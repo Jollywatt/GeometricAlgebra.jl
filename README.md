@@ -86,7 +86,7 @@ Dict{Vector{Int64}, Int64} with 2 entries:
 
 Operations which do not depend on the dimension of the space still work even if
 the metric signature is of undefined dimension.
-This enables cute desktop-calculator style interaction, where the signature need not be specified in advance.
+This enables cute desktop-calculator style interaction, where the dimension need not be specified in advance.
 
 ```Julia
 julia> a = basis(EuclideanSignature, :a)

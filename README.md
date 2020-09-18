@@ -1,6 +1,8 @@
 # GeometricAlgebra.jl
 _A simple, generic multivector implementation for geometric algebra with Julia._
 
+![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/Jollywatt/GeometricAlgebra.jl)
+
 The aim of this project is to provide an interface for geometric algebra
 which is simple, type-agnostic and explicit.
 See also [Grassmann.jl](https://github.com/chakravala/Grassmann.jl/) and co. for more advanced

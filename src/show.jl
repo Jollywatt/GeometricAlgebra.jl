@@ -5,7 +5,6 @@ COEFF_BASIS_SEPARATOR = " "
 const subscript_nums = '₀':'₉'
 subscriptnum(n::Integer) = join(subscript_nums[begin + i] for i ∈ reverse(digits(n)))
 
-
 #= SIGNATURES
 
 Signatures are displayed in shorthand (e.g., (-1,1,1,1) => "⟨-+++⟩") when appearing
@@ -39,12 +38,14 @@ function Base.show(io::IO, T::Type{<:AbstractMultivector{sig,C}}) where {sig,C}
 	print(io, "$name{$pretty_sig, $(join(params, ", "))}")
 end
 
-show_header(io::IO, a::MixedMultivector) = println(io, typeof(a))
-show_header(io::IO, a::HomogeneousMultivector{k}) where k = println(io, "$k-$(typeof(a))")
+
 
 
 
 #= BLADES, MULTIVECTORS, MIXEDMULTIVECTORS =#
+
+show_header(io::IO, a::MixedMultivector) = println(io, typeof(a))
+show_header(io::IO, a::HomogeneousMultivector{k}) where k = println(io, "$k-$(typeof(a))")
 
 bvlabel(sig, i) = "$DEFAULT_BASIS_SYMBOL$(subscriptnum(i))"
 bvlabel(sig::NamedTuple, i::Integer) = string(keys(sig)[i])
@@ -68,20 +69,20 @@ function each_ublade_bv(u::Unsigned)
 end
 each_ublade_bv(u::Vector) = u
 
-function show_blade(io::IO, sig, coeff, ublade; styled=false)
-	# show coeff with parentheses if necessary
-	Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
-	print(io, COEFF_BASIS_SEPARATOR)
+
+"""
+Display unit blade without coefficient.
+"""
+function show_ublade(io::IO, sig, ublade)
 	isfirst = true
 	for bv ∈ each_ublade_bv(ublade)
 		label = bvlabel(sig, bv)
 		if isfirst
 			isfirst = false
 		else
-			# print(io, length(label) > 1 ? "∧" : BASIS_SEPARATOR)
-			print(io, BASIS_SEPARATOR)
+		print(io, BASIS_SEPARATOR)
 		end
-		if styled
+		if get(io, :color, false) 
 			printstyled(io, label; bold=true)
 		else
 			print(io, label)
@@ -89,25 +90,59 @@ function show_blade(io::IO, sig, coeff, ublade; styled=false)
 	end
 end
 
-function show_multivector(io::IO, m::Multivector; inline, indent=0, onlynonzero=:auto)
-	if onlynonzero == :auto
-		onlynonzero = length(m.comps) > 10
-	end
-	isfirst = true
-	for (ublade, coeff) ∈ comps(m)
-		if onlynonzero && iszero(coeff) continue end
-		if isfirst
-			isfirst = false
-		else
-			print(io, inline ? " + " : "\n")
-		end
-		print(io, " "^indent)
-		show_blade(io, signature(m), coeff, ublade)
-	end
-	isfirst && print(io, " "^indent, zero(eltype(m)))
+
+"""
+Display blade with parentheses surrounding coefficient if necessary.
+"""
+function show_blade(io::IO, sig, coeff, ublade)
+	Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
+	print(io, COEFF_BASIS_SEPARATOR)
+	show_ublade(io, sig, ublade)
 end
 
 
+function show_multivector_inline(io::IO, m::Multivector; onlynonzero=:auto)
+	isfirst = true
+	for (ublade, coeff) ∈ comps(m)
+		if onlynonzero == true && !iszero(coeff)
+			isfirst ? isfirst = false : print(io, " + ")
+			show_blade(io, signature(m), coeff, ublade)
+		end
+	end
+end
+
+
+"""
+Display a multivector as a column of blades, with coefficients aligned using
+the native alignment mechanism, and blades basis aligned.
+
+```
+julia> 1e3x + y + 1e-3z
+1-Multivector{⟨x+,y+,z+⟩, Vector{Float64}, 1}
+ 1000.0   x
+    1.0   y
+    0.001 z
+```
+"""
+function show_multivector(io::IO, m::Multivector; indent=0, onlynonzero=:auto)
+	mcomps = collect(comps(m))
+	alignments = [Base.alignment(io, v) for (u, v) ∈ mcomps]
+	L = maximum(first.(alignments))
+	R = maximum(last.(alignments))
+	isfirst = true
+	for ((u, v), (l, r)) ∈ zip(mcomps, alignments)
+		isfirst ? isfirst = false : println(io)
+		print(io, " "^(L - l + indent))
+		Base.show_unquoted(io, v, 0, Base.operator_precedence(:*))
+		print(io, " "^(R - r), " ")
+		show_ublade(io, signature(m), u)
+	end
+end
+
+
+"""
+Display inhomogeneous `MixedMultivector` with each grade on a new line.
+"""
 function show_mixedmultivector(io::IO, m::MixedMultivector; inline, indent=0)
 	firstline = true
 	if iszero(m)
@@ -125,7 +160,7 @@ function show_mixedmultivector(io::IO, m::MixedMultivector; inline, indent=0)
 		print(io, " "^indent)
 		showparens = inline && (count(!iszero, mk.comps) > 1)
 		showparens && print(io, "(")
-		show_multivector(io, mk; inline=true, onlynonzero=true)
+		show_multivector_inline(io, mk; onlynonzero=true)
 		showparens && print(io, ")")
 	end
 end
@@ -138,10 +173,10 @@ function Base.show(io::IO, ::MIME"text/plain", b::Blade)
 	show(io, b)
 end
 
-Base.show(io::IO, m::Multivector) = show_multivector(io, m; inline=true)
+Base.show(io::IO, m::Multivector) = show_multivector_inline(io, m)
 function Base.show(io::IO, ::MIME"text/plain", m::Multivector)
 	show_header(io, m)
-	show_multivector(io, m; inline=false, indent=1)
+	show_multivector(io, m; indent=1)
 end
 
 Base.show(io::IO, m::MixedMultivector) = show_mixedmultivector(io, m; inline=true)

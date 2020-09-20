@@ -161,6 +161,7 @@ The metric signature of multivectors of type `type`. The definition
 """
 signature(::Type{<:AbstractMultivector{sig}}) where sig = sig
 signature(a::AbstractMultivector) = signature(typeof(a))
+dim(a::AbstractMultivector) = dim(signature(a))
 
 # MULTIVECTOR TYPE GYMNASTICS
 
@@ -224,12 +225,12 @@ end
 
 
 
-best_ublade_type(n) = n <= 8 ? UInt8 : n <= 16 ? UInt16 : n <= 32 ? UInt32 : n <= 64 ? UInt64 : n <= 128 ? UInt128 : Vector{Int}
 
 Base.eltype(::Type{<:Blade{sig,T}}) where {sig,T} = T
 Base.eltype(::Type{<:CompositeMultivector{sig,<:AbstractVector{T}}}) where {sig,T} = T
 Base.eltype(::Type{<:CompositeMultivector{sig,<:AbstractDict{B,T}}}) where {sig,B,T} = T
 
+best_ublade_type(n) = n <= 8 ? UInt8 : n <= 16 ? UInt16 : n <= 32 ? UInt32 : n <= 64 ? UInt64 : n <= 128 ? UInt128 : Vector{Int}
 Base.keytype(::Type{<:Blade{sig,T,B}}) where {sig,T,B} = B
 Base.keytype(::Type{<:CompositeMultivector{sig,<:AbstractVector}}) where {sig} = best_ublade_type(dim(sig))
 Base.keytype(::Type{<:CompositeMultivector{sig,<:AbstractDict{B}}}) where {sig,B} = B
@@ -309,7 +310,7 @@ julia> basis(EuclideanSignature, :t)
  1.0 t
 ```
 """
-basis(sig, i) = basis(Blade{sig,Float64,UInt,1}, i)
+basis(sig, i) = basis(Blade{sig,Float64,best_ublade_type(dim(sig)),1}, i)
 basis(sig) = [basis(sig, i) for i ∈ 1:dim(sig)]
 
 # good? bad? generate all 2^dim(sig) basis multivectors?
@@ -357,15 +358,37 @@ addcomp!(a::AbstractMultivector, ublade, v) = setcomp!(a, ublade, getcomp(a, ubl
 """
 `comps(a::AbstractMultivector)`
 
-Iterate components of multivector, generating `ublade => coeff` pairs (even when
-coefficients are stored in a vector).
+Iterate components of multivector, generating `ublade => coeff` pairs
+(regardless of the data type used to store coefficients).
 """
 comps(a::Blade) = (a.ublade => a.coeff,)
 
-#TODO: this could be made more efficient with an iterator which calls next_bit_permutation once each time
-comps(a::Multivector{sig,C,k}) where {sig,C<:AbstractVector,k} = (lindex2ublade(k, i) => coeff for (i, coeff) ∈ enumerate(a.comps))
+comps(a::Multivector{sig,C,k}) where {sig,C<:AbstractVector,k} = MultivectorComponentsIterator(a)
 
-comps(a::MixedMultivector{sig,C}) where {sig,C<:AbstractVector} = (unsigned(i - 1) => coeff for (i, coeff) ∈ enumerate(a.comps))
+struct MultivectorComponentsIterator{n,k,T}
+	multivector::T
+end
+MultivectorComponentsIterator(a::Multivector{sig,C,k}) where {sig,C<:AbstractVector,k} = MultivectorComponentsIterator{dim(sig),k,typeof(a)}(a)
+Base.length(::MultivectorComponentsIterator{n,k}) where {n,k} = binomial(n, k)
+Base.eltype(::MultivectorComponentsIterator{n,k,T}) where {n,k,T} = Pair{keytype(T),eltype(T)}
+
+function Base.iterate(mci::MultivectorComponentsIterator{n,k,T}) where {n,k,T}
+	if 0 <= k <= n
+		ublade = lindex2ublade(k, 1)
+		(ublade => mci.multivector.comps[1],  (1, ublade))
+	else
+		nothing
+	end
+end
+function Base.iterate(mci::MultivectorComponentsIterator{n,k,T}, (i, ublade)) where {n,k,T}
+	iszero(ublade) && return
+	ublade = next_bit_permutation(ublade)
+	i += 1
+	iszero(ublade >> n) ? (ublade => mci.multivector.comps[i], (i, ublade)) : nothing
+end
+
+
+comps(a::MixedMultivector{sig,C}) where {sig,C<:AbstractVector} = (keytype(a)(i - 1) => coeff for (i, coeff) ∈ enumerate(a.comps))
 comps(a::CompositeMultivector{sig,C}) where {sig,C<:AbstractDict} = a.comps
 
 

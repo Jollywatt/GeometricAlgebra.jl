@@ -143,13 +143,19 @@ const multivector_types = [Blade, Multivector, MixedMultivector]
 
 #TODO: equality. Should == involve implicit conversions?
 for eq ∈ [:(==), :(≈)]
-	@eval $eq(a::Blade{sig}, b::Blade{sig}; kwargs...) where sig = a.ublade == b.ublade && $eq(a.coeff, b.coeff; kwargs...)
-	@eval $eq(a::T, b::T; kwargs...) where T<:CompositeMultivector{sig,C} where {sig,C<:AbstractVector} = $eq(a.comps, b.comps; kwargs...)
-	@eval function $eq(a::T, b::T; kwargs...) where T<:CompositeMultivector{sig,C} where {sig,C<:AbstractDict}
+	@eval $eq(a::Blade{sig}, b::Blade{sig}; kwargs...) where sig = ==(promote_ublades(a.ublade, b.ublade)...) && $eq(a.coeff, b.coeff; kwargs...)
+@eval $eq(a::T, b::T; kwargs...) where T<:CompositeMultivector{sig,<:AbstractVector} where sig = $eq(a.comps, b.comps; kwargs...)
+@eval function $eq(a::T, b::T; kwargs...) where T<:CompositeMultivector{sig,<:AbstractDict} where sig
+		#TODO: doesn't work for different keytypes!
 		for u ∈ union(keys(a.comps), keys(b.comps))
 			$eq(getcomp(a, u), getcomp(b, u); kwargs...) ? continue : return false
 		end
 		true
+	end
+	# warning: can cause infinite recursion.
+	@eval function $eq(a::AbstractMultivector, b::AbstractMultivector)
+		T = smallest_type(a, b)
+		$eq(convert(T, a), convert(T, b))
 	end
 end
 
@@ -163,6 +169,9 @@ signature(::Type{<:AbstractMultivector{sig}}) where sig = sig
 signature(a::AbstractMultivector) = signature(typeof(a))
 dim(a::AbstractMultivector) = dim(signature(a))
 
+
+
+
 # MULTIVECTOR TYPE GYMNASTICS
 
 # assert that multivectors share same metric signature and return it
@@ -170,24 +179,14 @@ shared_sig(::Type{<:AbstractMultivector{sig}}...) where sig = sig
 shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share the same metric signature")
 shared_sig(as::AbstractMultivector...) = shared_sig(typeof.(as)...)
 
-# give the most sensible storage type of a CompositeMultivector with given signature, eltype, keytype
+# give the most sensible storage type of a CompositeMultivector with given signature, eltype, and keytype
 storagetype(sig, T, B::Type{<:Unsigned}) = dim(sig) <= 8 ? Vector{T} : SparseVector{T}
 storagetype(sig, T, B) = Dict{B,T}
 
-# this might be simplified if BitVectors are banished
-promote_ublade_type(as::Type{<:Unsigned}...) = promote_type(as...)
-for T ∈ [Vector{<:Integer}, BitVector]
-	@eval promote_ublade_type(a::Type{<:Unsigned}, b::Type{<:$T}) = $T
-	@eval promote_ublade_type(a::Type{<:$T}, b::Type{<:Unsigned}) = $T
-	@eval promote_ublade_type(a::Type{<:$T}, b::Type{<:$T}) = $T
-end
-
-promote_ublade_type(::Type{T}...) where T = T
 
 # give the most sensible CompositeMultivector type which can represent the given arguments
 function best_type(M::Type{Multivector}, as::Type{<:AbstractMultivector}...; k)
 	sig = shared_sig(as...)
-	# T = promote_type(filter(t -> !(t<:Derivative), eltype.(as))...)
 	T = promote_type(eltype.(as)...)
 	B = promote_ublade_type(keytype.(as)...)
 	C = storagetype(sig, T, B)
@@ -195,33 +194,22 @@ function best_type(M::Type{Multivector}, as::Type{<:AbstractMultivector}...; k)
 end
 function best_type(M::Type{MixedMultivector}, as::Type{<:AbstractMultivector}...)
 	sig = shared_sig(as...)
-	# T = promote_type(filter(t -> !(t<:Derivative), eltype.(as))...)
 	T = promote_type(eltype.(as)...)
 	B = promote_ublade_type(keytype.(as)...)
 	C = storagetype(sig, T, B)
 	MixedMultivector{sig,C}
 end
-# function best_type(M, a::AbstractMultivector{})
 best_type(M, as::AbstractMultivector...; args...) = best_type(M, typeof.(as)...; args...)
 
-
-function Base.convert(::Type{MixedMultivector}, a::AbstractMultivector)
-	b = zero(best_type(MixedMultivector, a))
-	for (u, v) ∈ comps(a)
-		setcomp!(b, u, v)
+function smallest_type(as::AbstractMultivector...)
+	if any(isa.(as, MixedMultivector))
+		return MixedMultivector
+	elseif all(isa.(as, Blade))
+		return Blade
+	else
+		return Multivector
 	end
-	b
 end
-
-function Base.convert(::Type{Multivector}, a::Union{Blade,Multivector})
-	k = grade(a)
-	b = zero(best_type(Multivector, a; k))
-	for (u, v) ∈ comps(a)
-		setcomp!(b, u, v)
-	end
-	b
-end
-
 
 
 
@@ -326,7 +314,7 @@ vol(::Type)
 The volume form or psuedoscalar element.
 """
 # @pure ??
-vol(T::Type{<:AbstractMultivector{sig}}) where sig = Blade{sig}(one(eltype(T)), ublade_vol(sig, keytype(T)))
+vol(T::Type{<:AbstractMultivector{sig}}) where sig = Blade{sig}(one(eltype(T)), ublade_vol(keytype(T), sig))
 vol(::T) where T<:AbstractMultivector = vol(T)
 
 # COMPONENT ACCESS
@@ -362,33 +350,10 @@ Iterate components of multivector, generating `ublade => coeff` pairs
 (regardless of the data type used to store coefficients).
 """
 comps(a::Blade) = (a.ublade => a.coeff,)
-
-comps(a::Multivector{sig,C,k}) where {sig,C<:AbstractVector,k} = MultivectorComponentsIterator(a)
-
-struct MultivectorComponentsIterator{n,k,T}
-	multivector::T
-end
-MultivectorComponentsIterator(a::Multivector{sig,C,k}) where {sig,C<:AbstractVector,k} = MultivectorComponentsIterator{dim(sig),k,typeof(a)}(a)
-Base.length(::MultivectorComponentsIterator{n,k}) where {n,k} = binomial(n, k)
-Base.eltype(::MultivectorComponentsIterator{n,k,T}) where {n,k,T} = Pair{keytype(T),eltype(T)}
-
-function Base.iterate(mci::MultivectorComponentsIterator{n,k,T}) where {n,k,T}
-	if 0 <= k <= n
-		ublade = lindex2ublade(k, 1)
-		(ublade => mci.multivector.comps[1],  (1, ublade))
-	else
-		nothing
-	end
-end
-function Base.iterate(mci::MultivectorComponentsIterator{n,k,T}, (i, ublade)) where {n,k,T}
-	iszero(ublade) && return
-	ublade = next_bit_permutation(ublade)
-	i += 1
-	iszero(ublade >> n) ? (ublade => mci.multivector.comps[i], (i, ublade)) : nothing
-end
-
-
-comps(a::MixedMultivector{sig,C}) where {sig,C<:AbstractVector} = (keytype(a)(i - 1) => coeff for (i, coeff) ∈ enumerate(a.comps))
+comps(a::Multivector{sig,C,k}) where {sig,C<:AbstractVector,k} =
+	(ublade => a.comps[i] for (i, ublade) ∈ enumerate(FixedGradeBlades{keytype(a)}(k, dim(sig))))
+comps(a::MixedMultivector{sig,C}) where {sig,C<:AbstractVector} =
+	(keytype(a)(i - 1) => coeff for (i, coeff) ∈ enumerate(a.comps))
 comps(a::CompositeMultivector{sig,C}) where {sig,C<:AbstractDict} = a.comps
 
 
@@ -410,7 +375,7 @@ mapcomp(f::Function, a::AbstractMultivector) = mapcomp!(f, deepcopy(a))
 _zeros(::Type{Vector{T}}, n) where T = zeros(T, n)
 _zeros(::Type{SparseVector{T}}, n) where T = spzeros(T, n)
 
-Base.zero(::Type{<:Blade{sig,T,B,k}}) where {sig,T,B,k} = Blade{sig}(zero(T), ublade_scalar(sig, B))
+Base.zero(::Type{<:Blade{sig,T,B,k}}) where {sig,T,B,k} = Blade{sig}(zero(T), ublade_scalar(B, sig))
 Base.zero(::Type{<:Multivector{sig,C,k}}) where {sig,C<:AbstractVector,k} = Multivector{sig}(k, _zeros(C, binomial(dim(sig), k)))
 Base.zero(::Type{<:MixedMultivector{sig,C}}) where {sig,C<:AbstractVector} = MixedMultivector{sig}(_zeros(C, 2^dim(sig)))
 Base.zero(T::Type{<:CompositeMultivector{sig,C}}) where {sig,C<:AbstractDict} = T(C())
@@ -421,21 +386,47 @@ Base.iszero(a::CompositeMultivector{sig,C}) where {sig,C<:AbstractVector} = isze
 Base.iszero(a::CompositeMultivector{sig,C}) where {sig,C<:AbstractDict} = all(iszero(v) for (u, v) ∈ a.comps)
 
 
-Base.one(::Type{<:Blade{sig,T,B}}) where {sig,T,B} = Blade{sig}(one(T), ublade_scalar(sig, B))
+Base.one(::Type{<:Blade{sig,T,B}}) where {sig,T,B} = Blade{sig}(one(T), ublade_scalar(B, sig))
 Base.oneunit(a::Blade{sig,T,B,k}) where {sig,T,B,k} = Blade{sig}(one(T), a.ublade)
 Base.one(a::AbstractMultivector) = one(typeof(a)) # not needed if AbstractMultivector <: Number
 
 function Base.one(T::Type{<:Multivector{sig,C}}) where {sig,C}
 	a = zero(Multivector{sig,C,0}) # scalar / 0-grade
-	setcomp!(a, ublade_scalar(sig, keytype(T)), one(eltype(T)))
+	setcomp!(a, ublade_scalar(keytype(T), sig), one(eltype(T)))
 	a
 end
 
 function Base.one(T::Type{<:MixedMultivector})
 	a = zero(T)
-	setcomp!(a, ublade_scalar(signature(T), keytype(T)), one(eltype(T)))
+	setcomp!(a, ublade_scalar(keytype(T), signature(T)), one(eltype(T)))
 	a
 end
+
+
+
+#= CONVERSIONS
+
+As mathematical sets, Blade ⊂ Multivector ⊂ MixedMultivector.
+Conversion into more general types is possible.
+=#
+
+function Base.convert(::Type{Multivector}, a::Union{Blade,Multivector})
+	k = grade(a)
+	b = zero(best_type(Multivector, a; k))
+	for (u, v) ∈ comps(a)
+		setcomp!(b, u, v)
+	end
+	b
+end
+
+function Base.convert(::Type{MixedMultivector}, a::AbstractMultivector)
+	b = zero(best_type(MixedMultivector, a))
+	for (u, v) ∈ comps(a)
+		setcomp!(b, u, v)
+	end
+	b
+end
+
 
 
 # GRADE SELECTION
@@ -503,7 +494,7 @@ and to support `OffsetSignature`s, for example, 0-based Lorentzian signatures.
 
 =#
 
-Base.getindex(a::AbstractMultivector) = getcomp(a, ublade_scalar(signature(a), keytype(a)))
+Base.getindex(a::AbstractMultivector) = getcomp(a, ublade_scalar(keytype(a), signature(a)))
 
 #TODO: ambiguous, ugly, stupid
 indices2ublade(::Any) = Int[]

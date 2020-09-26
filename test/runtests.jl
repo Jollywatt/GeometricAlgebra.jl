@@ -1,7 +1,7 @@
 using Test
 using GeometricAlgebra
 
-ublade_types = [UInt8, UInt64, Vector{Int}, BitVector]
+ublade_types = [UInt8, UInt64, Vector{Int}]
 
 @testset "lindex <-> ublade" begin
 	@testset "$T" for T ∈ ublade_types
@@ -28,7 +28,7 @@ sigs = [
 		# BitVector([1,1,0,1]) => [1,2,4], # havent implemented bv conversions yet
 		# BitVector([1,1,0,1]) => 0b1011,
 	], (a, b) ∈ [a2b, reverse(a2b)] # check both directions
-		bfroma = GeometricAlgebra.convert_ublade(typeof(b), a)
+		bfroma = GeometricAlgebra.convert_ublade(:sig, typeof(b), a)
 		@test typeof(bfroma) == typeof(b)
 		@test bfroma == b
 	end
@@ -42,8 +42,6 @@ import GeometricAlgebra: ubladeprod
 	@test ubladeprod((1,1,1), 0b11, 0b11) == (-1, 0b0)
 	@test ubladeprod((-1,-1,-1), [1,3,1]) == (1, [3])
 	@test ubladeprod((1,0,1), [2], [1,2]) == (0, [1])
-	@test ubladeprod((1,0,1), falses(3), trues(3)) == (1, trues(3))
-	@test ubladeprod((1,1,1), trues(3), trues(3)) == (-1, falses(3))
 end
 
 # @testset "basis" begin

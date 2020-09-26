@@ -30,12 +30,15 @@ function Base.show(io::IO, ::MIME"text/plain", sig::AbstractMetricSignature)
 end
 
 # WARNING: this disguises tuple signatures (1, 1, 1) in type info for the sake of prettiness
-function Base.show(io::IO, T::Type{<:AbstractMultivector{sig,C}}) where {sig,C}
-	# important to expose C so T::DataType not ::UnionAll
-	name = nameof(T)
-	pretty_sig = show_signature(sig)
-	params = T.parameters[2:end] # assumes T::DataType
-	print(io, "$name{$pretty_sig, $(join(params, ", "))}")
+function Base.show(io::IO, T::Type{<:AbstractMultivector})
+	if applicable(signature, T) # test if type has concrete sig field
+		name = nameof(T)
+		pretty_sig = show_signature(signature(T))
+		params = T.parameters[2:end] # assumes T::DataType
+		print(io, "$name{$pretty_sig, $(join(params, ", "))}")
+	else
+		invoke(show, Tuple{IO,Type}, io, T) # call original show method
+	end
 end
 
 
@@ -100,11 +103,14 @@ function show_blade(io::IO, sig, coeff, ublade)
 	show_ublade(io, sig, ublade)
 end
 
+sorted_comps(a::Blade) = comps(a)
+sorted_comps(a::CompositeMultivector{sig,<:AbstractVector}) where sig = comps(a)
+sorted_comps(a::CompositeMultivector{sig,<:AbstractDict}) where sig = sort(comps(a))
 
 function show_multivector_inline(io::IO, m::Multivector; onlynonzero=:auto)
 	isfirst = true
-	for (ublade, coeff) ∈ comps(m)
-		if onlynonzero == true && !iszero(coeff)
+	for (ublade, coeff) ∈ sorted_comps(m)
+		if onlynonzero == false || !iszero(coeff)
 			isfirst ? isfirst = false : print(io, " + ")
 			show_blade(io, signature(m), coeff, ublade)
 		end
@@ -125,7 +131,7 @@ julia> 1e3x + y + 1e-3z
 ```
 """
 function show_multivector(io::IO, m::Multivector; indent=0, onlynonzero=:auto)
-	mcomps = collect(comps(m))
+	mcomps = collect(sorted_comps(m))
 	alignments = [Base.alignment(io, v) for (u, v) ∈ mcomps]
 	L = maximum(first.(alignments))
 	R = maximum(last.(alignments))

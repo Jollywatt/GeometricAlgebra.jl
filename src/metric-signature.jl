@@ -26,6 +26,8 @@ julia> x + basis(EuclideanSignature, :y)
 
 
 dim(sig::Union{Tuple,NamedTuple}) = length(sig)
+signature_labels(sig::NamedTuple) = keys(sig)
+signature_labels(sig) = error("cannot access components of metric signature $(show_signature(sig)) = $sig by label")
 
 show_signature(sig::Tuple) = "⟨$(join(map(signum, sig)))⟩"
 show_signature(sig::NamedTuple) = show_signature(values(sig))
@@ -60,3 +62,5 @@ dim(::OffsetSignature{sig}) where sig = dim(sig)
 show_signature(::OffsetSignature{sig,indices}) where {sig,indices} = "$(show_signature(sig))[$indices]"
 
 Minkowski = OffsetSignature{(t=-1,x=1,y=1,z=1),0:3}()
+
+sig_has_dimension(sig) = applicable(dim, sig)

@@ -3,7 +3,6 @@
 Unit blades represent the wedge product of orthonormal
 basis vectors such as v1∧v3∧v4 and may be represented as:
  - Unsigned           0b1101
- - BitVector          BitVector([1, 1, 0, 1])
  - Vector{<:Integer}  [1, 3, 4]
  - Vector{<:Symbol}   [:v1, :v3, :v4]
 depending on the multivector type and metric signature.
@@ -11,89 +10,96 @@ This module tries to stay agnostic with respect to ublade type.
 However, in signatures of unspecified dimension which lack a canonical
 sequence of basic vectors, only the last representation is possible.
 
-One this project matures enough to think about performance, it could be
-decided whether BitVectors offer any advantage.
-Practically, I can only see uints being used, and otherwise vectors of symbols.
+Homogeneous `k`-multivectors have a canonical lexicographical ordering of basis blades.
+E.g., the 6 basis 2-blades in 4 dimensions are, in order:
+order	1		2		3		4		5		6
+uints	0011	0101	0110	1001	1010	1100
+vects	[1, 2]	[1, 3]	[2, 3]	[1, 4]	[2, 4]	[3, 4]
+Viewed as int vects, k-blades form a combinatorial number system,
+where their value is the 'order' index and their expression in
+the combinatorial number system is the corresponding `vect`.
+https://en.wikipedia.org/wiki/Combinatorial_number_system
 
 =#
 
 # for debugging:
-Base.show(io::IO, ::MIME"text/plain", a::Unsigned) = print(io, join(reverse(digits(a, base=2; pad=8sizeof(a)))))
+# Base.show(io::IO, ::MIME"text/plain", a::Unsigned) = print(io, join(reverse(digits(a, base=2; pad=8sizeof(a)))))
 
 # first grade-k unit blade basis under lexicographic ordering; e.g., 0b0111, [1,2,3]
 ublade_first_of_grade(T::Type{<:Unsigned}, k) = one(T) << k - one(T)
-ublade_first_of_grade(T::Type{<:Vector}, k) = T(1:k)
-ublade_first_of_grade(T::Type{<:BitVector}, k) = trues(k)
+ublade_first_of_grade(T::Type{<:Vector{<:Integer}}, k) = T(1:k)
 
 # scalar unit blade basis of the given type; e.g., 0b0000, []
-ublade_scalar(T, sig) = ublade_first_of_grade(T, 0)
-
-# pseudoscalar unit blade basis of given type
-ublade_vol(T, sig) = ublade_first_of_grade(T, dim(sig))
+ublade_scalar(T) = ublade_first_of_grade(T, 0)
 
 # unit blade basis of ith basis vector 
 ublade_bv(T::Type{<:Unsigned}, i) = one(T) << (i - 1)
 ublade_bv(T::Type{Vector{<:Integer}}, i) = [i]
-ublade_bv(T::Type{BitVector}, i) = [falses(i - 1); true]
+
+ublade_bvs(sig, ublade) = convert_ublade(sig, Vector{Int}, ublade)
 
 ublade_grade(ublade::Unsigned) = count_ones(ublade)
 ublade_grade(ublade::Vector) = length(ublade)
-ublade_grade(ublade::BitVector) = sum(ublade)
 
 has_bv(ublade::Unsigned, i) = !iszero(ublade & 1 << (i - 1))
 has_bv(ublade::Vector, i) = i ∈ ublade
-has_bv(ublade::BitVector, i) = ublade[i]
 
 ublade_xor(u::Unsigned, v::Unsigned) = u ⊻ v
 ublade_xor(u::Vector, v::Vector) = symdiff(u, v)
-function ublade_xor(u::BitVector, v::BitVector)
-	uv = falses(max(length(u), length(v)))
-	for i ∈ eachindex(uv)
-		uv[i] = get(u, i, 0) ⊻ get(v, i, 0)
-	end
-	uv
-end
 
 
 
 # UNIT BLADE PROMOTION & CONVERSION
 
-function convert_ublade(T::Type{<:Unsigned}, ublade::Vector{<:Integer})
+convert_ublade(sig, ::Type{T}, ublade::T) where T = ublade
+
+# Unsigned <-> Vector{<:Integer}
+function convert_ublade(sig, T::Type{<:Unsigned}, ublade::Vector{<:Integer})
 	u = zero(T)
 	for bv ∈ ublade
 		u += one(T) << (bv - 1)
 	end
 	u
 end
-function convert_ublade(T::Type{<:Vector{<:Integer}}, ublade::Unsigned)
+function convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Unsigned)
 	T(filter(i -> has_bv(ublade, i), 1:8sizeof(ublade)))
 end
 
-convert_ublade(T::Type{<:Unsigned}, ublade::Unsigned) = convert(T, ublade)
-convert_ublade(::Type{T}, ublade::T) where T = ublade
+convert_ublade(sig, T::Type{<:Unsigned}, ublade::Unsigned) = convert(T, ublade)
+
+# Vector{<:Integer} <-> Vector{Symbol}
+convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Vector{Symbol}) =
+	T([i ∈ keys(sig) ? sig[i] : error("signature $sig has no label $i") for i ∈ ublade])
+convert_ublade(sig, T::Type{<:Vector{Symbol}}, ublade::Vector{<:Integer}) =
+	T([signature_labels(sig)[i] for i ∈ ublade])
+
+# Unsigned <-> Vector{Symbol}
+convert_ublade(sig, T::Type{<:Unsigned}, ublade::Vector{Symbol}) = convert_ublade(sig, T, convert_ublade(sig, Vector{signed(T)}, ublade))
+convert_ublade(sig, T::Type{<:Vector{Symbol}}, ublade::Unsigned) = convert_ublade(sig, T, convert_ublade(sig, Vector{signed(T)}, ublade))
+
+"""
+	convert_ublade(a::AbstractMultivector, ublade)
+
+Convert unit blade `ublade` to the representation employed by `a`.
+"""
+
+# first argument should be a::AbstractMultivector
+convert_ublade(a, ublade) = convert_ublade(signature(a), keytype(a), ublade)
 
 # fallback
-convert_ublade(::Type{T}, ublade::S) where {T,S} = convert(T, ublade)
-
-#TODO: implement rest -- if they're really needed?
+# convert_ublade(sig, ::Type{T}, ublade::S) where {T,S} = convert(T, ublade)
 
 
-# this might be simplified if BitVectors are banished
 promote_ublade_type(as::Type{<:Unsigned}...) = promote_type(as...)
-for T ∈ [Vector{<:Integer}, BitVector]
-	@eval promote_ublade_type(a::Type{<:Unsigned}, b::Type{<:$T}) = b
-	@eval promote_ublade_type(a::Type{<:$T}, b::Type{<:Unsigned}) = a
-	@eval promote_ublade_type(a::Type{<:$T}, b::Type{<:$T}) = promote_type(a, b)
-end
-
+promote_ublade_type(a::Type{<:Unsigned}, b::Type{<:Vector{<:Integer}}) = b
+promote_ublade_type(a::Type{<:Vector{<:Integer}}, b::Type{<:Unsigned}) = a
+promote_ublade_type(a::Type{<:Vector{<:Integer}}, b::Type{<:Vector{<:Integer}}) = promote_type(a, b)
 promote_ublade_type(::Type{T}...) where T = T
 
-function promote_ublades(ublades...)
+function promote_ublades(sig, ublades...) # used only by ==(::Blade, ::Blade) so far
 	T = promote_ublade_type(typeof.(ublades)...)
-	tuple(convert_ublade.(T, ublades)...)
+	Tuple(convert_ublade(sig, T, u) for u ∈ ublades)
 end
-
-
 
 
 
@@ -137,32 +143,15 @@ function next_ublade!(u::Vector{<:Integer})
 	u[end] += 1
 	u
 end
-function next_ublade!(u::BitVector)
-	nwrapped = 1
-	for i ∈ 1:length(u) - 1
-		u[i] || continue
-		u[i] = false
-		if u[i + 1]
-			u[nwrapped] = true
-			nwrapped += 1
-		else
-			u[i + 1] = true
-			return u
-		end
-	end
-	u[end] = false
-	push!(u, true)
-	u
-end
 
 
 """
-Convert linear index `i` of unit `k`-blade into unsigned ublade form.
-The `i`th ublade of grade `k` is the `i`th uint with `k` binary ones,
-sorted lexicographically / in ascending order.
+Convert linear index `i` of into unit `k`-blade.
+The linear index (lindex) gives the index of the unit blade
+sorted lexicographically.
 
 ```
-julia> GeometricAlgebra.lindex2ublade.(3, 1:5) .|> UInt8 .|> bitstring
+julia> lindex2ublade.(UInt8, 3, 1:5) .|> bitstring
 5-element Vector{String}:
  "00000111"
  "00001011"
@@ -186,17 +175,6 @@ function ublade2lindex(ublade::Unsigned)
 	while u < ublade
 		u = next_ublade(u)
 		lindex += 1
-	end
-	lindex
-end
-function ublade2lindex(ublade::BitVector)
-	lindex = 1
-	k = 0
-	for (cₖ, bit) ∈ enumerate(ublade)
-		if bit
-			k += 1
-			lindex += binomial(cₖ - 1, k)
-		end
 	end
 	lindex
 end
@@ -256,7 +234,7 @@ julia> GeometricAlgebra.ubladeprod((1,1,1), 0b011, 0b111)
 (-1, 0x04)
 ```
 """
-function ubladeprod(sig, bvs::Vector{<:Integer}; startfrom=0)
+function ubladeprod(sig, bvs::Vector; startfrom=0)
 	sorted_bvs = bvs[1:startfrom]
 	coeff = 1
 	for b ∈ bvs[startfrom + 1:end]
@@ -283,15 +261,12 @@ end
 
 # optimisation for partially-sorted prod
 # only correct if `lbases` is in canonical form (strictly increasing)
-ubladeprod(sig, lbases, rbases) = ubladeprod(sig, [lbases..., rbases...]; startfrom=length(lbases))
+ubladeprod(sig, lbases, rbases) = ubladeprod(sig, vcat(lbases, rbases); startfrom=length(lbases))
 
 """
 Compute sign flips of blade product due to transposing basis vectors.
 (The full sign of the product will also depend on the basis norms.)
 """
-function bladeprodsign(a::BitVector, b::BitVector)
-	iseven(sum((a << 1) .* cumsum(b))) ? 1 : -1
-end
 function bladeprodsign(a::Unsigned, b::Unsigned)
 	swaps = 0
 	while b > 0
@@ -303,19 +278,20 @@ function bladeprodsign(a::Unsigned, b::Unsigned)
 end
 
 # faster implementation
-function _ubladeprod(sig, a, b)
+function ubladeprod(sig, a::Unsigned, b::Unsigned)
 	factor = bladeprodsign(a, b)
-	ab = a .⊻ b # generic on unsigned ints / bit vectors
-	squares = a .& b
-	for i ∈ 1:dim(sig)
-		if has_bv(squares, i)
-			factor *= sig[i]
+	ab = a ⊻ b # generic on unsigned ints / bit vectors
+	squares = a & b
+	bv = 1
+	while squares > 0
+		if !iszero(squares & 1)
+			factor *= sig[bv]
 		end
+		squares >>= 1
+		bv += 1
 	end
 	factor, ab
 end
-ubladeprod(sig, a::Unsigned, b::Unsigned) = _ubladeprod(sig, a, b)
-ubladeprod(sig, a::BitVector, b::BitVector) = _ubladeprod(sig, a, b)
-ubladeprod(sig, a::Union{<:Unsigned,BitVector}) = (1, a)
+ubladeprod(sig, a::Unsigned) = (1, a)
 
 

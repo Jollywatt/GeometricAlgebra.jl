@@ -31,16 +31,15 @@ end
 
 # WARNING: this disguises tuple signatures (1, 1, 1) in type info for the sake of prettiness
 function Base.show(io::IO, T::Type{<:AbstractMultivector})
-	if applicable(signature, T) # test if type has concrete sig field
+	if isconcretetype(T)
 		name = nameof(T)
 		pretty_sig = show_signature(signature(T))
-		params = T.parameters[2:end] # assumes T::DataType
+		params = T.parameters[2:end]
 		print(io, "$name{$pretty_sig, $(join(params, ", "))}")
 	else
 		invoke(show, Tuple{IO,Type}, io, T) # call original show method
 	end
 end
-
 
 
 

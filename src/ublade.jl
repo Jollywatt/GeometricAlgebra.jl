@@ -31,6 +31,7 @@ ublade_first_of_grade(T::Type{<:Vector{<:Integer}}, k) = T(1:k)
 
 # scalar unit blade basis of the given type; e.g., 0b0000, []
 ublade_scalar(T) = ublade_first_of_grade(T, 0)
+ublade_scalar(::Type{<:Vector{Symbol}}) = Symbol[]
 
 # unit blade basis of ith basis vector 
 ublade_bv(T::Type{<:Unsigned}, i) = one(T) << (i - 1)

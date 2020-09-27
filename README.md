@@ -5,8 +5,7 @@ _A simple, generic multivector implementation for geometric algebra with Julia._
 
 The aim of this project is to provide an interface for geometric algebra
 which is simple, type-agnostic and explicit.
-See also [Grassmann.jl](https://github.com/chakravala/Grassmann.jl/) and co. for more advanced
-capability.
+See also the more mature [Grassmann.jl](https://github.com/chakravala/Grassmann.jl/) and [Multivectors.jl](https://github.com/digitaldomain/Multivectors.jl) packages for more advanced capability.
 
 ```Julia
 julia> x, y, z = basis((1,1,1))
@@ -15,25 +14,35 @@ julia> x, y, z = basis((1,1,1))
  1.0 v₂
  1.0 v₃
 
+julia> 20x - y/2
+1-Multivector{⟨+++⟩, Vector{Float64}, 1}
+ 20.0 v₁
+ -0.5 v₂
+  0.0 v₃
+
 julia> exp(π/2*x*y)
 MixedMultivector{⟨+++⟩, Vector{Float64}}
  6.123233995736766e-17
  1.0 v₁v₂
 
-julia> x + 2
-MixedMultivector{⟨+++⟩, Vector{Float64}}
- 2.0
- 1.0 v₁
+julia> Multivector{(t=-1, x=1, y=1, z=1)}(2, rand(Int8, 6)) # create random bivector with spacetime metric
+2-Multivector{⟨t-,x+,y+,z+⟩, Vector{Int8}, 2}
+  36 tx
+  51 ty
+ -64 xy
+   7 tz
+   8 xz
+ -74 yz
 
-julia> x∧(4 + x)
-MixedMultivector{⟨+++⟩, Vector{Float64}}
- 4.0 v₁
+julia> ans[:z,:x] # access the z∧x component by basis label
+-8.0
+
 ```
 Currently supported operations include the geometric `*`, wedge `∧`, dot `⋅` and scalar `∗` products, etc.
 Exponentiation `^` and `exp` are supported, but that's about it so far...
 
 
-Components can be stored in vectors (which may be sparse) or in dictionaries:
+Multivector components can be internally stored in (possibly sparse) vectors or in dictionaries:
 ```Julia
 julia> (x + 2y - z).comps
 3-element Vector{Float64}:
@@ -41,9 +50,9 @@ julia> (x + 2y - z).comps
   2.0
  -1.0
 
-julia> t = basis(Multivector{(-1,1,1,1), Dict{UInt8, Int}, 1}, 1)
+julia> t = basis(Multivector{(-1,1,1,1), Dict{UInt8, Int}, 1}, 3)
 1-Multivector{⟨-+++⟩, Dict{UInt8, Int64}, 1}
- 1 v₁
+ 1 v₃
 
 julia> t.comps
 Dict{UInt8, Int64} with 1 entry:
@@ -64,9 +73,9 @@ julia> signature(x)
 ⟨3+⟩ = EuclideanSignature(3)
 ```
 
-Components may be represented in dictionaries with vectors of integers or symbols as keys.
+Components may be stored in dictionaries with unit blade keys of type `Vector{<:Integer}` or `Vector{<:Symbols}`.
 In principle, this flexibility allows for arbitrarily many dimensions.
-(Maybe this could find some use if one was doing geometric algebra in a Hilbert space of smooth functions?)
+(Maybe this could find some use? I don't know.)
 ```Julia
 
 julia> prod(basis.(Blade{EuclideanSignature(100000),Int,Vector{Int},1}, [1, 2, 99999, 100000]))
@@ -80,13 +89,13 @@ MixedMultivector{⟨100000+⟩, Dict{Vector{Int64}, Int64}}
 
 julia> ans.comps
 Dict{Vector{Int64}, Int64} with 2 entries:
-  Int64[]             => 42
+  Int64[]               => 42
   [1, 2, 99999, 100000] => 1
 ```
 
 Operations which do not depend on the dimension of the space still work even if
 the metric signature is of undefined dimension.
-This enables cute desktop-calculator style interaction, where the dimension need not be specified in advance.
+This enables playground-style interaction, where the dimension need not be specified in advance.
 
 ```Julia
 julia> a = basis(EuclideanSignature, :a)

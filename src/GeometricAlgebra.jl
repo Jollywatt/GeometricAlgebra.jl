@@ -12,6 +12,7 @@ export Blade, Multivector, MixedMultivector
 
 export signature, dim, basis, vol
 export grade, scalar, isscalar
+export blades
 
 export reversion, ~
 export hodgedual, ★

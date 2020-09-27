@@ -24,8 +24,8 @@ compmul(x::Number, comps::AbstractDict) = Dict(ublade => val*b for (ublade, val)
 function +(as::HomogeneousMultivector{k}...) where k
 	T = best_type(Multivector, as...; k)
 	Σ = zero(T)
-	for a ∈ as, (ublade, val) ∈ comps(a)
-		addcomp!(Σ, ublade, val)
+	for a ∈ as, u ∈ blades(a)
+		add!(Σ, u)
 	end
 	Σ
 end
@@ -33,8 +33,8 @@ end
 function +(as::AbstractMultivector...)
 	T = best_type(MixedMultivector, as...)
 	Σ = zero(T)
-	for a ∈ as, (ublade, val) ∈ comps(a)
-		addcomp!(Σ, ublade, val)
+	for a ∈ as, u ∈ blades(a)
+		add!(Σ, u)
 	end
 	Σ
 end
@@ -60,60 +60,51 @@ end
 
 
 
+
 #= ALGEBRAIC PRODUCTS =#
 
-function geometric_prod(a1::AbstractMultivector, a2::AbstractMultivector)
-	T = best_type(MixedMultivector, a1, a2)
-	sig = signature(T)
-	a12 = zero(T)
-	for (u1, v1) ∈ comps(a1), (u2, v2) ∈ comps(a2)
-		factor, u12 = ubladeprod(sig, u1, u2)
-		v12 = v1*v2
-		addcomp!(a12, u12, factor*v12)
-	end
-	a12
+function geometric_prod(a::Blade, b::Blade)
+	sig = shared_sig(a, b)
+	factor, u = ubladeprod(sig, a.ublade, b.ublade)
+	Blade{sig}(factor*(a.coeff*b.coeff), u)
 end
-function homogeneous_prod(a1::AbstractMultivector, a2::AbstractMultivector, k)
-	T = best_type(Multivector, a1, a2; k)
-	sig = signature(T)
-	a12 = zero(T)
-	for (u1, v1) ∈ comps(a1), (u2, v2) ∈ comps(a2)
-		u12 = ublade_xor(u1, u2)
-		if ublade_grade(u12) == k
-			factor, _ = ubladeprod(sig, u1, u2)
-			v12 = v1*v2
-			addcomp!(a12, u12, factor*v12)
-		end
+function geometric_prod(a::AbstractMultivector, b::AbstractMultivector)
+	ab = zero(best_type(MixedMultivector, a, b))
+	for u ∈ blades(a), v ∈ blades(b)
+		add!(ab, geometric_prod(u::Blade, v::Blade))
 	end
-	a12
-end
-function graded_prod(a1::AbstractMultivector, a2::AbstractMultivector, grade_selector)
-	T = best_type(MixedMultivector, a1, a2)
-	sig = signature(T)
-	a12 = zero(T)
-	for (u1, v1) ∈ comps(a1), (u2, v2) ∈ comps(a2)
-		u12 = ublade_xor(u1, u2)
-		if grade_selector(ublade_grade(u1), ublade_grade(u2)) == ublade_grade(u12)
-			factor, _ = ubladeprod(sig, u1, u2)
-			v12 = v1*v2
-			addcomp!(a12, u12, factor*v12)
-		end
-	end
-	a12
+	ab
 end
 
-# specialisations for blades
-function geometric_prod(a1::Blade, a2::Blade)
-	sig = shared_sig(a1, a2)
-	factor, u12 = ubladeprod(sig, a1.ublade, a2.ublade)
-	v12 = a1.coeff*a2.coeff
-	Blade{sig}(factor*v12, u12)
+function homogeneous_prod(a::Blade, b::Blade, k)
+	if ublade_grade(ublade_xor(a.ublade, b.ublade)) == k
+		geometric_prod(a, b)
+	else
+		zero(best_type(Blade, a, b; k))
+	end
 end
-homogeneous_prod(a::Blade, b::Blade, k) = grade(geometric_prod(a, b), k)
+function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, k)
+	ab = zero(best_type(Multivector, a, b; k))
+	for u ∈ blades(a), v ∈ blades(b)
+		add!(ab, homogeneous_prod(u::Blade, v::Blade, k))
+	end
+	ab
+end
 
-graded_prod(a::HomogeneousMultivector, b::HomogeneousMultivector, grade_selector) = homogeneous_prod(a, b, grade_selector(grade(a), grade(b)))
+function graded_prod(a::AbstractMultivector, b::AbstractMultivector, grade_selector)
+	ab = zero(best_type(MixedMultivector, a, b))
+	for u ∈ blades(a), v ∈ blades(b)
+		add!(ab, homogeneous_prod(u, v, grade_selector(grade(u), grade(v))))
+	end
+	ab
+end
+graded_prod(a::HomogeneousMultivector, b::HomogeneousMultivector, grade_selector) =
+	homogeneous_prod(a, b, grade_selector(grade(a), grade(b)))
 
 *(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
+
+
+
 
 """
 ```
@@ -178,11 +169,11 @@ reversionsign(k::Integer) = reversionsign(k, 1)
 
 reversion(a::Number) = a
 reversion(a::HomogeneousMultivector{k}) where k = reversionsign(k, a)
-reversion(a::MixedMultivector) = mapcomp((u, v) -> reversionsign(ublade_grade(u), v), a)
+reversion(a::MixedMultivector) = mapcomps(u -> reversion(u).coeff, a)
 ~(a::AbstractMultivector) = reversion(a)
 
 involute(a::HomogeneousMultivector) = iseven(grade(a)) ? a : -a
-involute(a::MixedMultivector) = mapcomp((u, v) -> iseven(ublade_grade(u)) ? v : -v, a)
+involute(a::MixedMultivector) = mapcomps(u -> (iseven(grade(u)) ? u : -u).coeff, a)
 
 
 """
@@ -226,7 +217,6 @@ function ^(a::Blade, p::Integer)
 	p >= 0 || return inv(a)^abs(p)
 	blade = iseven(p) ? one(a) : oneunit(a)
 	square, _ = ubladeprod(signature(a), a.ublade, a.ublade)
-	# square = 3
 	factor = square^fld(p, 2) # floored division
 	coeff = factor*a.coeff^p
 	coeff*blade
@@ -261,11 +251,6 @@ function Base.exp(a::Blade)
 		cos(coeff) + oneunit(a)*sin(coeff)
 	end
 end
-
-
-_sumcoeff(a::Blade) = a.coeff
-_sumcoeff(a::CompositeMultivector{sig,<:AbstractVector}) where sig = sum(a.comps)
-_sumcoeff(a::CompositeMultivector{sig,<:AbstractDict}) where sig = sum(values(a.comps))
 
 # what's the proper way to implement a stable exp which works with BigFloats?
 function Base.exp(a::AbstractMultivector, n=20)

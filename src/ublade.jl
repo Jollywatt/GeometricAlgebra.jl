@@ -19,11 +19,8 @@ Viewed as int vects, k-blades form a combinatorial number system,
 where their value is the 'order' index and their expression in
 the combinatorial number system is the corresponding `vect`.
 https://en.wikipedia.org/wiki/Combinatorial_number_system
-
 =#
 
-# for debugging:
-# Base.show(io::IO, ::MIME"text/plain", a::Unsigned) = print(io, join(reverse(digits(a, base=2; pad=8sizeof(a)))))
 
 # first grade-k unit blade basis under lexicographic ordering; e.g., 0b0111, [1,2,3]
 ublade_first_of_grade(T::Type{<:Unsigned}, k) = one(T) << k - one(T)
@@ -32,6 +29,8 @@ ublade_first_of_grade(T::Type{<:Vector{<:Integer}}, k) = T(1:k)
 # scalar unit blade basis of the given type; e.g., 0b0000, []
 ublade_scalar(T) = ublade_first_of_grade(T, 0)
 ublade_scalar(::Type{<:Vector{Symbol}}) = Symbol[]
+
+ublade_vol(sig, T) = ublade_first_of_grade(T, dim(sig))
 
 # unit blade basis of ith basis vector 
 ublade_bv(T::Type{<:Unsigned}, i) = one(T) << (i - 1)
@@ -75,8 +74,10 @@ convert_ublade(sig, T::Type{<:Vector{Symbol}}, ublade::Vector{<:Integer}) =
 	T([signature_labels(sig)[i] for i ∈ ublade])
 
 # Unsigned <-> Vector{Symbol}
-convert_ublade(sig, T::Type{<:Unsigned}, ublade::Vector{Symbol}) = convert_ublade(sig, T, convert_ublade(sig, Vector{signed(T)}, ublade))
-convert_ublade(sig, T::Type{<:Vector{Symbol}}, ublade::Unsigned) = convert_ublade(sig, T, convert_ublade(sig, Vector{signed(T)}, ublade))
+convert_ublade(sig, T::Type{<:Unsigned}, ublade::Vector{Symbol}) =
+	convert_ublade(sig, T, convert_ublade(sig, Vector{signed(T)}, ublade))
+convert_ublade(sig, T::Type{<:Vector{Symbol}}, ublade::Unsigned) =
+	convert_ublade(sig, T, convert_ublade(sig, Vector{signed(typeof(ublade))}, ublade))
 
 """
 	convert_ublade(a::AbstractMultivector, ublade)
@@ -194,6 +195,23 @@ end
 
 Generates all grade `k` unit blades in `n` dimensions ordered lexicographically.
 Unit blades of type `B` are produced.
+
+Examples
+===
+```jldoctest; setup = :( using GeometricAlgebra: FixedGradeBlades )
+julia> FixedGradeBlades{UInt8}(2, 3) .|> bitstring
+3-element Vector{String}:
+ "00000011"
+ "00000101"
+ "00000110"
+
+julia> FixedGradeBlades{Vector{Int}}(3, 4) |> collect
+4-element Vector{Vector{Int64}}:
+ [1, 2, 3]
+ [1, 2, 4]
+ [1, 3, 4]
+ [2, 3, 4]
+```
 """
 struct FixedGradeBlades{B}
 	grade::Int
@@ -275,12 +293,12 @@ function bladeprodsign(a::Unsigned, b::Unsigned)
 		swaps += count_ones(a)*(b & 1)
 		b >>= 1
 	end
-	iseven(swaps) ? 1 : -1
+	iseven(swaps)
 end
 
 # faster implementation
 function ubladeprod(sig, a::Unsigned, b::Unsigned)
-	factor = bladeprodsign(a, b)
+	factor = bladeprodsign(a, b) ? 1 : -1
 	ab = a ⊻ b # generic on unsigned ints / bit vectors
 	squares = a & b
 	bv = 1

@@ -85,6 +85,7 @@ function homogeneous_prod(a::Blade, b::Blade, k)
 end
 function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, k)
 	ab = zero(best_type(Multivector, a, b; k))
+	0 <= k <= dim(a) || return ab
 	for u ∈ blades(a), v ∈ blades(b)
 		add!(ab, homogeneous_prod(u::Blade, v::Blade, k))
 	end
@@ -94,7 +95,9 @@ end
 function graded_prod(a::AbstractMultivector, b::AbstractMultivector, grade_selector)
 	ab = zero(best_type(MixedMultivector, a, b))
 	for u ∈ blades(a), v ∈ blades(b)
-		add!(ab, homogeneous_prod(u, v, grade_selector(grade(u), grade(v))))
+		k = grade_selector(grade(u), grade(v))
+		0 <= k <= dim(ab) || continue
+		add!(ab, homogeneous_prod(u, v, k))
 	end
 	ab
 end
@@ -258,7 +261,7 @@ function Base.exp(a::AbstractMultivector, n=20)
 	term = one(eᵃ)
 	for i ∈ 1:n
 		term *= a/eltype(a)(i)
-		eᵃ += term
+		add!(eᵃ, term)
 	end
 	eᵃ
 end

@@ -46,8 +46,8 @@ end
 
 #= BLADES, MULTIVECTORS, MIXEDMULTIVECTORS =#
 
-show_header(io::IO, a::MixedMultivector) = println(io, typeof(a))
-show_header(io::IO, a::HomogeneousMultivector{k}) where k = println(io, "$k-$(typeof(a))")
+show_header(io::IO, a::MixedMultivector) = println(io, "$(typeof(a)):")
+show_header(io::IO, a::HomogeneousMultivector{k}) where k = println(io, "$k-grade $(typeof(a)):")
 
 bvlabel(sig, i) = "$DEFAULT_BASIS_SYMBOL$(subscriptnum(i))"
 bvlabel(sig::NamedTuple, i::Integer) = string(keys(sig)[i])
@@ -84,7 +84,7 @@ function show_ublade(io::IO, sig, ublade)
 		else
 		print(io, BASIS_SEPARATOR)
 		end
-		if get(io, :color, false) 
+		if get(io, :color, false)
 			printstyled(io, label; bold=true)
 		else
 			print(io, label)
@@ -98,21 +98,21 @@ Display blade with parentheses surrounding coefficient if necessary.
 """
 function show_blade(io::IO, sig, coeff, ublade)
 	Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
+	ublade_grade(ublade) == 0 && return
 	print(io, COEFF_BASIS_SEPARATOR)
 	show_ublade(io, sig, ublade)
 end
 
-sorted_comps(a::Blade) = comps(a)
-sorted_comps(a::CompositeMultivector{sig,<:AbstractVector}) where sig = comps(a)
-sorted_comps(a::CompositeMultivector{sig,<:AbstractDict}) where sig = sort(comps(a))
+sorted_blades(a::Blade) = blades(a)
+sorted_blades(a::CompositeMultivector{sig,<:AbstractVector}) where sig = blades(a)
+sorted_blades(a::CompositeMultivector{sig,<:AbstractDict}) where sig = sort(blades(a))
 
 function show_multivector_inline(io::IO, m::Multivector; onlynonzero=:auto)
 	isfirst = true
-	for (ublade, coeff) ∈ sorted_comps(m)
-		if onlynonzero == false || !iszero(coeff)
-			isfirst ? isfirst = false : print(io, " + ")
-			show_blade(io, signature(m), coeff, ublade)
-		end
+	for u ∈ sorted_blades(m)
+		onlynonzero == true && iszero(u) && continue
+		isfirst ? isfirst = false : print(io, " + ")
+		show(io, u)
 	end
 end
 
@@ -130,15 +130,19 @@ julia> 1e3x + y + 1e-3z
 ```
 """
 function show_multivector(io::IO, m::Multivector; indent=0, onlynonzero=:auto)
-	mcomps = collect(sorted_comps(m))
-	alignments = [Base.alignment(io, v) for (u, v) ∈ mcomps]
+	if iszero(m)
+		print(io, " "^indent, zero(eltype(m)))
+		return
+	end
+	mcomps = [(u.ublade, u.coeff) for u ∈ blades(m)]
+	alignments = [Base.alignment(io, coeff) for (_, coeff) ∈ mcomps]
 	L = maximum(first.(alignments))
 	R = maximum(last.(alignments))
 	isfirst = true
-	for ((u, v), (l, r)) ∈ zip(mcomps, alignments)
+	for ((u, coeff), (l, r)) ∈ zip(mcomps, alignments)
 		isfirst ? isfirst = false : println(io)
 		print(io, " "^(L - l + indent))
-		Base.show_unquoted(io, v, 0, Base.operator_precedence(:*))
+		Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
 		print(io, " "^(R - r), " ")
 		show_ublade(io, signature(m), u)
 	end

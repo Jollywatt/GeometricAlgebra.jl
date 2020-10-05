@@ -64,3 +64,4 @@ show_signature(::OffsetSignature{sig,indices}) where {sig,indices} = "$(show_sig
 Minkowski = OffsetSignature{(t=-1,x=1,y=1,z=1),0:3}()
 
 sig_has_dimension(sig) = applicable(dim, sig)
+sig_has_dimension(::Type{EuclideanSignature}) = false

@@ -2,7 +2,8 @@
 _A simple, generic multivector implementation for geometric algebra with Julia._
 
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/Jollywatt/GeometricAlgebra.jl)
-[![Docs](https://img.shields.io/badge/documentation-blue.svg)](https://jollywatt.github.io/GeometricAlgebra.jl/stable)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://jollywatt.github.io/GeometricAlgebra.jl/stable)
+
 
 The aim of this project is to provide an interface for geometric algebra
 which is simple, type-agnostic and explicit.

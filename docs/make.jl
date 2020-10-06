@@ -5,8 +5,10 @@ DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
 	using GeometricAlgebra
 end; recursive=true)
 
+@show readdir(dirname(pathof(GeometricAlgebra)))
+
 make() = makedocs(
-	root="docs",
+	root=joinpath(pathof(GeometricAlgebra), "docs"),
 	sitename="GeometricAlgebra.jl",
 )
 

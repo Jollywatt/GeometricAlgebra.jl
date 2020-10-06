@@ -1,6 +1,6 @@
 # GeometricAlgebra.jl Documentation
 
-This is the first documentation version.
+This is the initial documentation version.
 
 ```@autodocs
 Modules = [GeometricAlgebra]

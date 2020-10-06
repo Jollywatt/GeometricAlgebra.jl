@@ -1,22 +1,20 @@
-using Pkg, Documenter
-using GeometricAlgebra
+using Documenter, GeometricAlgebra
 
-# run all doctests in doc strings afer using GeometricAlgebra
+# apply setup code to all doctests in doc strings
 DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
 	using GeometricAlgebra
 end; recursive=true)
 
-function make(; kwargs...)
-	makedocs(
-		root=Pkg.dir("GeometricAlgebra", "docs"),
-		sitename="GeometricAlgebra.jl",
-		modules=[GeometricAlgebra];
-		kwargs...)
+make() = makedocs(
+	root=joinpath(pathof(GeometricAlgebra), "docs"),
+	sitename="GeometricAlgebra.jl",
+)
 
-	deploydocs(
-		repo = "github.com/Jollywatt/GeometricAlgebra.jl.git",
-		versions = ["stable" => "v^", "v#.#", "dev" => "dev"],
-	)
+deploy() = deploydocs(
+	repo = "github.com/Jollywatt/GeometricAlgebra.jl.git",
+)
+
+if "deploy" in ARGS
+	make()
+	deploy()
 end
-
-make()

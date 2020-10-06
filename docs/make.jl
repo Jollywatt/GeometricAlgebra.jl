@@ -5,8 +5,6 @@ DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
 	using GeometricAlgebra
 end; recursive=true)
 
-cd(pathof(GeometricAlgebra))
-
 make() = makedocs(
 	root="docs",
 	sitename="GeometricAlgebra.jl",

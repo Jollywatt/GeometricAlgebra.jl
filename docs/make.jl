@@ -15,7 +15,7 @@ function make(; kwargs...)
 
 	deploydocs(
 		repo = "github.com/Jollywatt/GeometricAlgebra.jl.git",
-		versions = ["stable" => "v^", "v#.#", devurl => devurl],
+		versions = ["stable" => "v^", "v#.#", "dev" => "dev"],
 	)
 end
 

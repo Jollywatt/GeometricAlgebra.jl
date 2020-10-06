@@ -238,6 +238,17 @@ Return the metric signature associated with the given multivector or multivector
 Metric signatures can be any object implementing `getindex` to return the norm of a
 given basis vector.
 Signatures may be `Tuple`s, `NamedTuple`s, or instances of `AbstractMetricSignature`.
+
+Examples
+===
+```jldoctest
+julia> x = Blade{(x=1, y=1)}(1, [:x])
+1-grade Blade{⟨x+,y+⟩, Int64, Array{Symbol,1}, 1}:
+ 1 x
+
+julia> signature(x)
+(x = 1, y = 1)
+```
 """
 signature(::Type{<:AbstractMultivector{sig}}) where sig = sig
 signature(a::AbstractMultivector) = signature(typeof(a))
@@ -506,21 +517,19 @@ end
 
 
 """
-```
-basis(::Type{<:AbstractMultivector}, i)
-basis(::Type{<:AbstractMultivector})
-```
+	basis(::Type{<:AbstractMultivector}, i)
+	basis(::Type{<:AbstractMultivector})
 
-Return the `i`th basis element of the given type, or a tuple of all basis elements if no
-index is given.
+Return the `i`th basis element of the given type, or a collection of all
+such basis elements if no index is given.
 For homogeneous types with grade `k`, this gives the `i`th basis `k`-blade in lexicographic order.
 For mixed multivector types, this gives the basis vectors / 1-blades.
 
 Examples
 ===
-```
+```jldoctest
 julia> x, y, z = basis(Blade{(1,1,1),Float64,UInt,1})
-3-element Vector{Blade{(1, 1, 1), Float64, UInt64, 1}}:
+3-element Array{Blade{⟨+++⟩, Float64, UInt64, 1},1}:
  1.0 v₁
  1.0 v₂
  1.0 v₃
@@ -528,7 +537,7 @@ julia> x, y, z = basis(Blade{(1,1,1),Float64,UInt,1})
 julia> basis(Blade{(1,1,1),Float64,UInt,1}, 2) == y
 true
 
-julia> basis(Multivector{(1,1,1),Vector{Float},2}, 1) == x*y
+julia> basis(Multivector{(1,1,1),Vector{Int},2}, 1) == x*y
 true
 ```
 
@@ -536,7 +545,7 @@ true
 basis(M::Type{Blade{sig,T,B,k}}, i::Integer) where {sig,T,B,k} = M(one(T), convert_ublade(M, lindex2ublade(keytype(M), k, i)))
 function basis(M::Type{Multivector{sig,C,k}}, i::Integer) where {sig,C<:AbstractVector,k}
 	a = zero(M)
-	setcomp!(a, lindex2ublade(k, i), one(eltype(M)))
+	setcomp!(a, lindex2ublade(keytype(M), k, i), one(eltype(M)))
 	a
 end
 basis(::Type{Multivector{sig,C}}, i) where {sig,C<:AbstractVector} = basis(Multivector{sig,C,1}, i)
@@ -552,28 +561,26 @@ basis(M::Type{<:HomogeneousMultivector{k}}) where k = [basis(M, i) for i ∈ 1:b
 
 # basis(sig::Type{<:AbstractMetricSignature}, i) = basis(sig(), i)
 """
-```
-basis(sig, i)
-basis(sig)
-```
+	basis(sig, i)
+	basis(sig)
 
 Return a basis vector `i` for the space of metric signature `sig`,
-or a tuple of all basis vectors (if `sig` has specified dimension).
+or a collection of all basis vectors (if `sig` has specified dimension).
 
 Examples
 ===
-```
+```jldoctest
 julia> basis((x=1, y=1))
-2-element Vector{Blade{(x = 1, y = 1), Float64, UInt64, 1}}:
+2-element Array{Blade{⟨x+,y+⟩, Float64, UInt8, 1},1}:
  1.0 x
  1.0 y
 
 julia> basis((-1,1,1,1), 2)
-1-Blade{(-1, 1, 1, 1), Float64, UInt64, 1}
+1-grade Blade{⟨-+++⟩, Float64, UInt8, 1}:
  1.0 v₂
 
 julia> basis(EuclideanSignature, :t)
-1-Blade{EuclideanSignature, Float64, Vector{Symbol}, 1}
+1-grade Blade{EuclideanSignature, Float64, Array{Symbol,1}, 1}:
  1.0 t
 ```
 """
@@ -585,14 +592,22 @@ fullbasis(sig) = (Blade{sig}(1, UInt(i - 1)) for i ∈ 1:2^dim(sig))
 basis(sig, i::Symbol) = Blade{sig,Float64,Vector{Symbol},1}(1, [i])
 
 """
-```
-vol(x)
-vol(::Type)
-`
+	vol(x)
 
 The volume form or psuedoscalar element.
+
+Examples
+===
+```jldoctest
+julia> x = basis((1, 1, 1), 1)
+1-grade Blade{⟨+++⟩, Float64, UInt8, 1}:
+ 1.0 v₁
+
+julia> vol(x)
+3-grade Blade{⟨+++⟩, Float64, UInt8, 3}:
+ 1.0 v₁v₂v₃
+```
 """
-# @pure ??
 vol(T::Type{<:AbstractMultivector{sig}}) where sig = Blade{sig}(one(eltype(T)), ublade_first_of_grade(keytype(T), dim(sig)))
 vol(::T) where T<:AbstractMultivector = vol(T)
 
@@ -602,15 +617,15 @@ vol(::T) where T<:AbstractMultivector = vol(T)
 # GRADE SELECTION
 
 """
-`grade(a::AbstractMultivector)`
+	grade(a::AbstractMultivector)
 
 The grade of the multivector `a`. For `MixedMultivector`s, returns a vector of each non-zero grade.
 
 Examples
 ===
-```
+```jldoctest
 julia> x, y, z = basis((1,1,1))
-3-element Vector{Blade{(1, 1, 1), Float64, UInt64, 1}}:
+3-element Array{Blade{⟨+++⟩, Float64, UInt8, 1},1}:
  1.0 v₁
  1.0 v₂
  1.0 v₃
@@ -619,7 +634,7 @@ julia> grade(x*y)
 2
 
 julia> grade(x + 1)
-2-element Vector{Int64}:
+2-element Array{Int64,1}:
  0
  1
 ```
@@ -629,10 +644,18 @@ grade(::HomogeneousMultivector{k}) where k = k
 grade(a::MixedMultivector) = sort(unique(grade(u) for u ∈ blades(a) if !iszero(u)))
 
 """
-`grade(a::AbstractMultivector, k)`
+	grade(a::AbstractMultivector, k)
 
 Grade projection of multivector `a` onto grade `k`. Returns a grade-`k` `Multivector`.
 
+Examples
+===
+```jldoctest; setup = :( (x, y) = basis((x=1,y=1)) )
+julia> grade(x + 1 + y + x*y, 1)
+1-grade Multivector{⟨x+,y+⟩, Array{Float64,1}, 1}:
+ 1.0 x
+ 1.0 y
+```
 """
 grade(a::Blade, k) = grade(a) == k ? a : zero(best_type(Blade, a; k=0))
 grade(a::Multivector{sig,C}, k) where {sig,C} = grade(a) == k ? a : zero(Multivector{sig,C,k})

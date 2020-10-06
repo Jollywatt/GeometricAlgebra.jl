@@ -14,7 +14,7 @@ function make(; kwargs...)
 		kwargs...)
 
 	deploydocs(
-	    repo = "github.com/Jollywatt/GeometricAlgebra.jl.git",
+		repo = "github.com/Jollywatt/GeometricAlgebra.jl.git",
 	)
 end
 

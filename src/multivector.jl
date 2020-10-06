@@ -33,7 +33,7 @@ Blade{sig}(coeff, ublade)
 A grade `k` blade (i.e., wedge product of `k` basis vectors) with coefficient of type `T`
 and unit blade represented by type `B`, in vector space of metric signature `sig`.
 
-Unit blade type `B` | E.g. for ``v₁∧v₃∧v₄`` | Signature
+Unit blade type `B` | E.g. for ``v_1∧v_3∧v_4`` | Signature
 :-------------------|:------------------|:----------------
 Unsigned            | `0b1101`          | any
 Vector{<:Integer}   | `[1, 3, 4]`       | any
@@ -47,7 +47,7 @@ julia> Blade{(1,1,1)}(42, 0b101)
  42 v₁v₃
 
 julia> Blade{(x=1,y=1,z=1)}(1, [:x])
-1-grade Blade{⟨x+,y+,z+⟩, Int64, Vector{Symbol}, 1}:
+1-grade Blade{⟨x+,y+,z+⟩, Int64, Array{Symbol,1}, 1}:
  1 x
 ```
 """
@@ -105,12 +105,12 @@ Examples
 ===
 ```jldoctest
 julia> Multivector{(1,1,1)}([10, 0, 20])
-1-grade Multivector{⟨+++⟩, Vector{Int64}, 1}:
+1-grade Multivector{⟨+++⟩, Array{Int64,1}, 1}:
  10 v₁
  20 v₃
 
 julia> Multivector{(x=1,y=1)}(2, [pi])
-2-grade Multivector{⟨x+,y+⟩, Vector{Irrational{:π}}, 2}:
+2-grade Multivector{⟨x+,y+⟩, Array{Irrational{:π},1}, 2}:
  π xy
 ```
 """
@@ -136,18 +136,18 @@ Examples
 ===
 ```jldoctest
 julia> MixedMultivector{(1,1,1)}(Dict(Int[] => 1, [1] => 2, [1,2] => 3))
-MixedMultivector{⟨+++⟩, Dict{Vector{Int64}, Int64}}:
+MixedMultivector{⟨+++⟩, Dict{Array{Int64,1},Int64}}:
  1
  2 v₁
  3 v₁v₂
 
 julia> basis((x=1, y=1), 1) + 7
-MixedMultivector{⟨x+,y+⟩, Vector{Float64}}:
+MixedMultivector{⟨x+,y+⟩, Array{Float64,1}}:
  7.0
  1.0 x
 
 julia> ans.comps
-4-element Vector{Float64}:
+4-element Array{Float64,1}:
  7.0
  1.0
  0.0
@@ -204,12 +204,12 @@ julia> keytype(ans)
 UInt8
 
 julia> MixedMultivector{EuclideanSignature}(Dict([:z] => 1, [:x, :y] => 2))
-MixedMultivector{EuclideanSignature, Dict{Vector{Symbol}, Int64}}:
+MixedMultivector{EuclideanSignature, Dict{Array{Symbol,1},Int64}}:
  1 z
  2 xy
 
 julia> keytype(ans)
-Vector{Symbol} = Array{Symbol, 1}
+Array{Symbol,1}
 ```
 """
 Base.keytype
@@ -290,8 +290,9 @@ Examples
 ```jldoctest
 julia> x, y, z = basis((1,1,1));
 
+
 julia> blades(1 + 2x + 3y*z)
-3-element Vector{Blade{(1, 1, 1), Float64, UInt8, k} where k}:
+3-element Array{Blade{(1, 1, 1),Float64,UInt8,k} where k,1}:
  1.0
  2.0 v₁
  3.0 v₂v₃

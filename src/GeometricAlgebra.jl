@@ -25,6 +25,15 @@ export contractl, ⨼
 
 export EuclideanSignature, OffsetSignature
 
+"""
+some docts
+```jldoctest
+julia> 1 + 9
+10
+```
+"""
+wedge
+
 include("metric-signature.jl")
 
 include("ublade.jl")

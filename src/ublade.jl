@@ -1,7 +1,7 @@
 #= UNIT BLADES
 
 Unit blades represent the wedge product of orthonormal
-basis vectors such as v1∧v3∧v4 and may be represented as:
+basis vectors such as `v_1∧v_3∧v_4` and may be represented as:
  - Unsigned           0b1101
  - Vector{<:Integer}  [1, 3, 4]
  - Vector{<:Symbol}   [:v1, :v3, :v4]
@@ -200,13 +200,13 @@ Examples
 ===
 ```jldoctest; setup = :( using GeometricAlgebra: FixedGradeBlades )
 julia> FixedGradeBlades{UInt8}(2, 3) .|> bitstring
-3-element Vector{String}:
+3-element Array{String,1}:
  "00000011"
  "00000101"
  "00000110"
 
 julia> FixedGradeBlades{Vector{Int}}(3, 4) |> collect
-4-element Vector{Vector{Int64}}:
+4-element Array{Array{Int64,1},1}:
  [1, 2, 3]
  [1, 2, 4]
  [1, 3, 4]

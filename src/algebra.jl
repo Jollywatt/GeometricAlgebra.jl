@@ -6,6 +6,7 @@ compmul(x::Number, comps::AbstractVector) = x.*comps
 compmul(comps::AbstractDict, x::Number) = Dict(ublade => a*val for (ublade, val) ∈ b.comps)
 compmul(x::Number, comps::AbstractDict) = Dict(ublade => val*b for (ublade, val) ∈ a.comps)
 
+# not type-stable, but only for k param. Does that matter?
 *(a::Number, b::Blade) = Blade{signature(b)}(a*b.coeff, b.ublade)
 *(a::Blade, b::Number) = Blade{signature(a)}(a.coeff*b, a.ublade)
 
@@ -178,6 +179,9 @@ reversion(a::MixedMultivector) = mapcomps(u -> reversion(u).coeff, a)
 involute(a::HomogeneousMultivector) = iseven(grade(a)) ? a : -a
 involute(a::MixedMultivector) = mapcomps(u -> (iseven(grade(u)) ? u : -u).coeff, a)
 
+# is this appropriate?
+Base.adjoint(a::AbstractMultivector) = reversion(involute(a))
+
 
 """
 ```
@@ -197,10 +201,10 @@ const ★ = hodgedual
 
 Base.inv(a::Blade) = a/(a*a)[] # blades are guaranteed to have scalar squares
 function Base.inv(a::AbstractMultivector)
-	ã = reversion(a)
-	square = ã*a
+	ā = reversion(involute(a))
+	square = ā*a
 	isscalar(square) || error("multivector is not invertible")
-	ã/square[]
+	ā/square[]
 end
 
 

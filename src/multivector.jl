@@ -37,7 +37,7 @@ Unit blade type `B` | E.g. for ``v_1∧v_3∧v_4`` | Signature
 :-------------------|:------------------|:----------------
 Unsigned            | `0b1101`          | any
 Vector{<:Integer}   | `[1, 3, 4]`       | any
-Vector{<:Symbol}    | `[:v₁, :v₃, :v₄]`  | labelled
+Vector{<:Symbol}    | `[:v₁, :v₃, :v₄]` | labelled
 
 Examples
 ===
@@ -74,7 +74,7 @@ Components are stored in the field `.comps` of type `C`, which in general may be
 `AbstractVector{T}` or an `AbstractDict{B,T}`, where `T` is the component type.
 
 If `C<:AbstractVector`, components are stored in lexicographic order.
-E.g., the component of a 3-multivector corresponding to `v1∧v3∧v4`
+E.g., the component of a 3-multivector corresponding to ``v_1∧v_3∧v_4``
 or `0b1101` is located at the `ublade2lindex(0b1101) == 3`rd index.
 """
 struct Multivector{sig,C,k} <: AbstractMultivector{sig,C}
@@ -130,7 +130,7 @@ general may be an `AbstractVector{T}` or an `AbstractDict{B,T}`,
 where `T` is the component type (similar to `Multivectors{sig,C,k}`).
 
 When `C<:AbstractVector`, components are ordered by the binary value of the unit blade.
-E.g., the coefficient of `v1∧v3∧v4` is stored at index `1 + Int(0b1101) == 14`.
+E.g., the coefficient of ``v_1∧v_3∧v_4`` is stored at index `1 + Int(0b1101) == 14`.
 
 Examples
 ===
@@ -361,7 +361,8 @@ _zeros(::Type{Vector{T}}, n) where T = zeros(T, n)
 _zeros(::Type{SparseVector{T}}, n) where T = spzeros(T, n)
 
 Base.zero(::Type{<:Blade{sig,T,B,k}}) where {sig,T,B,k} = Blade{sig,T,B,k}(zero(T), ublade_first_of_grade(B, k))
-Base.zero(::Type{<:Multivector{sig,C,k}}) where {sig,C<:AbstractVector,k} = Multivector{sig}(k, _zeros(C, binomial(dim(sig), k)))
+# Base.zero(::Type{<:Multivector{sig,C,k}}) where {sig,C<:AbstractVector,k} = Multivector{sig}(k, _zeros(C, binomial(dim(sig), k)))
+Base.zero(::Type{<:Multivector{sig,C,k}}) where {sig,C<:AbstractVector,k} = Multivector{sig,C,k}(_zeros(C, binomial(dim(sig), k)))
 Base.zero(::Type{<:MixedMultivector{sig,C}}) where {sig,C<:AbstractVector} = MixedMultivector{sig}(_zeros(C, 2^dim(sig)))
 Base.zero(T::Type{<:CompositeMultivector{sig,C}}) where {sig,C<:AbstractDict} = T(C())
 
@@ -493,6 +494,7 @@ Base.promote_rule(T::Type{<:MixedMultivector}, S::Type{<:AbstractMultivector}) =
 for eq ∈ [:(==), :(Base.isapprox)]
 	#TODO: should 1e-18 v₁ == 1e-18 v₂ ?
 	@eval $eq(a::T, b::T; kwargs...) where T<:Blade = a.ublade == b.ublade && $eq(a.coeff, b.coeff; kwargs...)
+	@eval $eq(a::HomogeneousMultivector, b::HomogeneousMultivector; kwargs...) = grade(a) == grade(b) ? $eq(promote(a, b)...; kwargs...) : false
 	@eval $eq(a::Multivector{sig,<:AbstractVector,k}, b::Multivector{sig,<:AbstractVector,k}; kwargs...) where {sig,k} = $eq(a.comps, b.comps; kwargs...)
 	@eval $eq(a::MixedMultivector{sig,<:AbstractVector}, b::MixedMultivector{sig,<:AbstractVector}; kwargs...) where sig = $eq(a.comps, b.comps; kwargs...)
 
@@ -507,10 +509,12 @@ for eq ∈ [:(==), :(Base.isapprox)]
 	# fallback: coerce into same type
 	@eval $eq(a::AbstractMultivector, b::AbstractMultivector; kwargs...) = $eq(promote(a, b)...; kwargs...)
 
-	@eval $eq(a::AbstractMultivector, b::Number) = isscalar(a) && $eq(a[], b)
-	@eval $eq(a::Number, b::AbstractMultivector) = b == a
+	@eval $eq(a::Number, b::AbstractMultivector; kwargs...) = $eq(b, a; kwargs...)
 end
 
+
+Base.:(==)(a::AbstractMultivector, b::Number) = isscalar(a) && a[] == b
+Base.isapprox(a::AbstractMultivector, b::Number; kwargs...) = Base.isapprox(a, b*one(a); kwargs...)
 
 
 
@@ -703,7 +707,7 @@ function Base.setindex!(a::AbstractMultivector, v, I...)
 	setcomp!(a, ublade, factor\v)
 end
 
-# function Base.getindex(a::AbstractMultivector, I::Blade, Is::Blade...)
-# 	blade = prod([I, Is...])
-# 	blade.coeff\getcomp(a, blade.ublade)
-# end
+function Base.getindex(a::AbstractMultivector, I::Blade, Is::Blade...)
+	blade = prod([I, Is...])
+	blade.coeff\getcomp(a, blade.ublade)
+end

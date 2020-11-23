@@ -1,7 +1,7 @@
 #= UNIT BLADES
 
 Unit blades represent the wedge product of orthonormal
-basis vectors such as `v_1∧v_3∧v_4` and may be represented as:
+basis vectors such as ``v_1∧v_3∧v_4`` and may be represented as:
  - Unsigned           0b1101
  - Vector{<:Integer}  [1, 3, 4]
  - Vector{<:Symbol}   [:v1, :v3, :v4]
@@ -171,7 +171,6 @@ function lindex2ublade(T, k, i)
 end
 
 function ublade2lindex(ublade::Unsigned)
-	#TODO: does this have a better algorithm?
 	lindex = 1
 	u = ublade_first_of_grade(typeof(ublade), ublade_grade(ublade))
 	while u < ublade

@@ -1,5 +1,4 @@
 DEFAULT_BASIS_SYMBOL = "v"
-BASIS_SEPARATOR = ""
 COEFF_BASIS_SEPARATOR = " "
 
 const subscript_nums = '₀':'₉'
@@ -71,6 +70,10 @@ function each_ublade_bv(u::Unsigned)
 end
 each_ublade_bv(u::Vector) = u
 
+basis_separator_symbol(::Tuple) = ""
+basis_separator_symbol(::NamedTuple{labels}) where labels = any(length.(string.(labels)) .> 1) ? "∧" : ""
+basis_separator_symbol(::OffsetSignature{sig}) where sig = basis_separator_symbol(sig)
+basis_separator_symbol(::AbstractMetricSignature) = ""
 
 """
 Display unit blade without coefficient.
@@ -82,7 +85,7 @@ function show_ublade(io::IO, sig, ublade)
 		if isfirst
 			isfirst = false
 		else
-		print(io, BASIS_SEPARATOR)
+		print(io, basis_separator_symbol(sig))
 		end
 		if get(io, :color, false)
 			printstyled(io, label; bold=true)

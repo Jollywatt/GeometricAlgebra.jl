@@ -79,19 +79,23 @@ end
 		@test x*x == 1
 		@test t*t == -1
 		@test (x*y)*(x*y) == x*y*x*y == -x*x*y*y == -1
+		@test x != y
+		@test x != x*y
+		@test x != 0
 	end
 	@testset "(mixed) multivectors" begin
 		@test (x + y)*z == x*z + y*z
 		@test (x + 1)*x == x + 1
 		@test (x - 2.)*y == x*y - y*2.
 		@test (x + 1)*(x + 1) == 2x + 2
+		@test x != x + 1
 	end
 end
 
 @testset "other products" begin
 	t, x, y, z = basis((t=-1,x=1,y=1,z=1))
 	@test (x + y)∧z == x*z + y*z
-	@test (x + y)∧x == -x*y
+	@test (x + y)∧x == y*x
 	@test x∧(y + x) isa Multivector
 	@test iszero(x∧x)
 
@@ -129,4 +133,29 @@ end
 			# identity: https://ncatlab.org/nlab/show/Hodge+star+operator#BasicProperties
 		end
 	end
+end
+
+@testset "inversion" begin
+	# non-zero Euclidean vectors are always invertible
+	for n ∈ 1:5
+		v = Multivector{EuclideanSignature(n)}(rand(n) .+ 1e-3)
+		@test v*inv(v) ≈ 1 ≈ inv(v)*v
+
+		v = Multivector{EuclideanSignature(n)}(rand(1:10, n).//rand(1:5, n))
+		@test isone(v*inv(v))
+	end
+
+	x, y, z = basis((1, 1, 1))
+
+	# inverses in ℂ
+	for (Re, Im) ∈ eachcol(rand(2, 10))
+		c = complex(Re, Im)
+		u = Re + Im*x*y
+		ci = inv(c)
+		@test ci.re + ci.im*x*y ≈ inv(u)
+		@test inv(u)*u ≈ 1
+	end
+
+	i = basis(Blade{(-1,), Rational{Int}, UInt, 1}, 1)
+	@test inv(2 + i)*(2 + i) == 1
 end

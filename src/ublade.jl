@@ -50,11 +50,14 @@ ublade_xor(u::Vector, v::Vector) = symdiff(u, v)
 
 
 # UNIT BLADE PROMOTION & CONVERSION
+# convert_ublade assumes ublades in canonical form
+# e.g., both [1, 2] and [2, 1] are converted to 0b011
 
 convert_ublade(sig, ::Type{T}, ublade::T) where T = ublade
 
 # Unsigned <-> Vector{<:Integer}
 function convert_ublade(sig, T::Type{<:Unsigned}, ublade::Vector{<:Integer})
+	@assert issorted(ublade)
 	u = zero(T)
 	for bv ∈ ublade
 		u += one(T) << (bv - 1)
@@ -69,7 +72,7 @@ convert_ublade(sig, T::Type{<:Unsigned}, ublade::Unsigned) = convert(T, ublade)
 
 # Vector{<:Integer} <-> Vector{Symbol}
 convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Vector{Symbol}) =
-	T([i ∈ keys(sig) ? sig[i] : error("signature $sig has no label $i") for i ∈ ublade])
+	T([i ∈ keys(sig) ? findfirst(==(i), keys(sig)) : error("signature $sig has no label $i") for i ∈ ublade])
 convert_ublade(sig, T::Type{<:Vector{Symbol}}, ublade::Vector{<:Integer}) =
 	T([signature_labels(sig)[i] for i ∈ ublade])
 
@@ -181,8 +184,8 @@ function ublade2lindex(ublade::Unsigned)
 end
 function ublade2lindex(ublade::Vector{<:Integer})
 	lindex = 1
-	for (k, cₖ) ∈ enumerate(ublade)
-		lindex += binomial(cₖ - 1, k)
+	for (k, c_k) ∈ enumerate(ublade)
+		lindex += binomial(c_k - 1, k)
 	end
 	lindex
 end

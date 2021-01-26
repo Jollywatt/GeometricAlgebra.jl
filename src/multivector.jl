@@ -280,7 +280,7 @@ getcomp(a::AbstractMultivector, ublade) = getcomp(a, convert_ublade(a, ublade))
 
 setcomp!(::Blade, ublade, v) = error("cannot set component of blade")
 function setcomp!(a::Multivector{sig,<:AbstractVector,k}, ublade, v) where {sig,k}
-	ublade_grade(ublade) == k || error("cannot set non-$k grade components of $k-multivector")
+	ublade_grade(ublade) == k || error("cannot set non-$k grade component of $k-multivector")
 	i = ublade2lindex(ublade)
 	a.comps[i] = v
 end
@@ -695,7 +695,6 @@ Base.getindex(a::AbstractMultivector) = getcomp(a, ublade_scalar(keytype(a)))
 Base.setindex!(a::AbstractMultivector, v) = setcomp!(a, ublade_scalar(keytype(a)), v)
 
 function Base.getindex(a::AbstractMultivector, I...)
-	ublade = collect(I)
 	factor, ublade = ubladeprod(signature(a), collect(I))
 	ublade = convert_ublade(a, ublade)
 	factor\getcomp(a, ublade)

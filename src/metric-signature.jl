@@ -11,7 +11,7 @@ an n-tuple of 1s. Furthermore, if the dimension is left unspecified with
 of type `Vector{Symbol}`, and there is no mathematical restriction on
 the number of dimensions.
 
-This also allows for a kinda cute mode of interaction:
+This also allows for a declare-when-needed mode of interaction:
 julia> x = basis(EuclideanSignature, :x)
 1-Blade{EuclideanSignature, Float64, Vector{Symbol}, 1}
  1.0 x
@@ -31,13 +31,13 @@ signature_labels(sig) = error("cannot access components of metric signature $(sh
 
 show_signature(sig::Tuple) = "⟨$(join(map(signum, sig)))⟩"
 show_signature(sig::NamedTuple) = show_signature(values(sig))
+signum(i) = i == 1 ? '+' : i == -1 ? '-' : "$i"
 show_signature(sig::NamedTuple{labels,<:Tuple{Vararg{<:Integer}}}) where labels  = "⟨$(join(map(((l,s),) -> "$l$(signum(s))", zip(keys(sig), sig)), ","))⟩"
-
-abstract type AbstractMetricSignature end
 show_signature(sig::Type) = nameof(sig)
 
 
-signum(i) = i == 1 ? '+' : i == -1 ? '-' : "$i"
+
+abstract type AbstractMetricSignature end
 
 struct MetricSignature{sig} <: AbstractMetricSignature end
 MetricSignature(sig) = MetricSignature{sig}()
@@ -54,14 +54,27 @@ show_signature(sig::EuclideanSignature) = "⟨$(sig.n)+⟩"
 
 # open signature of unspecified dimension
 Base.getindex(::Type{EuclideanSignature}, i) = 1
-dim(::Type{EuclideanSignature}) = error("open signatures do not have specified dimension")
+dim(sig::Type{EuclideanSignature}) = error("open signature $sig does not have specified dimension")
 
 struct OffsetSignature{sig,indices} <: AbstractMetricSignature end
 Base.getindex(::OffsetSignature{sig}, i) where sig = sig[i]
 dim(::OffsetSignature{sig}) where sig = dim(sig)
 show_signature(::OffsetSignature{sig,indices}) where {sig,indices} = "$(show_signature(sig))[$indices]"
+signature_labels(::OffsetSignature{sig}) where sig = keys(sig)
+
+unoffset_index(sig, i) = i
+unoffset_index(sig, i::Symbol) = findfirst(==(i), signature_labels(sig))
+unoffset_index(sig::Union{Tuple,NamedTuple}, i) = let r = 1:dim(sig)
+	i ∈ r ? i : error("index $i is outside range $r for signature $sig")
+end
+function unoffset_index(osig::OffsetSignature{sig,indices}, ioffset) where {sig,indices}
+	i = findfirst(==(ioffset), indices)
+	isnothing(i) && error("index $ioffset is outside range $indices for OffsetSignature $osig")
+	i
+end
+
 
 Minkowski = OffsetSignature{(t=-1,x=1,y=1,z=1),0:3}()
 
-sig_has_dimension(sig) = applicable(dim, sig)
-sig_has_dimension(::Type{EuclideanSignature}) = false
+sig_has_dim(sig) = applicable(dim, sig)
+sig_has_dim(::Type{EuclideanSignature}) = false

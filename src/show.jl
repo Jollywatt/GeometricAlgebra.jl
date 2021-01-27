@@ -82,7 +82,7 @@ function show_ublade(io::IO, sig, ublade)
 
 	# blades with higher grade than dimension are always zero,
 	#  and do not need to have any basis printed
-	ublade_grade(ublade) > dim(sig) && return
+	sig_has_dim(sig) && ublade_grade(ublade) > dim(sig) && return
 	
 	isfirst = true
 	for bv ∈ each_ublade_bv(ublade)

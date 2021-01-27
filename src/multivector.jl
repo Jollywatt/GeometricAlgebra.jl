@@ -220,7 +220,7 @@ Base.eltype(::Type{<:CompositeMultivector{sig,<:AbstractVector{T}}}) where {sig,
 Base.eltype(::Type{<:CompositeMultivector{sig,<:AbstractDict{B,T}}}) where {sig,B,T} = T
 
 narrowest_uint(n) = n <= 8 ? UInt8 : n <= 16 ? UInt16 : n <= 32 ? UInt32 : n <= 64 ? UInt64 : n <= 128 ? UInt128 : Vector{Int}
-best_ublade_type(sig) = sig_has_dimension(sig) ? narrowest_uint(dim(sig)) : Vector{Int}
+best_ublade_type(sig) = sig_has_dim(sig) ? narrowest_uint(dim(sig)) : Vector{Int}
 Base.keytype(::Type{<:Blade{sig,T,B}}) where {sig,T,B} = B
 Base.keytype(::Type{<:CompositeMultivector{sig,<:AbstractVector}}) where {sig} = best_ublade_type(sig)
 Base.keytype(::Type{<:CompositeMultivector{sig,<:AbstractDict{B}}}) where {sig,B} = B
@@ -694,19 +694,27 @@ and to support `OffsetSignature`s, for example, 0-based Lorentzian signatures.
 Base.getindex(a::AbstractMultivector) = getcomp(a, ublade_scalar(keytype(a)))
 Base.setindex!(a::AbstractMultivector, v) = setcomp!(a, ublade_scalar(keytype(a)), v)
 
-function Base.getindex(a::AbstractMultivector, I...)
-	factor, ublade = ubladeprod(signature(a), collect(I))
+function interpret_ublade(a::AbstractMultivector{sig}, I) where sig
+	ublade = [unoffset_index(sig, i) for i ∈ ublade] # not necessarily canonical
+	factor, ublade = ubladeprod(sig, ublade)
 	ublade = convert_ublade(a, ublade)
-	factor\getcomp(a, ublade)
+	factor, ublade
 end
 
+function Base.getindex(a::AbstractMultivector{sig}, I...) where sig
+	factor, ublade = interpret_ublade(a, I)
+	factor\getcomp(a, ublade)
+end
 function Base.setindex!(a::AbstractMultivector, v, I...)
-	factor, ublade = ubladeprod(signature(a), collect(I))
-	ublade = convert_ublade(a, ublade)
+	factor, ublade = interpret_ublade(a, I)
 	setcomp!(a, ublade, factor\v)
 end
 
-function Base.getindex(a::AbstractMultivector, I::Blade, Is::Blade...)
-	blade = prod([I, Is...])
+function Base.getindex(a::AbstractMultivector, I::Blade...)
+	blade = prod(collect(I))
 	blade.coeff\getcomp(a, blade.ublade)
+end
+function Base.setindex!(a::AbstractMultivector, v, I::Blade...)
+	blade = prod(collect(I))
+	setcomp!(a, blade.ublade, blade.coeff\v)
 end

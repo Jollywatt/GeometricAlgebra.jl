@@ -3,7 +3,7 @@ using GeometricAlgebra
 
 ublade_types = [UInt8, UInt64, Vector{Int}]
 
-@testset "lindex <-> ublade" begin
+@testset "lindex/ublade conversion" begin
 	@testset "$T" for T ∈ ublade_types
 		@testset "$((; n, k))" for n ∈ 1:8, k ∈ 0:n
 			for i ∈ 1:(n < 5 ? 1 : 11):binomial(n, k)
@@ -13,12 +13,15 @@ ublade_types = [UInt8, UInt64, Vector{Int}]
 	end
 end
 
+sigs_tuple = [(1,), (1,1), (1,1,1), (-1,-1,-1), (-1,1,1,1), (1,0,-1), (0,)]
+sigs_namedtuple = [(x=1,y=1,z=1), (t=-1,x=1,y=1,z=1), (ε=0,)]
+
 sigs = [
-	(1,), (1,1), (1,1,1), (-1,-1,-1), (-1,1,1,1), (-1,-1,1,1), (0,1,1,1), (1,0,-1),
+	(1,), (1,1,1), (-1,-1,-1), (-1,1,1,1), (-1,-1,1,1), (1,0,-1),
 	(x=1,y=1,z=1), (t=1,x=-1,y=-1,z=-1)
 ]
 
-@testset "ublade conversion" begin
+@testset "convert_ublade" begin
 	for a2b ∈ [
 		0b1 => [1],
 		0b10 => [2],
@@ -27,6 +30,15 @@ sigs = [
 		UInt128(0b11101) => [1,3,4,5],
 	], (a, b) ∈ [a2b, reverse(a2b)] # check both directions
 		bfroma = GeometricAlgebra.convert_ublade(:sig, typeof(b), a)
+		@test typeof(bfroma) == typeof(b)
+		@test bfroma == b
+	end
+
+	sig = (a=1, b=1, c=0)
+	for a2b ∈ Pair{Vector{Int},Vector{Symbol}}[
+		[] => [], [1] => [:a], [2, 3] => [:b, :c]
+	], (a, b) ∈ [a2b, reverse(a2b)]
+		bfroma = GeometricAlgebra.convert_ublade(sig, typeof(b), a)
 		@test typeof(bfroma) == typeof(b)
 		@test bfroma == b
 	end

@@ -72,7 +72,10 @@ convert_ublade(sig, T::Type{<:Unsigned}, ublade::Unsigned) = convert(T, ublade)
 
 # Vector{<:Integer} <-> Vector{Symbol}
 convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Vector{Symbol}) =
-	T([i ∈ keys(sig) ? findfirst(==(i), keys(sig)) : error("signature $sig has no label $i") for i ∈ ublade])
+	T([let i = findfirst(==(symbol), signature_labels(sig))
+		isnothing(i) && error("signature $sig has no label $(repr(symbol))")
+		i
+	end for symbol ∈ ublade])
 convert_ublade(sig, T::Type{<:Vector{Symbol}}, ublade::Vector{<:Integer}) =
 	T([signature_labels(sig)[i] for i ∈ ublade])
 

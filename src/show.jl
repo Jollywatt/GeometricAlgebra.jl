@@ -115,10 +115,14 @@ sorted_blades(a::Blade) = blades(a)
 sorted_blades(a::CompositeMultivector{sig,<:AbstractVector}) where sig = blades(a)
 sorted_blades(a::CompositeMultivector{sig,<:AbstractDict}) where sig = sort(blades(a))
 
-function show_multivector_inline(io::IO, m::Multivector; onlynonzero=:auto)
+function show_multivector_inline(io::IO, m::Multivector)
+	if iszero(m)
+		print(io, zero(eltype(m)))
+		return
+	end
+
 	isfirst = true
-	for u ∈ sorted_blades(m)
-		onlynonzero == true && iszero(u) && continue
+	for u ∈ sorted_blades(m) # only nonzero blades
 		isfirst ? isfirst = false : print(io, " + ")
 		show(io, u)
 	end
@@ -137,7 +141,7 @@ julia> 1e3x + y + 1e-3z
     0.001 z
 ```
 """
-function show_multivector(io::IO, m::Multivector; indent=0, onlynonzero=:auto)
+function show_multivector(io::IO, m::Multivector; indent=0)
 	if iszero(m)
 		print(io, " "^indent, zero(eltype(m)))
 		return
@@ -177,7 +181,7 @@ function show_mixedmultivector(io::IO, m::MixedMultivector; inline, indent=0)
 		print(io, " "^indent)
 		showparens = inline && (count(!iszero, mk.comps) > 1)
 		showparens && print(io, "(")
-		show_multivector_inline(io, mk; onlynonzero=true)
+		show_multivector_inline(io, mk)
 		showparens && print(io, ")")
 	end
 end

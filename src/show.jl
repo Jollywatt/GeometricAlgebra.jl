@@ -170,7 +170,7 @@ function show_mixedmultivector(io::IO, m::MixedMultivector; inline, indent=0)
 		print(io, " "^indent, zero(eltype(m)))
 		return
 	end
-	for k ∈ 0:maximum(grade(m))
+	for k ∈ 0:maximum(grades(m))
 		mk = grade(m, k)
 		if iszero(mk) continue end
 		if firstline

@@ -623,7 +623,8 @@ vol(::T) where T<:AbstractMultivector = vol(T)
 """
 	grade(a::AbstractMultivector)
 
-The grade of the multivector `a`. For `MixedMultivector`s, returns a vector of each non-zero grade.
+The grade of the homogeneous multivector `a`.
+For `MixedMultivector`s, see `grades`.
 
 Examples
 ===
@@ -636,21 +637,38 @@ julia> x, y, z = basis((1,1,1))
 
 julia> grade(x*y)
 2
-
-julia> grade(x + 1)
-2-element Array{Int64,1}:
- 0
- 1
 ```
 """
 grade(::Type{<:HomogeneousMultivector{k}}) where k = k
 grade(::HomogeneousMultivector{k}) where k = k
-grade(a::MixedMultivector) = sort(unique(grade(u) for u ∈ blades(a) if !iszero(u)))
+
+"""
+	grades(a::AbstractMultivector)
+
+The non-zero grades of the multivector `a`.
+
+Examples
+===
+```jldoctest
+julia> x, y, z = basis((1,1,1))
+3-element Array{Blade{⟨+++⟩, Float64, UInt8, 1},1}:
+ 1.0 v₁
+ 1.0 v₂
+ 1.0 v₃
+
+julia> grades(1 + x*y)
+2-element Array{Int64,1}:
+ 0
+ 2
+```
+"""
+grades(a::HomogeneousMultivector) = [grade(a)]
+grades(a::MixedMultivector) = sort(unique(grade(u) for u ∈ blades(a) if !iszero(u)))
 
 """
 	grade(a::AbstractMultivector, k)
 
-Grade projection of multivector `a` onto grade `k`. Returns a grade-`k` `Multivector`.
+The grade `k` part of a (mixed) multivector `a`. Returns a grade `k` `Multivector`.
 
 Examples
 ===
@@ -673,12 +691,12 @@ function grade(a::MixedMultivector{sig,C}, k::Integer) where {sig,C}
 	b
 end
 
-scalar(a::AbstractMultivector) = grade(a, 0)
+scalar(a::AbstractMultivector) = grade(a, 0)[]
 scalar(a::Number) = a
 
 isscalar(a::Blade) = iszero(grade(a))
 isscalar(a::Multivector) = iszero(grade(a))
-isscalar(a::MixedMultivector) = all(iszero.(grade(a)))
+isscalar(a::MixedMultivector) = all(iszero.(grades(a)))
 
 Base.isone(a::AbstractMultivector) = isscalar(a) && isone(a[])
 

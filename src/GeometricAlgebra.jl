@@ -6,20 +6,22 @@ module GeometricAlgebra
 
 import Base: ==, *, /, \, +, -, ^, ~
 import SparseArrays: SparseVector, spzeros
+import Combinatorics: powerset, permutations
 
 export AbstractMultivector
 export Blade, Multivector, MixedMultivector
 
 export signature, dim, basis, vol
-export grade, scalar, isscalar
+export grade, grades
+export scalar, isscalar
 export blades
 
+export @basis
+
 export reversion, ~
-export hodgedual, ★
 
 export dot, ⋅
 export wedge, ∧
-export scalar_prod, ∗
 export contractr, ⨽
 export contractl, ⨼
 
@@ -34,5 +36,7 @@ include("multivector.jl")
 include("algebra.jl")
 
 include("show.jl")
+
+include("convenience.jl")
 
 end # module

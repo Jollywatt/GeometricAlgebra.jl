@@ -134,16 +134,17 @@ Defined by ``a∧b = ∑_{ij} ⟨⟨a⟩_i * ⟨b⟩_j⟩_(i + j)``.
 wedge(a, b) = graded_prod(a, b, +)
 const ∧ = wedge
 
-"""
-```
-a∗b
-scalar_prod(a, b)
-```
-
-Scalar part of multivector product, equivalent to `grade(a*b, 0)`.
-"""
-scalar_prod(a, b) = homogeneous_prod(a, b, 0)
-const ∗ = scalar_prod
+## DEPRECIATED: just do `scalar(a*b)`
+# """
+# ```
+# a∗b
+# scalar_prod(a, b)
+# ```
+#
+# Scalar part of multivector product, equivalent to `grade(a*b, 0)`.
+# """
+# scalar_prod(a, b) = homogeneous_prod(a, b, 0)
+# const ∗ = scalar_prod
 
 contractr(a, b) = graded_prod(a, b, (r, s) -> r - s)
 const ⨽ = contractr
@@ -183,6 +184,22 @@ involute(a::MixedMultivector) = mapcomps(u -> (iseven(grade(u)) ? u : -u).coeff,
 Base.adjoint(a::AbstractMultivector) = reversion(a)
 
 
+
+"""
+```
+★(a)
+hodgedual(a)
+```
+
+Hodge dual or 'star' operator, satisfying
+``a∧★(b) == (a∗b)vol(a)``.(?)
+"""
+hodgedual(a::AbstractMultivector) = reversion(a)*vol(a)
+# const ★ = hodgedual
+
+
+
+
 # NORMS
 
 """
@@ -217,31 +234,43 @@ end
 
 
 
-"""
-```
-★(a)
-hodgedual(a)
-```
-
-Hodge dual or 'star' operator, satisfying
-``a∧★(b) == (a∗b)vol(a)``.(?)
-"""
-hodgedual(a::AbstractMultivector) = reversion(a)*vol(a)
-const ★ = hodgedual
-
 
 # optimisation for sign(scalar(oneunit(a)^2))
-squaresign(a::Blade) = reversionsign(grade(a))ublade_square(signature(a), a.ublade)
+# squaresign(a::Blade) = reversionsign(grade(a))ublade_square(signature(a), a.ublade)
 
 # MULTIPLICATIVE INVERSES
+# blades have an inverse iff their square is nonzero
+# homogeneous multivectors are invertible `sometimes` - TODO figure out when
 
 Base.inv(a::Blade) = a/scalar(a*a) # blades are guaranteed to have scalar squares
 function Base.inv(a::AbstractMultivector)
 	a² = a^2
-	isscalar(a²) || error("multivector is not invertible")
-	a/scalar(a²)
+	isscalar(a²) && return a/scalar(a²)
+
+	inv_matrixmethod(a)
+	# error("cannot find inverse of multivector $a")
 end
 
+# TODO use sparse matrices since they're 2^dim × 2^dim
+function inv_matrixmethod(a::T) where T<:MixedMultivector{sig,<:AbstractVector} where sig
+	M = hcat([(a*Blade{sig}(1, ublade)).comps for ublade ∈ 0:unsigned(2^dim(a) - 1)]...)
+	MixedMultivector{sig}(M\one(T).comps)
+end
+
+function inv_matrixmethod(a::CompositeMultivector{sig,C}) where {sig,C}
+	d = 2^dim(a)
+	M = Matrix{eltype(a)}(undef, d, d)
+	for j ∈ 1:d
+		u = Blade{sig}(one(eltype(a)), unsigned(j - 1))
+		au = a*u
+		for i ∈ 1:d
+			M[i, j] = getcomp(au, unsigned(i - 1))
+		end
+	end
+	x = zeros(eltype(a), d)
+	x[1] = one(eltype(a))
+	ainv = MixedMultivector{sig,C}(M\x)
+end
 
 
 /(a::AbstractMultivector, b::AbstractMultivector) = a*inv(b)
@@ -251,6 +280,9 @@ end
 \(a::AbstractMultivector, b::AbstractMultivector) = inv(a)*b
 \(a::AbstractMultivector, b::Number) = inv(a)*b
 \(a::Number, b::AbstractMultivector) = inv(a)*b
+
+
+
 
 
 # EXPONENTIATION
@@ -265,7 +297,7 @@ function ^(a::Blade, p::Integer)
 end
 
 function powbysquaring(a::AbstractMultivector, p::Integer)
-	p >= 0 || return powbysquaring(inv(m), abs(p))
+	p >= 0 || return powbysquaring(inv(a), abs(p))
 	Π = one(best_type(MixedMultivector, a))
 	aᵖ = a
 	while p > 0

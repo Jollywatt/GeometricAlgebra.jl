@@ -1,6 +1,10 @@
 using Test, Random
 using GeometricAlgebra
 
+#=
+TODO: test indexing
+=#
+
 ublade_types = [UInt8, UInt64, Vector{Int}]
 
 @testset "lindex/ublade conversion" begin
@@ -170,4 +174,23 @@ end
 
 	i = basis(Blade{(-1,), Rational{Int}, UInt, 1}, 1)
 	@test inv(2 + i)*(2 + i) == 1
+end
+
+
+
+@testset "trig funcs" begin
+	t, x, y = basis((-1, 1, 1))
+
+	for λ ∈ [0, 1, -0.5, π, -13, 11//5]
+		@test exp(λ*x*y) == cos(λ) + x*y*sin(λ)
+		@test exp(λ*x) == cosh(λ) + x*sinh(λ)
+		for u ∈ [λ*x, λ*t, λ*x*y, λ*x*t, λ*x*y*t]
+			@test tan(u) ≈ sin(u)/cos(u)
+			@test tanh(u) ≈ sinh(u)/cosh(u)
+
+			if abs(λ) <= 1
+				@test tanh(atanh(u)) ≈ u
+			end
+		end
+	end
 end

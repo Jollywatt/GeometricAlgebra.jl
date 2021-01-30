@@ -492,7 +492,7 @@ Base.promote_rule(T::Type{<:MixedMultivector}, S::Type{<:AbstractMultivector}) =
 ## EQUALITY
 
 for eq ∈ [:(==), :(Base.isapprox)]
-	#TODO: should 1e-18 v₁ == 1e-18 v₂ ?
+	#TODO: should 1e-18 v₁ ≈ 1e-18 v₂ ? yes!
 	@eval $eq(a::T, b::T; kwargs...) where T<:Blade = a.ublade == b.ublade && $eq(a.coeff, b.coeff; kwargs...)
 	@eval $eq(a::HomogeneousMultivector, b::HomogeneousMultivector; kwargs...) = grade(a) == grade(b) ? $eq(promote(a, b)...; kwargs...) : false
 	@eval $eq(a::Multivector{sig,<:AbstractVector,k}, b::Multivector{sig,<:AbstractVector,k}; kwargs...) where {sig,k} = $eq(a.comps, b.comps; kwargs...)
@@ -641,6 +641,7 @@ julia> grade(x*y)
 """
 grade(::Type{<:HomogeneousMultivector{k}}) where k = k
 grade(::HomogeneousMultivector{k}) where k = k
+grade(a::MixedMultivector) = error("mixed multivectors do not have a grade; use grades(::MixedMultivector) instead")
 
 """
 	grades(a::AbstractMultivector)
@@ -691,9 +692,10 @@ function grade(a::MixedMultivector{sig,C}, k::Integer) where {sig,C}
 	b
 end
 
-scalar(a::AbstractMultivector) = grade(a, 0)[]
 scalar(a::Number) = a
+scalar(a::AbstractMultivector) = grade(a, 0)[]
 
+isscalar(a::Number) = true
 isscalar(a::Blade) = iszero(grade(a))
 isscalar(a::Multivector) = iszero(grade(a))
 isscalar(a::MixedMultivector) = all(iszero.(grades(a)))

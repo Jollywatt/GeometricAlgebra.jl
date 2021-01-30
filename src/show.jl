@@ -54,22 +54,6 @@ bvlabel(sig, i::Symbol) = string(i)
 bvlabel(::MetricSignature{sig}, i) where sig = bvlabel(sig, i)
 bvlabel(::OffsetSignature{sig}, i) where sig = bvlabel(sig, i)
 
-
-# get indices of basis vectors belonging to given ublade
-function each_ublade_bv(u::Unsigned)
-	bvs = []
-	bv = 1
-	while u > 0
-		if !iszero(u & 1)
-			push!(bvs, bv)
-		end
-		u >>= 1
-		bv += 1
-	end
-	bvs
-end
-each_ublade_bv(u::Vector) = u
-
 basis_separator_symbol(::Tuple) = ""
 basis_separator_symbol(::NamedTuple{labels}) where labels = any(length.(string.(labels)) .> 1) ? "∧" : ""
 basis_separator_symbol(::OffsetSignature{sig}) where sig = basis_separator_symbol(sig)
@@ -85,7 +69,7 @@ function show_ublade(io::IO, sig, ublade)
 	sig_has_dim(sig) && ublade_grade(ublade) > dim(sig) && return
 	
 	isfirst = true
-	for bv ∈ each_ublade_bv(ublade)
+	for bv ∈ ublade_bvs(sig, ublade)
 		label = bvlabel(sig, bv)
 		if isfirst
 			isfirst = false

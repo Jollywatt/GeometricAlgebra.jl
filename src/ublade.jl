@@ -22,6 +22,8 @@ https://en.wikipedia.org/wiki/Combinatorial_number_system
 =#
 
 
+# UNIT BLADE UTILITY FUNCTIONS
+
 # first grade-k unit blade basis under lexicographic ordering; e.g., 0b0111, [1,2,3]
 ublade_first_of_grade(T::Type{<:Unsigned}, k) = one(T) << k - one(T)
 ublade_first_of_grade(T::Type{<:Vector{<:Integer}}, k) = T(1:k)
@@ -36,16 +38,20 @@ ublade_vol(sig, T) = ublade_first_of_grade(T, dim(sig))
 ublade_bv(T::Type{<:Unsigned}, i) = one(T) << (i - 1)
 ublade_bv(T::Type{Vector{<:Integer}}, i) = [i]
 
-ublade_bvs(sig, ublade) = convert_ublade(sig, Vector{Int}, ublade)
+ublade_has_bv(ublade::Unsigned, i) = !iszero(ublade & 1 << (i - 1))
+ublade_has_bv(ublade::Vector, i) = i ∈ ublade
 
 ublade_grade(ublade::Unsigned) = count_ones(ublade)
 ublade_grade(ublade::Vector) = length(ublade)
 
-has_bv(ublade::Unsigned, i) = !iszero(ublade & 1 << (i - 1))
-has_bv(ublade::Vector, i) = i ∈ ublade
-
 ublade_xor(u::Unsigned, v::Unsigned) = u ⊻ v
 ublade_xor(u::Vector, v::Vector) = symdiff(u, v)
+
+# iterate indices of basis vectors present in unit blade
+ublade_bvs(sig, ublade) = convert_ublade(sig, Vector{Int}, ublade)
+
+# scalar square of unit blade
+ublade_square(sig, ublade) = prod(sig[i] for i ∈ ublade_bvs(sig, ublade))
 
 
 
@@ -65,7 +71,7 @@ function convert_ublade(sig, T::Type{<:Unsigned}, ublade::Vector{<:Integer})
 	u
 end
 function convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Unsigned)
-	T(filter(i -> has_bv(ublade, i), 1:8sizeof(ublade)))
+	T(filter(i -> ublade_has_bv(ublade, i), 1:8sizeof(ublade)))
 end
 
 convert_ublade(sig, T::Type{<:Unsigned}, ublade::Unsigned) = convert(T, ublade)
@@ -317,5 +323,4 @@ function ubladeprod(sig, a::Unsigned, b::Unsigned)
 	factor, ab
 end
 ubladeprod(sig, a::Unsigned) = (1, a)
-
 

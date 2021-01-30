@@ -116,7 +116,7 @@ a⋅b
 dot(a, b)
 ```
 
-"Fat" dot product of multivectors, giving the lowest-grade part of the geometric product.
+"Fat" dot product of multivectors, giving the lowest-possible-grade part of the geometric product.
 Defined by ``a⋅b = ∑_{ij} ⟨⟨a⟩_i * ⟨b⟩_j⟩_|i - j|``.
 """
 dot(a, b) = graded_prod(a, b, abs∘-)
@@ -128,7 +128,7 @@ a∧b
 wedge(a, b)
 ```
 
-Wedge product of multivectors, giving the highest-grade part of the geometric product `a*b`.
+Wedge product of multivectors, giving the highest-possible-grade part of the geometric product `a*b`.
 Defined by ``a∧b = ∑_{ij} ⟨⟨a⟩_i * ⟨b⟩_j⟩_(i + j)``.
 """
 wedge(a, b) = graded_prod(a, b, +)
@@ -140,7 +140,7 @@ a∗b
 scalar_prod(a, b)
 ```
 
-Scalar product of multivectors, equivalent to `grade(a*b, 0)`.
+Scalar part of multivector product, equivalent to `grade(a*b, 0)`.
 """
 scalar_prod(a, b) = homogeneous_prod(a, b, 0)
 const ∗ = scalar_prod
@@ -180,7 +180,41 @@ involute(a::HomogeneousMultivector) = iseven(grade(a)) ? a : -a
 involute(a::MixedMultivector) = mapcomps(u -> (iseven(grade(u)) ? u : -u).coeff, a)
 
 # is this appropriate?
-Base.adjoint(a::AbstractMultivector) = reversion(involute(a))
+Base.adjoint(a::AbstractMultivector) = reversion(a)
+
+
+# NORMS
+
+"""
+	rsqrt(x)
+
+Real-valued square root defined on all real numbers as `sign(x)sqrt(abs(x))`.
+
+Examples
+===
+```
+julia> rsqrt(-9)
+-3.0
+```
+"""
+rsqrt(x) = sign(x)sqrt(abs(x))
+
+
+Base.abs2(a::Blade) = abs2(a.coeff)*ublade_square(signature(a), a.ublade)
+Base.abs2(a) = a'a
+
+Base.abs(a) = let n = abs2(a)
+	isscalar(n) || @warn "norm is not scalar" a
+	rsqrt(scalar(n)) # is this appropriate?
+end
+
+norm_unit(a::Blade) = (a.coeff, oneunit(a))
+norm_unit(a::AbstractMultivector) = let n = abs(a)
+	(n, a/n)
+end
+
+
+
 
 
 """
@@ -196,15 +230,16 @@ hodgedual(a::AbstractMultivector) = reversion(a)*vol(a)
 const ★ = hodgedual
 
 
+# optimisation for sign(scalar(oneunit(a)^2))
+squaresign(a::Blade) = reversionsign(grade(a))ublade_square(signature(a), a.ublade)
 
 # MULTIPLICATIVE INVERSES
 
-Base.inv(a::Blade) = a/(a*a)[] # blades are guaranteed to have scalar squares
+Base.inv(a::Blade) = a/scalar(a*a) # blades are guaranteed to have scalar squares
 function Base.inv(a::AbstractMultivector)
-	ā = reversion(involute(a))
-	square = ā*a
-	isscalar(square) || error("multivector is not invertible")
-	ā/square[]
+	a² = a^2
+	isscalar(a²) || error("multivector is not invertible")
+	a/scalar(a²)
 end
 
 
@@ -246,21 +281,28 @@ end
 ^(a::AbstractMultivector, p::Integer) = powbysquaring(a, p)
 # ^(a::AbstractMultivector, p) = error("unsupported multivector exponent type $(typeof(p))")
 
-function Base.exp(a::Blade)
-	factor, _ = ubladeprod(signature(a), a.ublade, a.ublade)
-	coeff = a.coeff
-	s = sign(factor)
-	if iszero(s)
-		one(a) + a
-	elseif s > 0
-		cosh(coeff) + oneunit(a)*sinh(coeff)
+
+# EXPONENTIAL FUNCTION
+# NOTE: this all assumes eltype <: Real
+
+
+function Base.exp(a::AbstractMultivector)
+	a² = a*a
+	if isscalar(a²)
+		s = scalar(a²)
+		if iszero(s)
+			one(a) + a
+		else
+			coeff, â = norm_unit(a)
+			s > 0 ? cosh(coeff) + sinh(coeff)â : cos(coeff) + sin(coeff)â
+		end
 	else
-		cos(coeff) + oneunit(a)*sin(coeff)
+		exp_iterative(a)
 	end
 end
 
-# what's the proper way to implement a stable exp which works with BigFloats?
-function Base.exp(a::AbstractMultivector, n=20)
+# # what's the proper way to implement a stable exp which works with BigFloats?
+function exp_iterative(a::AbstractMultivector, n=20)
 	eᵃ = one(best_type(MixedMultivector, a))
 	term = one(eᵃ)
 	for i ∈ 1:n
@@ -268,4 +310,60 @@ function Base.exp(a::AbstractMultivector, n=20)
 		add!(eᵃ, term)
 	end
 	eᵃ
+end
+
+
+# TRIGONOMETRIC FUNCTIONS
+
+# even trig functions (e.g., cos) of blades produce scalars, since even powers are scalar
+function apply_trig_even(a, sqsign, pos, neg)
+	if iszero(sqsign)
+		one(a)
+	else
+		sqsign > 0 ? pos(abs(a)) : neg(abs(a))
+	end
+end
+# odd (e.g., sin) functions produce blades parallel to the original
+function apply_trig_odd(a, sqsign, pos, neg)
+	if iszero(sqsign)
+		a
+	else
+		coeff, â = norm_unit(a)
+		sqsign > 0 ? pos(coeff)*â : neg(coeff)*â
+	end
+end
+
+
+for (trigfn,  (pos,    neg,    even )) ∈ [
+	:cos   => (:cos,   :cosh,  true ),
+	:cosh  => (:cosh,  :cos,   true ),
+	:sin   => (:sin,   :sinh,  false),
+	:sinh  => (:sinh,  :sin,   false),
+	:tan   => (:tan,   :tanh,  false),
+	:tanh  => (:tanh,  :tan,   false),
+	:asin  => (:asin,  :asinh, false),
+	:asinh => (:asinh, :asin,  false),
+	:atan  => (:atan,  :atanh, false),
+	:atanh => (:atanh, :atan,  false),
+]
+	apply_trig = even ? apply_trig_even : apply_trig_odd
+	@eval function Base.$trigfn(a::AbstractMultivector)
+		a² = a*a
+		if isscalar(a²)
+			$apply_trig(a, scalar(a²), $pos, $neg)
+		else
+			error("not yet implemented")
+		end
+	end
+end
+
+for (trigfn, invfn) ∈ [
+	:sec => :cos,
+	:sech => :cosh,
+	:csc => :sin,
+	:csch => :sinh,
+	:cot => :tan,
+	:coth => :tanh,
+]
+	@eval Base.$trigfn(a::AbstractMultivector) = inv(Base.$invfn(a))
 end

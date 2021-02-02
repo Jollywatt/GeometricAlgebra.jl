@@ -28,7 +28,7 @@ function Base.show(io::IO, ::MIME"text/plain", sig::AbstractMetricSignature)
 	Base.show_default(io, sig)
 end
 
-# WARNING: this disguises tuple signatures (1, 1, 1) in type info for the sake of prettiness
+# overload how AbstractMultivector types are displayed, in order to pretty-print metric signatures
 function Base.show(io::IO, T::Type{<:AbstractMultivector})
 	if isconcretetype(T)
 		name = nameof(T)
@@ -54,7 +54,7 @@ bvlabel(sig, i::Symbol) = string(i)
 bvlabel(::MetricSignature{sig}, i) where sig = bvlabel(sig, i)
 bvlabel(::OffsetSignature{sig}, i) where sig = bvlabel(sig, i)
 
-basis_separator_symbol(::Tuple) = ""
+basis_separator_symbol(::Any) = "" # fallback
 basis_separator_symbol(::NamedTuple{labels}) where labels = any(length.(string.(labels)) .> 1) ? "∧" : ""
 basis_separator_symbol(::OffsetSignature{sig}) where sig = basis_separator_symbol(sig)
 basis_separator_symbol(::AbstractMetricSignature) = ""
@@ -66,7 +66,7 @@ function show_ublade(io::IO, sig, ublade)
 
 	# blades with higher grade than dimension are always zero,
 	#  and do not need to have any basis printed
-	sig_has_dim(sig) && ublade_grade(ublade) > dim(sig) && return
+	sig_has_dim(sig) && ublade_grade(ublade) > dimension(sig) && return
 	
 	isfirst = true
 	for bv ∈ ublade_bvs(sig, ublade)
@@ -84,6 +84,13 @@ function show_ublade(io::IO, sig, ublade)
 	end
 end
 
+Base.alignment(io::IO, b::Blade) = let (l, r) = Base.alignment(io, b.coeff)
+	s = length(repr(b))
+	(l, s - l)
+end
+
+Base.alignment(io::IO, b::CompositeMultivector) = (1, length(repr(b)))
+
 
 """
 Display blade with parentheses surrounding coefficient if necessary.
@@ -97,7 +104,11 @@ end
 
 sorted_blades(a::Blade) = blades(a)
 sorted_blades(a::CompositeMultivector{sig,<:AbstractVector}) where sig = blades(a)
-sorted_blades(a::CompositeMultivector{sig,<:AbstractDict}) where sig = sort(blades(a))
+sorted_blades(a::CompositeMultivector{sig,<:AbstractDict}) where sig = sort(blades(a), by=blade_ordering)
+
+blade_ordering(a::Blade) = blade_ordering(a.ublade)
+blade_ordering(a::Unsigned) = a
+blade_ordering(a::Vector) = (ublade_grade(a), ublade2lindex(a))
 
 function show_multivector_inline(io::IO, m::Multivector)
 	if iszero(m)
@@ -145,6 +156,8 @@ function show_multivector(io::IO, m::Multivector; indent=0)
 end
 
 
+
+
 """
 Display inhomogeneous `MixedMultivector` with each grade on a new line.
 """
@@ -163,7 +176,7 @@ function show_mixedmultivector(io::IO, m::MixedMultivector; inline, indent=0)
 			print(io, inline ? " + " : "\n")
 		end
 		print(io, " "^indent)
-		showparens = inline && (count(!iszero, mk.comps) > 1)
+		showparens = inline && (length(blades(mk)) > 1)
 		showparens && print(io, "(")
 		show_multivector_inline(io, mk)
 		showparens && print(io, ")")

@@ -32,7 +32,7 @@ ublade_first_of_grade(T::Type{<:Vector{<:Integer}}, k) = T(1:k)
 ublade_scalar(T) = ublade_first_of_grade(T, 0)
 ublade_scalar(::Type{<:Vector{Symbol}}) = Symbol[]
 
-ublade_vol(sig, T) = ublade_first_of_grade(T, dim(sig))
+ublade_vol(sig, T) = ublade_first_of_grade(T, dimension(sig))
 
 # unit blade basis of ith basis vector 
 ublade_bv(T::Type{<:Unsigned}, i) = one(T) << (i - 1)
@@ -48,7 +48,8 @@ ublade_xor(u::Unsigned, v::Unsigned) = u ⊻ v
 ublade_xor(u::Vector, v::Vector) = symdiff(u, v)
 
 # iterate indices of basis vectors present in unit blade
-ublade_bvs(sig, ublade) = convert_ublade(sig, Vector{Int}, ublade)
+ublade_bvs(sig, ublade::Unsigned) = convert_ublade(sig, Vector{Int}, ublade)
+ublade_bvs(sig, ublade::Vector) = ublade
 
 # scalar square of unit blade
 ublade_square(sig, ublade) = prod(sig[i] for i ∈ ublade_bvs(sig, ublade))
@@ -57,7 +58,7 @@ ublade_square(sig, ublade) = prod(sig[i] for i ∈ ublade_bvs(sig, ublade))
 
 # UNIT BLADE PROMOTION & CONVERSION
 # convert_ublade assumes ublades in canonical form
-# e.g., both [1, 2] and [2, 1] are converted to 0b011
+# e.g., both [1, 2] and [2, 1] (invalid) are converted to 0b011
 
 convert_ublade(sig, ::Type{T}, ublade::T) where T = ublade
 
@@ -104,15 +105,27 @@ convert_ublade(a, ublade) = convert_ublade(signature(a), keytype(a), ublade)
 # convert_ublade(sig, ::Type{T}, ublade::S) where {T,S} = convert(T, ublade)
 
 
-promote_ublade_type(as::Type{<:Unsigned}...) = promote_type(as...)
-promote_ublade_type(a::Type{<:Unsigned}, b::Type{<:Vector{<:Integer}}) = b
-promote_ublade_type(a::Type{<:Vector{<:Integer}}, b::Type{<:Unsigned}) = a
-promote_ublade_type(a::Type{<:Vector{<:Integer}}, b::Type{<:Vector{<:Integer}}) = promote_type(a, b)
-promote_ublade_type(::Type{T}...) where T = T
 
-function promote_ublades(sig, ublades...) # used only by ==(::Blade, ::Blade) so far
-	T = promote_ublade_type(typeof.(ublades)...)
-	Tuple(convert_ublade(sig, T, u) for u ∈ ublades)
+# used by best_type
+promote_ublade_rule(a, b) = Union{}
+promote_ublade_rule(::Type{T}...) where T = T
+
+promote_ublade_rule(as::Type{<:Unsigned}...) = promote_type(as...)
+promote_ublade_rule(a::Type{<:Vector{<:Integer}}, b::Type{<:Vector{<:Integer}}) = promote_type(a, b)
+promote_ublade_rule(a::Type{<:Vector}, b::Type{<:Unsigned}) = a
+promote_ublade_rule(a::Type{<:Vector{<:Symbol}}, b::Type{<:Vector{<:Integer}}) = a
+
+function promote_ublade_type(a, b)
+	T = typejoin(promote_ublade_rule(a, b), promote_ublade_rule(b, a))
+	@assert T != Union{}
+	T
+end
+promote_ublade_type(a, b, cs...) = promote_ublade_type(promote_ublade_type(a, b), cs...)
+promote_ublade_type(a) = a
+
+function promote_ublades(sig, a, b) # used only by ==(::Blade, ::Blade) so far
+	T = promote_ublade_type(typeof(a), typeof(b))
+	(convert_ublade(sig, T, a), convert_ublade(sig, T, b))
 end
 
 

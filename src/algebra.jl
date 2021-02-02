@@ -1,27 +1,25 @@
 # SCALAR MULTIPLICATION
 # must respect the possibility of non-commutativity!
 
-compmul(comps::AbstractVector, x::Number) = comps.*x
-compmul(x::Number, comps::AbstractVector) = x.*comps
-compmul(comps::AbstractDict, x::Number) = Dict(ublade => a*val for (ublade, val) ∈ b.comps)
-compmul(x::Number, comps::AbstractDict) = Dict(ublade => val*b for (ublade, val) ∈ a.comps)
+compmul(comps::AbstractVector, x::Scalar) = comps.*x
+compmul(x::Scalar, comps::AbstractVector) = x.*comps
+compmul(comps::AbstractDict, x::Scalar) = Dict(ublade => a*val for (ublade, val) ∈ b.comps)
+compmul(x::Scalar, comps::AbstractDict) = Dict(ublade => val*b for (ublade, val) ∈ a.comps)
 
 # not type-stable, but only for k param. Does that matter?
-*(a::Number, b::Blade) = Blade{signature(b)}(a*b.coeff, b.ublade)
-*(a::Blade, b::Number) = Blade{signature(a)}(a.coeff*b, a.ublade)
+*(a::Scalar, b::Blade) = Blade{signature(b)}(a*b.coeff, b.ublade)
+*(a::Blade, b::Scalar) = Blade{signature(a)}(a.coeff*b, a.ublade)
 
-*(a::Number, b::Multivector) = Multivector{signature(b)}(grade(b), compmul(a, b.comps))
-*(a::Multivector, b::Number) = Multivector{signature(a)}(grade(a), compmul(a.comps, b))
+*(a::Scalar, b::Multivector) = Multivector{signature(b),grade(b)}(compmul(a, b.comps))
+*(a::Multivector, b::Scalar) = Multivector{signature(a),grade(a)}(compmul(a.comps, b))
 
-*(a::Number, b::MixedMultivector) = MixedMultivector{signature(b)}(compmul(a, b.comps))
-*(a::MixedMultivector, b::Number) = MixedMultivector{signature(a)}(compmul(a.comps, b))
-
--(a::Blade) = typeof(a)(-a.coeff, a.ublade)
--(a::AbstractMultivector) = -one(eltype(a))*a
+*(a::Scalar, b::MixedMultivector) = MixedMultivector{signature(b)}(compmul(a, b.comps))
+*(a::MixedMultivector, b::Scalar) = MixedMultivector{signature(a)}(compmul(a.comps, b))
 
 
 # (MULTI)VECTOR ADDITION
 
+# addition of same-grade elements to produce homogeneous multivector
 function +(as::HomogeneousMultivector{k}...) where k
 	T = best_type(Multivector, as...; k)
 	Σ = zero(T)
@@ -31,6 +29,7 @@ function +(as::HomogeneousMultivector{k}...) where k
 	Σ
 end
 
+# addition of possibly mixed grade elements to produce inhomogeneous multivector
 function +(as::AbstractMultivector...)
 	T = best_type(MixedMultivector, as...)
 	Σ = zero(T)
@@ -40,22 +39,37 @@ function +(as::AbstractMultivector...)
 	Σ
 end
 
-
-function +(a::MixedMultivector, b::Number)
-	ab = deepcopy(a)
+# addition of scalar to grade 0 objects
+function +(a::Blade{sig,0}, b::Scalar) where sig
+	T = best_type(Blade, a, el=typeof(b))
+	T(a.coeff + b, a.ublade)
+end
+	
+function +(a::Multivector{sig,0}, b::Scalar) where sig
+	ab = zero(best_type(Multivector, a, k=0, el=typeof(b)))
+	add!(ab, a)
 	ab[] += b
 	ab
 end
-+(a::Number, b::MixedMultivector) = +(b, a)
+
+function +(a::AbstractMultivector, b::Scalar)
+	ab = zero(best_type(MixedMultivector, a, el=typeof(b)))
+	add!(ab, a)
+	ab[] += b
+	ab
+end
+
++(a::Scalar, b::AbstractMultivector) = +(b, a)
 
 
-+(a::AbstractMultivector, b::Number) = convert(MixedMultivector, a) + b
-+(a::Number, b::AbstractMultivector) = a + convert(MixedMultivector, b)
+# ADDITIVE INVERSES
 
+-(a::Blade) = typeof(a)(-a.coeff, a.ublade)
+-(a::AbstractMultivector) = -one(eltype(a))*a
 
 -(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
--(a::AbstractMultivector, b::Number) = a + (-b)
--(a::Number, b::AbstractMultivector) = a + (-b)
+-(a::AbstractMultivector, b::Scalar) = a + (-b)
+-(a::Scalar, b::AbstractMultivector) = a + (-b)
 
 
 
@@ -86,7 +100,7 @@ function homogeneous_prod(a::Blade, b::Blade, k)
 end
 function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, k)
 	ab = zero(best_type(Multivector, a, b; k))
-	0 <= k <= dim(a) || return ab
+	0 <= k <= dimension(a) || return ab
 	for u ∈ blades(a), v ∈ blades(b)
 		add!(ab, homogeneous_prod(u::Blade, v::Blade, k))
 	end
@@ -97,7 +111,7 @@ function graded_prod(a::AbstractMultivector, b::AbstractMultivector, grade_selec
 	ab = zero(best_type(MixedMultivector, a, b))
 	for u ∈ blades(a), v ∈ blades(b)
 		k = grade_selector(grade(u), grade(v))
-		0 <= k <= dim(ab) || continue
+		0 <= k <= dimension(ab) || continue
 		add!(ab, homogeneous_prod(u, v, k))
 	end
 	ab
@@ -105,7 +119,9 @@ end
 graded_prod(a::HomogeneousMultivector, b::HomogeneousMultivector, grade_selector) =
 	homogeneous_prod(a, b, grade_selector(grade(a), grade(b)))
 
-*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
+for T ∈ multivector_types, S ∈ multivector_types
+	@eval *(a::$T, b::$S) = geometric_prod(a, b)
+end
 
 
 
@@ -251,14 +267,14 @@ function Base.inv(a::AbstractMultivector)
 	# error("cannot find inverse of multivector $a")
 end
 
-# TODO use sparse matrices since they're 2^dim × 2^dim
-function inv_matrixmethod(a::T) where T<:MixedMultivector{sig,<:AbstractVector} where sig
-	M = hcat([(a*Blade{sig}(1, ublade)).comps for ublade ∈ 0:unsigned(2^dim(a) - 1)]...)
-	MixedMultivector{sig}(M\one(T).comps)
+# TODO use sparse matrices since they're 2^dimension × 2^dimension
+function inv_matrixmethod(a::T) where T<:MixedMultivector{sig,C} where {sig,C<:AbstractVector}
+	M = hcat([(a*Blade{sig}(one(eltype(a)), ublade)).comps for ublade ∈ 0:unsigned(2^dimension(a) - 1)]...)
+	T(M\one(T).comps)
 end
 
 function inv_matrixmethod(a::CompositeMultivector{sig,C}) where {sig,C}
-	d = 2^dim(a)
+	d = 2^dimension(a)
 	M = Matrix{eltype(a)}(undef, d, d)
 	for j ∈ 1:d
 		u = Blade{sig}(one(eltype(a)), unsigned(j - 1))
@@ -269,7 +285,7 @@ function inv_matrixmethod(a::CompositeMultivector{sig,C}) where {sig,C}
 	end
 	x = zeros(eltype(a), d)
 	x[1] = one(eltype(a))
-	ainv = MixedMultivector{sig,C}(M\x)
+	MixedMultivector{sig,C}(M\x)
 end
 
 

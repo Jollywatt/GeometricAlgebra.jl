@@ -5,38 +5,33 @@ An implementation of geometric algebras (a.k.a. Clifford algebras) in Julia.
 module GeometricAlgebra
 
 import Base: ==, *, /, \, +, -, ^, ~
-import SparseArrays: SparseVector, spzeros
-import Combinatorics: powerset, permutations
 
-export AbstractMultivector
-export Blade, Multivector, MixedMultivector
+using SparseArrays: SparseVector, spzeros
+using Combinatorics: powerset, permutations
+using InteractiveUtils: subtypes
 
-export signature, dim, basis, vol
+export AbstractMultivector, Blade, Multivector, MixedMultivector
+
+export basis, @basis
+export signature, dimension
 export grade, grades
 export scalar, isscalar
+export vol
 export blades
 
-export @basis
-
 export reversion, ~
-
-export dot, ⋅
 export wedge, ∧
+export dot, ⋅
 export contractr, ⨽
 export contractl, ⨼
 
 export EuclideanSignature, OffsetSignature
 
 include("metric-signature.jl")
-
 include("ublade.jl")
-
 include("multivector.jl")
-
 include("algebra.jl")
-
 include("show.jl")
-
 include("convenience.jl")
 
 end # module

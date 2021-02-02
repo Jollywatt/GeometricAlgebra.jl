@@ -62,10 +62,30 @@ end
 @testset "basis() and equality" begin
 	sig = (1,1,1)
 	x = Blade{sig}(1, 0b001)
-	@test basis(Blade{sig, Int, UInt8, 1}, 1) == x
-	@test basis(Blade{sig, Float64, Vector{Int}, 2}, 1) == Blade{sig}(1, 0b011)
+	@test basis(Blade{sig,1,Int,UInt8}, 1) == x
+	@test basis(Blade{sig,2,Float64,Vector{Int}}, 1) == Blade{sig}(1, 0b011)
 	@test basis(sig, 1) == x
 	@test basis(sig)[1] == x
+end
+
+@testset "multivector promotion" begin
+	sig = (x=1,y=1,z=1)
+	xs = Any[
+		Complex(im)
+		Blade{sig}(42, 0b101)
+		Blade{sig}(42.0, [1, 3])
+		Blade{sig}(42//1, [:x, :z])
+		Multivector{sig,0,Vector{Float32}}([42])
+		Multivector{sig,0,Vector{Int16}}([42])
+		Multivector{sig,2,Dict{UInt,Int8}}(Dict(0b101 => 42))
+		Multivector{sig,2,Dict{Vector{Symbol},Int}}(Dict([:x, :z] => 42))
+		convert(MixedMultivector{sig,Dict{Vector{Symbol},Int128}}, 42)
+		convert(MixedMultivector{sig,Vector{Int32}}, 42)
+	]
+	for a ∈ xs, b ∈ xs
+		T = promote_type(typeof.((a, b))...)
+		@test promote(a, b) isa Tuple{T,T}
+	end
 end
 
 @testset "equality" begin
@@ -75,6 +95,16 @@ end
 		@test x1 == x2
 	end
 	@test one(x) == 1
+end
+
+@testset "addition" begin
+	sig = (1,1,1)
+	b = Blade{sig}(1, 0b11)
+	v = Multivector{sig,1}([1, 2, 3])
+	m = MixedMultivector{sig}(1:8)
+	for a ∈ (b,v,m), b ∈ (b,v,m)
+		@test a + b == b + a
+	end
 end
 
 @testset "addn. & scalar mult." begin
@@ -117,8 +147,8 @@ end
 
 	sample = -100:100
 	for sig ∈ sigs
-		A, B, C = [MixedMultivector{sig}(rand(MersenneTwister(i), sample, 2^dim(sig))) for i ∈ 1:3]
-		V = Multivector{sig}(rand(MersenneTwister(0), sample, dim(sig)))
+		A, B, C = [MixedMultivector{sig}(rand(MersenneTwister(i), sample, 2^dimension(sig))) for i ∈ 1:3]
+		V = Multivector{sig,1}(rand(MersenneTwister(0), sample, dimension(sig)))
 
 		I = vol(A)
 
@@ -140,8 +170,9 @@ end
 end
 
 @testset "Hodge star operator" begin
+	★ = GeometricAlgebra.hodgedual
 	for sig ∈ sigs
-		n = dim(sig)
+		n = dimension(sig)
 		s = prod(sig) # parity of signature, det(g)
 		for η ∈ GeometricAlgebra.fullbasis(sig)
 			k = grade(η)
@@ -154,10 +185,10 @@ end
 @testset "inversion" begin
 	# non-zero Euclidean vectors are always invertible
 	for n ∈ 1:5
-		v = Multivector{EuclideanSignature(n)}(rand(n) .+ 1e-3)
+		v = Multivector{EuclideanSignature(n),1}(rand(n) .+ 1e-3)
 		@test v*inv(v) ≈ 1 ≈ inv(v)*v
 
-		v = Multivector{EuclideanSignature(n)}(rand(1:10, n).//rand(1:5, n))
+		v = Multivector{EuclideanSignature(n),1}(rand(1:10, n).//rand(1:5, n))
 		@test isone(v*inv(v))
 	end
 
@@ -172,7 +203,7 @@ end
 		@test inv(u)*u ≈ 1
 	end
 
-	i = basis(Blade{(-1,), Rational{Int}, UInt, 1}, 1)
+	i = basis(Blade{(-1,),1,Rational{Int},UInt}, 1)
 	@test inv(2 + i)*(2 + i) == 1
 end
 

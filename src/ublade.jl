@@ -84,7 +84,7 @@ convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Vector{Symbol}) =
 		i
 	end for symbol ∈ ublade])
 convert_ublade(sig, T::Type{<:Vector{Symbol}}, ublade::Vector{<:Integer}) =
-	T([signature_labels(sig, i) for i ∈ ublade])
+	T([signature_label(sig, i) for i ∈ ublade])
 
 # Unsigned <-> Vector{Symbol}
 convert_ublade(sig, T::Type{<:Unsigned}, ublade::Vector{Symbol}) =

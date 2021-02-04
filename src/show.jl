@@ -18,6 +18,27 @@ AbstractMultivector{⟨5+⟩, C} where C
 =#
 
 
+#= PRETTY PRINTING =#
+
+Base.show(io::IO, sig::AbstractMetricSignature) = print(io, show_signature(sig))
+function Base.show(io::IO, ::MIME"text/plain", sig::AbstractMetricSignature)
+	print(io, "$sig = ")
+	Base.show_default(io, sig)
+end
+
+# overload how AbstractMultivector types are displayed, in order to pretty-print metric signatures
+function Base.show(io::IO, T::Type{<:AbstractMultivector})
+	if isconcretetype(T)
+		name = nameof(T)
+		pretty_sig = show_signature(signature(T))
+		params = T.parameters[2:end]
+		print(io, "$name{$pretty_sig, $(join(params, ", "))}")
+	else
+		invoke(show, Tuple{IO,Type}, io, T) # call original show method
+	end
+end
+
+
 
 #= BLADES, MULTIVECTORS, MIXEDMULTIVECTORS =#
 

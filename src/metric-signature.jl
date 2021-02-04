@@ -37,21 +37,6 @@ Optional methods:
 =#
 
 
-#= BASIS VECTOR LABELS =#
-
-DEFAULT_BASIS_SYMBOL = "v"
-
-const subscript_nums = '₀':'₉'
-subscriptnum(n::Integer) = join(subscript_nums[begin + i] for i ∈ reverse(digits(n)))
-
-signature_label(sig, i) = Symbol("$DEFAULT_BASIS_SYMBOL$(subscriptnum(i))")
-signature_label(sig::NamedTuple, i::Integer) = keys(sig)[i]
-signature_label(sig, i::Symbol) = i
-signature_label(::MetricSignature{sig}, i) where sig = signature_label(sig, i)
-signature_label(::OffsetSignature{sig}, i) where sig = signature_label(sig, i)
-
-signature_labels(sig) = [signature_label(sig, i) for i ∈ 1:dimension(sig)]
-
 
 # defaults & fallbacks
 
@@ -111,7 +96,7 @@ show_signature(::OffsetSignature{sig,indices}) where {sig,indices} = "$(show_sig
 
 unoffset_index(sig, i) = i
 unoffset_index(sig, i::Symbol) = findfirst(==(i), signature_labels(sig))
-unoffset_index(sig::Union{Tuple,NamedTuple}, i) = let r = 1:dimension(sig)
+unoffset_index(sig::Union{Tuple,NamedTuple}, i::Integer) = let r = 1:dimension(sig)
 	i ∈ r ? i : error("index $i is outside range $r for signature $sig")
 end
 function unoffset_index(osig::OffsetSignature{sig,indices}, ioffset) where {sig,indices}
@@ -129,23 +114,20 @@ Minkowski = OffsetSignature{(t=-1,x=1,y=1,z=1),0:3}()
 
 
 
-#= PRETTY PRINTING =#
+#= BASIS VECTOR LABELS =#
 
-Base.show(io::IO, sig::AbstractMetricSignature) = print(io, show_signature(sig))
-function Base.show(io::IO, ::MIME"text/plain", sig::AbstractMetricSignature)
-	print(io, "$sig = ")
-	Base.show_default(io, sig)
-end
+DEFAULT_BASIS_SYMBOL = "v"
 
-# overload how AbstractMultivector types are displayed, in order to pretty-print metric signatures
-function Base.show(io::IO, T::Type{<:AbstractMultivector})
-	if isconcretetype(T)
-		name = nameof(T)
-		pretty_sig = show_signature(signature(T))
-		params = T.parameters[2:end]
-		print(io, "$name{$pretty_sig, $(join(params, ", "))}")
-	else
-		invoke(show, Tuple{IO,Type}, io, T) # call original show method
-	end
-end
+const subscript_nums = '₀':'₉'
+subscriptnum(n::Integer) = join(subscript_nums[begin + i] for i ∈ reverse(digits(n)))
+
+signature_label(sig, i) = Symbol("$DEFAULT_BASIS_SYMBOL$(subscriptnum(i))")
+signature_label(sig::NamedTuple, i::Integer) = keys(sig)[i]
+signature_label(sig, i::Symbol) = i
+signature_label(::MetricSignature{sig}, i) where sig = signature_label(sig, i)
+signature_label(::OffsetSignature{sig}, i) where sig = signature_label(sig, i)
+
+signature_labels(sig) = [signature_label(sig, i) for i ∈ 1:dimension(sig)]
+
+
 

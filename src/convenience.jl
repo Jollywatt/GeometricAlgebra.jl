@@ -1,6 +1,6 @@
 
 basisvarname(sig::Tuple, ublade) = "$DEFAULT_BASIS_SYMBOL"*join(map(string, ublade))
-basisvarname(sig::NamedTuple, ublade) = join([signature_labels(sig)[i] for i ∈ ublade])
+basisvarname(sig::NamedTuple, ublade) = join([signature_label(sig, i) for i ∈ ublade])
 
 macro basis(sig, options=:all)
 	sig = eval(sig)

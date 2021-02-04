@@ -1,8 +1,3 @@
-DEFAULT_BASIS_SYMBOL = "v"
-COEFF_BASIS_SEPARATOR = " "
-
-const subscript_nums = '₀':'₉'
-subscriptnum(n::Integer) = join(subscript_nums[begin + i] for i ∈ reverse(digits(n)))
 
 #= SIGNATURES
 
@@ -22,37 +17,12 @@ AbstractMultivector{⟨5+⟩, C} where C
 
 =#
 
-Base.show(io::IO, sig::AbstractMetricSignature) = print(io, show_signature(sig))
-function Base.show(io::IO, ::MIME"text/plain", sig::AbstractMetricSignature)
-	print(io, "$sig = ")
-	Base.show_default(io, sig)
-end
-
-# overload how AbstractMultivector types are displayed, in order to pretty-print metric signatures
-function Base.show(io::IO, T::Type{<:AbstractMultivector})
-	if isconcretetype(T)
-		name = nameof(T)
-		pretty_sig = show_signature(signature(T))
-		params = T.parameters[2:end]
-		print(io, "$name{$pretty_sig, $(join(params, ", "))}")
-	else
-		invoke(show, Tuple{IO,Type}, io, T) # call original show method
-	end
-end
-
-
 
 
 #= BLADES, MULTIVECTORS, MIXEDMULTIVECTORS =#
 
 show_header(io::IO, a::MixedMultivector) = println(io, "$(typeof(a)):")
 show_header(io::IO, a::HomogeneousMultivector{k}) where k = println(io, "$k-grade $(typeof(a)):")
-
-bvlabel(sig, i) = "$DEFAULT_BASIS_SYMBOL$(subscriptnum(i))"
-bvlabel(sig::NamedTuple, i::Integer) = string(keys(sig)[i])
-bvlabel(sig, i::Symbol) = string(i)
-bvlabel(::MetricSignature{sig}, i) where sig = bvlabel(sig, i)
-bvlabel(::OffsetSignature{sig}, i) where sig = bvlabel(sig, i)
 
 basis_separator_symbol(::Any) = "" # fallback
 basis_separator_symbol(::NamedTuple{labels}) where labels = any(length.(string.(labels)) .> 1) ? "∧" : ""
@@ -70,7 +40,7 @@ function show_ublade(io::IO, sig, ublade)
 	
 	isfirst = true
 	for bv ∈ ublade_bvs(sig, ublade)
-		label = bvlabel(sig, bv)
+		label = signature_label(sig, bv)
 		if isfirst
 			isfirst = false
 		else
@@ -91,6 +61,7 @@ end
 
 Base.alignment(io::IO, b::CompositeMultivector) = (1, length(repr(b)))
 
+COEFF_BASIS_SEPARATOR = " "
 
 """
 Display blade with parentheses surrounding coefficient if necessary.

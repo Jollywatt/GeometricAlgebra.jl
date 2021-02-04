@@ -6,9 +6,11 @@ module GeometricAlgebra
 
 import Base: ==, *, /, \, +, -, ^, ~
 
-using SparseArrays: SparseVector, spzeros
-using Combinatorics: powerset, permutations
 using InteractiveUtils: subtypes
+using SparseArrays: SparseVector, spzeros
+using TaylorSeries: Taylor1
+using Combinatorics: powerset, permutations
+
 
 export AbstractMultivector, Blade, Multivector, MixedMultivector
 
@@ -30,8 +32,8 @@ export EuclideanSignature, OffsetSignature
 include("metric-signature.jl")
 include("ublade.jl")
 include("multivector.jl")
-include("algebra.jl")
 include("show.jl")
+include("algebra.jl")
 include("convenience.jl")
 
 end # module

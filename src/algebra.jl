@@ -1,23 +1,22 @@
-# SCALAR MULTIPLICATION
+#= SCALAR MULTIPLICATION =#
 # must respect the possibility of non-commutativity!
 
-compmul(comps::AbstractVector, x::Scalar) = comps.*x
-compmul(x::Scalar, comps::AbstractVector) = x.*comps
+compmul(comps::AbstractVector, x::Scalar) = comps.*Ref(x)
+compmul(x::Scalar, comps::AbstractVector) = Ref(x).*comps
 compmul(comps::AbstractDict, x::Scalar) = Dict(ublade => a*val for (ublade, val) ∈ b.comps)
 compmul(x::Scalar, comps::AbstractDict) = Dict(ublade => val*b for (ublade, val) ∈ a.comps)
 
-# not type-stable, but only for k param. Does that matter?
-*(a::Scalar, b::Blade) = Blade{signature(b)}(a*b.coeff, b.ublade)
-*(a::Blade, b::Scalar) = Blade{signature(a)}(a.coeff*b, a.ublade)
+*(a::Scalar, b::Blade{sig,k}) where {sig,k} = Blade{sig,k}(a*b.coeff, b.ublade)
+*(a::Blade{sig,k}, b::Scalar) where {sig,k} = Blade{sig,k}(a.coeff*b, a.ublade)
 
-*(a::Scalar, b::Multivector) = Multivector{signature(b),grade(b)}(compmul(a, b.comps))
-*(a::Multivector, b::Scalar) = Multivector{signature(a),grade(a)}(compmul(a.comps, b))
+*(a::Scalar, b::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}(compmul(a, b.comps))
+*(a::Multivector{sig,k}, b::Scalar) where {sig,k} = Multivector{sig,k}(compmul(a.comps, b))
 
 *(a::Scalar, b::MixedMultivector) = MixedMultivector{signature(b)}(compmul(a, b.comps))
 *(a::MixedMultivector, b::Scalar) = MixedMultivector{signature(a)}(compmul(a.comps, b))
 
 
-# (MULTI)VECTOR ADDITION
+#= ADDITION =#
 
 # addition of same-grade elements to produce homogeneous multivector
 function +(as::HomogeneousMultivector{k}...) where k
@@ -40,10 +39,7 @@ function +(as::AbstractMultivector...)
 end
 
 # addition of scalar to grade 0 objects
-function +(a::Blade{sig,0}, b::Scalar) where sig
-	T = best_type(Blade, a, el=typeof(b))
-	T(a.coeff + b, a.ublade)
-end
++(a::Blade{sig,0}, b::Scalar) where sig = Blade{sig,0}(a.coeff + b, a.ublade)
 	
 function +(a::Multivector{sig,0}, b::Scalar) where sig
 	ab = zero(best_type(Multivector, a, k=0, el=typeof(b)))
@@ -62,7 +58,7 @@ end
 +(a::Scalar, b::AbstractMultivector) = +(b, a)
 
 
-# ADDITIVE INVERSES
+# additive inverses
 
 -(a::Blade) = typeof(a)(-a.coeff, a.ublade)
 -(a::AbstractMultivector) = -one(eltype(a))*a
@@ -86,7 +82,7 @@ end
 function geometric_prod(a::AbstractMultivector, b::AbstractMultivector)
 	ab = zero(best_type(MixedMultivector, a, b))
 	for u ∈ blades(a), v ∈ blades(b)
-		add!(ab, geometric_prod(u::Blade, v::Blade))
+		add!(ab, geometric_prod(u, v))
 	end
 	ab
 end
@@ -102,7 +98,7 @@ function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, k)
 	ab = zero(best_type(Multivector, a, b; k))
 	0 <= k <= dimension(a) || return ab
 	for u ∈ blades(a), v ∈ blades(b)
-		add!(ab, homogeneous_prod(u::Blade, v::Blade, k))
+		add!(ab, homogeneous_prod(u, v, k))
 	end
 	ab
 end
@@ -182,7 +178,7 @@ commutator_prod(a, b) = (a*b - b*a)/2
 
 
 
-# REVERSION, INVOLUTION, DUALITY, ETC
+#= REVERSION, INVOLUTION, DUALITY, ETC =#
 
 # @pure ?
 reversionsign(k::Integer, c) = mod(k, 4) <= 1 ? c : -c
@@ -216,7 +212,7 @@ hodgedual(a::AbstractMultivector) = reversion(a)*vol(a)
 
 
 
-# NORMS
+#= NORMS =#
 
 """
 	rsqrt(x)
@@ -250,18 +246,18 @@ end
 
 
 
+#= MULTIPLICATIVE INVERSES =#
 
 # optimisation for sign(scalar(oneunit(a)^2))
-# squaresign(a::Blade) = reversionsign(grade(a))ublade_square(signature(a), a.ublade)
 
-# MULTIPLICATIVE INVERSES
 # blades have an inverse iff their square is nonzero
 # homogeneous multivectors are invertible `sometimes` - TODO figure out when
 
-Base.inv(a::Blade) = a/scalar(a*a) # blades are guaranteed to have scalar squares
+# Base.inv(a::Blade) = a/scalar(a*a) # blades are guaranteed to have scalar squares
+Base.inv(a::Blade) = a/(reversionsign(grade(a))ublade_square(signature(a), a.ublade)) # blades are guaranteed to have scalar squares
 function Base.inv(a::AbstractMultivector)
 	a² = a^2
-	isscalar(a²) && return a/scalar(a²)
+	isscalar(a²) && return a/scalar(a²)::typeof(a)
 
 	inv_matrixmethod(a)
 	# error("cannot find inverse of multivector $a")
@@ -303,6 +299,10 @@ end
 
 # EXPONENTIATION
 
+function Base.literal_pow(::typeof(^), a::Blade{sig,k,T,B}, ::Val{2})::Blade{sig,0,T,B} where {sig,k,T,B}
+	a.coeff^2*reversionsign(grade(a))ublade_square(signature(a), a.ublade)
+end
+
 function ^(a::Blade, p::Integer)
 	p >= 0 || return inv(a)^abs(p)
 	blade = iseven(p) ? one(a) : oneunit(a)
@@ -327,15 +327,43 @@ function powbysquaring(a::AbstractMultivector, p::Integer)
 end
 
 ^(a::AbstractMultivector, p::Integer) = powbysquaring(a, p)
-# ^(a::AbstractMultivector, p) = error("unsupported multivector exponent type $(typeof(p))")
+^(a::AbstractMultivector, p) = error("unsupported multivector exponent type $(typeof(p))")
 
 
 # EXPONENTIAL FUNCTION
 # NOTE: this all assumes eltype <: Real
 
+#=
+function eval_taylor_series(a::AbstractMultivector, coeffgen)
+	b = one(best_type(MixedMultivector, a))
+	term = one(b)
+	# what's the proper way to detect convergence for different precisions?
+	a² = a*a
+	skipterm = false
+	for (i, coeff) ∈ enumerate(coeffgen)
+		# if iszero(coeff) && !skipterm
+		# 	skipterm = true
+		# 	continue
+		# end
+		# print(".")
+		term *= skipterm ? a² : a
+		add!(b, coeff*term)
+		skipterm = false
+		i >= 20 && break
+	end
+	b
+end
+=#
+
+function eval_taylor_series(a::AbstractMultivector, func)
+	T = eltype(a)
+	order = 20
+	series = func(Taylor1{T}(order))
+	series(a)
+end
 
 function Base.exp(a::AbstractMultivector)
-	a² = a*a
+	a² = a^2
 	if isscalar(a²)
 		s = scalar(a²)
 		if iszero(s)
@@ -345,20 +373,14 @@ function Base.exp(a::AbstractMultivector)
 			s > 0 ? cosh(coeff) + sinh(coeff)â : cos(coeff) + sin(coeff)â
 		end
 	else
-		exp_iterative(a)
+		# fallback to explicit computation
+		eval_taylor_series(a, exp)
 	end
 end
 
-# # what's the proper way to implement a stable exp which works with BigFloats?
-function exp_iterative(a::AbstractMultivector, n=20)
-	eᵃ = one(best_type(MixedMultivector, a))
-	term = one(eᵃ)
-	for i ∈ 1:n
-		term *= a/eltype(a)(i)
-		add!(eᵃ, term)
-	end
-	eᵃ
-end
+
+# Uses the identity ``log(x) = 2atanh((x - 1)/(x + 1))`` and hopes for the best
+Base.log(a::AbstractMultivector) = 2atanh((a - 1)/(a + 1))
 
 
 # TRIGONOMETRIC FUNCTIONS
@@ -368,7 +390,8 @@ function apply_trig_even(a, sqsign, pos, neg)
 	if iszero(sqsign)
 		one(a)
 	else
-		sqsign > 0 ? pos(abs(a)) : neg(abs(a))
+		coeff = abs(a)
+		sqsign > 0 ? pos(coeff) : neg(coeff)
 	end
 end
 # odd (e.g., sin) functions produce blades parallel to the original
@@ -400,7 +423,7 @@ for (trigfn,  (pos,    neg,    even )) ∈ [
 		if isscalar(a²)
 			$apply_trig(a, scalar(a²), $pos, $neg)
 		else
-			error("not yet implemented")
+			eval_taylor_series(a, $trigfn)
 		end
 	end
 end

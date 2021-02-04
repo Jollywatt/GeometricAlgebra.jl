@@ -37,16 +37,32 @@ Optional methods:
 =#
 
 
+#= BASIS VECTOR LABELS =#
+
+DEFAULT_BASIS_SYMBOL = "v"
+
+const subscript_nums = '₀':'₉'
+subscriptnum(n::Integer) = join(subscript_nums[begin + i] for i ∈ reverse(digits(n)))
+
+signature_label(sig, i) = Symbol("$DEFAULT_BASIS_SYMBOL$(subscriptnum(i))")
+signature_label(sig::NamedTuple, i::Integer) = keys(sig)[i]
+signature_label(sig, i::Symbol) = i
+signature_label(::MetricSignature{sig}, i) where sig = signature_label(sig, i)
+signature_label(::OffsetSignature{sig}, i) where sig = signature_label(sig, i)
+
+signature_labels(sig) = [signature_label(sig, i) for i ∈ 1:dimension(sig)]
+
+
 # defaults & fallbacks
 
-signature_labels(sig) = error("cannot access components of metric signature $sig by label")
+# signature_labels(sig) = error("cannot access components of metric signature $sig by label")
 show_signature(sig) = repr(sig) # fallback
 show_signature(sig::Type) = nameof(sig)
 
 # TUPLE METRIC SIGNATURES
+# signature_labels(sig::NamedTuple) = keys(sig)
 
 dimension(sig::Union{Tuple,NamedTuple}) = length(sig)
-signature_labels(sig::NamedTuple) = keys(sig)
 
 show_signature(sig::Tuple) = "⟨$(join(map(s -> get(Dict(1 => "+", -1 => "-"), s, s), sig)))⟩"
 function show_signature(sig::NamedTuple{labels,<:Tuple{Vararg{<:Integer}}}) where labels
@@ -89,7 +105,6 @@ struct OffsetSignature{sig,indices} <: AbstractMetricSignature end
 
 Base.getindex(::OffsetSignature{sig}, i) where sig = sig[i]
 dimension(::OffsetSignature{sig}) where sig = dimension(sig)
-signature_labels(::OffsetSignature{sig}) where sig = keys(sig)
 show_signature(::OffsetSignature{sig,indices}) where {sig,indices} = "$(show_signature(sig))[$indices]"
 
 
@@ -111,3 +126,26 @@ sig_has_dim(::Type{EuclideanSignature}) = false
 
 
 Minkowski = OffsetSignature{(t=-1,x=1,y=1,z=1),0:3}()
+
+
+
+#= PRETTY PRINTING =#
+
+Base.show(io::IO, sig::AbstractMetricSignature) = print(io, show_signature(sig))
+function Base.show(io::IO, ::MIME"text/plain", sig::AbstractMetricSignature)
+	print(io, "$sig = ")
+	Base.show_default(io, sig)
+end
+
+# overload how AbstractMultivector types are displayed, in order to pretty-print metric signatures
+function Base.show(io::IO, T::Type{<:AbstractMultivector})
+	if isconcretetype(T)
+		name = nameof(T)
+		pretty_sig = show_signature(signature(T))
+		params = T.parameters[2:end]
+		print(io, "$name{$pretty_sig, $(join(params, ", "))}")
+	else
+		invoke(show, Tuple{IO,Type}, io, T) # call original show method
+	end
+end
+

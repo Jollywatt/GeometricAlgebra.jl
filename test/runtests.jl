@@ -26,22 +26,19 @@ sigs = [
 ]
 
 @testset "convert_ublade" begin
+	sig = (t=-1, x=1, y=1, z=1)
 	for a2b ∈ [
+		0b0 => Int[]
 		0b1 => [1],
 		0b10 => [2],
 		0b11 => [1,2],
-		UInt32(0b11001) => [1,4,5],
-		UInt128(0b11101) => [1,3,4,5],
+		UInt32(0b1001) => [1,4],
+		UInt128(0b1101) => [1,3,4],
+		Int[] => Symbol[],
+		[1,2,4] => [:t,:x,:z],
+		0b0 => Symbol[],
+		0b1110 => [:x,:y,:z],
 	], (a, b) ∈ [a2b, reverse(a2b)] # check both directions
-		bfroma = GeometricAlgebra.convert_ublade(:sig, typeof(b), a)
-		@test typeof(bfroma) == typeof(b)
-		@test bfroma == b
-	end
-
-	sig = (a=1, b=1, c=0)
-	for a2b ∈ Pair{Vector{Int},Vector{Symbol}}[
-		[] => [], [1] => [:a], [2, 3] => [:b, :c]
-	], (a, b) ∈ [a2b, reverse(a2b)]
 		bfroma = GeometricAlgebra.convert_ublade(sig, typeof(b), a)
 		@test typeof(bfroma) == typeof(b)
 		@test bfroma == b
@@ -71,7 +68,7 @@ end
 @testset "multivector promotion" begin
 	sig = (x=1,y=1,z=1)
 	xs = Any[
-		Complex(im)
+		Complex(42)
 		Blade{sig}(42, 0b101)
 		Blade{sig}(42.0, [1, 3])
 		Blade{sig}(42//1, [:x, :z])

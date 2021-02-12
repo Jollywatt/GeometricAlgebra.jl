@@ -51,7 +51,7 @@ struct Blade{sig,k,T,B} <: AbstractMultivector{sig,Pair{B,T}}
 	coeff::T
 	ublade::B
 	function Blade{sig,k,T,B}(coeff, ublade) where {sig,k,T,B}
-		ublade = convert(B, ublade)
+		ublade = convert_ublade(sig, B, ublade)
 		@assert ublade_grade(ublade) == k
 		new{sig,k,T,B}(coeff, ublade)
 	end
@@ -308,6 +308,7 @@ getcomp(a::AbstractMultivector, ublade) = getcomp(a, convert_ublade(a, ublade))
 setcomp!(::Blade, ublade, v) = error("cannot set component of blade")
 function setcomp!(a::Multivector{sig,k,<:AbstractVector}, ublade, v) where {sig,k}
 	ublade_grade(ublade) == k || error("cannot set non-$k grade component of $k-multivector")
+	isempty(a.comps) && error("$k-multivector in $(dimension(a)) dimensions has zero components")
 	i = ublade2lindex(ublade)
 	a.comps[i] = v
 end
@@ -400,9 +401,13 @@ shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share th
 shared_sig(as::AbstractMultivector...) = shared_sig(typeof.(as)...)
 
 # give the most sensible storage type of a CompositeMultivector with given signature, eltype, and keytype
-storagetype(sig, T, B::Type{<:Unsigned}) = dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
-storagetype(sig, T, B) = Dict{B,T}
+# storagetype(sig, T, B::Type{<:Unsigned}) = sig_has_dim(sig) && dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
+# storagetype(sig, T, B) = Dict{B,T}
 
+function storagetype(sig, T, B)
+	sig_has_dim(sig) || return Dict{B,T}
+	dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
+end
 
 # give the most sensible <:AbstractMultivector type which can represent the given arguments
 function best_type(::Type{Blade}, as::Type{<:AbstractMultivector}...; k=missing, el=Union{})

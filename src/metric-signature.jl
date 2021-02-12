@@ -31,18 +31,15 @@ Required methods:
 
 Optional methods:
 
-	dimension(::Sig) # if known. If omitted, treated as arbitrary/infinite-dimensional
-	signature_labels(::Sig)
-	show_signature(::Sig) # for pretty printing
+	dimension(::Sig) # only if known. If omitted, treated as arbitrary/infinite-dimensional
+
+Methods for pretty printing:
+
+	show_signature(::Sig)
+	basis_vector_label(::Sig, i)
+	basis_blade_label(::Sig, i)
 =#
 
-
-
-# defaults & fallbacks
-
-# signature_labels(sig) = error("cannot access components of metric signature $sig by label")
-show_signature(sig) = repr(sig) # fallback
-show_signature(sig::Type) = nameof(sig)
 
 # TUPLE METRIC SIGNATURES
 # signature_labels(sig::NamedTuple) = keys(sig)
@@ -114,20 +111,38 @@ Minkowski = OffsetSignature{(t=-1,x=1,y=1,z=1),0:3}()
 
 
 
-#= BASIS VECTOR LABELS =#
+#= BASIS VECTOR LABELS
 
-DEFAULT_BASIS_SYMBOL = "v"
+Add a `basis_vector_label(sig, i)` method for custom labelling for custom signature types.
+Add a `basis_blade_label(sig, bvs::Vector)` method for more control; defaults to concatenating 
+basis vector labels.
 
-const subscript_nums = '₀':'₉'
-subscriptnum(n::Integer) = join(subscript_nums[begin + i] for i ∈ reverse(digits(n)))
+=#
 
-signature_label(sig, i) = Symbol("$DEFAULT_BASIS_SYMBOL$(subscriptnum(i))")
-signature_label(sig::NamedTuple, i::Integer) = keys(sig)[i]
-signature_label(sig, i::Symbol) = i
-signature_label(::MetricSignature{sig}, i) where sig = signature_label(sig, i)
-signature_label(::OffsetSignature{sig}, i) where sig = signature_label(sig, i)
+basis_vector_label(sig::NamedTuple, i::Integer) = keys(sig)[i]
+basis_vector_label(sig, i::Symbol) = i
+basis_vector_label(::MetricSignature{sig}, i) where sig = basis_vector_label(sig, i)
+basis_vector_label(::OffsetSignature{sig}, i) where sig = basis_vector_label(sig, i)
 
-signature_labels(sig) = [signature_label(sig, i) for i ∈ 1:dimension(sig)]
+basis_vector_labels(sig) = [basis_vector_label(sig, i) for i ∈ 1:dimension(sig)]
+
+function basis_blade_label(sig::T, bvs) where T
+	if hasmethod(basis_vector_label, Tuple{T,eltype(bvs)})
+		join(basis_vector_label(sig, i) for i ∈ bvs)
+	else
+		"v$(join(bvs))"
+	end
+end
 
 
+struct Quaternions <: GeometricAlgebra.AbstractMetricSignature end
 
+Base.getindex(::Quaternions, i) = 1
+dimension(::Quaternions) = 3
+function basis_blade_label(::Quaternions, bvs)
+	get(Dict(
+		[2,3] => :i,
+		[1,3] => :j,
+		[1,2] => :k,
+	), bvs, basis_blade_label((1,1,1), bvs))
+end

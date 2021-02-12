@@ -20,19 +20,28 @@ AbstractMultivector{⟨5+⟩, C} where C
 
 #= PRETTY PRINTING =#
 
-Base.show(io::IO, sig::AbstractMetricSignature) = print(io, show_signature(sig))
+function Base.show(io::IO, sig::AbstractMetricSignature)
+	if applicable(show_signature, sig)
+		print(io, show_signature(sig))
+	else
+		Base.show_default(io, sig)
+	end
+end
 function Base.show(io::IO, ::MIME"text/plain", sig::AbstractMetricSignature)
-	print(io, "$sig = ")
-	Base.show_default(io, sig)
+	if applicable(show_signature, sig)
+		print(io, "$sig = ")
+		Base.show_default(io, sig)
+	else
+		Base.show_default(io, sig)
+	end
 end
 
 # overload how AbstractMultivector types are displayed, in order to pretty-print metric signatures
 function Base.show(io::IO, T::Type{<:AbstractMultivector})
 	if isconcretetype(T)
 		name = nameof(T)
-		pretty_sig = show_signature(signature(T))
 		params = T.parameters[2:end]
-		print(io, "$name{$pretty_sig, $(join(params, ", "))}")
+		print(io, "$name{$(signature(T)), $(join(params, ", "))}")
 	else
 		invoke(show, Tuple{IO,Type}, io, T) # call original show method
 	end
@@ -43,12 +52,20 @@ end
 #= BLADES, MULTIVECTORS, MIXEDMULTIVECTORS =#
 
 show_header(io::IO, a::MixedMultivector) = println(io, "$(typeof(a)):")
-show_header(io::IO, a::HomogeneousMultivector{k}) where k = println(io, "$k-grade $(typeof(a)):")
+show_header(io::IO, a::HomogeneousMultivector{k}) where k = println(io, "Grade-$k $(typeof(a)):")
 
 basis_separator_symbol(::Any) = "" # fallback
 basis_separator_symbol(::NamedTuple{labels}) where labels = any(length.(string.(labels)) .> 1) ? "∧" : ""
 basis_separator_symbol(::OffsetSignature{sig}) where sig = basis_separator_symbol(sig)
 basis_separator_symbol(::AbstractMetricSignature) = ""
+
+DEFAULT_BASIS_SYMBOL = "v"
+
+const subscript_nums = '₀':'₉'
+subscriptnum(n::Integer) = join(subscript_nums[begin + i] for i ∈ reverse(digits(n)))
+
+# default_signature_label(sig, i) = Symbol("$DEFAULT_BASIS_SYMBOL$(subscriptnum(i))")
+
 
 """
 Display unit blade without coefficient.
@@ -59,20 +76,9 @@ function show_ublade(io::IO, sig, ublade)
 	#  and do not need to have any basis printed
 	sig_has_dim(sig) && ublade_grade(ublade) > dimension(sig) && return
 	
-	isfirst = true
-	for bv ∈ ublade_bvs(sig, ublade)
-		label = signature_label(sig, bv)
-		if isfirst
-			isfirst = false
-		else
-		print(io, basis_separator_symbol(sig))
-		end
-		if get(io, :color, false)
-			printstyled(io, label; bold=true)
-		else
-			print(io, label)
-		end
-	end
+	bvs = ublade_bvs(sig, ublade)
+	printstyled(io, basis_blade_label(sig, bvs); bold=true)
+
 end
 
 Base.alignment(io::IO, b::Blade) = let (l, r) = Base.alignment(io, b.coeff)

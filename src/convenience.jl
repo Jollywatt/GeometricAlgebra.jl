@@ -1,36 +1,50 @@
-
-basisvarname(sig::Tuple, ublade) = "$DEFAULT_BASIS_SYMBOL"*join(map(string, ublade))
-basisvarname(sig::NamedTuple, ublade) = join([signature_label(sig, i) for i ∈ ublade])
-
-macro basis(sig, options=:all)
-	sig = eval(sig)
-	@assert dimension(sig) < 10
+function generate_blades(combos, sig)
 	bvs = basis(sig)
 	vars = Symbol[]
-	vals = []
-	combos = Dict(
-		:vector => x -> [[i] for i ∈ x],
-		:all => powerset,
-		:allcombos => x -> Iterators.flatten(permutations.(powerset(x)))
-	)[options]
-	for (bladebvs, ublade) ∈ zip(combos(bvs), combos(1:dimension(sig)))
-		varname = basisvarname(sig, ublade)
+	vals = Blade{sig}[]
+	for (ordered_bvs, ublade) ∈ zip(combos(bvs), combos(1:dimension(sig)))
+		varname = basis_blade_label(sig, ublade)
 		isempty(varname) && continue
 		push!(vars, Symbol(varname))
-		push!(vals, prod(bladebvs))
+		push!(vals, prod(ordered_bvs))
 	end
-	@info "Defined basis blades $(join(vars, ", "))"
 	quote
+		@info "Defined basis blades $(join($vars, ", "))"
 		$([ :($(esc(k)) = $(v)) for (k, v) ∈ zip(vars, vals) ]...)
 		nothing
 	end
 end
+generate_blades(sig) = generate_blades(x -> [[i] for i ∈ x], sig)
 
-#=
-perhaps:
+function parse_sig(args...)
+	if length(args) == 1 && first(args).head == :tuple
+		# signature specified by literal
+		return @eval $(first(args))
+	end
 
-@basis -> vector
-@basisfull -> all
-@basisfullperm -> allcombos
+	# signature specified by series of exprs `label[=square]`
+	labels = Symbol[]
+	squares = []
+	for bv ∈ args
+		if bv isa Symbol
+			label, sq = bv, 1
+		elseif bv isa Expr && bv.head == :(=)
+			label, sq = bv.args
+		else
+			error("invalid syntax $bv in signature")
+		end
+		push!(labels, label)
+		push!(squares, sq)
+	end
+	NamedTuple{tuple(labels...)}(squares)
+end
 
-=#
+macro basis(args...)
+	generate_blades(powerset, parse_sig(args...))
+end
+
+macro basisperm(args...)
+	generate_blades(parse_sig(args...)) do bvs
+		Iterators.flatten(permutations.(powerset(bvs)))
+	end
+end

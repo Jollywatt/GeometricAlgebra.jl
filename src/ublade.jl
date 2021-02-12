@@ -79,12 +79,12 @@ convert_ublade(sig, T::Type{<:Unsigned}, ublade::Unsigned) = convert(T, ublade)
 
 # Vector{<:Integer} <-> Vector{Symbol}
 convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Vector{Symbol}) =
-	T([let i = findfirst(==(symbol), signature_labels(sig))
+	T([let i = findfirst(==(symbol), basis_vector_labels(sig))
 		isnothing(i) && error("signature $sig has no label $(repr(symbol))")
 		i
 	end for symbol ∈ ublade])
 convert_ublade(sig, T::Type{<:Vector{Symbol}}, ublade::Vector{<:Integer}) =
-	T([signature_label(sig, i) for i ∈ ublade])
+	T([basis_vector_label(sig, i) for i ∈ ublade])
 
 # Unsigned <-> Vector{Symbol}
 convert_ublade(sig, T::Type{<:Unsigned}, ublade::Vector{Symbol}) =
@@ -100,10 +100,6 @@ Convert unit blade `ublade` to the representation employed by `a`.
 
 # first argument should be a::AbstractMultivector
 convert_ublade(a, ublade) = convert_ublade(signature(a), keytype(a), ublade)
-
-# fallback
-# convert_ublade(sig, ::Type{T}, ublade::S) where {T,S} = convert(T, ublade)
-
 
 
 # used by best_type

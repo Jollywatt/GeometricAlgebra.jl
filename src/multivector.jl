@@ -597,24 +597,31 @@ true
 ```
 
 """
-basis(M::Type{Blade{sig,k,T,B}}, i::Integer) where {sig,k,T,B} = M(one(T), convert_ublade(M, lindex2ublade(keytype(M), k, i)))
-function basis(M::Type{Multivector{sig,k,C}}, i::Integer) where {sig,k,C<:AbstractVector}
+function basis end
+
+# concrete types
+
+basis(M::Type{Blade{sig,k,T,B}}, i::Integer) where {sig,k,T,B} = M(one(T), lindex2ublade(k, i))
+function basis(M::Type{Multivector{sig,k}}, i::Integer) where {sig,k}
 	a = zero(M)
-	setcomp!(a, lindex2ublade(keytype(M), k, i), one(eltype(M)))
+	setcomp!(a, lindex2ublade(k, i), one(eltype(a)))
 	a
 end
-basis(::Type{Multivector{sig,C}}, i) where {sig,C<:AbstractVector} = basis(Multivector{sig,1,C}, i)
-function basis(M::Type{MixedMultivector{sig,C}}, i) where {sig,C<:AbstractVector}
+function basis(M::Type{<:MixedMultivector{sig}}, i::Integer) where sig
 	a = zero(M)
-	setcomp!(a, ublade_bv(sig, keytype(M), i), one(eltype(M)))
+	setcomp!(a, lindex2ublade(1, i), one(eltype(a)))
 	a
 end
-basis(M::Type{<:CompositeMultivector{sig,C}}, i) where {sig,C<:AbstractDict} = M(C(ublade_bv(sig, keytype(M), i) => one(eltype(M))))
+
+
+# basis(M::Type{<:CompositeMultivector{sig,C}}, i) where {sig,C<:AbstractDict} = M(C(ublade_bv(sig, keytype(M), i) => one(eltype(M))))
 
 basis(M::Type{<:AbstractMultivector}) = [basis(M, i) for i ∈ 1:dimension(M)]
 basis(M::Type{<:HomogeneousMultivector{k}}) where k = [basis(M, i) for i ∈ 1:binomial(dimension(M), k)]
 
 # basis(sig::Type{<:AbstractMetricSignature}, i) = basis(sig(), i)
+Sig = Union{Tuple,NamedTuple,<:AbstractMetricSignature}
+
 """
 	basis(sig, i)
 	basis(sig)
@@ -639,8 +646,8 @@ julia> basis(EuclideanSignature, :t)
  1.0 t
 ```
 """
-basis(sig, i::Integer) = basis(Blade{sig,1,Float64,best_ublade_type(sig)}, i)
-basis(sig) = [basis(sig, i) for i ∈ 1:dimension(sig)]
+basis(sig::Sig, i::Integer) = basis(Blade{sig,1,Float64,best_ublade_type(sig)}, i)
+basis(sig::Sig) = [basis(sig, i) for i ∈ 1:dimension(sig)]
 
 # good? bad? generate all 2^dimension(sig) basis multivectors?
 fullbasis(sig) = (Blade{sig}(1, UInt(i - 1)) for i ∈ 1:2^dimension(sig))
@@ -750,7 +757,7 @@ scalar(a::AbstractMultivector) = grade(a, 0)[]
 
 isscalar(a::Number) = true
 isscalar(a::HomogeneousMultivector{0}) = true
-isscalar(a::HomogeneousMultivector{k}) where k = iszero(k)
+isscalar(a::HomogeneousMultivector{k}) where k = iszero(k) ? true : iszero(a)
 isscalar(a::MixedMultivector) = all(iszero.(grades(a)))
 
 Base.isone(a::AbstractMultivector) = isscalar(a) && isone(scalar(a))

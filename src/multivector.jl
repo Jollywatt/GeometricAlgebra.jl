@@ -367,6 +367,11 @@ Base.zero(::Type{<:Multivector{sig,k,C}}) where {sig,k,C<:AbstractVector} = Mult
 Base.zero(::Type{<:MixedMultivector{sig,C}}) where {sig,C<:AbstractVector} = MixedMultivector{sig}(_zeros(C, 2^dimension(sig)))
 Base.zero(T::Type{<:CompositeMultivector{sig,C}}) where {sig,C<:AbstractDict} = T(C())
 
+# for non-concrete types
+Base.zero(::Type{<:Blade{sig,k,T}}) where {sig,k,T} = zero(Blade{sig,k,T,UInt})
+Base.zero(::Type{<:Blade{sig,k}}) where {sig,k} = zero(Blade{sig,k,Float64})
+Base.zero(::Type{<:Multivector{sig,k}}) where {sig,k} = zero(Multivector{sig,k,Vector{Float64}})
+
 Base.iszero(a::Blade) = iszero(a.coeff)
 Base.iszero(a::CompositeMultivector{sig,C}) where {sig,C<:AbstractVector} = iszero(a.comps)
 Base.iszero(a::CompositeMultivector{sig,C}) where {sig,C<:AbstractDict} = all(iszero(v) for (u, v) ∈ a.comps)
@@ -490,14 +495,34 @@ Base.promote(as::(Multivector{sig,k,C} where k)...) where {sig,C} = as
 
 
 
+Base.float(T::Type{<:AbstractMultivector}) = promote_type(T, float(eltype(T)))
+Base.float(a::AbstractMultivector) = convert(float(typeof(a)), a)
+
+Base.big(T::Type{<:AbstractMultivector}) = promote_type(T, big(eltype(T)))
+Base.big(a::AbstractMultivector) = convert(big(typeof(a)), a)
+
+Base.complex(T::Type{<:AbstractMultivector}) = promote_type(T, complex(eltype(T)))
+Base.complex(a::AbstractMultivector) = convert(complex(typeof(a)), a)
+
+_constructor(::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}
+_constructor(::MixedMultivector{sig}) where {sig} = MixedMultivector{sig}
+
+Base.real(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig,k,real(T),B}(real(a.coeff), a.ublade)
+Base.real(a::CompositeMultivector{sig,<:AbstractVector}) where {sig,k} = _constructor(a)(real(a.comps))
+Base.real(a::CompositeMultivector{sig,<:AbstractDict}) where {sig,k} = _constructor(a)(mapcomps(a, real))
+
+
+
 ## EQUALITY
 
 ==(a::T, b::T) where T<:Blade = a.ublade == b.ublade && a.coeff == b.coeff
 ==(a::T, b::T) where T<:Multivector = a.comps == b.comps
 ==(a::T, b::T) where T<:MixedMultivector = a.comps == b.comps
 
-==(::Blade{sig1,k1,T,B}, ::Blade{sig2,k2,T,B}) where {sig1,sig2,k1,k2,T,B} = false
-==(::Multivector{sig1,k1,C}, ::Multivector{sig2,k2,C}) where {sig1,sig2,k1,k2,C} = false
+# ==(::AbstractMultivector{sig1}, ::AbstractMultivector{sig2}) where {sig1,sig2} = false
+
+==(a::Blade{sig,k1,T,B}, b::Blade{sig,k2,T,B}) where {sig,k1,k2,T,B} = iszero(a) && iszero(b)
+==(a::Multivector{sig,k1,C}, b::Multivector{sig,k2,C}) where {sig,k1,k2,C} = iszero(a) && iszero(b)
 ==(::MixedMultivector{sig1,C}, ::MixedMultivector{sig2,C}) where {sig1,sig2,C} = false
 
 ==(a::AbstractMultivector, b::Scalar) = isscalar(a) && scalar(a) == b

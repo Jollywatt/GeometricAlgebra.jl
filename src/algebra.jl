@@ -248,8 +248,6 @@ end
 
 #= MULTIPLICATIVE INVERSES =#
 
-# optimisation for sign(scalar(oneunit(a)^2))
-
 # blades have an inverse iff their square is nonzero
 # homogeneous multivectors are invertible `sometimes` - TODO figure out when
 
@@ -330,35 +328,10 @@ end
 ^(a::AbstractMultivector, p) = error("unsupported multivector exponent type $(typeof(p))")
 
 
-# EXPONENTIAL FUNCTION
-# NOTE: this all assumes eltype <: Real
-
-#=
-function eval_taylor_series(a::AbstractMultivector, coeffgen)
-	b = one(best_type(MixedMultivector, a))
-	term = one(b)
-	# what's the proper way to detect convergence for different precisions?
-	a² = a*a
-	skipterm = false
-	for (i, coeff) ∈ enumerate(coeffgen)
-		# if iszero(coeff) && !skipterm
-		# 	skipterm = true
-		# 	continue
-		# end
-		# print(".")
-		term *= skipterm ? a² : a
-		add!(b, coeff*term)
-		skipterm = false
-		i >= 20 && break
-	end
-	b
-end
-=#
-
 function eval_taylor_series(a::AbstractMultivector, func)
 	T = eltype(a)
 	order = 20
-	series = func(Taylor1{T}(order))
+	series = func(Taylor1(T, order))
 	series(a)
 end
 
@@ -379,7 +352,7 @@ function Base.exp(a::AbstractMultivector)
 end
 
 
-# Uses the identity ``log(x) = 2atanh((x - 1)/(x + 1))`` and hopes for the best
+# Use the identity ``log(x) = 2atanh((x - 1)/(x + 1))`` and hope for the best
 Base.log(a::AbstractMultivector) = 2atanh((a - 1)/(a + 1))
 
 

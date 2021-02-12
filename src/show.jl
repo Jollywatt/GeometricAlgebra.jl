@@ -59,10 +59,10 @@ basis_separator_symbol(::NamedTuple{labels}) where labels = any(length.(string.(
 basis_separator_symbol(::OffsetSignature{sig}) where sig = basis_separator_symbol(sig)
 basis_separator_symbol(::AbstractMetricSignature) = ""
 
-DEFAULT_BASIS_SYMBOL = "v"
+# DEFAULT_BASIS_SYMBOL = "v"
 
-const subscript_nums = '₀':'₉'
-subscriptnum(n::Integer) = join(subscript_nums[begin + i] for i ∈ reverse(digits(n)))
+# const subscript_nums = '₀':'₉'
+# subscriptnum(n::Integer) = join(subscript_nums[begin + i] for i ∈ reverse(digits(n)))
 
 # default_signature_label(sig, i) = Symbol("$DEFAULT_BASIS_SYMBOL$(subscriptnum(i))")
 

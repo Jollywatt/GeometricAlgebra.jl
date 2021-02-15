@@ -7,6 +7,7 @@ module GeometricAlgebra
 import Base: ==, *, /, \, +, -, ^, ~
 
 using InteractiveUtils: subtypes
+using OffsetArrays
 using SparseArrays: SparseVector, spzeros
 using TaylorSeries: Taylor1
 using Combinatorics: powerset, permutations
@@ -14,7 +15,7 @@ using Combinatorics: powerset, permutations
 
 export AbstractMultivector, Blade, Multivector, MixedMultivector
 
-export basis, @basis
+export basis, @basis, @basisperm
 export signature, dimension
 export grade, grades
 export scalar, isscalar

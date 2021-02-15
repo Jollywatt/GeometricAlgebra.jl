@@ -84,19 +84,22 @@ Base.getindex(::Type{EuclideanSignature}, i) = 1
 
 
 struct OffsetSignature{sig,indices} <: AbstractMetricSignature end
+OffsetSignature(sig, indices) = OffsetSignature{sig,indices}()
 
 Base.getindex(::OffsetSignature{sig}, i) where sig = sig[i]
 dimension(::OffsetSignature{sig}) where sig = dimension(sig)
 show_signature(::OffsetSignature{sig,indices}) where {sig,indices} = "$(show_signature(sig))[$indices]"
 
 
+offset_index(::Any, i) = i
+offset_index(::OffsetSignature{sig,indices}, i) where {sig,indices} = indices[i]
 
 unoffset_index(sig, i) = i
-unoffset_index(sig, i::Symbol) = findfirst(==(i), signature_labels(sig))
+unoffset_index(sig, i::Symbol) = findfirst(==(i), basis_vector_labels(sig))
 unoffset_index(sig::Union{Tuple,NamedTuple}, i::Integer) = let r = 1:dimension(sig)
 	i ∈ r ? i : error("index $i is outside range $r for signature $sig")
 end
-function unoffset_index(osig::OffsetSignature{sig,indices}, ioffset) where {sig,indices}
+function unoffset_index(osig::OffsetSignature{sig,indices}, ioffset::Integer) where {sig,indices}
 	i = findfirst(==(ioffset), indices)
 	isnothing(i) && error("index $ioffset is outside range $indices for OffsetSignature $osig")
 	i
@@ -107,7 +110,7 @@ sig_has_dim(sig) = applicable(dimension, sig)
 sig_has_dim(::Type{EuclideanSignature}) = false
 
 
-Minkowski = OffsetSignature{(t=-1,x=1,y=1,z=1),0:3}()
+Minkowski = OffsetSignature((t=-1,x=1,y=1,z=1), 0:3)
 
 
 
@@ -121,8 +124,7 @@ basis vector labels.
 
 basis_vector_label(sig::NamedTuple, i::Integer) = keys(sig)[i]
 basis_vector_label(sig, i::Symbol) = i
-basis_vector_label(::MetricSignature{sig}, i) where sig = basis_vector_label(sig, i)
-basis_vector_label(::OffsetSignature{sig}, i) where sig = basis_vector_label(sig, i)
+basis_vector_label(::Union{OffsetSignature{sig},MetricSignature{sig}}, args...) where sig = basis_vector_label(sig, args...)
 
 basis_vector_labels(sig) = [basis_vector_label(sig, i) for i ∈ 1:dimension(sig)]
 
@@ -130,7 +132,7 @@ function basis_blade_label(sig::T, bvs) where T
 	if hasmethod(basis_vector_label, Tuple{T,eltype(bvs)})
 		join(basis_vector_label(sig, i) for i ∈ bvs)
 	else
-		"v$(join(bvs))"
+		"v$(join(offset_index(sig, i) for i ∈ bvs))"
 	end
 end
 

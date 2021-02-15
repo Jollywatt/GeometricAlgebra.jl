@@ -1,5 +1,5 @@
 function generate_blades(combos, sig)
-	bvs = basis(sig)
+	bvs = collect(basis(sig)) # needed because `OffsetArrays` don't work with, e.g., `powerset`
 	vars = Symbol[]
 	vals = Blade{sig}[]
 	for (ordered_bvs, ublade) ∈ zip(combos(bvs), combos(1:dimension(sig)))
@@ -17,7 +17,7 @@ end
 generate_blades(sig) = generate_blades(x -> [[i] for i ∈ x], sig)
 
 function parse_sig(args...)
-	if length(args) == 1 && first(args).head == :tuple
+	if length(args) == 1
 		# signature specified by literal
 		return @eval $(first(args))
 	end

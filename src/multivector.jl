@@ -406,13 +406,13 @@ shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share th
 shared_sig(as::AbstractMultivector...) = shared_sig(typeof.(as)...)
 
 # give the most sensible storage type of a CompositeMultivector with given signature, eltype, and keytype
-# storagetype(sig, T, B::Type{<:Unsigned}) = sig_has_dim(sig) && dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
-# storagetype(sig, T, B) = Dict{B,T}
+storagetype(sig, T, B::Type{<:Unsigned}) = sig_has_dim(sig) && dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
+storagetype(sig, T, B) = Dict{B,T}
 
-function storagetype(sig, T, B)
-	sig_has_dim(sig) || return Dict{B,T}
-	dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
-end
+# function storagetype(sig, T, B)
+# 	sig_has_dim(sig) || return Dict{B,T}
+# 	dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
+# end
 
 # give the most sensible <:AbstractMultivector type which can represent the given arguments
 function best_type(::Type{Blade}, as::Type{<:AbstractMultivector}...; k=missing, el=Union{})
@@ -615,6 +615,7 @@ end
 
 
 # basis(M::Type{<:CompositeMultivector{sig,C}}, i) where {sig,C<:AbstractDict} = M(C(ublade_bv(sig, keytype(M), i) => one(eltype(M))))
+basis(M::OffsetSignature{sig,indices}) where {sig,indices} = OffsetVector([basis(M, i) for i ∈ 1:dimension(M)], indices)
 
 basis(M::Type{<:AbstractMultivector}) = [basis(M, i) for i ∈ 1:dimension(M)]
 basis(M::Type{<:HomogeneousMultivector{k}}) where k = [basis(M, i) for i ∈ 1:binomial(dimension(M), k)]

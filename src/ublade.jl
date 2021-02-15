@@ -190,6 +190,7 @@ function lindex2ublade(T, k, i)
 	end
 	ublade
 end
+lindex2ublade(k, i) = lindex2ublade(UInt, k, i)
 
 function ublade2lindex(ublade::Unsigned)
 	lindex = 1

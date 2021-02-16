@@ -41,7 +41,7 @@ function Base.show(io::IO, T::Type{<:AbstractMultivector})
 	if isconcretetype(T)
 		name = nameof(T)
 		params = T.parameters[2:end]
-		print(io, "$name{$(signature(T)), $(join(params, ", "))}")
+		print(io, "$name{$(show_signature(signature(T))), $(join(params, ", "))}")
 	else
 		invoke(show, Tuple{IO,Type}, io, T) # call original show method
 	end

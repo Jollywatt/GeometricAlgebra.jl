@@ -500,8 +500,6 @@ replace_eltype(::Type{<:Blade{sig,k,T,B} where T}, T) where {sig,k,B} = Blade{si
 replace_eltype(::Type{<:Multivector{sig,k,C}}, T) where {sig,k,C} = Multivector{sig,k,replace_eltype(C, T)}
 replace_eltype(::Type{<:MixedMultivector{sig,C}}, T) where {sig,C} = MixedMultivector{sig,replace_eltype(C, T)}
 
-
-
 Base.float(T::Type{<:AbstractMultivector}) = replace_eltype(T, float(eltype(T)))
 Base.float(a::AbstractMultivector) = convert(float(typeof(a)), a)
 
@@ -661,8 +659,6 @@ julia> basis(EuclideanSignature, :t)
 basis(sig::Sig, i::Integer) = basis(Blade{sig,1,Float64,best_ublade_type(sig)}, unoffset_index(sig, i))
 basis(sig::Sig) = [basis(sig, i) for i ∈ 1:dimension(sig)]
 
-# good? bad? generate all 2^dimension(sig) basis multivectors?
-fullbasis(sig) = (Blade{sig}(1, UInt(i - 1)) for i ∈ 1:2^dimension(sig))
 basis(sig, i::Symbol) = Blade{sig,1,Float64,Vector{Symbol}}(1, [i])
 
 """

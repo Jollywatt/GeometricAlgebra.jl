@@ -210,6 +210,7 @@ hodgedual(a::AbstractMultivector) = reversion(a)*vol(a)
 # const ★ = hodgedual
 
 
+dual(a::AbstractMultivector) = a*vol(a)
 
 
 #= NORMS =#

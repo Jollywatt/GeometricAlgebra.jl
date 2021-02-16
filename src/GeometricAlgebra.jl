@@ -27,6 +27,7 @@ export wedge, ∧
 export dot, ⋅
 export contractr, ⨽
 export contractl, ⨼
+export dual
 
 export EuclideanSignature, OffsetSignature
 

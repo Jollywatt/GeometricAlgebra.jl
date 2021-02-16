@@ -472,6 +472,7 @@ Base.convert(T::Type{<:MixedMultivector}, a::Scalar) = zero(T) + a
 
 
 ## PROMOTION
+# Promotion should convert to same type *except for grade parameter*, which may remain different.
 
 # Same multivector type
 Base.promote_rule(T::Type{<:Blade}, S::Type{<:Blade}) = best_type(Blade, T, S)
@@ -493,15 +494,21 @@ Base.promote_rule(T::Type{<:MixedMultivector{sig,C}}, S::Type{<:Scalar}) where {
 Base.promote(as::(Blade{sig,k,T,B} where k)...) where {sig,T,B} = as
 Base.promote(as::(Multivector{sig,k,C} where k)...) where {sig,C} = as
 
+replace_eltype(::Type{<:Vector}, T) = Vector{T}
+replace_eltype(::Type{<:Dict{B}}, T) where B = Dict{B,T}
+replace_eltype(::Type{<:Blade{sig,k,T,B} where T}, T) where {sig,k,B} = Blade{sig,k,T,B}
+replace_eltype(::Type{<:Multivector{sig,k,C}}, T) where {sig,k,C} = Multivector{sig,k,replace_eltype(C, T)}
+replace_eltype(::Type{<:MixedMultivector{sig,C}}, T) where {sig,C} = MixedMultivector{sig,replace_eltype(C, T)}
 
 
-Base.float(T::Type{<:AbstractMultivector}) = promote_type(T, float(eltype(T)))
+
+Base.float(T::Type{<:AbstractMultivector}) = replace_eltype(T, float(eltype(T)))
 Base.float(a::AbstractMultivector) = convert(float(typeof(a)), a)
 
-Base.big(T::Type{<:AbstractMultivector}) = promote_type(T, big(eltype(T)))
+Base.big(T::Type{<:AbstractMultivector}) = replace_eltype(T, big(eltype(T)))
 Base.big(a::AbstractMultivector) = convert(big(typeof(a)), a)
 
-Base.complex(T::Type{<:AbstractMultivector}) = promote_type(T, complex(eltype(T)))
+Base.complex(T::Type{<:AbstractMultivector}) = replace_eltype(T, complex(eltype(T)))
 Base.complex(a::AbstractMultivector) = convert(complex(typeof(a)), a)
 
 _constructor(::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}
@@ -510,6 +517,10 @@ _constructor(::MixedMultivector{sig}) where {sig} = MixedMultivector{sig}
 Base.real(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig,k,real(T),B}(real(a.coeff), a.ublade)
 Base.real(a::CompositeMultivector{sig,<:AbstractVector}) where {sig,k} = _constructor(a)(real(a.comps))
 Base.real(a::CompositeMultivector{sig,<:AbstractDict}) where {sig,k} = _constructor(a)(mapcomps(a, real))
+
+Base.imag(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig,k,real(T),B}(imag(a.coeff), a.ublade)
+Base.imag(a::CompositeMultivector{sig,<:AbstractVector}) where {sig,k} = _constructor(a)(imag(a.comps))
+Base.imag(a::CompositeMultivector{sig,<:AbstractDict}) where {sig,k} = _constructor(a)(mapcomps(a, imag))
 
 
 
@@ -615,7 +626,6 @@ end
 
 
 # basis(M::Type{<:CompositeMultivector{sig,C}}, i) where {sig,C<:AbstractDict} = M(C(ublade_bv(sig, keytype(M), i) => one(eltype(M))))
-basis(M::OffsetSignature{sig,indices}, i::Integer) where {sig,indices} = basis(sig, unoffset_index(M, i))
 basis(M::OffsetSignature{sig,indices}) where {sig,indices} = OffsetVector([basis(M, i) for i ∈ indices], indices)
 
 basis(M::Type{<:AbstractMultivector}) = [basis(M, i) for i ∈ 1:dimension(M)]
@@ -648,7 +658,7 @@ julia> basis(EuclideanSignature, :t)
  1.0 t
 ```
 """
-basis(sig::Sig, i::Integer) = basis(Blade{sig,1,Float64,best_ublade_type(sig)}, i)
+basis(sig::Sig, i::Integer) = basis(Blade{sig,1,Float64,best_ublade_type(sig)}, unoffset_index(sig, i))
 basis(sig::Sig) = [basis(sig, i) for i ∈ 1:dimension(sig)]
 
 # good? bad? generate all 2^dimension(sig) basis multivectors?

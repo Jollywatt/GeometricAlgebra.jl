@@ -120,19 +120,31 @@ Add a `basis_vector_label(sig, i)` method for custom labelling for custom signat
 Add a `basis_blade_label(sig, bvs::Vector)` method for more control; defaults to concatenating 
 basis vector labels.
 
+TODO:
+redesign labelling interface
+Need one function
+
 =#
 
 basis_vector_label(sig::NamedTuple, i::Integer) = keys(sig)[i]
 basis_vector_label(sig, i::Symbol) = i
-basis_vector_label(::Union{OffsetSignature{sig},MetricSignature{sig}}, args...) where sig = basis_vector_label(sig, args...)
 
 basis_vector_labels(sig) = [basis_vector_label(sig, i) for i ∈ 1:dimension(sig)]
+
 
 function basis_blade_label(sig::T, bvs) where T
 	if hasmethod(basis_vector_label, Tuple{T,eltype(bvs)})
 		join(basis_vector_label(sig, i) for i ∈ bvs)
 	else
-		"v$(join(offset_index(sig, i) for i ∈ bvs))"
+		"v$(join(bvs))"
+	end
+end
+
+function basis_blade_label(M::OffsetSignature{sig}, bvs) where sig
+	if hasmethod(basis_vector_label, Tuple{typeof(sig),eltype(bvs)})
+		join(basis_vector_label(sig, i) for i ∈ bvs)
+	else
+		"v$(join(offset_index(M, i) for i ∈ bvs))"
 	end
 end
 

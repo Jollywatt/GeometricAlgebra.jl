@@ -239,7 +239,7 @@ Base.abs2(a::Blade) = abs2(a.coeff)*ublade_square(signature(a), a.ublade)
 Base.abs2(a) = a'a
 
 Base.abs(a) = let n = abs2(a)
-	isscalar(n) || @warn "norm is not scalar" a
+	isscalar(n) || @warn "norm is not scalar" n
 	rsqrt(scalar(n)) # is this appropriate?
 end
 

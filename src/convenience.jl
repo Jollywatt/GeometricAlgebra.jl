@@ -16,10 +16,18 @@ function generate_blades(combos, sig)
 end
 generate_blades(sig) = generate_blades(x -> [[i] for i ∈ x], sig)
 
-function parse_sig(args...)
+parse_sig(sig::AbstractString) = Tuple(get(Dict('+'=>1, '-'=>-1, '0'=>0), i) do i
+	error("Invalid character in signature string: $i")
+end for i ∈ sig)
+
+function parse_sig(ctx, args...)
 	if length(args) == 1
 		# signature specified by literal
-		return eval(first(args))
+		sig = @eval ctx $(first(args))
+		if sig isa AbstractString
+			return parse_sig(sig)
+		end
+		return sig
 	end
 
 	# signature specified by series of exprs `label[=square]`
@@ -31,7 +39,7 @@ function parse_sig(args...)
 		elseif bv isa Expr && bv.head == :(=)
 			label, sq = bv.args
 		else
-			error("invalid syntax $bv in signature")
+			error("Invalid syntax $bv in signature")
 		end
 		push!(labels, label)
 		push!(squares, sq)
@@ -40,11 +48,11 @@ function parse_sig(args...)
 end
 
 macro basis(args...)
-	generate_blades(powerset, parse_sig(args...))
+	generate_blades(powerset, parse_sig(__module__, args...))
 end
 
-macro basisperm(args...)
-	generate_blades(parse_sig(args...)) do bvs
+macro basisfull(args...)
+	generate_blades(parse_sig(__module__, args...)) do bvs
 		Iterators.flatten(permutations.(powerset(bvs)))
 	end
 end

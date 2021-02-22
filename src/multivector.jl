@@ -665,7 +665,7 @@ basis(sig, i::Symbol) = Blade{sig,1,Float64,Vector{Symbol}}(1, [i])
 """
 	vol(x)
 
-The volume form or psuedoscalar element.
+The volume form or pseudoscalar element.
 
 Examples
 ===

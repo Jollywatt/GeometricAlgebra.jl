@@ -15,7 +15,7 @@ using Combinatorics: powerset, permutations
 
 export AbstractMultivector, Blade, Multivector, MixedMultivector
 
-export basis, @basis, @basisperm
+export basis, @basis, @basisfull
 export signature, dimension
 export grade, grades
 export scalar, isscalar

@@ -74,6 +74,8 @@ end
 
 #= ALGEBRAIC PRODUCTS =#
 
+# TODO: Multivector{k}*Multivector{0} should give Multivector{k}
+
 function geometric_prod(a::Blade, b::Blade)
 	sig = shared_sig(a, b)
 	factor, u = ubladeprod(sig, a.ublade, b.ublade)
@@ -195,6 +197,9 @@ involute(a::MixedMultivector) = mapcomps(u -> (iseven(grade(u)) ? u : -u).coeff,
 # is this appropriate?
 Base.adjoint(a::AbstractMultivector) = reversion(a)
 
+# don't know what this operation is yet
+conjugate(a::AbstractMultivector{sig}) where sig = mapcomps(u -> ublade_square(sig, u.ublade)*u.coeff, a)
+
 
 
 """
@@ -206,11 +211,11 @@ hodgedual(a)
 Hodge dual or 'star' operator, satisfying
 ``a∧★(b) == (a∗b)vol(a)``.(?)
 """
-hodgedual(a::AbstractMultivector) = reversion(a)*vol(a)
+hodgedual(a::AbstractMultivector) = reversion(a)⋅vol(a)
 # const ★ = hodgedual
 
 
-dual(a::AbstractMultivector) = a*vol(a)
+dual(a::AbstractMultivector) = a⋅vol(a)
 
 
 #= NORMS =#
@@ -256,7 +261,7 @@ end
 Base.inv(a::Blade) = a/(reversionsign(grade(a))ublade_square(signature(a), a.ublade)) # blades are guaranteed to have scalar squares
 function Base.inv(a::AbstractMultivector)
 	a² = a^2
-	isscalar(a²) && return a/scalar(a²)::typeof(a)
+	isscalar(a²) && return (a/scalar(a²))::typeof(a)
 
 	inv_matrixmethod(a)
 	# error("cannot find inverse of multivector $a")
@@ -329,9 +334,14 @@ end
 ^(a::AbstractMultivector, p) = error("unsupported multivector exponent type $(typeof(p))")
 
 
+SERIES_ORDER = 10
+set_order(n) = begin
+	global SERIES_ORDER
+	SERIES_ORDER = n
+end
 function eval_taylor_series(a::AbstractMultivector, func)
 	T = eltype(a)
-	order = 20
+	order = SERIES_ORDER
 	series = func(Taylor1(T, order))
 	series(a)
 end

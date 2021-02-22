@@ -52,7 +52,7 @@ ublade_bvs(sig, ublade::Unsigned) = convert_ublade(sig, Vector{Int}, ublade)
 ublade_bvs(sig, ublade::Vector) = ublade
 
 # scalar square of unit blade
-ublade_square(sig, ublade) = prod(sig[i] for i ∈ ublade_bvs(sig, ublade))
+ublade_square(sig, ublade) = reduce(*, (sig[i] for i ∈ ublade_bvs(sig, ublade)); init=1)
 
 
 

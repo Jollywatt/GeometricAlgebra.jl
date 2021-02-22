@@ -19,7 +19,7 @@ generate_blades(sig) = generate_blades(x -> [[i] for i ∈ x], sig)
 function parse_sig(args...)
 	if length(args) == 1
 		# signature specified by literal
-		return @eval $(first(args))
+		return eval(first(args))
 	end
 
 	# signature specified by series of exprs `label[=square]`

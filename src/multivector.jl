@@ -351,7 +351,7 @@ function mapcomps!(f::Function, a::CompositeMultivector)
 	a
 end
 function mapcomps(f::Function, a::Blade)
-	Blade{signature(a)}(f(a.ublade, a.coeff), a.ublade)
+	Blade{signature(a)}(f(a), a.ublade)
 end
 mapcomps(f::Function, a::AbstractMultivector) = mapcomps!(f, deepcopy(a))
 
@@ -371,6 +371,7 @@ Base.zero(T::Type{<:CompositeMultivector{sig,C}}) where {sig,C<:AbstractDict} = 
 Base.zero(::Type{<:Blade{sig,k,T}}) where {sig,k,T} = zero(Blade{sig,k,T,UInt})
 Base.zero(::Type{<:Blade{sig,k}}) where {sig,k} = zero(Blade{sig,k,Float64})
 Base.zero(::Type{<:Multivector{sig,k}}) where {sig,k} = zero(Multivector{sig,k,Vector{Float64}})
+Base.zero(::Type{<:MixedMultivector{sig}}) where {sig} = zero(MixedMultivector{sig,Vector{Float64}})
 
 Base.iszero(a::Blade) = iszero(a.coeff)
 Base.iszero(a::CompositeMultivector{sig,C}) where {sig,C<:AbstractVector} = iszero(a.comps)
@@ -382,12 +383,12 @@ Base.oneunit(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig}(one(T), a.ublad
 
 function Base.one(T::Type{<:Multivector{sig,k,C}}) where {sig,k,C}
 	a = zero(Multivector{sig,0,C}) # scalar / 0-grade
-	setcomp!(a, ublade_scalar(keytype(T)), one(eltype(T)))
+	a[] = one(eltype(a))
 	a
 end
 function Base.one(T::Type{<:MixedMultivector})
 	a = zero(T)
-	setcomp!(a, ublade_scalar(keytype(T)), one(eltype(T)))
+	a[] = one(eltype(a))
 	a
 end
 
@@ -707,6 +708,7 @@ julia> grade(x*y)
 2
 ```
 """
+grade(x::Scalar, k) = iszero(k) ? x : zero(x)
 grade(::Type{<:HomogeneousMultivector{k}}) where k = k
 grade(::HomogeneousMultivector{k}) where k = k
 grade(a::MixedMultivector) = error("mixed multivectors do not have a grade; use grades(::MixedMultivector) instead")

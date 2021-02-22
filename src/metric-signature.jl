@@ -89,7 +89,7 @@ OffsetSignature(sig, indices) = OffsetSignature{sig,indices}()
 Base.getindex(::OffsetSignature{sig}, i) where sig = sig[i]
 dimension(::OffsetSignature{sig}) where sig = dimension(sig)
 show_signature(::OffsetSignature{sig,indices}) where {sig,indices} = "$(show_signature(sig))[$indices]"
-
+Base.keys(::OffsetSignature{sig,indices}) where {sig,indices} = indices
 
 offset_index(::Any, i) = i
 offset_index(::OffsetSignature{sig,indices}, i) where {sig,indices} = indices[i]

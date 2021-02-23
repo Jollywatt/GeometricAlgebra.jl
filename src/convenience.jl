@@ -88,7 +88,7 @@ end
 """
 	@basis_perms
 
-Populate the local namespace with basis blades, like `@basis`,
+Similarly to `@basis`, populate the local namespace with basis blades,
 but include names for all permutations of the basis vectors.
 
 More than `2^n` variables are defined for a signature of

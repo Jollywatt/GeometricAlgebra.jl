@@ -14,7 +14,7 @@ subtyping `AbstractMultivector`.
 Supertype of all elements in the geometric algebra over a vector space with
 metric signature `sig`.
 
-The parameter `C` is the type which the multivector components are stored as.
+The parameter `C` is the type which the multivector components are internally stored as.
 For instance, `a::AbstractMultivector{(1,1), SparseVector{Int64}}` is a (mixed)
 multivector in the Euclidean plane with components of `eltype(a) == Int64`
 stored in a `Vector`.
@@ -33,18 +33,19 @@ Unit blade type `B` | E.g. for ``v_1∧v_3∧v_4`` | Signature
 :-------------------|:------------------|:----------------
 Unsigned            | `0b1101`          | any
 Vector{<:Integer}   | `[1, 3, 4]`       | any
-Vector{<:Symbol}    | `[:v₁, :v₃, :v₄]` | labelled
+Vector{<:Symbol}    | `[:v1, :v2, :v3]` | labelled
 
 Examples
 ===
 ```jldoctest
 julia> Blade{(1,1,1)}(42, 0b101)
-2-grade Blade{⟨+++⟩, Int64, UInt8, 2}:
- 42 v₁v₃
+Grade-2 Blade{⟨+++⟩, 2, Int64, UInt8}:
+ 42 v13
 
 julia> Blade{(x=1,y=1,z=1)}(1, [:x])
-1-grade Blade{⟨x+,y+,z+⟩, Int64, Array{Symbol,1}, 1}:
+Grade-1 Blade{⟨x+,y+,z+⟩, 1, Int64, Array{Symbol,1}}:
  1 x
+
 ```
 """
 struct Blade{sig,k,T,B} <: AbstractMultivector{sig,Pair{B,T}}
@@ -73,7 +74,7 @@ end
 	Multivector{sig,k,C} <: AbstractMultivector{sig,C}
 
 Homogeneous multivector of grade `k` in space of metric signature `sig`, containing
-`binomial(dimension(sig), k)` independent components.
+`binomial(dimension(sig), k)` components.
 
 Components are stored in the field `.comps` of type `C`, which in general may be an
 `AbstractVector{T}` or an `AbstractDict{B,T}`, where `T` is the component type.
@@ -102,7 +103,7 @@ Multivector{sig,k}(comps::C) where {sig,k,C} = Multivector{sig,k,C}(comps)
 	MixedMultivector{sig}(comps)
 
 Inhomogeneous multivector in vector space of metric signature `sig`,
-containing `2^dimension(sig)` independent components of mixed grade.
+containing `2^dimension(sig)` components of varying grade.
 
 Components are stored in the field `.comps` of type `C`, which in
 general may be an `AbstractVector{T}` or an `AbstractDict{B,T}`,
@@ -117,8 +118,8 @@ Examples
 julia> MixedMultivector{(1,1,1)}(Dict(Int[] => 1, [1] => 2, [1,2] => 3))
 MixedMultivector{⟨+++⟩, Dict{Array{Int64,1},Int64}}:
  1
- 2 v₁
- 3 v₁v₂
+ 2 v1
+ 3 v12
 
 julia> basis((x=1, y=1), 1) + 7
 MixedMultivector{⟨x+,y+⟩, Array{Float64,1}}:
@@ -186,8 +187,8 @@ Examples
 ===
 ```jldoctest
 julia> Blade{(1,1,1)}(42, 0b101)
-2-grade Blade{⟨+++⟩, Int64, UInt8, 2}:
- 42 v₁v₃
+Grade-2 Blade{⟨+++⟩, 2, Int64, UInt8}:
+ 42 v13
 
 julia> keytype(ans)
 UInt8
@@ -228,7 +229,7 @@ Examples
 ===
 ```jldoctest
 julia> x = Blade{(x=1, y=1)}(1, [:x])
-1-grade Blade{⟨x+,y+⟩, Int64, Array{Symbol,1}, 1}:
+Grade-1 Blade{⟨x+,y+⟩, 1, Int64, Array{Symbol,1}}:
  1 x
 
 julia> signature(x)
@@ -264,11 +265,12 @@ Examples
 julia> x, y, z = basis((1,1,1));
 
 
+
 julia> blades(1 + 2x + 3y*z)
-3-element Array{Blade{(1, 1, 1),Float64,UInt8,k} where k,1}:
+3-element Array{Blade{(1, 1, 1),k,Float64,UInt64} where k,1}:
  1.0
- 2.0 v₁
- 3.0 v₂v₃
+ 2.0 v1
+ 3.0 v23
 ```
 """
 blades(a::Blade) = iszero(a) ? typeof(a)[] : [a]
@@ -593,17 +595,24 @@ For mixed multivector types, this gives the basis vectors / 1-blades.
 Examples
 ===
 ```jldoctest
-julia> x, y, z = basis(Blade{(1,1,1),Float64,UInt,1})
-3-element Array{Blade{⟨+++⟩, Float64, UInt64, 1},1}:
- 1.0 v₁
- 1.0 v₂
- 1.0 v₃
+julia> x, y, z = basis(Blade{(1,1,1),1,Float64,UInt})
+3-element Array{Blade{⟨+++⟩, 1, Float64, UInt64},1}:
+ 1.0 v1
+ 1.0 v2
+ 1.0 v3
 
-julia> basis(Blade{(1,1,1),Float64,UInt,1}, 2) == y
+julia> basis(Blade{(1,1,1),1,Float64,UInt}, 2) == y
 true
 
-julia> basis(Multivector{(1,1,1),Vector{Int},2}, 1) == x*y
-true
+julia> basis(Multivector{(1,1,1),2,Vector{Int}}, 1) == x*y
+ERROR: MethodError: no method matching basis(::Type{Multivector{⟨+++⟩, 2, Array{Int64,1}}}, ::Int64)
+Closest candidates are:
+  basis(!Matched::Type{Blade{sig,k,T,B}}, ::Integer) where {sig, k, T, B} at /Users/jollywatt/Documents/JuliaPackages/GeometricAlgebra.jl/src/multivector.jl:623
+  basis(!Matched::Type{Multivector{sig,k,C} where C}, ::Integer) where {sig, k} at /Users/jollywatt/Documents/JuliaPackages/GeometricAlgebra.jl/src/multivector.jl:624
+  basis(!Matched::Type{var"#s35"} where var"#s35"<:(MixedMultivector{sig,C} where C), ::Integer) where sig at /Users/jollywatt/Documents/JuliaPackages/GeometricAlgebra.jl/src/multivector.jl:629
+  ...
+Stacktrace:
+ [1] top-level scope at none:1
 ```
 
 """
@@ -644,16 +653,16 @@ Examples
 ===
 ```jldoctest
 julia> basis((x=1, y=1))
-2-element Array{Blade{⟨x+,y+⟩, Float64, UInt8, 1},1}:
+2-element Array{Blade{⟨x+,y+⟩, 1, Float64, UInt8},1}:
  1.0 x
  1.0 y
 
 julia> basis((-1,1,1,1), 2)
-1-grade Blade{⟨-+++⟩, Float64, UInt8, 1}:
- 1.0 v₂
+Grade-1 Blade{⟨-+++⟩, 1, Float64, UInt8}:
+ 1.0 v2
 
 julia> basis(EuclideanSignature, :t)
-1-grade Blade{EuclideanSignature, Float64, Array{Symbol,1}, 1}:
+Grade-1 Blade{EuclideanSignature, 1, Float64, Array{Symbol,1}}:
  1.0 t
 ```
 """
@@ -671,12 +680,12 @@ Examples
 ===
 ```jldoctest
 julia> x = basis((1, 1, 1), 1)
-1-grade Blade{⟨+++⟩, Float64, UInt8, 1}:
- 1.0 v₁
+Grade-1 Blade{⟨+++⟩, 1, Float64, UInt8}:
+ 1.0 v1
 
 julia> vol(x)
-3-grade Blade{⟨+++⟩, Float64, UInt8, 3}:
- 1.0 v₁v₂v₃
+Grade-3 Blade{⟨+++⟩, 3, Float64, UInt8}:
+ 1.0 v123
 ```
 """
 function vol(T::Type{<:AbstractMultivector{sig}}) where sig
@@ -699,10 +708,10 @@ Examples
 ===
 ```jldoctest
 julia> x, y, z = basis((1,1,1))
-3-element Array{Blade{⟨+++⟩, Float64, UInt8, 1},1}:
- 1.0 v₁
- 1.0 v₂
- 1.0 v₃
+3-element Array{Blade{⟨+++⟩, 1, Float64, UInt8},1}:
+ 1.0 v1
+ 1.0 v2
+ 1.0 v3
 
 julia> grade(x*y)
 2
@@ -722,10 +731,10 @@ Examples
 ===
 ```jldoctest
 julia> x, y, z = basis((1,1,1))
-3-element Array{Blade{⟨+++⟩, Float64, UInt8, 1},1}:
- 1.0 v₁
- 1.0 v₂
- 1.0 v₃
+3-element Array{Blade{⟨+++⟩, 1, Float64, UInt8},1}:
+ 1.0 v1
+ 1.0 v2
+ 1.0 v3
 
 julia> grades(1 + x*y)
 2-element Array{Int64,1}:
@@ -745,7 +754,7 @@ Examples
 ===
 ```jldoctest; setup = :( (x, y) = basis((x=1,y=1)) )
 julia> grade(x + 1 + y + x*y, 1)
-1-grade Multivector{⟨x+,y+⟩, Array{Float64,1}, 1}:
+Grade-1 Multivector{⟨x+,y+⟩, 1, Array{Float64,1}}:
  1.0 x
  1.0 y
 ```
@@ -764,6 +773,10 @@ end
 
 scalar(a::Number) = a
 scalar(a::AbstractMultivector) = grade(a, 0)[]
+
+# Good idea?
+# pseudoscalar(a::Number) = zero(a)
+# pseudoscalar(a::AbstractMultivector) = first(blades(grade(a, dimension(a)))).coeff
 
 isscalar(a::Number) = true
 isscalar(a::HomogeneousMultivector{0}) = true

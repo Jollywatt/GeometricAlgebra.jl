@@ -17,4 +17,6 @@ deploy() = deploydocs(
 if "deploy" in ARGS
 	make()
 	deploy()
+elseif "make" in ARGS
+	make()
 end

@@ -227,7 +227,7 @@ Real-valued square root defined on all real numbers as `sign(x)sqrt(abs(x))`.
 
 Examples
 ===
-```
+```jldoctest; setup = :( using GeometricAlgebra: rsqrt )
 julia> rsqrt(-9)
 -3.0
 ```

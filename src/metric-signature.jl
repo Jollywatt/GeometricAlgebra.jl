@@ -55,7 +55,8 @@ function show_signature(sig::NamedTuple{labels,<:Tuple{Vararg{<:Integer}}}) wher
 	"⟨$(join(items, ","))⟩"
 end
 
-show_signature(sig::Type) = repr(sig)
+# fallback
+show_signature(sig) = repr(sig)
 
 
 

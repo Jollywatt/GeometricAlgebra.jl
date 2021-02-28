@@ -28,6 +28,7 @@ if isempty(ARGS)
 		`deploy()` - build and deploy to github
 		`fix()` - fix doctests
 		Keep the session alive; changes will be revised and successive runs will be faster.
+		Alternatively, run this script passing a command (without parentheses) as an argument.
 		"""
 end
 

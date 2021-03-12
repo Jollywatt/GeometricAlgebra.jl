@@ -8,12 +8,15 @@ function runtests(files...)
 	nothing
 end
 
+cd(joinpath(dirname(pathof(GeometricAlgebra)), "..", "test"))
+
 if isempty(ARGS)
 	@info """Run this script in intreactive mode, and call
-		`@runtests "testfile1" "testfile2" ...`
+		`runtests("testfile1", "testfile2", ...)`
 		(without `.jl` extensions) to run tests.
 		Keep the session alive; changes will be revised and successive runs will be faster.
 		"""
+		!isinteractive() && runtests()
 else
 	runtests(ARGS...)
 end

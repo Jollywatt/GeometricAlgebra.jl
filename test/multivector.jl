@@ -1,3 +1,24 @@
+@testset "best_type" begin
+	using GeometricAlgebra: best_type
+	@test best_type(Blade, Blade{:sig,1,Float32,UInt}) == Blade{:sig,k,Float32,UInt} where k
+	@test best_type(Multivector, Blade{:sig,1,Float64,UInt}) == Multivector{:sig,k,Vector{Float64}} where k
+	@test best_type(MixedMultivector, Blade{:sig,1,BigInt,UInt}) == MixedMultivector{:sig,Vector{BigInt}}
+
+	@test best_type(Multivector, Blade{:sig,1,BigFloat,Vector{Symbol}}) == Multivector{:sig,k,Dict{Vector{Symbol},BigFloat}} where k
+	@test best_type(MixedMultivector, Blade{:sig,1,Complex{Int},Vector{Int}}) == MixedMultivector{:sig,Dict{Vector{Int},Complex{Int}}}
+
+	@test best_type(Blade, Blade{:sig,1,Int,UInt},  Blade{:sig,2,Float64,UInt}) == Blade{:sig,k,Float64,UInt} where k
+
+	@test best_type(Blade, Blade{:sig,1,Float32,UInt}; grade=Val(3)) == Blade{:sig,3,Float32,UInt}
+	@test best_type(Multivector, Blade{:sig,1,Float32,UInt}; grade=Val(3)) == Multivector{:sig,3,Vector{Float32}}
+
+	@test best_type(Multivector, Blade{:sig,1,Float32,UInt}, Multivector{:sig,2,Vector{Rational{Int}}}; grade=Val(3)) == Multivector{:sig,3,Vector{Float32}}
+	@test best_type(Multivector, Blade{:sig,1,Float32,Vector{Int}}, Multivector{:sig,2,Vector{Rational{Int}}}; grade=Val(3)) == Multivector{:sig,3,Dict{Vector{Int},Float32}}
+
+	x = Blade{(1,1,1)}(Float32(pi), 0b101)
+	@test best_type(Multivector, x) == Multivector{(1,1,1),k,Vector{Float32}} where k
+end
+
 @testset "promotion" begin
 	sig = (x=1,y=1,z=1)
 	xs = Any[
@@ -17,7 +38,6 @@
 		@test promote(a, b) isa Tuple{T,T}
 	end
 end
-
 
 @testset "geometric prod" begin
 	t, x, y, z = basis((-1,1,1,1))

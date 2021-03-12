@@ -20,12 +20,13 @@ compmul(x::Scalar, comps::AbstractDict) = Dict(ublade => val*b for (ublade, val)
 
 # addition of same-grade elements to produce homogeneous multivector
 function +(as::HomogeneousMultivector{k}...) where k
-	T = best_type(Multivector, as...; k)
+	T = best_type(Multivector, as...; grade=Val(k))
 	Σ = zero(T)
 	for a ∈ as, u ∈ blades(a)
 		add!(Σ, u)
 	end
 	Σ
+	# sum(sum, (blades(u) for u in as))
 end
 
 # addition of possibly mixed grade elements to produce inhomogeneous multivector
@@ -42,14 +43,14 @@ end
 +(a::Blade{sig,0}, b::Scalar) where sig = Blade{sig,0}(a.coeff + b, a.ublade)
 	
 function +(a::Multivector{sig,0}, b::Scalar) where sig
-	ab = zero(best_type(Multivector, a, k=0, el=typeof(b)))
+	ab = zero(best_type(Multivector, a, grade=Val(0), el=Val(typeof(b))))
 	add!(ab, a)
 	ab[] += b
 	ab
 end
 
 function +(a::AbstractMultivector, b::Scalar)
-	ab = zero(best_type(MixedMultivector, a, el=typeof(b)))
+	ab = zero(best_type(MixedMultivector, a, el=Val(typeof(b))))
 	add!(ab, a)
 	ab[] += b
 	ab
@@ -93,11 +94,11 @@ function homogeneous_prod(a::Blade, b::Blade, k)
 	if ublade_grade(ublade_xor(a.ublade, b.ublade)) == k
 		geometric_prod(a, b)
 	else
-		zero(best_type(Blade, a, b; k))
+		zero(best_type(Blade, a, b; grade=Val(k)))
 	end
 end
 function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, k)
-	ab = zero(best_type(Multivector, a, b; k))
+	ab = zero(best_type(Multivector, a, b; grade=Val(k)))
 	0 <= k <= dimension(a) || return ab
 	for u ∈ blades(a), v ∈ blades(b)
 		add!(ab, homogeneous_prod(u, v, k))

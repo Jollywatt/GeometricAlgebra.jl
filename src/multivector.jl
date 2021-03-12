@@ -69,7 +69,6 @@ end
 
 
 
-
 """
 	Multivector{sig,k,C} <: AbstractMultivector{sig,C}
 
@@ -222,8 +221,7 @@ Base.keytype(::T) where T<:AbstractMultivector = keytype(T)
 Return the metric signature associated with the given multivector or multivector type. 
 
 Metric signatures can be any object implementing `getindex` to return the norm of a
-given basis vector.
-Signatures may be `Tuple`s, `NamedTuple`s, or instances of `AbstractMetricSignature`.
+given basis vector. Examples include `Tuple`s, `NamedTuple`s, or instances of `AbstractMetricSignature`.
 
 Examples
 ===
@@ -263,8 +261,6 @@ Examples
 
 ```jldoctest
 julia> x, y, z = basis((1,1,1));
-
-
 
 julia> blades(1 + 2x + 3y*z)
 3-element Array{Blade{(1, 1, 1),k,Float64,UInt64} where k,1}:
@@ -325,7 +321,7 @@ function add!(a::AbstractMultivector, b::Scalar)
 	a
 end
 function add!(a::AbstractMultivector, b::AbstractMultivector)
-	iszero(b) && return a
+	# iszero(b) && return a # if b is empty, blades(b) is empty too
 	for u ∈ blades(b)
 		setcomp!(a, u.ublade, getcomp(a, u.ublade) + u.coeff)
 	end
@@ -401,45 +397,94 @@ Base.one(a::AbstractMultivector) = one(typeof(a))
 
 
 
-# MULTIVECTOR TYPE GYMNASTICS
+#= MULTIVECTOR TYPE GYMNASTICS
+
+Different `<:AbstractMultivector{sig}` instances are _compatible_ if they
+share the same metric signature `sig`. Compatible multivectors may be promoted
+to a common type.
+This involves promoting the `eltype`, ublade type, and for `CompositeMultivector`s,
+the storage type (whether components are stored in a vector, dict, etc).
+Promotion does *not* change the grade parameter `k` of `HomogeneousMultivector`s.
+=#
 
 # assert that multivectors share same metric signature and return it
 shared_sig(::Type{<:AbstractMultivector{sig}}...) where sig = sig
 shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share the same metric signature")
 shared_sig(as::AbstractMultivector...) = shared_sig(typeof.(as)...)
 
-# give the most sensible storage type of a CompositeMultivector with given signature, eltype, and keytype
-storagetype(sig, T, B::Type{<:Unsigned}) = sig_has_dim(sig) && dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
-storagetype(sig, T, B) = Dict{B,T}
 
-# function storagetype(sig, T, B)
-# 	sig_has_dim(sig) || return Dict{B,T}
-# 	dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
-# end
+# `StorageType` is a wrapper for multivector storage types (e.g., `Vector{Float64}` or `Dict{<ublade_type>,<eltype>}`)
+# which harnesses the built-in promotion system.
+struct StorageType{T}
+	StorageType(T) = new{T}()
+end
+unwrap(::Type{StorageType{T}}) where T = T
 
-# give the most sensible <:AbstractMultivector type which can represent the given arguments
-function best_type(::Type{Blade}, as::Type{<:AbstractMultivector}...; k=missing, el=Union{})
+# for `Blade`s, `storagetype` returns the preferred default storage type for composite multivectors.
+storagetype(::Type{<:Blade{sig,k,T,B} where k}) where {sig,T,B<:Union{UInt8,UInt16,UInt32,UInt64}} = StorageType{Vector{T}}
+storagetype(::Type{<:Blade{sig,k,T,B} where k}) where {sig,T,B} = StorageType{Dict{B,T}}
+storagetype(::Type{<:CompositeMultivector{sig,C}}) where {sig,C} = StorageType{C}
+
+# as storage types, dicts are more general than vectors
+Base.promote_rule(::Type{StorageType{Vector{T}}}, ::Type{StorageType{Vector{S}}}) where {T,S} = StorageType{Vector{promote_type(T, S)}}
+Base.promote_rule(::Type{StorageType{Dict{B,T}}}, ::Type{StorageType{Vector{S}}}) where {B,T,S} = StorageType{Dict{B,promote_type(T, S)}}
+Base.promote_rule(::Type{StorageType{Dict{B1,T1}}}, ::Type{StorageType{Dict{B2,T2}}}) where {B1,B2,T1,T2} = StorageType{Dict{promote_ublade_type(B1, B2),promote_type(T1, T2)}}
+
+# promote the eltype of a multivector type
+promote_mv_eltype(::Type{Vector{T}}, ::Val{S}) where {T,S}   = Vector{promote_type(T, S)}
+promote_mv_eltype(::Type{Dict{B,T}}, ::Val{S}) where {B,T,S} = Dict{B,promote_type(T, S)}
+
+promote_mv_eltype(::Type{Blade{sig,k,T,B}}, ::Val{S})             where {sig,k,T,B,S} = Blade{sig,k,promote_type(T, S),B}
+promote_mv_eltype(::Type{Blade{sig,k,T,B} where k}, ::Val{S})     where {sig,T,B,S}   = Blade{sig,k,promote_type(T, S),B} where k
+promote_mv_eltype(::Type{Multivector{sig,k,C}}, ::Val{S})         where {sig,k,C,S}   = Multivector{sig,k,promote_mv_eltype(C, Val(S))}
+promote_mv_eltype(::Type{Multivector{sig,k,C} where k}, ::Val{S}) where {sig,C,S}     = Multivector{sig,k,promote_mv_eltype(C, Val(S))} where k
+promote_mv_eltype(::Type{MixedMultivector{sig,C}}, ::Val{S})      where {sig,C,S}     = MixedMultivector{sig,promote_mv_eltype(C, Val(S))}
+promote_mv_eltype(A, ::Type{T}) where T = promote_mv_eltype(A, Val(T))
+
+# set the grade parameter `k` of a (homogeneous) multivector type, dispatching on `k::Integer`
+set_grade(::Type{<:Blade{sig,k′,T,B} where k′}, ::Val{k}) where {sig,T,B,k} = Blade{sig,k,T,B}
+set_grade(::Type{<:Multivector{sig,k′,C} where k′}, ::Val{k}) where {sig,C,k} = Multivector{sig,k,C}
+set_grade(T, k::Integer) = set_grade(T, Val(k)) # not type stable
+
+"""
+	_best_type(::Type{M}, as::Type{<:AbstractMultivector}...)
+
+Given `M` in `(Blade, Multivector, MixedMultivector)`, give the best concrete subtype of `M`
+which can simultaneously represent objects with types `as...`.
+E.g., `_best_type(M, Blade{:sig,2,UInt8,Int8}, Multivector{:sig,1,Vector{Int},Float64})`
+returns a concrete `M` type with eltype `Float64` and ublade type `Vector{Int}`.
+"""
+function _best_type(::Type{Blade}, as::Type{<:AbstractMultivector}...)
 	sig = shared_sig(as...)
-	T = promote_type(el, eltype.(as)...)
-	B = promote_ublade_type(keytype.(as)...)
-	ismissing(k) ? Blade{sig,k,T,B} where k : Blade{sig,k,T,B}
+	T = promote_type(eltype.(as)...)
+	B = promote_type(keytype.(as)...)
+	Blade{sig,k,T,B} where k
 end
-function best_type(::Type{Multivector}, as::Type{<:AbstractMultivector}...; k=missing, el=Union{})
+function _best_type(::Type{Multivector}, as::Type{<:AbstractMultivector}...)
 	sig = shared_sig(as...)
-	T = promote_type(el, eltype.(as)...)
-	B = promote_ublade_type(keytype.(as)...)
-	C = storagetype(sig, T, B)
-	ismissing(k) ? Multivector{sig,k,C} where k : Multivector{sig,k,C}
+	C = promote_type(storagetype.(as)...) |> unwrap
+	Multivector{sig,k,C} where k
 end
-function best_type(::Type{MixedMultivector}, as::Type{<:AbstractMultivector}...; el=Union{})
+function _best_type(::Type{MixedMultivector}, as::Type{<:AbstractMultivector}...)
 	sig = shared_sig(as...)
-	T = promote_type(el, eltype.(as)...)
-	B = promote_ublade_type(keytype.(as)...)
-	C = storagetype(sig, T, B)
+	C = promote_type(storagetype.(as)...) |> unwrap
 	MixedMultivector{sig,C}
 end
-best_type(T, as::AbstractMultivector...; args...) = best_type(T, typeof.(as)...; args...)
 
+_best_type(::Type{<:Blade{sig,k,T,B} where k}) where {sig,T,B} = Blade{sig,k,T,B} where k
+_best_type(::Type{<:Multivector{sig,k,C} where k}) where {sig,C} = Multivector{sig,k,C} where k
+_best_type(::Type{<:MixedMultivector{sig,C}}) where {sig,C} = MixedMultivector{sig,C}
+
+# @generated to achieve type stability
+@generated _best_type(::Type{M}, a::AbstractMultivector, bs::AbstractMultivector...) where M = _best_type(M, a, bs...)
+
+
+function best_type(args...; grade::Val=Val(nothing), el::Val=Val(nothing))
+	T = _best_type(args...)
+	grade === Val(nothing) || (T = set_grade(T, grade))
+	el === Val(nothing) || (T = promote_mv_eltype(T, el))
+	T
+end
 
 
 #= CONSTRUCTORS TO CONVERT FROM LOWER MULTIVECTOR TYPES
@@ -456,9 +501,9 @@ MixedMultivector(a::AbstractMultivector) = add!(zero(best_type(MixedMultivector,
 
 ## CONVERSION
 # need to be able to convert to types returned by `best_type`
+# must convert to type identically except for possibly the grade parameter (which should not be changed)
 
 # Conversion of element type
-# must return identical type except for possibly the grade parameter (which should not change)
 Base.convert(::Type{<:Blade{sig,k,T,B} where k}, a::Blade) where {sig,T,B} = Blade{sig,grade(a),T,B}(a.coeff, convert_ublade(sig, B, a.ublade))
 Base.convert(::Type{<:Multivector{sig,k,C} where k}, a::Multivector) where {sig,C} = add!(zero(Multivector{sig,grade(a),C}), a)
 Base.convert(::Type{<:MixedMultivector{sig,C}}, a::MixedMultivector) where {sig,C} = add!(zero(MixedMultivector{sig,C}), a)
@@ -475,7 +520,7 @@ Base.convert(T::Type{<:MixedMultivector}, a::Scalar) = zero(T) + a
 
 
 ## PROMOTION
-# Promotion should convert to same type *except for grade parameter*, which may remain different.
+# promotion should give same type except for the grade parameter, which may remain different.
 
 # Same multivector type
 Base.promote_rule(T::Type{<:Blade}, S::Type{<:Blade}) = best_type(Blade, T, S)
@@ -483,33 +528,28 @@ Base.promote_rule(T::Type{<:Multivector}, S::Type{<:Multivector}) = best_type(Mu
 Base.promote_rule(T::Type{<:MixedMultivector}, S::Type{<:MixedMultivector}) = best_type(MixedMultivector, T, S)
 
 # Promotion to higher multivector type
-# warning: these may throw shared_sig error
 Base.promote_rule(T::Type{<:Multivector}, S::Type{<:Blade}) = best_type(Multivector, T, S)
 Base.promote_rule(T::Type{<:MixedMultivector}, S::Type{<:AbstractMultivector}) = best_type(MixedMultivector, T, S)
 
 # Promotion from scalars
-Base.promote_rule(::Type{<:Blade{sig,k,T,B} where k}, S::Type{<:Scalar}) where {sig,T,B} = Blade{sig,k,promote_type(T, S),B} where k
-Base.promote_rule(T::Type{<:Multivector{sig,k,C} where k}, S::Type{<:Scalar}) where {sig,C} = best_type(Multivector, T; el=S)
-Base.promote_rule(T::Type{<:MixedMultivector{sig,C}}, S::Type{<:Scalar}) where {sig,C} = best_type(MixedMultivector, T; el=S)
+Base.promote_rule(T::Type{<:AbstractMultivector}, S::Type{<:Scalar}) = best_type(T; el=Val(S))
 
 # hack: need to treat `<:HomogeneousMultivector`s of nearly-identical types except for
 # differing grade as "the same type" as far as promotion is concerned
 Base.promote(as::(Blade{sig,k,T,B} where k)...) where {sig,T,B} = as
 Base.promote(as::(Multivector{sig,k,C} where k)...) where {sig,C} = as
 
-replace_eltype(::Type{<:Vector}, T) = Vector{T}
-replace_eltype(::Type{<:Dict{B}}, T) where B = Dict{B,T}
-replace_eltype(::Type{<:Blade{sig,k,T,B} where T}, T) where {sig,k,B} = Blade{sig,k,T,B}
-replace_eltype(::Type{<:Multivector{sig,k,C}}, T) where {sig,k,C} = Multivector{sig,k,replace_eltype(C, T)}
-replace_eltype(::Type{<:MixedMultivector{sig,C}}, T) where {sig,C} = MixedMultivector{sig,replace_eltype(C, T)}
 
-Base.float(T::Type{<:AbstractMultivector}) = replace_eltype(T, float(eltype(T)))
+
+
+
+Base.float(T::Type{<:AbstractMultivector}) = best_type(T; el=Val(float(eltype(T))), grade=Val(grade(T)))
 Base.float(a::AbstractMultivector) = convert(float(typeof(a)), a)
 
-Base.big(T::Type{<:AbstractMultivector}) = replace_eltype(T, big(eltype(T)))
+Base.big(T::Type{<:AbstractMultivector}) = best_type(T; el=Val(big(eltype(T))), grade=Val(grade(T)))
 Base.big(a::AbstractMultivector) = convert(big(typeof(a)), a)
 
-Base.complex(T::Type{<:AbstractMultivector}) = replace_eltype(T, complex(eltype(T)))
+Base.complex(T::Type{<:AbstractMultivector}) = best_type(T; el=Val(complex(eltype(T))), grade=Val(grade(T)))
 Base.complex(a::AbstractMultivector) = convert(complex(typeof(a)), a)
 
 _constructor(::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}
@@ -595,7 +635,7 @@ For mixed multivector types, this gives the basis vectors / 1-blades.
 Examples
 ===
 ```jldoctest
-julia> x, y, z = basis(Blade{(1,1,1),1,Float64,UInt})
+julia> x, y, z = basis(Blade{(1,1,1),1})
 3-element Array{Blade{⟨+++⟩, 1, Float64, UInt64},1}:
  1.0 v1
  1.0 v2
@@ -605,14 +645,7 @@ julia> basis(Blade{(1,1,1),1,Float64,UInt}, 2) == y
 true
 
 julia> basis(Multivector{(1,1,1),2,Vector{Int}}, 1) == x*y
-ERROR: MethodError: no method matching basis(::Type{Multivector{⟨+++⟩, 2, Array{Int64,1}}}, ::Int64)
-Closest candidates are:
-  basis(!Matched::Type{Blade{sig,k,T,B}}, ::Integer) where {sig, k, T, B} at /Users/jollywatt/Documents/JuliaPackages/GeometricAlgebra.jl/src/multivector.jl:623
-  basis(!Matched::Type{Multivector{sig,k,C} where C}, ::Integer) where {sig, k} at /Users/jollywatt/Documents/JuliaPackages/GeometricAlgebra.jl/src/multivector.jl:624
-  basis(!Matched::Type{var"#s35"} where var"#s35"<:(MixedMultivector{sig,C} where C), ::Integer) where sig at /Users/jollywatt/Documents/JuliaPackages/GeometricAlgebra.jl/src/multivector.jl:629
-  ...
-Stacktrace:
- [1] top-level scope at none:1
+true
 ```
 
 """
@@ -620,14 +653,21 @@ function basis end
 
 # concrete types
 
+default_params(T::DataType) = T
+default_params(::Type{Blade{sig,k}}) where {sig,k} = default_params(Blade{sig,k,Float64})
+default_params(::Type{Blade{sig,k,T}}) where {sig,k,T} = default_params(Blade{sig,k,T,UInt})
+default_params(::Type{Multivector{sig,k}}) where {sig,k} = default_params(Multivector{sig,k,Vector{Float64}})
+default_params(::Type{MixedMultivector{sig}}) where {sig} = default_params(MixedMultivector{sig,Vector{Float64}})
+
+basis(M::Type{<:Blade}, i::Integer) = basis(default_params(M), i)
 basis(M::Type{Blade{sig,k,T,B}}, i::Integer) where {sig,k,T,B} = M(one(T), lindex2ublade(k, i))
-function basis(M::Type{Multivector{sig,k}}, i::Integer) where {sig,k}
-	a = zero(M)
+function basis(M::Type{<:Multivector{sig,k}}, i::Integer) where {sig,k}
+	a = zero(default_params(M))
 	setcomp!(a, lindex2ublade(k, i), one(eltype(a)))
 	a
 end
-function basis(M::Type{<:MixedMultivector{sig}}, i::Integer) where sig
-	a = zero(M)
+function basis(M::Type{<:MixedMultivector{sig}}, i::Integer) where {sig}
+	a = zero(default_params(M))
 	setcomp!(a, lindex2ublade(1, i), one(eltype(a)))
 	a
 end

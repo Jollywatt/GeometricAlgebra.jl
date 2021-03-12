@@ -19,6 +19,7 @@ function generate_blades(combos, sig)
 end
 generate_blades(sig) = generate_blades(x -> [[i] for i ∈ x], sig)
 
+parse_sig(sig::AbstractMetricSignature) = sig # fallback
 parse_sig(sig::Tuple{Vararg{<:Integer}}) = sig
 parse_sig(sig::NamedTuple) = sig
 parse_sig(labels::Tuple{Vararg{Symbol}}) = NamedTuple{labels}(ones(Int, length(labels)))

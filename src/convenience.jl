@@ -27,7 +27,7 @@ end
 basis(T::Type{<:HomogeneousMultivector}, i::Integer; grade::Integer) = basis(set_grade(default_params(T), Val(grade)), i)
 
 """
-	basis(signature_or_type; i, [grade=1])
+	basis(signature_or_type, i; [grade=1])
 	basis(signature_or_type; [grade=1])
 
 Return the `i`th basis element of certain `grade` for the given metric signature or multivector type.

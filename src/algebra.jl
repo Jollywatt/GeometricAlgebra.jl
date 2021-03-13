@@ -274,8 +274,9 @@ function inv_matrixmethod(a::T) where T<:MixedMultivector{sig,C} where {sig,C<:A
 	T(M\one(T).comps)
 end
 
-function inv_matrixmethod(a::CompositeMultivector{sig,C}) where {sig,C}
-	d = 2^dimension(a)
+function inv_matrixmethod(a::CompositeMultivector{C}) where {C}
+	sig = signature(a)
+	d = 2^dimension(sig)
 	M = Matrix{eltype(a)}(undef, d, d)
 	for j ∈ 1:d
 		u = Blade{sig}(one(eltype(a)), unsigned(j - 1))

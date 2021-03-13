@@ -101,8 +101,8 @@ function show_blade(io::IO, sig, coeff, ublade)
 end
 
 sorted_blades(a::Blade) = blades(a)
-sorted_blades(a::CompositeMultivector{sig,<:AbstractVector}) where sig = blades(a)
-sorted_blades(a::CompositeMultivector{sig,<:AbstractDict}) where sig = sort(blades(a), by=blade_ordering)
+sorted_blades(a::CompositeMultivector{<:AbstractVector}) = blades(a)
+sorted_blades(a::CompositeMultivector{<:AbstractDict}) = sort(blades(a), by=blade_ordering)
 
 blade_ordering(a::Blade) = blade_ordering(a.ublade)
 blade_ordering(a::Unsigned) = a

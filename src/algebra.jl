@@ -43,14 +43,14 @@ end
 +(a::Blade{sig,0}, b::Scalar) where sig = Blade{sig,0}(a.coeff + b, a.ublade)
 	
 function +(a::Multivector{sig,0}, b::Scalar) where sig
-	ab = zero(best_type(Multivector, a, grade=Val(0), el=Val(typeof(b))))
+	ab = zero(best_type(Multivector, a, grade=Val(0), el=typeof(b)))
 	add!(ab, a)
 	ab[] += b
 	ab
 end
 
 function +(a::AbstractMultivector, b::Scalar)
-	ab = zero(best_type(MixedMultivector, a, el=Val(typeof(b))))
+	ab = zero(best_type(MixedMultivector, a, el=typeof(b)))
 	add!(ab, a)
 	ab[] += b
 	ab

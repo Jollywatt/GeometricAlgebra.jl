@@ -632,94 +632,6 @@ Base.isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = _isapprox(promote(
 
 
 
-
-"""
-	basis(::Type{<:AbstractMultivector}, i)
-	basis(::Type{<:AbstractMultivector})
-
-Return the `i`th basis element of the given type, or a collection of all
-such basis elements if no index is given.
-For homogeneous types with grade `k`, this gives the `i`th basis `k`-blade in lexicographic order.
-For mixed multivector types, this gives the basis vectors / 1-blades.
-
-Examples
-===
-```jldoctest
-julia> x, y, z = basis(Blade{(1,1,1),1})
-3-element Array{Blade{⟨+++⟩, 1, Float64, UInt64},1}:
- 1.0 v1
- 1.0 v2
- 1.0 v3
-
-julia> basis(Blade{(1,1,1),1,Float64,UInt}, 2) == y
-true
-
-julia> basis(Multivector{(1,1,1),2,Vector{Int}}, 1) == x*y
-true
-```
-
-"""
-function basis end
-
-# concrete types
-
-default_params(T::DataType) = T
-default_params(::Type{Blade{sig,k}}) where {sig,k} = default_params(Blade{sig,k,Float64})
-default_params(::Type{Blade{sig,k,T}}) where {sig,k,T} = default_params(Blade{sig,k,T,UInt})
-default_params(::Type{Multivector{sig,k}}) where {sig,k} = default_params(Multivector{sig,k,Vector{Float64}})
-default_params(::Type{MixedMultivector{sig}}) where {sig} = default_params(MixedMultivector{sig,Vector{Float64}})
-
-basis(M::Type{<:Blade}, i::Integer) = basis(default_params(M), i)
-basis(M::Type{Blade{sig,k,T,B}}, i::Integer) where {sig,k,T,B} = M(one(T), lindex2ublade(k, i))
-function basis(M::Type{<:Multivector{sig,k}}, i::Integer) where {sig,k}
-	a = zero(default_params(M))
-	setcomp!(a, lindex2ublade(k, i), one(eltype(a)))
-	a
-end
-function basis(M::Type{<:MixedMultivector{sig}}, i::Integer) where {sig}
-	a = zero(default_params(M))
-	setcomp!(a, lindex2ublade(1, i), one(eltype(a)))
-	a
-end
-
-
-basis(M::OffsetSignature{sig,indices}) where {sig,indices} = OffsetVector([basis(M, i) for i ∈ indices], indices)
-
-basis(M::Type{<:AbstractMultivector}) = [basis(M, i) for i ∈ 1:dimension(M)]
-basis(M::Type{<:HomogeneousMultivector{k}}) where k = [basis(M, i) for i ∈ 1:binomial(dimension(M), k)]
-
-# basis(sig::Type{<:AbstractMetricSignature}, i) = basis(sig(), i)
-Sig = Union{Tuple,NamedTuple,<:AbstractMetricSignature}
-
-"""
-	basis(sig, i)
-	basis(sig)
-
-Return a basis vector `i` for the space of metric signature `sig`,
-or a collection of all basis vectors (if `sig` has specified dimension).
-
-Examples
-===
-```jldoctest
-julia> basis((x=1, y=1))
-2-element Array{Blade{⟨x+,y+⟩, 1, Float64, UInt8},1}:
- 1.0 x
- 1.0 y
-
-julia> basis((-1,1,1,1), 2)
-Grade-1 Blade{⟨-+++⟩, 1, Float64, UInt8}:
- 1.0 v2
-
-julia> basis(EuclideanSignature, :t)
-Grade-1 Blade{EuclideanSignature, 1, Float64, Array{Symbol,1}}:
- 1.0 t
-```
-"""
-basis(sig::Sig, i::Integer) = basis(Blade{sig,1,Float64,best_ublade_type(sig)}, unoffset_index(sig, i))
-basis(sig::Sig) = [basis(sig, i) for i ∈ 1:dimension(sig)]
-
-basis(sig, i::Symbol) = Blade{sig,1,Float64,Vector{Symbol}}(1, [i])
-
 """
 	vol(x)
 
@@ -729,11 +641,11 @@ Examples
 ===
 ```jldoctest
 julia> x = basis((1, 1, 1), 1)
-Grade-1 Blade{⟨+++⟩, 1, Float64, UInt8}:
+Grade-1 Blade{⟨+++⟩, 1, Float64, UInt64}:
  1.0 v1
 
 julia> vol(x)
-Grade-3 Blade{⟨+++⟩, 3, Float64, UInt8}:
+Grade-3 Blade{⟨+++⟩, 3, Float64, UInt64}:
  1.0 v123
 ```
 """
@@ -757,7 +669,7 @@ Examples
 ===
 ```jldoctest
 julia> x, y, z = basis((1,1,1))
-3-element Array{Blade{⟨+++⟩, 1, Float64, UInt8},1}:
+3-element Array{Blade{⟨+++⟩, 1, Float64, UInt64},1}:
  1.0 v1
  1.0 v2
  1.0 v3
@@ -780,7 +692,7 @@ Examples
 ===
 ```jldoctest
 julia> x, y, z = basis((1,1,1))
-3-element Array{Blade{⟨+++⟩, 1, Float64, UInt8},1}:
+3-element Array{Blade{⟨+++⟩, 1, Float64, UInt64},1}:
  1.0 v1
  1.0 v2
  1.0 v3

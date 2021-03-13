@@ -76,6 +76,7 @@ function convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Unsigned)
 end
 
 convert_ublade(sig, T::Type{<:Unsigned}, ublade::Unsigned) = convert(T, ublade)
+convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Vector{<:Integer}) = convert(T, ublade)
 
 # Vector{<:Integer} <-> Vector{Symbol}
 convert_ublade(sig, T::Type{<:Vector{<:Integer}}, ublade::Vector{Symbol}) =

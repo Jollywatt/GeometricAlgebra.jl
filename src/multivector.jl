@@ -1,7 +1,7 @@
 #= MULTIVECTORS
 
 There are three types representing objects in the geometric algebra, all
-subtyping `AbstractMultivector`.
+subtypes of `AbstractMultivector`.
  - `Blade`: a scalar multiple of a wedge product of basis vectors
  - `Multivector`: a homogeneous multivector; a sum of same-grade blades
  - `MixedMultivector`: an inhomogeneous multivector. All objects in the algebra
@@ -166,8 +166,9 @@ Give the numerical type of the components of a multivector.
 Base.eltype
 
 Base.eltype(::Type{<:Blade{sig,k,T} where {sig,k}}) where T = T
-Base.eltype(::Type{<:CompositeMultivector{sig,<:AbstractVector{T}} where sig}) where T = T
-Base.eltype(::Type{<:CompositeMultivector{sig,<:AbstractDict{B,T}} where {sig,B}}) where T = T
+Base.eltype(::Type{<:CompositeMultivector{sig,C}}) where {sig,C} = valtype(C)
+# Base.eltype(::Type{<:CompositeMultivector{sig,<:AbstractVector{T}} where sig}) where T = T
+# Base.eltype(::Type{<:CompositeMultivector{sig,<:AbstractDict{B,T}} where {sig,B}}) where T = T
 
 Base.valtype(a::Union{Type{<:AbstractMultivector},<:AbstractMultivector}) = eltype(a)
 
@@ -413,10 +414,33 @@ shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share th
 shared_sig(as::AbstractMultivector...) = shared_sig(typeof.(as)...)
 
 
+
+# set the grade parameter `k` of a (homogeneous) multivector type, dispatching on `k::Integer`
+set_grade(::Type{<:Blade{sig,k′,T,B} where k′}, ::Val{k}) where {sig,T,B,k} = Blade{sig,k,T,B}
+set_grade(::Type{<:Multivector{sig,k′,C} where k′}, ::Val{k}) where {sig,C,k} = Multivector{sig,k,C}
+set_grade(::Type{<:Blade{sig,k′,T,B} where k′}, ::Missing) where {sig,T,B} = Blade{sig,k,T,B} where k
+set_grade(::Type{<:Multivector{sig,k′,C} where k′}, ::Missing) where {sig,C} = Multivector{sig,k,C} where k
+set_grade(T::Type{<:MixedMultivector}, ::Missing) = T
+
+set_grade(T, k::Integer) = set_grade(T, Val(k)) # not type stable
+
+set_eltype(::Type{<:Vector}, T) = Vector{T}
+set_eltype(::Type{<:Dict{B}}, T) where B = Dict{B,T}
+
+# note: should work for UnionAll's with parametric k
+set_eltype(::Type{<:Blade{sig,k,T′,B} where T′}, T) where {sig,k,B}   = Blade{sig,k,T,B}
+set_eltype(::Type{<:Blade{sig,k,T′,B} where {k,T′}}, T) where {sig,B} = Blade{sig,k,T,B} where k
+set_eltype(::Type{<:Multivector{sig,k,C}}, T) where {sig,k,C}         = Multivector{sig,k,set_eltype(C, T)}
+set_eltype(::Type{<:Multivector{sig,k,C} where k}, T) where {sig,C}   = Multivector{sig,k,set_eltype(C, T)} where k
+set_eltype(::Type{<:MixedMultivector{sig,C}}, T) where {sig,C}        = MixedMultivector{sig,set_eltype(C, T)}
+
+set_storagetype(::Type{<:Multivector{sig,k}}, C) where {sig,k} = Multivector{sig,k,C}
+set_storagetype(::Type{<:MixedMultivector{sig}}, C) where {sig} = MixedMultivector{sig,C}
+
 # `StorageType` is a wrapper for multivector storage types (e.g., `Vector{Float64}` or `Dict{<ublade_type>,<eltype>}`)
 # which harnesses the built-in promotion system.
 struct StorageType{T}
-	StorageType(T) = new{T}()
+	# StorageType(T) = new{T}()
 end
 unwrap(::Type{StorageType{T}}) where T = T
 
@@ -430,21 +454,6 @@ Base.promote_rule(::Type{StorageType{Vector{T}}}, ::Type{StorageType{Vector{S}}}
 Base.promote_rule(::Type{StorageType{Dict{B,T}}}, ::Type{StorageType{Vector{S}}}) where {B,T,S} = StorageType{Dict{B,promote_type(T, S)}}
 Base.promote_rule(::Type{StorageType{Dict{B1,T1}}}, ::Type{StorageType{Dict{B2,T2}}}) where {B1,B2,T1,T2} = StorageType{Dict{promote_ublade_type(B1, B2),promote_type(T1, T2)}}
 
-# promote the eltype of a multivector type
-promote_mv_eltype(::Type{Vector{T}}, ::Val{S}) where {T,S}   = Vector{promote_type(T, S)}
-promote_mv_eltype(::Type{Dict{B,T}}, ::Val{S}) where {B,T,S} = Dict{B,promote_type(T, S)}
-
-promote_mv_eltype(::Type{Blade{sig,k,T,B}}, ::Val{S})             where {sig,k,T,B,S} = Blade{sig,k,promote_type(T, S),B}
-promote_mv_eltype(::Type{Blade{sig,k,T,B} where k}, ::Val{S})     where {sig,T,B,S}   = Blade{sig,k,promote_type(T, S),B} where k
-promote_mv_eltype(::Type{Multivector{sig,k,C}}, ::Val{S})         where {sig,k,C,S}   = Multivector{sig,k,promote_mv_eltype(C, Val(S))}
-promote_mv_eltype(::Type{Multivector{sig,k,C} where k}, ::Val{S}) where {sig,C,S}     = Multivector{sig,k,promote_mv_eltype(C, Val(S))} where k
-promote_mv_eltype(::Type{MixedMultivector{sig,C}}, ::Val{S})      where {sig,C,S}     = MixedMultivector{sig,promote_mv_eltype(C, Val(S))}
-promote_mv_eltype(A, ::Type{T}) where T = promote_mv_eltype(A, Val(T))
-
-# set the grade parameter `k` of a (homogeneous) multivector type, dispatching on `k::Integer`
-set_grade(::Type{<:Blade{sig,k′,T,B} where k′}, ::Val{k}) where {sig,T,B,k} = Blade{sig,k,T,B}
-set_grade(::Type{<:Multivector{sig,k′,C} where k′}, ::Val{k}) where {sig,C,k} = Multivector{sig,k,C}
-set_grade(T, k::Integer) = set_grade(T, Val(k)) # not type stable
 
 """
 	_best_type(::Type{M}, as::Type{<:AbstractMultivector}...)
@@ -471,19 +480,18 @@ function _best_type(::Type{MixedMultivector}, as::Type{<:AbstractMultivector}...
 	MixedMultivector{sig,C}
 end
 
-_best_type(::Type{<:Blade{sig,k,T,B} where k}) where {sig,T,B} = Blade{sig,k,T,B} where k
-_best_type(::Type{<:Multivector{sig,k,C} where k}) where {sig,C} = Multivector{sig,k,C} where k
-_best_type(::Type{<:MixedMultivector{sig,C}}) where {sig,C} = MixedMultivector{sig,C}
+# called with a single argument, returns the same type
+# and preserves grade (unlike e.g., _best_type(Blade, ::Blade), which leaves `k` free)
+_best_type(T::Type{<:AbstractMultivector}) = set_grade(T, missing)
 
 # @generated to achieve type stability
 @generated _best_type(::Type{M}, a::AbstractMultivector, bs::AbstractMultivector...) where M = _best_type(M, a, bs...)
 
 
-function best_type(args...; grade::Val=Val(nothing), el::Val=Val(nothing))
+function best_type(args...; grade=missing, el=nothing)
 	T = _best_type(args...)
-	grade === Val(nothing) || (T = set_grade(T, grade))
-	el === Val(nothing) || (T = promote_mv_eltype(T, el))
-	T
+	isnothing(el) || (T = set_eltype(T, promote_type(eltype(T), el)))
+	set_grade(T, grade)
 end
 
 
@@ -494,7 +502,7 @@ Conversion into more general types is possible.
 =#
 
 Blade(a::Blade) = a
-Multivector(a::HomogeneousMultivector{k}) where k = add!(zero(best_type(Multivector, a; k)), a)
+Multivector(a::HomogeneousMultivector{k}) where k = add!(zero(best_type(Multivector, a; grade=Val(k))), a)
 MixedMultivector(a::AbstractMultivector) = add!(zero(best_type(MixedMultivector, a)), a)
 
 
@@ -532,7 +540,7 @@ Base.promote_rule(T::Type{<:Multivector}, S::Type{<:Blade}) = best_type(Multivec
 Base.promote_rule(T::Type{<:MixedMultivector}, S::Type{<:AbstractMultivector}) = best_type(MixedMultivector, T, S)
 
 # Promotion from scalars
-Base.promote_rule(T::Type{<:AbstractMultivector}, S::Type{<:Scalar}) = best_type(T; el=Val(S))
+Base.promote_rule(T::Type{<:AbstractMultivector}, S::Type{<:Scalar}) = best_type(T; el=S)
 
 # hack: need to treat `<:HomogeneousMultivector`s of nearly-identical types except for
 # differing grade as "the same type" as far as promotion is concerned
@@ -540,16 +548,20 @@ Base.promote(as::(Blade{sig,k,T,B} where k)...) where {sig,T,B} = as
 Base.promote(as::(Multivector{sig,k,C} where k)...) where {sig,C} = as
 
 
+grade_maybe(::Type{<:HomogeneousMultivector{k}}) where k = Val(k)
+grade_maybe(::Type{<:AbstractMultivector}) = missing
 
+# set_eltype(T::Type{<:HomogeneousMultivector{k}}, S) where k = best_type(T; el=S, grade=Val(k))
+# set_eltype(T::Type{<:MixedMultivector}, S) = best_type(T; el=Val(S))
+# set_eltype(T::Type{<:AbstractMultivector}, S) = best_type(T; el=S, grade=grade_maybe(T))
 
-
-Base.float(T::Type{<:AbstractMultivector}) = best_type(T; el=Val(float(eltype(T))), grade=Val(grade(T)))
+Base.float(T::Type{<:AbstractMultivector}) = set_eltype(T, float(eltype(T)))
 Base.float(a::AbstractMultivector) = convert(float(typeof(a)), a)
 
-Base.big(T::Type{<:AbstractMultivector}) = best_type(T; el=Val(big(eltype(T))), grade=Val(grade(T)))
+Base.big(T::Type{<:AbstractMultivector}) = set_eltype(T, big(eltype(T)))
 Base.big(a::AbstractMultivector) = convert(big(typeof(a)), a)
 
-Base.complex(T::Type{<:AbstractMultivector}) = best_type(T; el=Val(complex(eltype(T))), grade=Val(grade(T)))
+Base.complex(T::Type{<:AbstractMultivector}) = set_eltype(T, complex(eltype(T)))
 Base.complex(a::AbstractMultivector) = convert(complex(typeof(a)), a)
 
 _constructor(::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}

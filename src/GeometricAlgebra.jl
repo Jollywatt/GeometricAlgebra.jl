@@ -37,5 +37,6 @@ include("multivector.jl")
 include("show.jl")
 include("algebra.jl")
 include("convenience.jl")
+include("generated.jl")
 
 end # module

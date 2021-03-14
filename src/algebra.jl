@@ -77,6 +77,33 @@ end
 
 # TODO: Multivector{k}*Multivector{0} should give Multivector{k}
 
+"""
+	a*b
+	geometric_prod(a, b)
+
+Geometric product of multivectors `a` and `b`.
+
+Returns a `MixedMultivector`, unless both arguments are `Blade`s, in which
+case the product is a `Blade`.
+
+Examples
+===
+```jldoctests
+julia> @basis x y z
+[ Info: Defined basis blades x, y, z, xy, xz, yz, xyz
+
+julia> x*(1 + y)
+MixedMultivector{⟨x+,y+,z+⟩, Array{Float64,1}}:
+ 1.0 x
+ 1.0 xy
+
+julia> 2x*2x
+Grade-0 Blade{⟨x+,y+,z+⟩, 0, Float64, UInt64}:
+ 4.0
+```
+"""
+geometric_prod
+
 function geometric_prod(a::Blade, b::Blade)
 	sig = shared_sig(a, b)
 	factor, u = ubladeprod(sig, a.ublade, b.ublade)
@@ -97,7 +124,15 @@ function homogeneous_prod(a::Blade, b::Blade, k)
 		zero(best_type(Blade, a, b; grade=Val(k)))
 	end
 end
-function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, k)
+
+function homogeneous_prod(a::HomogeneousMultivector{k1}, b::HomogeneousMultivector{k2}, k) where {k1,k2}
+	if k ∈ abs(k1 - k2):2:(k1 + k2)
+		_homogeneous_prod(a, b, Val(k))
+	else
+		zero(best_type(Multivector, a, b; grade=Val(k)))
+	end
+end
+function _homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, ::Val{k}) where k
 	ab = zero(best_type(Multivector, a, b; grade=Val(k)))
 	0 <= k <= dimension(a) || return ab
 	for u ∈ blades(a), v ∈ blades(b)
@@ -118,10 +153,19 @@ end
 graded_prod(a::HomogeneousMultivector, b::HomogeneousMultivector, grade_selector) =
 	homogeneous_prod(a, b, grade_selector(grade(a), grade(b)))
 
-for T ∈ multivector_types, S ∈ multivector_types
-	@eval *(a::$T, b::$S) = geometric_prod(a, b)
-end
+"""
+	*(::AbstractMultivector, ::AbstractMultivector)
 
+Geometric product of multivectors. See also `GeometricAlgebra.geometric_prod`.
+"""
+*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
+
+
+# faster versions for vector storage types
+let T = CompositeMultivector{<:AbstractVector}
+	@eval *(a::$T, b::$T) = geometric_prod_gen(a, b)
+	@eval _homogeneous_prod(a::$T, b::$T, k) = homogeneous_prod_gen(a, b, k)
+end
 
 
 

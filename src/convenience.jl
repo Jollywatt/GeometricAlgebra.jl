@@ -44,11 +44,9 @@ julia> x, y, z = basis(sig)
  1.0 y
  1.0 z
 
-julia> basis(sig, grade=2)
-3-element Array{Blade{⟨x+,y+,z+⟩, 2, Float64, UInt64},1}:
+julia> basis(sig, 1, grade=2)
+Grade-2 Blade{⟨x+,y+,z+⟩, 2, Float64, UInt64}:
  1.0 xy
- 1.0 xz
- 1.0 yz
 
 julia> basis(Multivector{sig, 2, Vector{Rational{Int}}}, 3)
 Grade-2 Multivector{⟨x+,y+,z+⟩, 2, Array{Rational{Int64},1}}:

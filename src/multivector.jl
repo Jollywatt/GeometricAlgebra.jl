@@ -45,7 +45,6 @@ Grade-2 Blade{⟨+++⟩, 2, Int64, UInt8}:
 julia> Blade{(x=1,y=1,z=1)}(1, [:x])
 Grade-1 Blade{⟨x+,y+,z+⟩, 1, Int64, Array{Symbol,1}}:
  1 x
-
 ```
 """
 struct Blade{sig,k,T,B} <: AbstractMultivector{sig,Pair{B,T}}
@@ -53,7 +52,7 @@ struct Blade{sig,k,T,B} <: AbstractMultivector{sig,Pair{B,T}}
 	ublade::B
 	function Blade{sig,k,T,B}(coeff, ublade) where {sig,k,T,B}
 		ublade = convert_ublade(sig, B, ublade)
-		@assert ublade_grade(ublade) == k
+		# @assert ublade_grade(ublade) == k
 		new{sig,k,T,B}(coeff, ublade)
 	end
 end
@@ -85,11 +84,11 @@ or `0b1101` is located at the `ublade2lindex(0b1101) == 3`rd index.
 struct Multivector{sig,k,C} <: AbstractMultivector{sig,C}
 	comps::C
 	function Multivector{sig,k,C}(comps) where {sig,k,C<:AbstractVector}
-		@assert length(comps) == binomial(dimension(sig), k)
+		# @assert length(comps) == binomial(dimension(sig), k)
 		new{sig,k,C}(comps)
 	end
 	function Multivector{sig,k,C}(comps) where {sig,k,C<:AbstractDict}
-		@assert all(ublade_grade(u) == k for u ∈ keys(comps))
+		# @assert all(ublade_grade(u) == k for u ∈ keys(comps))
 		new{sig,k,C}(comps)
 	end
 end
@@ -132,7 +131,6 @@ julia> ans.comps
  0.0
  0.0
 ```
-
 """
 struct MixedMultivector{sig,C} <: AbstractMultivector{sig,C}
 	comps::C

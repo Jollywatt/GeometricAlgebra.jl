@@ -1,4 +1,4 @@
-using Test, TestSetExtensions
+using Test, TestSetExtensions, Random
 using Revise, GeometricAlgebra
 
 function runtests(files...)

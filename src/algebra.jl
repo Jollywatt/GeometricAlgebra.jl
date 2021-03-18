@@ -117,21 +117,23 @@ function geometric_prod(a::AbstractMultivector, b::AbstractMultivector)
 	ab
 end
 
-function homogeneous_prod(a::Blade, b::Blade, k)
-	if ublade_grade(ublade_xor(a.ublade, b.ublade)) == k
+function homogeneous_prod(a::Blade, b::Blade, ::Val{k}) where k
+	if ublade_grade(ublade_xor(ublade(a), ublade(b))) == k
 		geometric_prod(a, b)
 	else
 		zero(best_type(Blade, a, b; grade=Val(k)))
 	end
 end
 
-function homogeneous_prod(a::HomogeneousMultivector{k1}, b::HomogeneousMultivector{k2}, k) where {k1,k2}
+function homogeneous_prod(a::HomogeneousMultivector{k1}, b::HomogeneousMultivector{k2}, ::Val{k}) where {k1,k2,k}
 	if k ∈ abs(k1 - k2):2:(k1 + k2)
 		_homogeneous_prod(a, b, Val(k))
 	else
 		zero(best_type(Multivector, a, b; grade=Val(k)))
 	end
 end
+homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, k::Integer) = homogeneous_prod(a, b, Val(k))
+
 function _homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, ::Val{k}) where k
 	ab = zero(best_type(Multivector, a, b; grade=Val(k)))
 	0 <= k <= dimension(a) || return ab
@@ -164,7 +166,7 @@ Geometric product of multivectors. See also `GeometricAlgebra.geometric_prod`.
 # faster versions for vector storage types
 let T = CompositeMultivector{<:AbstractVector}
 	@eval *(a::$T, b::$T) = geometric_prod_gen(a, b)
-	@eval _homogeneous_prod(a::$T, b::$T, k) = homogeneous_prod_gen(a, b, k)
+	@eval _homogeneous_prod(a::$T, b::$T, k::Val) = homogeneous_prod_gen(a, b, k::Val)
 end
 
 
@@ -283,12 +285,11 @@ rsqrt(x) = sign(x)sqrt(abs(x))
 Base.abs2(a::Blade) = abs2(a.coeff)*ublade_square(signature(a), a.ublade)
 Base.abs2(a) = a'a
 
-Base.abs(a) = let n = abs2(a)
-	isscalar(n) || @warn "norm is not scalar" n
-	rsqrt(scalar(n)) # is this appropriate?
+Base.abs(a::AbstractMultivector) = let n = abs2(a)
+	s = scalar(n)
+	sqrt(abs(s)) # is this appropriate?
 end
 
-norm_unit(a::Blade) = (a.coeff, oneunit(a))
 norm_unit(a::AbstractMultivector) = let n = abs(a)
 	(n, a/n)
 end
@@ -380,7 +381,7 @@ end
 ^(a::AbstractMultivector, p) = error("unsupported multivector exponent type $(typeof(p))")
 
 
-SERIES_ORDER = 10
+SERIES_ORDER = 25
 set_order(n) = begin
 	global SERIES_ORDER
 	SERIES_ORDER = n

@@ -21,6 +21,8 @@ stored in a `Vector`.
 """
 abstract type AbstractMultivector{sig,C} <: Number end
 
+Base.broadcastable(a::AbstractMultivector) = ref(a)
+
 
 """
 	Blade{sig,k,T,B} <: AbstractMultivector{sig,Pair{B,T}}

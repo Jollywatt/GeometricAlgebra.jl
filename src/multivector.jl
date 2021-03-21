@@ -21,7 +21,7 @@ stored in a `Vector`.
 """
 abstract type AbstractMultivector{sig,C} <: Number end
 
-Base.broadcastable(a::AbstractMultivector) = ref(a)
+Base.broadcastable(a::AbstractMultivector) = Ref(a)
 
 
 """
@@ -52,23 +52,29 @@ Grade-1 Blade{⟨x+,y+,z+⟩, 1, Int64, Array{Symbol,1}}:
 struct Blade{sig,k,T,B} <: AbstractMultivector{sig,Pair{B,T}}
 	coeff::T
 	ublade::B
-	function Blade{sig,k,T,B}(coeff, ublade) where {sig,k,T,B}
-		ublade = convert_ublade(sig, B, ublade)
-		# @assert ublade_grade(ublade) == k
-		new{sig,k,T,B}(coeff, ublade)
+	function Blade{sig,k,T,B}(coeff, ub) where {sig,k,T,B}
+		ub = convert_ublade(sig, B, ub)
+		# @assert ublade_grade(ub) == k
+		new{sig,k,T,B}(coeff, ub)
 	end
+	Blade{sig,k,T}(coeff, ::Val{ub}) where {sig,k,T,ub} = new{sig,k,T,Val{ub}}(coeff)
+
+	# compile-time known ublade constructor
+	(::Type{Blade{sig,k,T,Val} where k})(coeff, ub) where {sig,T} = new{sig,ublade_grade(ub),T,Val{ub}}(coeff)
 end
 
-Blade{sig}(coeff::T, ublade::B) where {sig,T,B} = Blade{sig,ublade_grade(ublade),T,B}(coeff, ublade)
-Blade{sig,k}(coeff::T, ublade::B) where {sig,k,T,B} = Blade{sig,k,T,B}(coeff::T, ublade::B)
+Blade{sig}(coeff::T, ub::B) where {sig,T,B} = Blade{sig,ublade_grade(ub),T,B}(coeff, ub)
+Blade{sig,k}(coeff::T, ub::B) where {sig,k,T,B} = Blade{sig,k,T,B}(coeff::T, ub::B)
 
-function (::Type{Blade{sig,k,T,B} where k})(coeff, ublade=ublade_scalar(B)) where {sig,T,B}
-	ublade = convert(B, ublade)
-	k = ublade_grade(ublade)
-	Blade{sig,k,T,B}(coeff, ublade)
+function (::Type{Blade{sig,k,T,B} where k})(coeff, ub=ublade_scalar(B)) where {sig,T,B}
+	ub = convert(B, ub)
+	k = ublade_grade(ub)
+	Blade{sig,k,T,B}(coeff, ub)
 end
 
 
+ublade(::Blade{sig,k,T,Val{b}}) where {sig,k,T,b} = b
+ublade(b::Blade) = b.ublade
 
 """
 	Multivector{sig,k,C} <: AbstractMultivector{sig,C}
@@ -211,6 +217,7 @@ Base.keytype(::Type{<:CompositeMultivector{<:AbstractDict{B}}}) where B = B
 
 Base.keytype(::T) where T<:AbstractMultivector = keytype(T)
 
+Base.keytype(::Type{<:Blade{sig,k,T,<:Val} where k}) where {sig,T} = Val
 
 
 """
@@ -271,19 +278,19 @@ julia> blades(1 + 2x + 3y*z)
 blades(a::Blade) = iszero(a) ? typeof(a)[] : [a]
 function blades(a::Multivector{sig,k,<:AbstractVector}) where {sig,k}
 	T = Blade{sig,k,eltype(a),keytype(a)} # for type stability
-	T[Blade{sig}(coeff, ublade) for (coeff, ublade) ∈ zip(a.comps, FixedGradeBlades{keytype(a)}(k, dimension(sig))) if !iszero(coeff)]
+	T[Blade{sig}(coeff, ub) for (coeff, ub) ∈ zip(a.comps, FixedGradeBlades{keytype(a)}(k, dimension(sig))) if !iszero(coeff)]
 end
 function blades(a::MixedMultivector{sig,<:AbstractVector}) where {sig}
 	T = Blade{sig,k,eltype(a),keytype(a)} where k # for type stability
-	T[T(coeff, convert_ublade(a, unsigned(ublade - 1))) for (ublade, coeff) ∈ enumerate(a.comps) if !iszero(coeff)]
+	T[T(coeff, convert_ublade(a, unsigned(ub - 1))) for (ub, coeff) ∈ enumerate(a.comps) if !iszero(coeff)]
 end
 function blades(a::Multivector{sig,k,<:AbstractDict}) where {sig,k}
 	T = Blade{sig,k,eltype(a),keytype(a)} # for type stability
-	T[T(coeff, ublade) for (ublade, coeff) ∈ a.comps if !iszero(coeff)]
+	T[T(coeff, ub) for (ub, coeff) ∈ a.comps if !iszero(coeff)]
 end
 function blades(a::MixedMultivector{sig,<:AbstractDict}) where {sig}
 	T = Blade{sig,k,eltype(a),keytype(a)} where k # for type stability
-	T[T(coeff, ublade) for (ublade, coeff) ∈ a.comps if !iszero(coeff)]
+	T[T(coeff, ub) for (ub, coeff) ∈ a.comps if !iszero(coeff)]
 end
 
 
@@ -291,38 +298,38 @@ end
 
 # COMPONENT ACCESS
 
-getcomp(a::Blade{sig,k,T,B}, ublade::B) where {sig,k,T,B} = a.ublade == ublade ? a.coeff : zero(T)
-function getcomp(a::Multivector{sig,k,<:AbstractVector}, ublade::Unsigned) where {sig,k}
-	ublade_grade(ublade) == k || return zero(eltype(a))
-	i = ublade2lindex(ublade)
+getcomp(a::Blade{sig,k,T,B}, ub::B) where {sig,k,T,B} = ublade(a) == ub ? a.coeff : zero(T)
+function getcomp(a::Multivector{sig,k,<:AbstractVector}, ub::Unsigned) where {sig,k}
+	ublade_grade(ub) == k || return zero(eltype(a))
+	i = ublade2lindex(ub)
 	a.comps[i]
 end
-getcomp(a::MixedMultivector{sig,<:AbstractVector}, ublade::Unsigned) where sig = a.comps[begin + ublade]
-getcomp(a::CompositeMultivector{<:AbstractDict{B}}, ublade::B) where {B} = get(a.comps, ublade, zero(eltype(a)))
-getcomp(a::AbstractMultivector, ublade) = getcomp(a, convert_ublade(a, ublade))
+getcomp(a::MixedMultivector{sig,<:AbstractVector}, ub::Unsigned) where sig = a.comps[begin + ub]
+getcomp(a::CompositeMultivector{<:AbstractDict{B}}, ub::B) where {B} = get(a.comps, ub, zero(eltype(a)))
+getcomp(a::AbstractMultivector, ub) = getcomp(a, convert_ublade(a, ub))
 
 
-setcomp!(::Blade, ublade, v) = error("cannot set component of blade")
-function setcomp!(a::Multivector{sig,k,<:AbstractVector}, ublade, v) where {sig,k}
-	ublade_grade(ublade) == k || error("cannot set non-$k grade component of $k-multivector")
+setcomp!(::Blade, ub, v) = error("cannot set component of blade")
+function setcomp!(a::Multivector{sig,k,<:AbstractVector}, ub, v) where {sig,k}
+	ublade_grade(ub) == k || error("cannot set non-$k grade component of $k-multivector")
 	isempty(a.comps) && error("$k-multivector in $(dimension(a)) dimensions has zero components")
-	i = ublade2lindex(ublade)
+	i = ublade2lindex(ub)
 	a.comps[i] = v
 end
-setcomp!(a::MixedMultivector{sig,<:AbstractVector}, ublade::Unsigned, v) where sig = a.comps[begin + ublade] = v
-setcomp!(a::CompositeMultivector{<:AbstractDict{B}}, ublade::B, v) where {B} = a.comps[ublade] = v
-setcomp!(a::CompositeMultivector, ublade, v) = setcomp!(a, convert_ublade(a, ublade), v)
+setcomp!(a::MixedMultivector{sig,<:AbstractVector}, ub::Unsigned, v) where sig = a.comps[begin + ub] = v
+setcomp!(a::CompositeMultivector{<:AbstractDict{B}}, ub::B, v) where {B} = a.comps[ub] = v
+setcomp!(a::CompositeMultivector, ub, v) = setcomp!(a, convert_ublade(a, ub), v)
 
 
 function add!(a::AbstractMultivector, b::Scalar)
-	ublade = ublade_scalar(keytype(a))
-	setcomp!(a, ublade, getcomp(a, ublade))
+	ub = ublade_scalar(keytype(a))
+	setcomp!(a, ub, getcomp(a, ub))
 	a
 end
 function add!(a::AbstractMultivector, b::AbstractMultivector)
 	# iszero(b) && return a # if b is empty, blades(b) is empty too
 	for u ∈ blades(b)
-		setcomp!(a, u.ublade, getcomp(a, u.ublade) + u.coeff)
+		setcomp!(a, ublade(u), getcomp(a, ublade(u)) + u.coeff)
 	end
 	a
 end
@@ -343,12 +350,12 @@ mapcomps!, mapcomps
 
 function mapcomps!(f::Function, a::CompositeMultivector)
 	for u ∈ blades(a)
-		setcomp!(a, u.ublade, f(u))
+		setcomp!(a, ublade(u), f(u))
 	end
 	a
 end
 function mapcomps(f::Function, a::Blade)
-	Blade{signature(a)}(f(a), a.ublade)
+	Blade{signature(a)}(f(a), ublade(a))
 end
 mapcomps(f::Function, a::AbstractMultivector) = mapcomps!(f, deepcopy(a))
 
@@ -376,7 +383,7 @@ Base.iszero(a::CompositeMultivector{<:AbstractDict}) = all(iszero(v) for (u, v) 
 
 
 Base.one(::Type{<:Blade{sig,k,T,B}}) where {sig,k,T,B} = Blade{sig}(one(T), ublade_scalar(B))
-Base.oneunit(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig}(one(T), a.ublade)
+Base.oneunit(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig}(one(T), ublade(a))
 
 function Base.one(T::Type{<:Multivector{sig,k,C}}) where {sig,k,C}
 	a = zero(Multivector{sig,0,C}) # scalar / 0-grade
@@ -510,7 +517,7 @@ MixedMultivector(a::AbstractMultivector) = add!(zero(best_type(MixedMultivector,
 # must convert to type identically except for possibly the grade parameter (which should not be changed)
 
 # Conversion of element type
-Base.convert(::Type{<:Blade{sig,k,T,B} where k}, a::Blade) where {sig,T,B} = Blade{sig,grade(a),T,B}(a.coeff, convert_ublade(sig, B, a.ublade))
+Base.convert(::Type{<:Blade{sig,k,T,B} where k}, a::Blade) where {sig,T,B} = Blade{sig,grade(a),T,B}(a.coeff, convert_ublade(sig, B, ublade(a)))
 Base.convert(::Type{<:Multivector{sig,k,C} where k}, a::Multivector) where {sig,C} = add!(zero(Multivector{sig,grade(a),C}), a)
 Base.convert(::Type{<:MixedMultivector{sig,C}}, a::MixedMultivector) where {sig,C} = add!(zero(MixedMultivector{sig,C}), a)
 
@@ -565,11 +572,11 @@ Base.complex(a::AbstractMultivector) = convert(complex(typeof(a)), a)
 _constructor(::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}
 _constructor(::MixedMultivector{sig}) where {sig} = MixedMultivector{sig}
 
-Base.real(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig,k,real(T),B}(real(a.coeff), a.ublade)
+Base.real(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig,k,real(T),B}(real(a.coeff), ublade(a))
 Base.real(a::CompositeMultivector{<:AbstractVector}) = _constructor(a)(real(a.comps))
 Base.real(a::CompositeMultivector{<:AbstractDict}) = _constructor(a)(mapcomps(a, real))
 
-Base.imag(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig,k,real(T),B}(imag(a.coeff), a.ublade)
+Base.imag(a::Blade{sig,k,T,B}) where {sig,k,T,B} = Blade{sig,k,real(T),B}(imag(a.coeff), ublade(a))
 Base.imag(a::CompositeMultivector{<:AbstractVector}) = _constructor(a)(imag(a.comps))
 Base.imag(a::CompositeMultivector{<:AbstractDict}) = _constructor(a)(mapcomps(a, imag))
 
@@ -577,7 +584,7 @@ Base.imag(a::CompositeMultivector{<:AbstractDict}) = _constructor(a)(mapcomps(a,
 
 ## EQUALITY
 
-==(a::T, b::T) where T<:Blade = a.ublade == b.ublade && a.coeff == b.coeff
+==(a::T, b::T) where T<:Blade = ublade(a) == ublade(b) && a.coeff == b.coeff
 ==(a::T, b::T) where T<:Multivector = a.comps == b.comps
 ==(a::T, b::T) where T<:MixedMultivector = a.comps == b.comps
 
@@ -594,7 +601,7 @@ Base.imag(a::CompositeMultivector{<:AbstractDict}) = _constructor(a)(mapcomps(a,
 ## APPROXIMATE EQUALITY
 
 function _isapprox(a::(Blade{sig,k,T,B} where k), b::(Blade{sig,k,T,B} where k); kwargs...) where {sig,T,B}
-	if a.ublade == b.ublade
+	if ublade(a) == ublade(b)
 		isapprox(a.coeff, b.coeff; kwargs...)
 	else # orthogonal blades can be approximately equal if they are both approximately zero
 		isapprox(a.coeff, zero(T); kwargs...) && isapprox(b.coeff, zero(T); kwargs...)
@@ -608,8 +615,8 @@ end
 function _isapprox(a::T, b::T; kwargs...) where T<:CompositeMultivector{<:AbstractDict}
 	B = keytype(T)
 	for i ∈ 1:2^dimension(T)
-		ublade = convert_ublade(sig, B, unsigned(i - 1))
-		isapprox(getcomp(a, ublade), getcomp(b, ublade); kwargs...) || return false
+		ub = convert_ublade(sig, B, unsigned(i - 1))
+		isapprox(getcomp(a, ub), getcomp(b, ub); kwargs...) || return false
 	end
 	true
 end
@@ -760,20 +767,20 @@ Base.setindex!(a::AbstractMultivector, v) = setcomp!(a, ublade_scalar(keytype(a)
 
 # convert e.g., [:t, :y] or [0, 2] to canonical [1, 3]
 function interpret_ublade(a::AbstractMultivector{sig}, I) where sig
-	ublade = [unoffset_index(sig, i) for i ∈ I] # not necessarily canonical
-	factor, ublade = ubladeprod(sig, ublade)
-	ublade = convert_ublade(a, ublade)
-	factor, ublade
+	ub = [unoffset_index(sig, i) for i ∈ I] # not necessarily canonical
+	factor, ub = ubladeprod(sig, ub)
+	ub = convert_ublade(a, ub)
+	factor, ub
 end
 
 function _getindex(a::AbstractMultivector, I...)	
-	factor, ublade = interpret_ublade(a, I)
-	factor\getcomp(a, ublade)
+	factor, ub = interpret_ublade(a, I)
+	factor\getcomp(a, ub)
 end
 
 function _setindex!(a::AbstractMultivector, v, I::Union{<:Integer,Symbol}...)
-	factor, ublade = interpret_ublade(a, I)
-	setcomp!(a, ublade, factor\v)
+	factor, ub = interpret_ublade(a, I)
+	setcomp!(a, ub, factor\v)
 end
 
 Base.getindex(a::AbstractMultivector, I::Integer...) = _getindex(a, I...)
@@ -783,9 +790,9 @@ Base.setindex!(a::AbstractMultivector, v, I::Symbol...) = _setindex!(a, v, I...)
 
 function Base.getindex(a::AbstractMultivector, I::Blade...)
 	blade = prod(collect(I))
-	blade.coeff\getcomp(a, blade.ublade)
+	blade.coeff\getcomp(a, ublade(blade))
 end
 function Base.setindex!(a::AbstractMultivector, v, I::Blade...)
 	blade = prod(collect(I))
-	setcomp!(a, blade.ublade, blade.coeff\v)
+	setcomp!(a, ublade(blade), blade.coeff\v)
 end

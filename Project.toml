@@ -6,6 +6,3 @@ version = "0.1.0"
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
-OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-TaylorSeries = "6aa5eb33-94cf-58f4-a9d0-e4b2c4fc25ea"

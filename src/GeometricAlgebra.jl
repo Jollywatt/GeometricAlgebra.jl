@@ -1,42 +1,33 @@
-#= GeometricAlgebra.jl
-An implementation of geometric algebras (a.k.a. Clifford algebras) in Julia.
-=#
-
 module GeometricAlgebra
 
-import Base: ==, *, /, \, +, -, ^, ~
+import Base: ==, *, /, \, +, -, ^
+import InteractiveUtils: subtypes
+import Combinatorics: parity
 
-using InteractiveUtils: subtypes
-using OffsetArrays
-using SparseArrays: SparseVector, spzeros
-using TaylorSeries: Taylor1
-using Combinatorics: powerset, permutations
+# for use in documentation to give module-independent cross references
+fullname(method) = "$(parentmodule(method)).$(nameof(method))"
 
 
-export AbstractMultivector, Blade, Multivector, MixedMultivector
+include("unit_blades.jl")
 
-export basis, @basis, @basisall
-export signature, dimension
+
+export AbstractMultivector, HomogeneousMultivector
+export Blade, Multivector, MixedMultivector
+include("types.jl")
+
+include("signatures.jl")
+
+export ∧, ⋅
+export ~, reversion, involute
 export grade, grades
-export scalar, isscalar
-export vol
-export blades
-
-export reversion, ~
-export wedge, ∧
-export dot, ⋅
-export contractr, ⨽
-export contractl, ⨼
-export dual
-
-export EuclideanSignature, OffsetSignature
-
-include("metric-signature.jl")
-include("ublade.jl")
-include("multivector.jl")
-include("show.jl")
 include("algebra.jl")
+
+export basis
 include("convenience.jl")
-include("generated.jl")
+
+include("show.jl")
+
+
+export best_type
 
 end # module

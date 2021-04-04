@@ -1,471 +1,266 @@
+
 #= SCALAR MULTIPLICATION =#
-# must respect the possibility of non-commutativity!
 
-compmul(comps::AbstractVector, x::Scalar) = comps.*Ref(x)
-compmul(x::Scalar, comps::AbstractVector) = Ref(x).*comps
-compmul(comps::AbstractDict, x::Scalar) = Dict(ublade => a*val for (ublade, val) ∈ b.comps)
-compmul(x::Scalar, comps::AbstractDict) = Dict(ublade => val*b for (ublade, val) ∈ a.comps)
 
-*(a::Scalar, b::Blade{sig,k}) where {sig,k} = Blade{sig,k}(a*b.coeff, b.ublade)
-*(a::Blade{sig,k}, b::Scalar) where {sig,k} = Blade{sig,k}(a.coeff*b, a.ublade)
+*(a::Blade{sig,k,bits}, b::Scalar) where {sig,k,bits} = Blade{sig,k,bits}(a.coeff*b)
+*(a::Scalar, b::Blade{sig,k,bits}) where {sig,k,bits} = Blade{sig,k,bits}(a*b.coeff)
 
-*(a::Scalar, b::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}(compmul(a, b.comps))
-*(a::Multivector{sig,k}, b::Scalar) where {sig,k} = Multivector{sig,k}(compmul(a.comps, b))
+constructor(::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}
+constructor(::MixedMultivector{sig}) where sig = Multivector{sig}
+*(a::CompositeMultivector{<:AbstractVector}, b::Scalar) = constructor(a)(a.components*b)
+*(a::Scalar, b::CompositeMultivector{<:AbstractVector}) = constructor(b)(a*b.components)
 
-*(a::Scalar, b::MixedMultivector) = MixedMultivector{signature(b)}(compmul(a, b.comps))
-*(a::MixedMultivector, b::Scalar) = MixedMultivector{signature(a)}(compmul(a.comps, b))
 
 
 #= ADDITION =#
 
-# addition of same-grade elements to produce homogeneous multivector
-function +(as::HomogeneousMultivector{k}...) where k
-	T = best_type(Multivector, as...; grade=Val(k))
-	Σ = zero(T)
-	for a ∈ as, u ∈ blades(a)
-		add!(Σ, u)
+# mutating addition which does not require same element/storage types
+function add!(a::CompositeMultivector, b::Blade)
+	a.components[bits_to_key(a, bitsof(b))] += b.coeff
+	a
+end
+function add!(a::CompositeMultivector, b::CompositeMultivector)
+	for u ∈ blades(b)
+		add!(a, u)
+	end
+	a
+end
+
+function add(As::(HomogeneousMultivector{sig,k} where sig)...) where k
+	Σ = zero(best_type(Multivector, As..., grade=Val(k)))
+	for a ∈ As, b ∈ blades(a)
+		add!(Σ, b)
 	end
 	Σ
-	# sum(sum, (blades(u) for u in as))
 end
-
-# addition of possibly mixed grade elements to produce inhomogeneous multivector
-function +(as::AbstractMultivector...)
-	T = best_type(MixedMultivector, as...)
-	Σ = zero(T)
-	for a ∈ as, u ∈ blades(a)
-		add!(Σ, u)
+function add(As::AbstractMultivector...)
+	Σ = zero(best_type(MixedMultivector, As...))
+	for a ∈ As, b ∈ blades(a)
+		add!(Σ, b)
 	end
 	Σ
 end
 
-# addition of scalar to grade 0 objects
-+(a::Blade{sig,0}, b::Scalar) where sig = Blade{sig,0}(a.coeff + b, a.ublade)
-	
-function +(a::Multivector{sig,0}, b::Scalar) where sig
-	ab = zero(best_type(Multivector, a, grade=Val(0), el=typeof(b)))
-	add!(ab, a)
-	ab[] += b
-	ab
-end
+add(a::Union{Blade,CompositeMultivector}) = a
 
-function +(a::AbstractMultivector, b::Scalar)
-	ab = zero(best_type(MixedMultivector, a, el=typeof(b)))
-	add!(ab, a)
-	ab[] += b
-	ab
-end
-
-+(a::Scalar, b::AbstractMultivector) = +(b, a)
-
-
-# additive inverses
-
--(a::Blade) = typeof(a)(-a.coeff, a.ublade)
--(a::AbstractMultivector) = -one(eltype(a))*a
-
--(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
--(a::AbstractMultivector, b::Scalar) = a + (-b)
--(a::Scalar, b::AbstractMultivector) = a + (-b)
++(a::AbstractMultivector...) = add(a...)
 
 
 
-
-
-
-#= ALGEBRAIC PRODUCTS =#
-
-# TODO: Multivector{k}*Multivector{0} should give Multivector{k}
+#= THE GEOMETRIC PRODUCT =#
 
 """
 	a*b
 	geometric_prod(a, b)
 
-Geometric product of multivectors `a` and `b`.
+Geometric product of multivectors.
 
-Returns a `MixedMultivector`, unless both arguments are `Blade`s, in which
-case the product is a `Blade`.
-
-Examples
-===
-```jldoctests
-julia> @basis x y z
-[ Info: Defined basis blades x, y, z, xy, xz, yz, xyz
-
-julia> x*(1 + y)
-MixedMultivector{⟨x+,y+,z+⟩, Array{Float64,1}}:
- 1.0 x
- 1.0 xy
-
-julia> 2x*2x
-Grade-0 Blade{⟨x+,y+,z+⟩, 0, Float64, UInt64}:
- 4.0
-```
+If both arguments are blades, then the result is a `Blade`.
+Otherwise, the geometric product is general `MixedMultivector`.
 """
 geometric_prod
 
 function geometric_prod(a::Blade, b::Blade)
 	sig = shared_sig(a, b)
-	factor, u = ubladeprod(sig, a.ublade, b.ublade)
-	Blade{sig}(factor*(a.coeff*b.coeff), u)
+	factor, bits = geometric_prod_bits(sig, bitsof(a), bitsof(b))
+	Blade{sig,grade(bits),bits}(factor*(a.coeff*b.coeff))
 end
+
 function geometric_prod(a::AbstractMultivector, b::AbstractMultivector)
-	ab = zero(best_type(MixedMultivector, a, b))
+	Π = zero(best_type(MixedMultivector, a, b))
 	for u ∈ blades(a), v ∈ blades(b)
-		add!(ab, geometric_prod(u, v))
-	end
-	ab
-end
-
-function homogeneous_prod(a::Blade, b::Blade, ::Val{k}) where k
-	if ublade_grade(ublade_xor(ublade(a), ublade(b))) == k
-		geometric_prod(a, b)
-	else
-		zero(best_type(Blade, a, b; grade=Val(k)))
-	end
-end
-
-function homogeneous_prod(a::HomogeneousMultivector{k1}, b::HomogeneousMultivector{k2}, ::Val{k}) where {k1,k2,k}
-	if k ∈ abs(k1 - k2):2:(k1 + k2)
-		_homogeneous_prod(a, b, Val(k))
-	else
-		zero(best_type(Multivector, a, b; grade=Val(k)))
-	end
-end
-homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, k::Integer) = homogeneous_prod(a, b, Val(k))
-
-function _homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, ::Val{k}) where k
-	ab = zero(best_type(Multivector, a, b; grade=Val(k)))
-	0 <= k <= dimension(a) || return ab
-	for u ∈ blades(a), v ∈ blades(b)
-		add!(ab, homogeneous_prod(u, v, k))
-	end
-	ab
-end
-
-function graded_prod(a::AbstractMultivector, b::AbstractMultivector, grade_selector)
-	ab = zero(best_type(MixedMultivector, a, b))
-	for u ∈ blades(a), v ∈ blades(b)
-		k = grade_selector(grade(u), grade(v))
-		0 <= k <= dimension(ab) || continue
-		add!(ab, homogeneous_prod(u, v, k))
-	end
-	ab
-end
-graded_prod(a::HomogeneousMultivector, b::HomogeneousMultivector, grade_selector) =
-	homogeneous_prod(a, b, grade_selector(grade(a), grade(b)))
-
-"""
-	*(::AbstractMultivector, ::AbstractMultivector)
-
-Geometric product of multivectors. See also `GeometricAlgebra.geometric_prod`.
-"""
-*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
-
-
-# faster versions for vector storage types
-let T = CompositeMultivector{<:AbstractVector}
-	@eval *(a::$T, b::$T) = geometric_prod_gen(a, b)
-	@eval _homogeneous_prod(a::$T, b::$T, k::Val) = homogeneous_prod_gen(a, b, k::Val)
-end
-
-
-
-"""
-```
-a⋅b
-dot(a, b)
-```
-
-"Fat" dot product of multivectors, giving the lowest-possible-grade part of the geometric product.
-Defined by ``a⋅b = ∑_{ij} ⟨⟨a⟩_i * ⟨b⟩_j⟩_|i - j|``.
-"""
-dot(a, b) = graded_prod(a, b, abs∘-)
-const ⋅ = dot
-
-"""
-```
-a∧b
-wedge(a, b)
-```
-
-Wedge product of multivectors, giving the highest-possible-grade part of the geometric product `a*b`.
-Defined by ``a∧b = ∑_{ij} ⟨⟨a⟩_i * ⟨b⟩_j⟩_(i + j)``.
-"""
-wedge(a, b) = graded_prod(a, b, +)
-const ∧ = wedge
-
-## DEPRECIATED: just do `scalar(a*b)`
-# """
-# ```
-# a∗b
-# scalar_prod(a, b)
-# ```
-#
-# Scalar part of multivector product, equivalent to `grade(a*b, 0)`.
-# """
-# scalar_prod(a, b) = homogeneous_prod(a, b, 0)
-# const ∗ = scalar_prod
-
-contractr(a, b) = graded_prod(a, b, (r, s) -> r - s)
-const ⨽ = contractr
-
-contractl(a, b) = graded_prod(a, b, (r, s) -> s - r)
-const ⨼ = contractl
-
-"""
-```
-a×b
-commutator_prod(a, b)
-```
-
-Commutator product of multivectors, given by ``a × b = (a*b - b*a)/2``.
-
-"""
-commutator_prod(a, b) = (a*b - b*a)/2
-
-
-
-
-#= REVERSION, INVOLUTION, DUALITY, ETC =#
-
-# @pure ?
-reversionsign(k::Integer, c) = mod(k, 4) <= 1 ? c : -c
-reversionsign(k::Integer) = reversionsign(k, 1)
-
-reversion(a::Number) = a
-reversion(a::HomogeneousMultivector{k}) where k = reversionsign(k, a)
-reversion(a::MixedMultivector) = mapcomps(u -> reversion(u).coeff, a)
-~(a::AbstractMultivector) = reversion(a)
-
-involute(a::HomogeneousMultivector) = iseven(grade(a)) ? a : -a
-involute(a::MixedMultivector) = mapcomps(u -> (iseven(grade(u)) ? u : -u).coeff, a)
-
-# is this appropriate?
-Base.adjoint(a::AbstractMultivector) = reversion(a)
-
-# don't know what this operation is yet
-conjugate(a::AbstractMultivector{sig}) where sig = mapcomps(u -> ublade_square(sig, u.ublade)*u.coeff, a)
-
-
-
-"""
-```
-★(a)
-hodgedual(a)
-```
-
-Hodge dual or 'star' operator, satisfying
-``a∧★(b) == (a∗b)vol(a)``.(?)
-"""
-hodgedual(a::AbstractMultivector) = reversion(a)⋅vol(a)
-# const ★ = hodgedual
-
-
-dual(a::AbstractMultivector) = a⋅vol(a)
-
-
-#= NORMS =#
-
-"""
-	rsqrt(x)
-
-Real-valued square root defined on all real numbers as `sign(x)sqrt(abs(x))`.
-
-Examples
-===
-```jldoctest; setup = :( using GeometricAlgebra: rsqrt )
-julia> rsqrt(-9)
--3.0
-```
-"""
-rsqrt(x) = sign(x)sqrt(abs(x))
-
-
-Base.abs2(a::Blade) = abs2(a.coeff)*ublade_square(signature(a), a.ublade)
-Base.abs2(a) = a'a
-
-Base.abs(a::AbstractMultivector) = let n = abs2(a)
-	s = scalar(n)
-	sqrt(abs(s)) # is this appropriate?
-end
-
-norm_unit(a::AbstractMultivector) = let n = abs(a)
-	(n, a/n)
-end
-
-
-
-
-
-#= MULTIPLICATIVE INVERSES =#
-
-# blades have an inverse iff their square is nonzero
-# homogeneous multivectors are invertible `sometimes` - TODO figure out when
-
-# Base.inv(a::Blade) = a/scalar(a*a) # blades are guaranteed to have scalar squares
-Base.inv(a::Blade) = a/(reversionsign(grade(a))ublade_square(signature(a), a.ublade)) # blades are guaranteed to have scalar squares
-function Base.inv(a::AbstractMultivector)
-	a² = a^2
-	isscalar(a²) && return (a/scalar(a²))::typeof(a)
-
-	inv_matrixmethod(a)
-	# error("cannot find inverse of multivector $a")
-end
-
-# TODO use sparse matrices since they're 2^dimension × 2^dimension
-function inv_matrixmethod(a::T) where T<:MixedMultivector{sig,C} where {sig,C<:AbstractVector}
-	M = hcat([(a*Blade{sig}(one(eltype(a)), ublade)).comps for ublade ∈ 0:unsigned(2^dimension(a) - 1)]...)
-	T(M\one(T).comps)
-end
-
-function inv_matrixmethod(a::CompositeMultivector{C}) where {C}
-	sig = signature(a)
-	d = 2^dimension(sig)
-	M = Matrix{eltype(a)}(undef, d, d)
-	for j ∈ 1:d
-		u = Blade{sig}(one(eltype(a)), unsigned(j - 1))
-		au = a*u
-		for i ∈ 1:d
-			M[i, j] = getcomp(au, unsigned(i - 1))
-		end
-	end
-	x = zeros(eltype(a), d)
-	x[1] = one(eltype(a))
-	MixedMultivector{sig,C}(M\x)
-end
-
-
-/(a::AbstractMultivector, b::AbstractMultivector) = a*inv(b)
-/(a::AbstractMultivector, b::Number) = a*inv(b)
-/(a::Number, b::AbstractMultivector) = a*inv(b)
-
-\(a::AbstractMultivector, b::AbstractMultivector) = inv(a)*b
-\(a::AbstractMultivector, b::Number) = inv(a)*b
-\(a::Number, b::AbstractMultivector) = inv(a)*b
-
-
-
-
-
-# EXPONENTIATION
-
-function Base.literal_pow(::typeof(^), a::Blade{sig,k,T,B}, ::Val{2})::Blade{sig,0,T,B} where {sig,k,T,B}
-	a.coeff^2*reversionsign(grade(a))ublade_square(signature(a), a.ublade)
-end
-
-function ^(a::Blade, p::Integer)
-	p >= 0 || return inv(a)^abs(p)
-	blade = iseven(p) ? one(a) : oneunit(a)
-	square, _ = ubladeprod(signature(a), a.ublade, a.ublade)
-	factor = square^fld(p, 2) # floored division
-	coeff = factor*a.coeff^p
-	coeff*blade
-end
-
-function powbysquaring(a::AbstractMultivector, p::Integer)
-	p >= 0 || return powbysquaring(inv(a), abs(p))
-	Π = one(best_type(MixedMultivector, a))
-	aᵖ = a
-	while p > 0
-		if !iszero(p & 1)
-			Π *= aᵖ
-		end
-		aᵖ *= aᵖ
-		p >>= 1
+		add!(Π, geometric_prod(u, v))
 	end
 	Π
 end
 
-^(a::AbstractMultivector, p::Integer) = powbysquaring(a, p)
-^(a::AbstractMultivector, p) = error("unsupported multivector exponent type $(typeof(p))")
+"""
+	*(::AbstractMultivector, ::AbstractMultivector)
+
+Geometric product. See `$(fullname(geometric_prod))`.
+"""
+*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
 
-SERIES_ORDER = 25
-set_order(n) = begin
-	global SERIES_ORDER
-	SERIES_ORDER = n
+
+#= GRADED PRODUCTS =#
+
+"""
+	homogeneous_prod(a, b, Val(k))
+
+The grade `k` part of the geometric product of `a` and `b`.
+Equivalent to, but more efficient than, `grade(geometric_prod(a, b), k)`.
+"""
+homogeneous_prod
+
+function homogeneous_prod(a::Blade, b::Blade, ::Val{k}) where k
+	bits = bitsof(a) ⊻ bitsof(b)
+	if grade(bits) == k
+		geometric_prod(a, b)
+	else
+		zero(best_type(Blade, a, b; bits=Val(bits)))
+	end
 end
-function eval_taylor_series(a::AbstractMultivector, func)
-	T = eltype(a)
-	order = SERIES_ORDER
-	series = func(Taylor1(T, order))
-	series(a)
+function homogeneous_prod(a::HomogeneousMultivector{k1}, b::HomogeneousMultivector{k2}, ::Val{k}) where {k1,k2,k}
+	Π = zero(best_type(Multivector, a, b; grade=Val(k)))
+	k ∈ abs(k1 - k2):2:(k1 + k2) && return Π
+	for u ∈ blades(a), v ∈ blades(b)
+		add!(Π, homogeneous_prod(u, v, k))
+	end
+	Π
+end
+function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, ::Val{k}) where k
+	Π = zero(best_type(Multivector, a, b; grade=Val(k)))
+	0 <= k <= dimension(a) || return Π
+	for u ∈ blades(a), v ∈ blades(b)
+		add!(Π, homogeneous_prod(u, v, k))
+	end
+	Π
+end
+homogeneous_prod(a, b, k::Integer) = homogeneous_prod(a, b, Val(k))
+
+"""
+	graded_prod(a, b, grade_selector::Function)
+
+Homogenised geometric product with resulting grade given as a function of the grades of `a` and `b`.
+
+If ``a_p`` and ``b_q`` are multivectors of grade ``p`` and ``q`` respectively, then this is
+equal to ``⟨a_p b_q⟩_{k(p,q)}`` where ``k(p,q)`` is given by `grade_selector`.
+If `a` or `b` are multi-graded, then this extends linearly to ``∑_{pq} ⟨⟨a⟩_p ⟨b⟩_q⟩_{k(p,q)}``.
+"""
+graded_prod
+
+function graded_prod(a::AbstractMultivector, b::AbstractMultivector, grade_selector::Function)
+	Π = zero(best_type(MixedMultivector, a, b))
+	for u ∈ blades(a), v ∈ blades(b)
+		k = grade_selector(grade(u), grade(v))
+		0 <= k <= dimension(Π) || continue
+		add!(Π, homogeneous_prod(u, v, k))
+	end
+	Π
+end
+function graded_prod(a::HomogeneousMultivector, b::HomogeneousMultivector, grade_selector::Function)
+	homogeneous_prod(a, b, grade_selector(grade(a), grade(b)))
 end
 
-function Base.exp(a::AbstractMultivector)
-	a² = a^2
-	if isscalar(a²)
-		s = scalar(a²)
-		if iszero(s)
-			one(a) + a
-		else
-			coeff, â = norm_unit(a)
-			s > 0 ? cosh(coeff) + sinh(coeff)â : cos(coeff) + sin(coeff)â
+∧(a::AbstractMultivector, b::AbstractMultivector) = graded_prod(a, b, +)
+⋅(a::AbstractMultivector, b::AbstractMultivector) = graded_prod(a, b, abs∘-)
+
+
+
+
+
+#= COMPONENT ACCESS =#
+
+bits_to_key(a::Multivector{sig,k,<:AbstractVector}, bits::Unsigned) where {sig,k} = bits_to_linear_index(bits)
+bits_to_key(a::MixedMultivector{sig,<:AbstractVector}, bits::Unsigned) where sig = firstindex(a.components) + bits
+bits_to_key(a::CompositeMultivector{<:AbstractDict}, bits::Unsigned) = bits
+
+parity_sign(I) = iseven(parity(sortperm(collect(I)))) ? +1 : -1
+
+function getcomponent(a::Blade, I...)
+	indices_to_bits(I) == bitsof(a) || return zero(eltype(a))
+	s = parity_sign(I)
+	s*a.coeff
+end
+
+getcomponent(a::Multivector, I...) = zero(eltype(a))
+function getcomponent(a::Multivector{sig,k}, I::Vararg{Any,k}) where {sig,k}
+	s = parity_sign(I)
+	s*a.components[bits_to_key(a, indices_to_bits(I))]
+end
+
+function getcomponent(a::MixedMultivector, I...)
+	s = parity_sign(I)
+	s*a.components[bits_to_key(a, indices_to_bits(I))]
+end
+
+Base.getindex(a::AbstractMultivector, I::Integer...) = getcomponent(a, I...)
+Base.getindex(a::AbstractMultivector) = getcomponent(a)
+
+# experimental notations for grade selection
+Base.getindex(a::AbstractMultivector, I::Vector{<:Integer}) = grade(a, Iterators.only(I))
+# Base.getindex(a::AbstractMultivector; grade) = GeometricAlgebra2.grade(a, grade)
+
+
+function mapcomponents(f, a::CompositeMultivector)
+	a′ = zero(a)
+	for b ∈ blades(a)
+		a′.components[bits_to_key(a, bitsof(b))] = f(b)
+	end
+	a′
+end
+
+
+
+#= GRADE PROJECTION =#
+
+grade(a::Blade{sig}, k::Integer) where sig = grade(a) == k ? a : zero(a)
+grade(a::Multivector{sig}, k::Integer) where sig = grade(a) == k ? a : zero(a)
+function grade(a::MixedMultivector{sig,S}, k::Integer) where {sig,S}
+	b = zero(Multivector{sig,k,S})
+	for u ∈ blades(a)
+		if grade(u) == k
+			add!(b, u)
 		end
-	else
-		# fallback to explicit computation
-		eval_taylor_series(a, exp)
 	end
+	b
 end
 
+# experimental notation for even/odd grade projections
+grade(a::MixedMultivector, ::typeof(+)) = sum(grade(a, k) for k ∈ 0:2:dimension(a))
+grade(a::MixedMultivector, ::typeof(-)) = sum(grade(a, k) for k ∈ 1:2:dimension(a))
 
-# Use the identity ``log(x) = 2atanh((x - 1)/(x + 1))`` and hope for the best
-Base.log(a::AbstractMultivector) = 2atanh((a - 1)/(a + 1))
+grades(a::MixedMultivector) = sort(unique(grade.(Iterators.filter(!iszero, blades(a)))))
 
+scalar(a::AbstractMultivector) = getcomponent(a)
 
-# TRIGONOMETRIC FUNCTIONS
-
-# even trig functions (e.g., cos) of blades produce scalars, since even powers are scalar
-function apply_trig_even(a, sqsign, pos, neg)
-	if iszero(sqsign)
-		one(a)
-	else
-		coeff = abs(a)
-		sqsign > 0 ? pos(coeff) : neg(coeff)
-	end
-end
-# odd (e.g., sin) functions produce blades parallel to the original
-function apply_trig_odd(a, sqsign, pos, neg)
-	if iszero(sqsign)
-		a
-	else
-		coeff, â = norm_unit(a)
-		sqsign > 0 ? pos(coeff)*â : neg(coeff)*â
-	end
-end
+isscalar(a::HomogeneousMultivector) = iszero(grade(a))
+isscalar(a::MixedMultivector) = all(iszero.(grades(a)))
 
 
-for (trigfn,  (pos,    neg,    even )) ∈ [
-	:cos   => (:cos,   :cosh,  true ),
-	:cosh  => (:cosh,  :cos,   true ),
-	:sin   => (:sin,   :sinh,  false),
-	:sinh  => (:sinh,  :sin,   false),
-	:tan   => (:tan,   :tanh,  false),
-	:tanh  => (:tanh,  :tan,   false),
-	:asin  => (:asin,  :asinh, false),
-	:asinh => (:asinh, :asin,  false),
-	:atan  => (:atan,  :atanh, false),
-	:atanh => (:atanh, :atan,  false),
-]
-	apply_trig = even ? apply_trig_even : apply_trig_odd
-	@eval function Base.$trigfn(a::AbstractMultivector)
-		a² = a*a
-		if isscalar(a²)
-			$apply_trig(a, scalar(a²), $pos, $neg)
-		else
-			eval_taylor_series(a, $trigfn)
-		end
-	end
-end
 
-for (trigfn, invfn) ∈ [
-	:sec => :cos,
-	:sech => :cosh,
-	:csc => :sin,
-	:csch => :sinh,
-	:cot => :tan,
-	:coth => :tanh,
-]
-	@eval Base.$trigfn(a::AbstractMultivector) = inv(Base.$invfn(a))
-end
+#= AUTOMORPHISMS & DUALITY OPERATIONS =#
+
+
+reversionsign(k, x=1) = mod(k, 4) <= 1 ? +x : -x
+
+"""
+	~(a::AbstractMultivector)
+	reversion(a::AbstractMultivector)
+
+The reverse of a multivector.
+
+The reversion antiautomorphism ``ρ`` is defined by ``ρ(u) = u`` on vectors
+and ``ρ(ab) = ρ(b)ρ(a)`` on higher-grade elements.
+"""
+reversion, ~
+
+reversion(a::Scalar) = a
+reversion(a::HomogeneousMultivector{sig,k}) where {sig,k} = reversionsign(k, a)
+reversion(a::MixedMultivector) = mapcomponents(b -> reversion(b).coeff, a)
+
+Base.:~(a::AbstractMultivector) = reversion(a)
+
+"""
+	involute(a::AbstractMultivector)
+
+The involute of a multivector, negating the odd-grade part.
+
+The involution automorphism ``ι`` is defined by ``ι(u) = u`` on vectors
+and ``ι(ab) = ι(a)ι(b)`` on higher-grade elements.
+"""
+involute(a::HomogeneousMultivector) = iseven(grade(a)) ? a : -a
+involute(a::MixedMultivector) = mapcomps(u -> (iseven(grade(u)) ? u : -u).coeff, a)
+
+# TODO: show the Clifford conjugate cong = reversion∘involute be defined as the adjoint?
+
+
+
+-(a::AbstractMultivector) = -one(eltype(a))*a
+-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
+
++(a::AbstractMultivector{sig}, b::Scalar) where sig = a + Blade{sig}(b, bits_scalar())
++(a::Scalar, b::AbstractMultivector) = b + a
+-(a::AbstractMultivector, b::Scalar) = a + (-b)
+-(a::Scalar, b::AbstractMultivector) = a + (-b)

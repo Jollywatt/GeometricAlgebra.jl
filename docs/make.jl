@@ -1,5 +1,5 @@
-#= Run this script interactively: `julia -i make.jl`
-... or with arguments `julia make.jl [test|fix|make|deploy]` =#
+#= Run this script interactively: `julia --project=docs/ -i make.jl`
+... or with arguments `julia --project=docs/ make.jl [test|fix|make|deploy]` =#
 
 using Documenter, Revise, GeometricAlgebra
 

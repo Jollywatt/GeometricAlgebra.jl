@@ -6,7 +6,7 @@
 *(a::Scalar, b::Blade{sig,k,bits}) where {sig,k,bits} = Blade{sig,k,bits}(a*b.coeff)
 
 constructor(::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}
-constructor(::MixedMultivector{sig}) where sig = Multivector{sig}
+constructor(::MixedMultivector{sig}) where sig = MixedMultivector{sig}
 *(a::CompositeMultivector{<:AbstractVector}, b::Scalar) = constructor(a)(a.components*b)
 *(a::Scalar, b::CompositeMultivector{<:AbstractVector}) = constructor(b)(a*b.components)
 

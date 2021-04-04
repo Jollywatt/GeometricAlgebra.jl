@@ -136,29 +136,19 @@ Base.one(::Type{<:Blade{sig,k,bits,T}}) where {sig,k,bits,T} = Blade{sig,k,bits_
 
 #= MULTIVECTOR TYPE INFERENCE UTILITIES =#
 
-shared_sig(::AbstractMultivector{sig}...) where sig = sig
-shared_sig(::AbstractMultivector...) = error("multivectors must share the same metric signature")
 shared_sig(::Type{<:AbstractMultivector{sig}}...) where sig = sig
+shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share the same metric signature")
+shared_sig(T::AbstractMultivector...) = shared_sig(typeof.(T)...)
 
-# function best_type(::Type{Blade}, a...; bits::Val{b}) where b
-# 	sig = shared_sig(a...)
-# 	T = promote_type(eltype.(a)...)
-# 	Blade{sig,grade(b),b,T}
-# end
-# function best_type(::Type{Multivector}, a...; grade::Val{k}) where k
-# 	sig = shared_sig(a...)
-# 	T = promote_type(eltype.(a)...)
-# 	Multivector{sig,k,Vector{T}}
-# end
-function best_type(::Type{Blade}, a...)
+function best_type(::Type{Blade}, a...; bits::Val{b}=Val(missing)) where b
 	sig = shared_sig(a...)
 	T = promote_type(eltype.(a)...)
-	Blade{sig,k,bits,T} where {k,bits}
+	ismissing(b) ? Blade{sig,k,bits,T} where {k,bits} : Blade{sig,grade(b),b,T}
 end
-function best_type(::Type{Multivector}, a...)
+function best_type(::Type{Multivector}, a...; grade::Val{k}=Val(missing)) where k
 	sig = shared_sig(a...)
 	T = promote_type(eltype.(a)...)
-	Multivector{sig,k,Vector{T}} where k
+	ismissing(k) ? Multivector{sig,k,Vector{T}} where k : Multivector{sig,k,Vector{T}}
 end
 function best_type(::Type{MixedMultivector}, a...)
 	sig = shared_sig(a...)
@@ -239,6 +229,9 @@ treated as equal if they are both zero.
 
 ==(a::AbstractMultivector, b::Scalar) = isscalar(a) && scalar(a) == b
 ==(a::Scalar, b::AbstractMultivector) = isscalar(b) && a == scalar(b)
+
+==(a::AbstractMultivector{sig}...) where sig = ==(promote(a...)...)
+==(a::AbstractMultivector...) = false # multivectors with non-identical signatures are teated as non-equal
 
 
 blades(a::Blade) = (a,)

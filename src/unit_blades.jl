@@ -13,6 +13,7 @@ bits_has_index(bits, i) = isone(bits >> (i - 1) & 1)
 Return the positions of the ones in the unsigned integer `bits`.
 
 Used to convert between representations of a unit blade.
+See also [`indices_to_bits`](@ref).
 
 Examples
 ===
@@ -37,6 +38,23 @@ function bits_to_indices(bits)
 	end
 	indices
 end
+
+"""
+	indices_to_bits(indices)
+
+Create unsigned integer with bits at the positions given in the vector `indices`.
+
+Used to convert between representations of a unit blade.
+See also [`bits_to_indices`](@ref).
+
+Examples
+===
+```jldoctest
+julia> GeometricAlgebra.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
+"0000000000010011"
+```
+
+"""
 function indices_to_bits(indices)
 	bits = bits_scalar()
 	for i ∈ indices
@@ -65,8 +83,7 @@ end
 """
 Return the smallest uint larger than the one given which has
 the same number of binary ones.
-Algorithm is Gosper's hack, documented at
-http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation.
+Algorithm is [Gosper's hack](http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation).
 
 ```
 julia> GeometricAlgebra.next_bit_permutation(0b1011) |> bitstring

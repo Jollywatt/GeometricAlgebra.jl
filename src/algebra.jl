@@ -247,7 +247,7 @@ Base.:~(a::AbstractMultivector) = reversion(a)
 
 The involute of a multivector, negating the odd-grade part.
 
-The involution automorphism ``ι`` is defined by ``ι(u) = u`` on vectors
+The involution automorphism ``ι`` is defined by ``ι(u) = -u`` on vectors
 and ``ι(ab) = ι(a)ι(b)`` on higher-grade elements.
 """
 involute(a::HomogeneousMultivector) = iseven(grade(a)) ? a : -a

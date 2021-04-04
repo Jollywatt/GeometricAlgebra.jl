@@ -2,9 +2,4 @@ language: julia
 julia:
   - nightly
   - 1.6
-  - 1.0.5
 codecov: true
-coveralls: true
-after_success:
-  # Submit test coverage report
-  - julia --project -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'

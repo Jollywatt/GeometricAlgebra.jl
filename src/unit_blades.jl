@@ -8,7 +8,22 @@ bits_has_index(bits, i) = isone(bits >> (i - 1) & 1)
 
 
 """
+	bits_to_indices(bits)
 
+Return the positions of the ones in the unsigned integer `bits`.
+
+Used to convert between representations of a unit blade.
+
+Examples
+===
+```jldoctest
+julia> GeometricAlgebra.bits_to_indices(0b1001101)
+4-element Vector{Int64}:
+ 1
+ 3
+ 4
+ 7
+```
 """
 function bits_to_indices(bits)
 	indices = Int[]

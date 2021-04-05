@@ -8,21 +8,26 @@ using GeometricAlgebra
 	@test 6*a1 == a6
 	@test (3*a1)*2 == a6
 	@test a6*2 == 3(2a1)*2
-
 	@test 3.0a1 == 0.5a6
 	@test 6im*a1 == im*a6
+	@test a6/2 == 3a1
+	@test a1 == 6.0\a6
 
 	u = Multivector{(1,1,1),1}([1, 2, 4])
 	v = Multivector{(1,1,1),1}([12, 24, 48])
 	@test 12u == v
 	@test 4(u*3) == v
 	@test 120f0*u == BigInt(10)v
+	@test u/2 == v/24
+	@test 6\v == 2u
 
 	A = MixedMultivector{(1,1)}([3, 0, 10, 7])
 	B = MixedMultivector{(1,1)}([21, 0, 70, 49])
 	@test 7A == B
 	@test (7A)*2 == 2B
 	@test (7 + 0im)A == (1//1)B
+	@test B/7 == A
+	@test 1\A == 7\B
 
 end
 
@@ -69,6 +74,23 @@ end
 		@test (2 + x*y)*(y + x*y) == 2y + 2x*y + x - 1
 	end
 end
+
+
+@testset "multiplicative inverses" begin
+	t, x, y, z = basis((-1, 1, 1, 1))
+    @test inv(x) == x
+    @test inv(t) == -t
+    @test inv(x*y) == y*x
+    @test x/x == 1
+    @test (t*x*y*z)/(t*z) == t*x*y*z*t*z == x*y
+
+    @test inv(3x + 4y) == (3x + 4y)/25
+    @testset "inv($a)" for a ∈ [x + 2y + 3z, 1 + 2x, 3 + x*y*z, 1 + t + x*y]
+    	@test inv(a)*a ≈ 1
+    	@test a*inv(a) ≈ 1
+    end
+end
+
 
 @testset "integer powers" begin
 	t, x, y, z = basis((-1, 1, 1, 1))

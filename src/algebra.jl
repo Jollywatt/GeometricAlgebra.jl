@@ -1,6 +1,4 @@
-
 #= SCALAR MULTIPLICATION =#
-
 
 *(a::Blade{sig,k,bits}, b::Scalar) where {sig,k,bits} = Blade{sig,k,bits}(a.coeff*b)
 *(a::Scalar, b::Blade{sig,k,bits}) where {sig,k,bits} = Blade{sig,k,bits}(a*b.coeff)
@@ -14,6 +12,7 @@ constructor(::MixedMultivector{sig}) where sig = MixedMultivector{sig}
 
 /(a::AbstractMultivector, b::Scalar) = a*inv(b)
 \(a::Scalar, b::AbstractMultivector) = inv(a)*b
+
 
 
 #= ADDITION =#
@@ -175,7 +174,7 @@ end
 # returns (2^dim)-element vector of components for every basis blade in the algebra
 full_components_vector(a::MixedMultivector{sig,<:AbstractVector}) where sig = a.components
 function full_components_vector(a::HomogeneousMultivector)
-	fcv = zeros(eltype(a), 2^dimension(a)) # TODO: use sparse vector? is large and will remain mostly empty
+	fcv = zeros(eltype(a), 2^dimension(a)) # TODO: use sparse vector? fcv is large and will remain mostly empty
 	for b ∈ blades(a)
 		fcv[begin + bitsof(b)] = b.coeff
 	end

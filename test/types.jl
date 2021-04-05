@@ -37,6 +37,7 @@ end
 	# equal if both zero even if grade differs
 	@test Blade{(1,1)}(0, 0b01) == Blade{(1,1)}(0, 0b10)
 	@test Multivector{(1,1),1}([0, 0]) == Multivector{(1,1),0}([0])
+
 end
 
 
@@ -89,6 +90,10 @@ end
 	end
 
 	x, y = basis((1, 1))
+	@test float(x) isa Blade{(1, 1),k,bits,<:AbstractFloat} where {k,bits}
+	@test big(x) isa Blade{(1, 1),k,bits,BigInt} where {k,bits}
+	@test complex(x) isa Blade{(1, 1),k,bits,Complex{Int}} where {k,bits}
+
 	fns = float, big, complex, real
 	objs = x*y, x + y, x*y - 1
 	@testset "$(GeometricAlgebra.multivector_type(a))" for a ∈ objs
@@ -112,4 +117,14 @@ end
 	@test ==(promote(1, x^2)...)
 	@test ==(promote(2, (x + y)^2)...)
 	@test ==(promote(1, (x + 0)^2)...)
+end
+
+
+@testset "isapprox()" begin
+	x, y, z = basis((1, 1, 1))
+	@test x^2 ≈ 1
+	@test (x + y)^2 ≈ 2
+	@test (1 + x*y)^4 ≈ -4
+
+	@test ((x + y)/√2)^Int(1e10) ≈ 1 rtol=1e-4
 end

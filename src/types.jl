@@ -295,16 +295,30 @@ treated as equal if they are both zero.
 ==(a::AbstractMultivector...) = false # multivectors with non-identical signatures are teated as non-equal
 
 
+Base.isapprox(a::Blade{sig}, b::Blade{sig}; kwargs...) where sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : isapprox(a.coeff, zero(a.coeff); kwargs...) && isapprox(b.coeff, zero(a.coeff); kwargs...)
+Base.isapprox(a::T, b::T; kwargs...) where {T<:MixedMultivector} = isapprox(a.components, b.components; kwargs...)
+function Base.isapprox(a::Multivector{sig}, b::Multivector{sig}; kwargs...) where sig
+	if grade(a) == grade(b)
+		isapprox(a.components, b.components; kwargs...)
+	else
+		# multivectors of different grade are approximately equal is they are both approximately zero
+		isapprox(a, zero(a); kwargs...) && isapprox(b, zero(b); kwargs...)
+	end
+end
+Base.isapprox(a::AbstractMultivector, b::AbstractMultivector; kwargs...) = isapprox(promote(a, b)...; kwargs...)
+
+Base.isapprox(a::AbstractMultivector, b::Scalar; kwargs...) = isapprox(promote(a, b)...; kwargs...)
+Base.isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(promote(a, b)...; kwargs...)
+
+
+
+#= COMPONENT ACCESS =#
+
 blades(a::Blade) = (a,)
 blades(a::Multivector{sig,k,<:AbstractVector}) where {sig,k} = (Blade{sig,k}(coeff, bits) for (coeff, bits) ∈ zip(a.components, FixedGradeBits(k)))
 blades(a::MixedMultivector{sig,<:AbstractVector}) where sig = (Blade{sig}(coeff, unsigned(i - 1)) for (i, coeff) ∈ enumerate(a.components))
 blades(a::CompositeMultivector{<:AbstractDict}) where sig = (Blade{sig}(coeff, bits) for (bits, coeff) ∈ a.components)
 
-
-
-
-
-#= COMPONENT ACCESS =#
 
 """
 	getcomponent(a::AbstractMultivector, I...)

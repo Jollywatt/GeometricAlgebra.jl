@@ -63,14 +63,24 @@ function indices_to_bits(indices)
 	bits
 end
 
+# # this version is 10% slower
+# function bits_to_linear_index(bits::Unsigned)
+# 	i = 1
+# 	for b ∈ FixedGradeBits(grade(bits))
+# 		if b >= bits
+# 			return i
+# 		end
+# 		i += 1
+# 	end
+# end
 function bits_to_linear_index(bits::Unsigned)
 	i = 1
-	for b ∈ FixedGradeBits(grade(bits))
-		if b >= bits
-			return i
-		end
+	u = bits_first_of_grade(grade(bits))
+	while u < bits
+		u = next_bit_permutation(u)
 		i += 1
 	end
+	i
 end
 function linear_index_to_bits(i, k)
 	bits = bits_scalar()

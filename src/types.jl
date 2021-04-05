@@ -28,7 +28,8 @@ metric signature `sig`.
 """
 abstract type AbstractMultivector{sig} <: Number end
 
-dimension(::AbstractMultivector{sig}) where sig = dimension(sig)
+dimension(::Type{<:AbstractMultivector{sig}}) where sig = dimension(sig)
+dimension(::T) where {T<:AbstractMultivector} = dimension(T)
 
 
 """

@@ -3,13 +3,15 @@
 
 using Documenter, Revise, GeometricAlgebra
 
+project_root = dirname(dirname(pathof(GeometricAlgebra)))
+
 # apply setup code to all doctests in doc strings
 DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
 	using Revise, GeometricAlgebra
 end; recursive=true)
 
 make() = makedocs(
-	root=joinpath(dirname(pathof(GeometricAlgebra)), "..", "docs"),
+	root=joinpath(project_root, "docs"),
 	sitename="GeometricAlgebra.jl",
 )
 
@@ -25,11 +27,11 @@ fix() = begin
 end
 
 if isempty(ARGS)
-	@info """Run this script in interactive mode, and call any of the following:
-		`make()` - build documentation locally
-		`deploy()` - build and deploy to github
-		`test()` - run doctests
-		`fix()` - fix doctests
+	@info """Run this script in interactive mode, and call:
+		 - `make()` to build documentation locally
+		 - `deploy()` to build and deploy to github
+		 - `test()` to run doctests
+		 - `fix()` to fix doctests
 		Keep the session alive; changes will be revised and successive runs will be faster.
 		Alternatively, run this script passing a command (without parentheses) as an argument.
 		"""

@@ -13,10 +13,10 @@ Blade   Multivector                 │
 - `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
    Note that the mathematical definition of a ``k``-blade is the wedge product
    of ``k`` different _vectors_, not necessarily basis vectors. Thus, not all
-   ``k``-blades are representable as a `Blade`, but instead as a `Multivector`.
+   ``k``-blades are representable as a `Blade` (but always as a `Multivector`).
 - `Multivector`: a homogeneous multivector; a sum of same-grade blades.
 - `MixedMultivector`: an inhomogeneous multivector. All elements in a geometric
-   algebra can be converted into this type.
+   algebra can be represented as this type.
 
 =#
 
@@ -38,7 +38,8 @@ Supertype of grade `k` elements in the geometric algebra with metric signature `
 """
 abstract type HomogeneousMultivector{sig,k} <: AbstractMultivector{sig} end
 
-grade(::HomogeneousMultivector{sig,k}) where {sig,k} = k
+grade(::Type{<:HomogeneousMultivector{sig,k} where sig}) where k = k
+grade(::T) where {T<:HomogeneousMultivector} = grade(T)
 
 
 """
@@ -58,11 +59,19 @@ struct Blade{sig,k,bits,T} <: HomogeneousMultivector{sig,k}
 end
 Blade{sig}(coeff::T, bits) where {sig,T} = Blade{sig,grade(bits),bits,T}(coeff)
 
-# for internal use only (assumes `k == grade(bits)`)
+# for internal use only (assumes `k == grade(bits)` without checking)
 Blade{sig,k}(coeff::T, bits) where {sig,k,T} = Blade{sig,k,bits,T}(coeff)
 Blade{sig,k,bits}(coeff::T) where {sig,k,bits,T} = Blade{sig,k,bits,T}(coeff)
+(Blade{sig,k,bits,T} where {k,bits})(coeff, bits) where {sig,T} = Blade{sig}(convert(T, coeff), bits)
 
-bitsof(::(Blade{sig,k,b} where {sig,k})) where b = b
+
+"""
+	bitsof(a::Blade{sig,k,bits,T}) = bits
+
+The bits parameter of a blade, representing its basis `k`-blade.
+"""
+bitsof(::Type{<:Blade{sig,k,bits} where {sig,k}}) where bits = bits
+bitsof(::T) where {T<:Blade} = bitsof(T)
 
 
 
@@ -103,6 +112,7 @@ MixedMultivector{sig}(comps::S) where {sig,S} = MixedMultivector{sig,S}(comps)
 
 
 
+# const UnionMultivectorTypes = Union{Blade,Multivector,AbstractMultivector}
 const CompositeMultivector{S} = Union{Multivector{sig,k,S},MixedMultivector{sig,S}} where {sig,k}
 const Scalar = Union{filter(T -> !(T <: AbstractMultivector), subtypes(Number))...}
 
@@ -134,28 +144,43 @@ Base.iszero(a::CompositeMultivector{<:AbstractDict}) = error("unimplemented")
 Base.one(::Type{<:Blade{sig,k,bits,T}}) where {sig,k,bits,T} = Blade{sig,k,bits_scalar(),T}(one(T))
 
 
+
 #= MULTIVECTOR TYPE INFERENCE UTILITIES =#
 
 shared_sig(::Type{<:AbstractMultivector{sig}}...) where sig = sig
 shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share the same metric signature")
 shared_sig(T::AbstractMultivector...) = shared_sig(typeof.(T)...)
 
-function best_type(::Type{Blade}, a...; bits::Val{b}=Val(missing)) where b
+multivector_type(::Type{<:Blade}) = Blade
+multivector_type(::Type{<:Multivector}) = Multivector
+multivector_type(::Type{<:MixedMultivector}) = MixedMultivector
+multivector_type(::T) where {T<:AbstractMultivector} = multivector_type(T)
+
+# designed to work where each `a...` is a multivector instance *or* a multivector type
+function best_sig_and_eltype(a...; set_eltype=nothing, promote_eltype_with=Union{})
 	sig = shared_sig(a...)
-	T = promote_type(eltype.(a)...)
+	T = isnothing(set_eltype) ? promote_type(eltype.(a)..., promote_eltype_with) : set_eltype
+	sig, T
+end
+
+function best_type(::Type{Blade}, a...; bits::Val{b}=Val(missing), kwargs...) where b
+	sig, T = best_sig_and_eltype(a...; kwargs...)
 	ismissing(b) ? Blade{sig,k,bits,T} where {k,bits} : Blade{sig,grade(b),b,T}
 end
-function best_type(::Type{Multivector}, a...; grade::Val{k}=Val(missing)) where k
-	sig = shared_sig(a...)
-	T = promote_type(eltype.(a)...)
+function best_type(::Type{Multivector}, a...; grade::Val{k}=Val(missing), kwargs...) where k
+	sig, T = best_sig_and_eltype(a...; kwargs...)
 	ismissing(k) ? Multivector{sig,k,Vector{T}} where k : Multivector{sig,k,Vector{T}}
 end
-function best_type(::Type{MixedMultivector}, a...)
-	sig = shared_sig(a...)
-	T = promote_type(eltype.(a)...)
+function best_type(::Type{MixedMultivector}, a...; kwargs...)
+	sig, T = best_sig_and_eltype(a...; kwargs...)
 	MixedMultivector{sig,Vector{T}}
 end
 
+# single argument form is used to modify parameters (e.g., to change the eltype)
+best_type(a::Type{<:Blade}; kwargs...) = best_type(Blade, a; bits=Val(bitsof(a)), kwargs...)
+best_type(a::Type{<:Multivector}; kwargs...)  = best_type(Multivector, a; grade=Val(grade(a)), kwargs...)
+best_type(a::Type{<:MixedMultivector}; kwargs...) = best_type(MixedMultivector, a; kwargs...)
+best_type(a::AbstractMultivector; kwargs...) = best_type(typeof(a); kwargs...)
 
 
 #= CONVERSION
@@ -182,6 +207,7 @@ Base.convert(::Type{<:Multivector{sig,k,S} where k}, a::Scalar) where {sig,S} = 
 Base.convert(T::Type{<:MixedMultivector}, a::Scalar) = zero(T) + a
 
 
+
 #= PROMOTION
 
 Promotion should result in objects of identical types *except* for the grade parameter, which should not be changed.
@@ -197,17 +223,51 @@ Base.promote_rule(T::Type{<:Multivector}, S::Type{<:Blade}) = best_type(Multivec
 Base.promote_rule(T::Type{<:MixedMultivector}, S::Type{<:AbstractMultivector}) = best_type(MixedMultivector, T, S)
 
 # promotion from scalars
-Base.promote_rule(T::Type{<:AbstractMultivector}, S::Type{<:Scalar}) = error("unimplemented")
+Base.promote_rule(T::Type{<:AbstractMultivector}, S::Type{<:Scalar}) = best_type(T; promote_eltype_with=S)
 
 # hack: instances of `HomogeneousMultivector` which share identical types *expect* for a possibly
 # differing grade or bits parameter should be treated as the "same" type as far as promotion is concerned
-Base.promote(as::(Blade{sig,k,bits,T} where {k,bits})...) where {sig,T} = as
-Base.promote(as::(Multivector{sig,k,S} where k)...) where {sig,S} = as
+# Base.promote(as::(Blade{sig,k,bits,T} where {k,bits})...) where {sig,T} = as
+# Base.promote(as::(Multivector{sig,k,S} where k)...) where {sig,S} = as
 
 
 
+#= CONVENIENCE CONSTRUCTORS AND CONVERTERS =#
+
+blade_like(a::AbstractMultivector, coeff=1, bits::Unsigned=bits_scalar()) = Blade{signature(a),grade(bits),bits,eltype(a)}(coeff)
+
+"""
+	mapcomponents(f, a::AbstractMultivector; kwargs...)
+
+Apply a mapping `f :: Blade -> Scalar` component-wise to `a`.
+The function `f` is given a `Blade` representing each component,
+and should return a scalar (not a blade).
+
+The same keyword arguments as [`best_type`](@ref) are accepted,
+including `set_eltype` and `promote_eltype_with` which can be
+used to specify the eltype of the resultant multivector.
+"""
+mapcomponents(f, a::Blade; kwargs...) = best_type(a; kwargs...)(f(a)) # best_type preserves {k,bits}
+function mapcomponents(f, a::CompositeMultivector; kwargs...)
+	a′ = zero(best_type(a; kwargs...))
+	for b ∈ blades(a)
+		a′.components[bits_to_key(a, bitsof(b))] = f(b)
+	end
+	a′
+end
 
 
+Base.float(T::Type{<:AbstractMultivector}) = best_type(T, set_eltype=float(eltype(T)))
+Base.big(T::Type{<:AbstractMultivector}) = best_type(T, set_eltype=big(eltype(T)))
+Base.complex(T::Type{<:AbstractMultivector}) = best_type(T, set_eltype=complex(eltype(T)))
+Base.real(T::Type{<:AbstractMultivector}) = best_type(T, set_eltype=real(eltype(T)))
+
+Base.float(a::AbstractMultivector) = convert(float(typeof(a)), a)
+Base.big(a::AbstractMultivector) = convert(big(typeof(a)), a)
+Base.complex(a::AbstractMultivector) = convert(complex(typeof(a)), a)
+
+Base.real(a::AbstractMultivector) = mapcomponents(b -> real(b.coeff), a; set_eltype=real(eltype(a)))
+Base.imag(a::AbstractMultivector) = mapcomponents(b -> imag(b.coeff), a; set_eltype=real(eltype(a)))
 
 
 
@@ -239,5 +299,63 @@ blades(a::Multivector{sig,k,<:AbstractVector}) where {sig,k} = (Blade{sig,k}(coe
 blades(a::MixedMultivector{sig,<:AbstractVector}) where sig = (Blade{sig}(coeff, unsigned(i - 1)) for (i, coeff) ∈ enumerate(a.components))
 blades(a::CompositeMultivector{<:AbstractDict}) where sig = (Blade{sig}(coeff, bits) for (bits, coeff) ∈ a.components)
 
+
+
+
+
+#= COMPONENT ACCESS =#
+
+"""
+	getcomponent(a::AbstractMultivector, I...)
+	a[I...]
+
+Return the component of the multivector `a` corresponding to the basis blade
+defined by `I`.
+
+Examples
+===
+```jldoctest
+julia> v = basis((1, 1, 1));
+
+julia> a = 1 + 2v[1] + 3v[2]v[3];
+
+julia> a[], a[1], a[2], a[2,3]
+(1, 2, 0, 3)
+
+julia> GeometricAlgebra.getcomponent(a, 3, 2)
+-3
+```
+"""
+getcomponent
+
+bits_to_key(a::Multivector{sig,k,<:AbstractVector}, bits::Unsigned) where {sig,k} = bits_to_linear_index(bits)
+bits_to_key(a::MixedMultivector{sig,<:AbstractVector}, bits::Unsigned) where sig = firstindex(a.components) + bits
+bits_to_key(a::CompositeMultivector{<:AbstractDict}, bits::Unsigned) = bits
+
+parity_sign(I) = iseven(parity(sortperm(collect(I)))) ? +1 : -1
+
+function getcomponent(a::Blade, I...)
+	indices_to_bits(I) == bitsof(a) || return zero(eltype(a))
+	s = parity_sign(I)
+	s*a.coeff
+end
+
+getcomponent(a::Multivector, I...) = zero(eltype(a))
+function getcomponent(a::Multivector{sig,k}, I::Vararg{Any,k}) where {sig,k}
+	s = parity_sign(I)
+	s*a.components[bits_to_key(a, indices_to_bits(I))]
+end
+
+function getcomponent(a::MixedMultivector, I...)
+	s = parity_sign(I)
+	s*a.components[bits_to_key(a, indices_to_bits(I))]
+end
+
+Base.getindex(a::AbstractMultivector, I::Integer...) = getcomponent(a, I...)
+Base.getindex(a::AbstractMultivector) = getcomponent(a)
+
+# experimental notations for grade selection
+Base.getindex(a::AbstractMultivector, I::Vector{<:Integer}) = grade(a, Iterators.only(I))
+# Base.getindex(a::AbstractMultivector; grade) = GeometricAlgebra2.grade(a, grade)
 
 

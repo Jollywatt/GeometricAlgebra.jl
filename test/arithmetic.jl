@@ -1,42 +1,5 @@
 using GeometricAlgebra
 
-@testset "constructors" begin
-	@test iszero(zero(Blade{(1,1,1),2,0b101,Float64}))
-	@test iszero(zero(Blade{(1,1,1),0,0b000,BigInt}))
-	@test iszero(zero(Multivector{(1,1,1),1,Vector{Int}}))
-	@test iszero(zero(MixedMultivector{(1,1,1),Vector{Int}}))
-
-	@test first(basis((1,1,1))) == Blade{(1,1,1)}(1, 0b001)
-	@test  last(basis((1,1,1))) == Blade{(1,1,1)}(1, 0b100)
-end
-
-@testset "equality" begin
-	a = Blade{(1,1)}(42, 0b01)
-	@test a == Blade{(1,1)}(42, 0b01)
-	@test a == Blade{(1,1)}(42.0, 0b01)
-	@test a == Blade{(1,1)}(BigFloat(42), 0b01)
-	@test a != Blade{(1,1)}(-1, 0b01)
-	@test a != Blade{(1,1)}(42, 0b10)
-	@test a != Blade{(1,1)}(42, 0b11)
-	@test a != Blade{(1,1,1)}(42, 0b01)
-
-	a = Multivector{(1,1,1),1}([3, 5, 7])
-	@test a == Multivector{(1,1,1),1}(Float16[3, 5, 7])
-	@test a == Multivector{(1,1,1),1}(Number[3, 5, 7 + 0im])
-	@test a != Multivector{(1,1,1),1}([3, -1, 7])
-	@test a != Multivector{(1,1,1),2}([3, 5, 7])
-	@test a != Multivector{(-1,1,1),1}([3, 5, 7])
-
-	a = MixedMultivector{(1,1)}([1, 10, 20, 100])
-	@test a == MixedMultivector{(1,1)}(BigInt[1, 10, 20, 100])
-	@test a != MixedMultivector{(1,1)}([1, 10, -1, 100])
-	@test a != MixedMultivector{(-1,1)}([1, 10, 20, 100])
-
-	# equal if both zero even if grade differs
-	@test Blade{(1,1)}(0, 0b01) == Blade{(1,1)}(0, 0b10)
-	@test Multivector{(1,1),1}([0, 0]) == Multivector{(1,1),0}([0])
-end
-
 @testset "scalar multiplication" begin
 	a1 = Blade{(1,1)}(1, 0b01)
 	a6 = Blade{(1,1)}(6, 0b01)
@@ -81,9 +44,46 @@ end
 	@test u - x == u - (0 + x)
 end
 
-@testset "geometric product of blades" begin
-    x, y, z = basis((1, 1, 1))
-    @test x*x == y*y == z*z == 1
-    @test x*y == -y*x
-    @test (x*y)*(x*y) == -1
+
+@testset "geometric product" begin
+	t, x, y, z = basis((-1, 1, 1, 1))
+	@testset "Blade" begin
+		@test x*x == y*y == z*z == 1
+		@test t*t == -1
+		@test x*y == -y*x
+		@test (x*y)*(x*y) == -1
+		@test (y*z)*(t*x) == t*x*y*z
+		@test x*x*x == x
+	end
+
+	@testset "Multivector" begin
+		u = 3x + 4y
+		@test u*x == 3 + 4y*x
+		@test u*u == 25
+		@test (t + x)*(t + x) == 0
+	end
+
+	@testset "MixedMultivector" begin
+		@test (1 + x)*(1 + y) == 1 + x + y + x*y
+		@test (1 + x)*(1 - x) == 0
+		@test (2 + x*y)*(y + x*y) == 2y + 2x*y + x - 1
+	end
+end
+
+@testset "integer powers" begin
+	t, x, y, z = basis((-1, 1, 1, 1))
+	
+	@testset "power_with_scalar_square()" begin
+		using GeometricAlgebra: power_with_scalar_square
+		pwss = power_with_scalar_square
+
+		@testset "a = $a" for a ∈ float.([x, 2x*y, x*t])
+			@testset "a^p, p = $p" for p ∈ [-4:4; 13; 14; 171; -333; 10042]
+				a² = a*a
+				@assert isscalar(a²)
+				@test pwss(a, scalar(a²), p) == prod(fill(p > 0 ? a : inv(a), abs(p)))
+			end
+		end
+	    
+	end
 end

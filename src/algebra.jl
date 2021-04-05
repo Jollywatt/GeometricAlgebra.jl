@@ -10,6 +10,10 @@ constructor(::MixedMultivector{sig}) where sig = MixedMultivector{sig}
 *(a::CompositeMultivector{<:AbstractVector}, b::Scalar) = constructor(a)(a.components*b)
 *(a::Scalar, b::CompositeMultivector{<:AbstractVector}) = constructor(b)(a*b.components)
 
+-(a::AbstractMultivector) = -one(eltype(a))*a
+
+/(a::AbstractMultivector, b::Scalar) = a*inv(b)
+\(a::Scalar, b::AbstractMultivector) = inv(a)*b
 
 
 #= ADDITION =#
@@ -44,6 +48,14 @@ end
 add(a::Union{Blade,CompositeMultivector}) = a
 
 +(a::AbstractMultivector...) = add(a...)
+-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
+
+# scalar addition
++(a::AbstractMultivector{sig}, b::Scalar) where sig = a + Blade{sig}(b, bits_scalar())
++(a::Scalar, b::AbstractMultivector) = b + a
+-(a::AbstractMultivector, b::Scalar) = a + (-b)
+-(a::Scalar, b::AbstractMultivector) = a + (-b)
+
 
 
 
@@ -148,47 +160,78 @@ end
 
 
 
+#= MULTIPLICATIVE INVERSES =#
 
-
-#= COMPONENT ACCESS =#
-
-bits_to_key(a::Multivector{sig,k,<:AbstractVector}, bits::Unsigned) where {sig,k} = bits_to_linear_index(bits)
-bits_to_key(a::MixedMultivector{sig,<:AbstractVector}, bits::Unsigned) where sig = firstindex(a.components) + bits
-bits_to_key(a::CompositeMultivector{<:AbstractDict}, bits::Unsigned) = bits
-
-parity_sign(I) = iseven(parity(sortperm(collect(I)))) ? +1 : -1
-
-function getcomponent(a::Blade, I...)
-	indices_to_bits(I) == bitsof(a) || return zero(eltype(a))
-	s = parity_sign(I)
-	s*a.coeff
-end
-
-getcomponent(a::Multivector, I...) = zero(eltype(a))
-function getcomponent(a::Multivector{sig,k}, I::Vararg{Any,k}) where {sig,k}
-	s = parity_sign(I)
-	s*a.components[bits_to_key(a, indices_to_bits(I))]
-end
-
-function getcomponent(a::MixedMultivector, I...)
-	s = parity_sign(I)
-	s*a.components[bits_to_key(a, indices_to_bits(I))]
-end
-
-Base.getindex(a::AbstractMultivector, I::Integer...) = getcomponent(a, I...)
-Base.getindex(a::AbstractMultivector) = getcomponent(a)
-
-# experimental notations for grade selection
-Base.getindex(a::AbstractMultivector, I::Vector{<:Integer}) = grade(a, Iterators.only(I))
-# Base.getindex(a::AbstractMultivector; grade) = GeometricAlgebra2.grade(a, grade)
-
-
-function mapcomponents(f, a::CompositeMultivector)
-	a′ = zero(a)
-	for b ∈ blades(a)
-		a′.components[bits_to_key(a, bitsof(b))] = f(b)
+Base.inv(a::Blade) = a/scalar(a*a) # blades are guaranteed to have scalar squares
+function Base.inv(a::CompositeMultivector)
+	a² = a^2
+	if isscalar(a²)
+		a/scalar(a²)
+	else
+		inv_matrixmethod(a)
 	end
-	a′
+end
+
+# returns (2^dim)-element vector of components for every basis blade in the algebra
+full_components_vector(a::MixedMultivector{sig,<:AbstractVector}) where sig = a.components
+function full_components_vector(a::HomogeneousMultivector)
+	fcv = zeros(eltype(a), 2^dimension(a)) # TODO: use sparse vector? is large and will remain mostly empty
+	for b ∈ blades(a)
+		fcv[begin + bitsof(b)] = b.coeff
+	end
+	fcv
+end
+
+function inv_matrixmethod(a::AbstractMultivector)
+	A = hcat([full_components_vector(a*blade_like(a, 1, unsigned(i - 1)))
+		for i ∈ 1:2^dimension(a)]...)
+	id = full_components_vector(one(a))
+	inv_components = A\id
+	a⁻¹ = MixedMultivector{signature(a)}(inv_components)
+	# result should be converted into the same storage type as original
+end
+
+
+/(a::AbstractMultivector, b::AbstractMultivector) = a*inv(b)
+\(a::AbstractMultivector, b::AbstractMultivector) = inv(a)*b
+
+/(a::Scalar, b::AbstractMultivector) = a*inv(b)
+\(a::AbstractMultivector, b::Scalar) = inv(a)*b
+
+
+
+#= EXPONENTIATION =#
+
+# if a² is a scalar, then a²ⁿ = |a²|ⁿ, a²ⁿ⁺¹ = |a²|ⁿa
+function power_with_scalar_square(a::AbstractMultivector, a², p::Integer)
+	# if p is even, p = 2n; if odd, p = 2n + 1
+	aⁿ = a²^fld(p, 2)
+	iseven(p) ? aⁿ*one(a) : aⁿ*a
+end
+
+function power_by_squaring(a::AbstractMultivector, p::Integer)
+	p >= 0 || return power_by_squaring(a, abs(p))
+	Π = one(best_type(MixedMultivector, a))
+	aⁿ = a
+	while p > 0
+		if isone(p & 1)
+			Π *= aⁿ
+		end
+		aⁿ *= aⁿ
+		p >>= 1
+	end
+	Π
+end
+
+^(a::Blade, p::Integer) = power_with_scalar_square(a, scalar(a*a), p)
+
+function ^(a::CompositeMultivector, p::Integer)
+	a² = a*a
+	if isscalar(a²)
+		power_with_scalar_square(a, scalar(a²), p)
+	else
+		power_by_squaring(a, p)
+	end
 end
 
 
@@ -221,7 +264,6 @@ isscalar(a::MixedMultivector) = all(iszero.(grades(a)))
 
 
 #= AUTOMORPHISMS & DUALITY OPERATIONS =#
-
 
 reversionsign(k, x=1) = mod(k, 4) <= 1 ? +x : -x
 
@@ -257,10 +299,3 @@ involute(a::MixedMultivector) = mapcomps(u -> (iseven(grade(u)) ? u : -u).coeff,
 
 
 
--(a::AbstractMultivector) = -one(eltype(a))*a
--(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
-
-+(a::AbstractMultivector{sig}, b::Scalar) where sig = a + Blade{sig}(b, bits_scalar())
-+(a::Scalar, b::AbstractMultivector) = b + a
--(a::AbstractMultivector, b::Scalar) = a + (-b)
--(a::Scalar, b::AbstractMultivector) = a + (-b)

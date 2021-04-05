@@ -19,7 +19,7 @@ include("signatures.jl")
 
 export ∧, ⋅
 export ~, reversion, involute
-export grade, grades
+export grade, grades, isscalar, scalar
 include("algebra.jl")
 
 export basis

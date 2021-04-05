@@ -4,7 +4,7 @@ bits_scalar() = unsigned(0)
 bits_first_of_grade(k) = (unsigned(1) << k) - unsigned(1)
 
 bits_basis_vector(i) = unsigned(1) << (i - 1)
-bits_has_index(bits, i) = isone(bits >> (i - 1) & 1)
+# bits_has_index(bits, i) = isone(bits >> (i - 1) & 1)
 
 
 """

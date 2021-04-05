@@ -288,8 +288,8 @@ treated as equal if they are both zero.
 ==(a::(Multivector{sig,k,S} where k), b::(Multivector{sig,k,S} where k)) where {sig,S} = grade(a) == grade(b) ? a.components == b.components : iszero(a) && iszero(b)
 ==(a::MixedMultivector{sig,S}, b::MixedMultivector{sig,S}) where {sig,S} = a.components == b.components
 
-==(a::AbstractMultivector, b::Scalar) = isscalar(a) && scalar(a) == b
-==(a::Scalar, b::AbstractMultivector) = isscalar(b) && a == scalar(b)
+==(a::AbstractMultivector, b::Scalar) = (isscalar(a) || iszero(b)) && scalar(a) == b
+==(a::Scalar, b::AbstractMultivector) = (isscalar(b) || iszero(a)) && a == scalar(b)
 
 ==(a::AbstractMultivector{sig}...) where sig = ==(promote(a...)...)
 ==(a::AbstractMultivector...) = false # multivectors with non-identical signatures are teated as non-equal

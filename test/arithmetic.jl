@@ -44,6 +44,7 @@ end
 	u = x + 2y
 	@test -x == (-1)x
 	@test -u == (-1)u
+	@test +u == -(-u)
 	@test x - y == x + (-y)
 	@test u - 1 == -1 + u
 	@test u - x == u - (0 + x)
@@ -81,11 +82,18 @@ end
     @test inv(x) == x
     @test inv(t) == -t
     @test inv(x*y) == y*x
-    @test x/x == 1
+    @test x/x == y\y == 1
     @test (t*x*y*z)/(t*z) == t*x*y*z*t*z == x*y
 
     @test inv(3x + 4y) == (3x + 4y)/25
-    @testset "inv($a)" for a ∈ [x + 2y + 3z, 1 + 2x, 3 + x*y*z, 1 + t + x*y]
+    cases = [
+    	x + 2y + 3z,
+    	t*x + y*z, # simplest multivector with non-scalar square
+    	1 + 2x,
+    	3 + x*y*z,
+    	1 + t + x*y
+    ]
+    @testset "inv($a)" for a ∈ cases
     	@test inv(a)*a ≈ 1
     	@test a*inv(a) ≈ 1
     end
@@ -108,4 +116,39 @@ end
 		end
 	    
 	end
+end
+
+
+
+@testset "duality operations" begin
+	t, x, y, z = basis((-1, 1, 1, 1))
+	@test reversion(x*y) == y*x
+	@test reversion(42) == 42
+	@test ~x == x
+	@test ~(x*y + y*z) == y*x + z*y
+	@test ~(1 + t*x*y) == 1 - t*x*y
+	for a ∈ [x*z + y*z, 1 + x + x*y + x*y*z + t*x*y*z]
+		@test ~(~a) == a
+	end
+
+	@test involute(4) == 4
+	@test involute(4x) == -4x
+	@test involute(4x*y) == 4x*y
+	@test involute(1 + 4x*y + t) == 1 + 4x*y - t
+end
+
+
+@testset "grade operations" begin
+	t, x, y, z = basis((-1, 1, 1, 1))
+    @test grade(42) == 0
+    @test grade(x) == 1
+    @test grade(x*y) == 2
+    @test grade(x + y) == 1
+
+    @test grade(42, 1) == 0
+    @test grade(x, 1) == x
+    @test grade(x, 10) == 0
+    @test grade(x + y, 1) == x + y
+    @test grade(x + y, 0) == 0
+    @test grade(1 + x + y*z, 2) == y*z
 end

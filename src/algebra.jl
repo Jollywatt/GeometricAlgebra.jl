@@ -237,8 +237,8 @@ end
 
 #= GRADE PROJECTION =#
 
-grade(a::Blade{sig}, k::Integer) where sig = grade(a) == k ? a : zero(a)
-grade(a::Multivector{sig}, k::Integer) where sig = grade(a) == k ? a : zero(a)
+grade(a::Scalar) = 0
+grade(a, k::Integer) where sig = grade(a) == k ? a : zero(a)
 function grade(a::MixedMultivector{sig,S}, k::Integer) where {sig,S}
 	b = zero(Multivector{sig,k,S})
 	for u ∈ blades(a)
@@ -291,10 +291,11 @@ The involute of a multivector, negating the odd-grade part.
 The involution automorphism ``ι`` is defined by ``ι(u) = -u`` on vectors
 and ``ι(ab) = ι(a)ι(b)`` on higher-grade elements.
 """
+involute
+
+involute(a::Scalar) = a
 involute(a::HomogeneousMultivector) = iseven(grade(a)) ? a : -a
-involute(a::MixedMultivector) = mapcomps(u -> (iseven(grade(u)) ? u : -u).coeff, a)
+involute(a::MixedMultivector) = mapcomponents(u -> (iseven(grade(u)) ? u : -u).coeff, a)
 
 # TODO: show the Clifford conjugate cong = reversion∘involute be defined as the adjoint?
-
-
 

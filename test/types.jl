@@ -117,6 +117,12 @@ end
 	@test ==(promote(1, x^2)...)
 	@test ==(promote(2, (x + y)^2)...)
 	@test ==(promote(1, (x + 0)^2)...)
+
+	# objects are promoted when stored in vectors
+	@test first([1, x]) isa Blade
+	@test first([2, x + y]) isa Multivector
+	@test first([3, z + 1]) isa MixedMultivector
+	@test sum([1, x, x + y, z + 1]) == 2 + 2x + y + z
 end
 
 

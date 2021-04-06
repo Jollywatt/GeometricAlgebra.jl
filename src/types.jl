@@ -224,7 +224,8 @@ Base.promote_rule(T::Type{<:Multivector}, S::Type{<:Blade}) = best_type(Multivec
 Base.promote_rule(T::Type{<:MixedMultivector}, S::Type{<:AbstractMultivector}) = best_type(MixedMultivector, T, S)
 
 # promotion from scalars
-Base.promote_rule(T::Type{<:AbstractMultivector}, S::Type{<:Scalar}) = best_type(T; promote_eltype_with=S)
+# note that the grade/bits parameters should *not* be preserved
+Base.promote_rule(T::Type{<:AbstractMultivector}, S::Type{<:Scalar}) = best_type(multivector_type(T), T; promote_eltype_with=S)
 
 # hack: instances of `HomogeneousMultivector` which share identical types *expect* for a possibly
 # differing grade or bits parameter should be treated as the "same" type as far as promotion is concerned

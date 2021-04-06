@@ -112,9 +112,9 @@ function homogeneous_prod(a::Blade, b::Blade, ::Val{k}) where k
 		zero(best_type(Blade, a, b; bits=Val(bits)))
 	end
 end
-function homogeneous_prod(a::HomogeneousMultivector{k1}, b::HomogeneousMultivector{k2}, ::Val{k}) where {k1,k2,k}
+function homogeneous_prod(a::HomogeneousMultivector, b::HomogeneousMultivector, ::Val{k}) where k
 	Π = zero(best_type(Multivector, a, b; grade=Val(k)))
-	k ∈ abs(k1 - k2):2:(k1 + k2) && return Π
+	k ∈ abs(grade(a) - grade(b)):2:(grade(a) + grade(b)) || return Π
 	for u ∈ blades(a), v ∈ blades(b)
 		add!(Π, homogeneous_prod(u, v, k))
 	end

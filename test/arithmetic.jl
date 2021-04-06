@@ -65,7 +65,7 @@ end
 	@testset "Multivector" begin
 		u = 3x + 4y
 		@test u*x == 3 + 4y*x
-		@test u*u == 25
+		@test 25 == u*u
 		@test (t + x)*(t + x) == 0
 	end
 
@@ -119,7 +119,6 @@ end
 end
 
 
-
 @testset "duality operations" begin
 	t, x, y, z = basis((-1, 1, 1, 1))
 	@test reversion(x*y) == y*x
@@ -151,4 +150,15 @@ end
     @test grade(x + y, 1) == x + y
     @test grade(x + y, 0) == 0
     @test grade(1 + x + y*z, 2) == y*z
+end
+
+
+@testset "other products" begin
+	t, x, y, z = basis((-1, 1, 1, 1))
+    @test x∧x == 0
+    @test x∧(y + x) == x*y
+    @test (1 + x)∧(y + x) == x + y + x*y
+
+    @test x⋅y == 0
+    @test x⋅x == -t⋅t == 1
 end

@@ -20,3 +20,8 @@ xy = x*y
 	@test isparseable(0.0x)
 	@test isparseable(1 + 2x + 3xy)
 end
+
+# just test against errors
+@test isnothing(show(devnull, MIME("text/plain"), x))
+@test isnothing(show(devnull, MIME("text/plain"), x + y))
+@test isnothing(show(devnull, MIME("text/plain"), 1 + y))

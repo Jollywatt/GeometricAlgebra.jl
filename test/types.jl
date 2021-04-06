@@ -41,6 +41,9 @@ end
 end
 
 
+# TODO: test getcomponent and Base.getindex
+
+
 @testset "best_type()" begin
 	x = Blade{(1,1),1,0b01,Int}(42)
 
@@ -133,4 +136,6 @@ end
 	@test (1 + x*y)^4 ≈ -4
 
 	@test ((x + y)/√2)^Int(1e10) ≈ 1 rtol=1e-4
+
+	# TODO: test zero-equalities
 end

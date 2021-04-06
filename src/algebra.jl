@@ -136,8 +136,8 @@ homogeneous_prod(a, b, k::Integer) = homogeneous_prod(a, b, Val(k))
 Homogenised geometric product with resulting grade given as a function of the grades of `a` and `b`.
 
 If ``a_p`` and ``b_q`` are multivectors of grade ``p`` and ``q`` respectively, then this is
-equal to ``⟨a_p b_q⟩_{k(p,q)}`` where ``k(p,q)`` is given by `grade_selector`.
-If `a` or `b` are multi-graded, then this extends linearly to ``∑_{pq} ⟨⟨a⟩_p ⟨b⟩_q⟩_{k(p,q)}``.
+equal to ``⟨a_p b_q⟩_{k(p,q)}`` where ``k(p,q)`` is `grade_selector(p, q)`.
+If `a` or `b` are multi-graded, then this extends linearly to ``∑_{p,q} ⟨⟨a⟩_p ⟨b⟩_q⟩_{k(p,q)}``.
 """
 graded_prod
 

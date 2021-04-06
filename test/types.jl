@@ -99,7 +99,7 @@ end
 
 	fns = float, big, complex, real
 	objs = x*y, x + y, x*y - 1
-	@testset "$(GeometricAlgebra.multivector_type(a))" for a ∈ objs
+	@testset "$(GeometricAlgebra.multivectortype(a))" for a ∈ objs
 		@testset "$fn()" for fn ∈ fns
 			@test typeof(fn(a)) == fn(typeof(a))
 			@test typeof(fn(complex(a))) == fn(typeof(complex(a)))
@@ -126,6 +126,8 @@ end
 	@test first([2, x + y]) isa Multivector
 	@test first([3, z + 1]) isa MixedMultivector
 	@test sum([1, x, x + y, z + 1]) == 2 + 2x + y + z
+
+	@test prod([x, x*y, y*x*z]) == x*z
 end
 
 

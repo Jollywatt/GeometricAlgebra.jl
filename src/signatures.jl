@@ -1,7 +1,5 @@
 dimension(sig) = length(sig)
 
-signature(::AbstractMultivector{sig}) where sig = sig
-
 basis_labels(sig::Tuple) = ["v$i" for i ∈ 1:N]
 basis_labels(sig::NamedTuple{labels}) where labels = string.(labels)
 

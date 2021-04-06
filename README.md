@@ -1,5 +1,5 @@
 # GeometricAlgebra.jl
-_A simple, generic multivector implementation for geometric algebra with Julia._
+_ A simple, generic implementation for geometric (Clifford) algebras in Julia._
 
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/Jollywatt/GeometricAlgebra.jl)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://jollywatt.github.io/GeometricAlgebra.jl/dev)

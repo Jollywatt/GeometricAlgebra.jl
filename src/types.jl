@@ -24,12 +24,14 @@ Blade   Multivector                 │
 	AbstractMultivector{sig}
 
 Supertype of all elements in the geometric algebra over the vector space with
-metric signature `sig`.
+metric signature `sig`, retrieved with the `signature` method.
 """
 abstract type AbstractMultivector{sig} <: Number end
 
-dimension(::Type{<:AbstractMultivector{sig}}) where sig = dimension(sig)
-dimension(::T) where {T<:AbstractMultivector} = dimension(T)
+signature(::Type{<:AbstractMultivector{sig}}) where sig = sig
+signature(::T) where {T<:AbstractMultivector} = signature(T)
+
+dimension(::Union{T,Type{T}}) where {T<:AbstractMultivector} = dimension(signature(T))
 
 
 """
@@ -64,7 +66,6 @@ Blade{sig}(coeff::T, bits) where {sig,T} = Blade{sig,grade(bits),bits,T}(coeff)
 Blade{sig,k}(coeff::T, bits) where {sig,k,T} = Blade{sig,k,bits,T}(coeff)
 Blade{sig,k,bits}(coeff::T) where {sig,k,bits,T} = Blade{sig,k,bits,T}(coeff)
 (Blade{sig,k,bits,T} where {k,bits})(coeff, bits) where {sig,T} = Blade{sig}(convert(T, coeff), bits)
-
 
 """
 	bitsof(a::Blade{sig,k,bits,T}) = bits
@@ -131,6 +132,8 @@ Base.eltype(::Type{<:CompositeMultivector{S}}) where S = valtype(S)
 #= ZERO & ONE CONSTRUCTORS =#
 
 zeroslike(::Type{Vector{T}}, I...) where T = zeros(T, I...)
+zeroslike(::Type{SparseVector{Tv,Ti}}, I...) where {Tv,Ti} = spzeros(Tv, Ti, I...)
+
 Base.zero(::Type{<:Blade{sig,k,bits,T}}) where {sig,k,bits,T} = Blade{sig,k,bits,T}(zero(T))
 Base.zero(::Type{<:Multivector{sig,k,S}}) where {sig,k,S} = Multivector{sig,k}(zeroslike(S, binomial(dimension(sig), k)))
 Base.zero(::Type{<:MixedMultivector{sig,S}}) where {sig,S} = MixedMultivector{sig}(zeroslike(S, 2^dimension(sig)))
@@ -146,35 +149,79 @@ Base.one(::Type{<:Blade{sig,k,bits,T}}) where {sig,k,bits,T} = Blade{sig,k,bits_
 
 
 
-#= MULTIVECTOR TYPE INFERENCE UTILITIES =#
+#= MULTIVECTOR TYPE INFERENCE UTILITIES
+
+The `<:AbstractMultivector` type system is complex -- any multivector type consists of four orthogonal aspects:
+
+ - `multivectortype`: one of `Blade, Multivector, MixedMultivector`
+ - `signature`: an all-bits type parameter defining the geometric algebra
+ - `storagetype`: the container type `S` which stores components of a `<:CompositeMultivector{S}`
+ - `eltype`: the numerical type of the components
+
+The direction of promotion for these aspects are, respectively:
+
+ - `Blade` -> `Multivector` -> `MixedMultivector`
+ -  no promotion occurs -- an error is thrown if types of different signature are compared
+ - `Vector` -> `SparseVector`
+ -  usual promotion of `<:Number` types
+
+The master function `best_type` performs promotion, and exposes ways of
+setting certain aspects of the resulting type (e.g., requiring a minimum
+`multivectortype` or `eltype`).
+=#
+
+multivectortype(::Type{<:Blade}) = Blade
+multivectortype(::Type{<:Multivector}) = Multivector
+multivectortype(::Type{<:MixedMultivector}) = MixedMultivector
+multivectortype(::T) where {T<:AbstractMultivector} = multivectortype(T)
 
 shared_sig(::Type{<:AbstractMultivector{sig}}...) where sig = sig
 shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share the same metric signature")
 shared_sig(T::AbstractMultivector...) = shared_sig(typeof.(T)...)
 
-multivector_type(::Type{<:Blade}) = Blade
-multivector_type(::Type{<:Multivector}) = Multivector
-multivector_type(::Type{<:MixedMultivector}) = MixedMultivector
-multivector_type(::T) where {T<:AbstractMultivector} = multivector_type(T)
 
-# designed to work where each `a...` is a multivector instance *or* a multivector type
-function best_sig_and_eltype(a...; set_eltype=nothing, promote_eltype_with=Union{})
+struct StorageType{S} end
+unwrap(::Type{StorageType{S}}) where S = S
+
+default_storagetype(sig, Tv, Ti) = Vector{Tv}
+storagetype(::Type{<:Blade{sig,k,bits,T}}) where {sig,k,bits,T} = StorageType{default_storagetype(sig, T, typeof(bits))}
+storagetype(::Type{<:Blade{sig,k,bits,T} where {k,bits}}) where {sig,T} = StorageType{default_storagetype(sig, T, UInt)}
+storagetype(::Type{<:CompositeMultivector{S}}) where S = StorageType{S}
+storagetype(::T) where {T<:AbstractMultivector} = storagetype(T)
+
+Base.promote_rule(::Type{StorageType{Vector{T}}}, ::Type{StorageType{Vector{S}}}) where {T,S} = StorageType{Vector{promote_type(T, S)}}
+Base.promote_rule(::Type{StorageType{SparseVector{Tv,Ti}}}, ::Type{StorageType{Vector{T}}}) where {Tv,Ti,T} = StorageType{SparseVector{promote_type(Tv, T),Ti}}
+Base.promote_rule(::Type{StorageType{SparseVector{Tv,Ti}}}, ::Type{StorageType{SparseVector{Sv,Si}}}) where {Tv,Ti,Sv,Si} = StorageType{SparseVector{promote_type(Tv, Sv),promote_type(Ti, Si)}}
+
+
+# NOTE: best_type must work with non-concrete types in order for promotion to work with more than two objects.
+# E.g., promote_type(x, x*y, x) == promote_type(promote_type(x, x*y), x)
+#                                               \__ non-concrete __/
+# Parameters which are allowed to be unspecified are {k,bits}. If any of {sig,S} are unspecified, do not use best_type to promote.
+
+unwrap(::Type{Type{T}}) where T = T
+unwrap(::Type{T}) where T = T
+
+# must work where each `a...` is a multivector instance *or* a multivector type
+@generated function best_type_parameters(a...; set_eltype::Type{SetT}=Nothing, promote_eltype_with::Type{PromT}=Union{}) where {SetT,PromT}
+	a = unwrap.(a) # normalize Type{Type{A}} -> Type{A} 
 	sig = shared_sig(a...)
-	T = isnothing(set_eltype) ? promote_type(eltype.(a)..., promote_eltype_with) : set_eltype
-	sig, T
+	T = SetT == Nothing ? promote_type(eltype.(a)..., PromT) : SetT
+	S = unwrap(promote_type(storagetype.(a)..., StorageType{Vector{T}}))
+	sig, T, S
 end
 
 function best_type(::Type{Blade}, a...; bits::Val{b}=Val(missing), kwargs...) where b
-	sig, T = best_sig_and_eltype(a...; kwargs...)
+	sig, T = best_type_parameters(a...; kwargs...)
 	ismissing(b) ? Blade{sig,k,bits,T} where {k,bits} : Blade{sig,grade(b),b,T}
 end
 function best_type(::Type{Multivector}, a...; grade::Val{k}=Val(missing), kwargs...) where k
-	sig, T = best_sig_and_eltype(a...; kwargs...)
-	ismissing(k) ? Multivector{sig,k,Vector{T}} where k : Multivector{sig,k,Vector{T}}
+	sig, T, S = best_type_parameters(a...; kwargs...)
+	ismissing(k) ? Multivector{sig,k,S} where k : Multivector{sig,k,S}
 end
 function best_type(::Type{MixedMultivector}, a...; kwargs...)
-	sig, T = best_sig_and_eltype(a...; kwargs...)
-	MixedMultivector{sig,Vector{T}}
+	sig, T, S = best_type_parameters(a...; kwargs...)
+	MixedMultivector{sig,S}
 end
 
 # single argument form is used to modify parameters (e.g., to change the eltype)
@@ -182,6 +229,8 @@ best_type(a::Type{<:Blade}; kwargs...) = best_type(Blade, a; bits=Val(bitsof(a))
 best_type(a::Type{<:Multivector}; kwargs...)  = best_type(Multivector, a; grade=Val(grade(a)), kwargs...)
 best_type(a::Type{<:MixedMultivector}; kwargs...) = best_type(MixedMultivector, a; kwargs...)
 best_type(a::AbstractMultivector; kwargs...) = best_type(typeof(a); kwargs...)
+
+
 
 
 #= CONVERSION
@@ -211,21 +260,22 @@ Base.convert(T::Type{<:MixedMultivector}, a::Scalar) = zero(T) + a
 
 #= PROMOTION
 
-Promotion should result in objects of identical types *except* for the grade parameter, which should not be changed.
+Promotion should result in objects of identical types *except* for the parameters {k,bits}, which should not be changed.
+Promotion should only occur between objects of the same signature -- otherwise, fall back on default promotion behaviour.
 =#
 
 # same multivector type
-Base.promote_rule(T::Type{<:Blade}, S::Type{<:Blade}) = best_type(Blade, T, S)
-Base.promote_rule(T::Type{<:Multivector}, S::Type{<:Multivector}) = best_type(Multivector, T, S)
-Base.promote_rule(T::Type{<:MixedMultivector}, S::Type{<:MixedMultivector}) = best_type(MixedMultivector, T, S)
+Base.promote_rule(T::Type{<:Blade{sig}}, S::Type{<:Blade{sig}}) where sig = best_type(Blade, T, S)
+Base.promote_rule(T::Type{<:Multivector{sig}}, S::Type{<:Multivector{sig}}) where sig = best_type(Multivector, T, S)
+Base.promote_rule(T::Type{<:MixedMultivector{sig}}, S::Type{<:MixedMultivector{sig}}) where sig = best_type(MixedMultivector, T, S)
 
 # promotion to higher multivector type
-Base.promote_rule(T::Type{<:Multivector}, S::Type{<:Blade}) = best_type(Multivector, T, S)
-Base.promote_rule(T::Type{<:MixedMultivector}, S::Type{<:AbstractMultivector}) = best_type(MixedMultivector, T, S)
+Base.promote_rule(T::Type{<:Multivector{sig}}, S::Type{<:Blade{sig}}) where sig = best_type(Multivector, T, S)
+Base.promote_rule(T::Type{<:MixedMultivector{sig}}, S::Type{<:AbstractMultivector{sig}}) where sig = best_type(MixedMultivector, T, S)
 
 # promotion from scalars
 # note that the grade/bits parameters should *not* be preserved
-Base.promote_rule(T::Type{<:AbstractMultivector}, S::Type{<:Scalar}) = best_type(multivector_type(T), T; promote_eltype_with=S)
+Base.promote_rule(T::Type{<:AbstractMultivector{sig}}, S::Type{<:Scalar}) where sig = best_type(multivectortype(T), T; promote_eltype_with=S)
 
 # hack: instances of `HomogeneousMultivector` which share identical types *expect* for a possibly
 # differing grade or bits parameter should be treated as the "same" type as far as promotion is concerned

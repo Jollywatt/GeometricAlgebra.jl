@@ -339,8 +339,8 @@ treated as equal if they are both zero.
 ==(a::(Multivector{sig,k,S} where k), b::(Multivector{sig,k,S} where k)) where {sig,S} = grade(a) == grade(b) ? a.components == b.components : iszero(a) && iszero(b)
 ==(a::MixedMultivector{sig,S}, b::MixedMultivector{sig,S}) where {sig,S} = a.components == b.components
 
-==(a::AbstractMultivector, b::Scalar) = (isscalar(a) || iszero(b)) && scalar(a) == b
-==(a::Scalar, b::AbstractMultivector) = (isscalar(b) || iszero(a)) && a == scalar(b)
+==(a::AbstractMultivector, b::Scalar) = iszero(b) || (isscalar(a) && scalar(a) == b)
+==(a::Scalar, b::AbstractMultivector) = iszero(a) || (isscalar(b) && a == scalar(b))
 
 ==(a::AbstractMultivector{sig}...) where sig = ==(promote(a...)...)
 ==(a::AbstractMultivector...) = false # multivectors with non-identical signatures are teated as non-equal
@@ -421,7 +421,7 @@ Base.getindex(a::AbstractMultivector, I::Integer...) = getcomponent(a, I...)
 Base.getindex(a::AbstractMultivector) = getcomponent(a)
 
 # experimental notations for grade selection
-Base.getindex(a::AbstractMultivector, I::Vector{<:Integer}) = grade(a, Iterators.only(I))
+# Base.getindex(a::AbstractMultivector, I::Vector{<:Integer}) = grade(a, Iterators.only(I))
 # Base.getindex(a::AbstractMultivector; grade) = GeometricAlgebra2.grade(a, grade)
 
 

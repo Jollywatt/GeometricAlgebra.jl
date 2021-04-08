@@ -112,19 +112,19 @@ function homogeneous_prod(a::Blade, b::Blade, ::Val{k}) where k
 		zero(best_type(Blade, a, b; bits=Val(bits)))
 	end
 end
-function homogeneous_prod(a::HomogeneousMultivector, b::HomogeneousMultivector, ::Val{k}) where k
-	Π = zero(best_type(Multivector, a, b; grade=Val(k)))
-	k ∈ abs(grade(a) - grade(b)):2:(grade(a) + grade(b)) || return Π
-	for u ∈ blades(a), v ∈ blades(b)
-		add!(Π, homogeneous_prod(u, v, k))
-	end
-	Π
-end
 function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, ::Val{k}) where k
 	Π = zero(best_type(Multivector, a, b; grade=Val(k)))
-	0 <= k <= dimension(a) || return Π
+
+	if (a, b) isa NTuple{2,HomogeneousMultivector}
+		k ∈ abs(grade(a) - grade(b)):2:(grade(a) + grade(b)) || return Π
+	else
+		0 <= k <= dimension(a) || return Π
+	end
+
 	for u ∈ blades(a), v ∈ blades(b)
-		add!(Π, homogeneous_prod(u, v, k))
+		if grade(bitsof(u) ⊻ bitsof(v)) == k
+			add!(Π, homogeneous_prod(u, v, k))
+		end
 	end
 	Π
 end
@@ -250,8 +250,8 @@ function grade(a::MixedMultivector{sig,S}, k::Integer) where {sig,S}
 end
 
 # experimental notation for even/odd grade projections
-grade(a::MixedMultivector, ::typeof(+)) = sum(grade(a, k) for k ∈ 0:2:dimension(a))
-grade(a::MixedMultivector, ::typeof(-)) = sum(grade(a, k) for k ∈ 1:2:dimension(a))
+# grade(a::MixedMultivector, ::typeof(+)) = sum(grade(a, k) for k ∈ 0:2:dimension(a))
+# grade(a::MixedMultivector, ::typeof(-)) = sum(grade(a, k) for k ∈ 1:2:dimension(a))
 
 grades(a::MixedMultivector) = sort(unique(grade.(Iterators.filter(!iszero, blades(a)))))
 

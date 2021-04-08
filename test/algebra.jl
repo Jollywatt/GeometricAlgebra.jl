@@ -79,24 +79,24 @@ end
 
 @testset "multiplicative inverses" begin
 	t, x, y, z = basis((-1, 1, 1, 1))
-    @test inv(x) == x
-    @test inv(t) == -t
-    @test inv(x*y) == y*x
-    @test x/x == y\y == 1
-    @test (t*x*y*z)/(t*z) == t*x*y*z*t*z == x*y
+	@test inv(x) == 1/x == x\1 == x
+	@test inv(t) == -t
+	@test inv(x*y) == y*x
+	@test x/x == y\y == 1
+	@test (t*x*y*z)/(t*z) == t*x*y*z*t*z == x*y
 
-    @test inv(3x + 4y) == (3x + 4y)/25
-    cases = [
-    	x + 2y + 3z,
-    	t*x + y*z, # simplest multivector with non-scalar square
-    	1 + 2x,
-    	3 + x*y*z,
-    	1 + t + x*y
-    ]
-    @testset "inv($a)" for a ∈ cases
-    	@test inv(a)*a ≈ 1
-    	@test a*inv(a) ≈ 1
-    end
+	@test inv(3x + 4y) == (3x + 4y)/25
+	cases = [
+		x + 2y + 3z,
+		t*x + y*z, # simplest multivector with non-scalar square
+		1 + 2x,
+		3 + x*y*z,
+		1 + t + x*y
+	]
+	@testset "inv($a)" for a ∈ cases
+		@test inv(a)*a ≈ 1
+		@test a*inv(a) ≈ 1
+	end
 end
 
 
@@ -114,7 +114,7 @@ end
 				@test pwss(a, scalar(a²), p) == prod(fill(p > 0 ? a : inv(a), abs(p)))
 			end
 		end
-	    
+		
 	end
 end
 
@@ -138,27 +138,40 @@ end
 
 
 @testset "grade operations" begin
-	t, x, y, z = basis((-1, 1, 1, 1))
-    @test grade(42) == 0
-    @test grade(x) == 1
-    @test grade(x*y) == 2
-    @test grade(x + y) == 1
+	x, y, z = basis((1, 1, 1))
+	@test grade(42) == 0
+	@test grade(x) == 1
+	@test grade(x*y) == 2
+	@test grade(x + y) == 1
 
-    @test grade(42, 1) == 0
-    @test grade(x, 1) == x
-    @test grade(x, 10) == 0
-    @test grade(x + y, 1) == x + y
-    @test grade(x + y, 0) == 0
-    @test grade(1 + x + y*z, 2) == y*z
+	@test grade(42, 1) == 0
+	@test grade(x, 1) == x
+	@test grade(x, 10) == 0
+	@test grade(x + y, 1) == x + y
+	@test grade(x + y, 0) == 0
+	@test grade(1 + x + y*z, 2) == y*z
+
+	@test x[1] == 1
+	@test x[2] == 0
+	@test (1 + 3x*y)[2,1] == -3
 end
 
 
 @testset "other products" begin
 	t, x, y, z = basis((-1, 1, 1, 1))
-    @test x∧x == 0
-    @test x∧(y + x) == x*y
-    @test (1 + x)∧(y + x) == x + y + x*y
+	@test x∧x == 0
+	@test x∧(y + x) == x*y
+	@test (1 + x)∧(y + x) == x + y + x*y
 
-    @test x⋅y == 0
-    @test x⋅x == -t⋅t == 1
+	@test x⋅y == 0
+	@test x⋅x == -t⋅t == 1
+
+	u = x - y
+	v = t*x + 2y*z
+	@test u⋅u == 2
+	@test u∧u == 0
+	@test v∧v == 0
+	@test u⋅v == -t - 2z
+	@test u∧v == 2x*y*z - t*x*y
 end
+

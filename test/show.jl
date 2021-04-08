@@ -22,6 +22,6 @@ xy = x*y
 end
 
 # just test against errors
-@test isnothing(show(devnull, MIME("text/plain"), x))
-@test isnothing(show(devnull, MIME("text/plain"), x + y))
-@test isnothing(show(devnull, MIME("text/plain"), 1 + y))
+@test isnothing(show(stdout, MIME("text/plain"), x))
+@test isnothing(show(stdout, MIME("text/plain"), x + y))
+@test isnothing(show(stdout, MIME("text/plain"), 1 + y))

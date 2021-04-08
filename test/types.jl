@@ -37,6 +37,7 @@ end
 	# equal if both zero even if grade differs
 	@test Blade{(1,1)}(0, 0b01) == Blade{(1,1)}(0, 0b10)
 	@test Multivector{(1,1),1}([0, 0]) == Multivector{(1,1),0}([0])
+	@test Blade{(1,1)}(0, 0b01) != Blade{(1,1)}(1, 0b10)
 
 end
 

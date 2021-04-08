@@ -5,9 +5,7 @@ function show_basis_blade(io::IO, sig, bits)
 	# blades with higher grade than dimension are always zero,
 	#  and do not need to have any basis printed
 	grade(bits) > dimension(sig) && return
-	
 	indices = bits_to_indices(bits)
-
 	printstyled(io, basis_blade_label(sig, indices); bold=true)
 end
 show_basis_blade(io::IO, b::Blade) = show_basis_blade(io, signature(b), bitsof(b))

@@ -14,16 +14,16 @@ _This code is very young and in rapid development._
 
 ```Julia
 julia> x, y, z = basis((1, 1, 1))
-3-element Vector{Blade{(1, 1, 1), 1, bits, Int64} where bits}:
- 1 v1
- 1 v2
- 1 v3
+3-element Vector{Blade{⟨+++⟩, 1, bits, Int64} where bits}:
+ 1v1
+ 1v2
+ 1v3
 
 julia> x^2 == 1
 true
 
 julia> (1 + 2x + 3y)*y
-MixedMultivector{(1, 1, 1), Vector{Int64}}:
+MixedMultivector{⟨+++⟩, Vector{Int64}}:
  3
  0 v1 + 1 v2 + 0 v3
  2 v12 + 0 v13 + 0 v23
@@ -31,7 +31,7 @@ MixedMultivector{(1, 1, 1), Vector{Int64}}:
 julia> ans[2,1]
 -2
 
-julia> ~(x*y*z)
-Grade-3 Blade{(1, 1, 1), 3, 0x0000000000000007, Int64}:
+julia> ~(x*y*z) # reversion
+Grade-3 Blade{⟨+++⟩, 3, 0b111, Int64}:
  -1 v123
 ```

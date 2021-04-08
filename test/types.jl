@@ -8,7 +8,6 @@ using GeometricAlgebra
 
 	@test first(basis((1,1,1))) == Blade{(1,1,1)}(1, 0b001)
 	@test  last(basis((1,1,1))) == Blade{(1,1,1)}(1, 0b100)
-
 end
 
 
@@ -39,6 +38,10 @@ end
 	@test Multivector{(1,1),1}([0, 0]) == Multivector{(1,1),0}([0])
 	@test Blade{(1,1)}(0, 0b01) != Blade{(1,1)}(1, 0b10)
 
+	@test Blade{(1,1)}(0, 0b01) == 0
+	@test Blade{(1,1)}(1, 0b00) == 1
+	@test Blade{(1,1)}(2, 0b00) != 1
+	@test Blade{(1,1)}(1, 0b01) != 1
 end
 
 
@@ -109,6 +112,9 @@ end
 		@test imag(2a + im*a) == a
 	end
 
+	@test Multivector(x)::Multivector == x
+	@test MixedMultivector(x)::MixedMultivector == x
+	@test MixedMultivector(x + 1) == x + 1
 end
 
 

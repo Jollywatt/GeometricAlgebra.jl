@@ -116,6 +116,9 @@ end
 		end
 		
 	end
+
+	@test x^2 == 1
+	@test t^2 == -1
 end
 
 
@@ -154,6 +157,9 @@ end
 	@test x[1] == 1
 	@test x[2] == 0
 	@test (1 + 3x*y)[2,1] == -3
+
+	@test isscalar(x^2)
+	@test isscalar(x^2 + 0)
 end
 
 
@@ -170,7 +176,6 @@ end
 	v = t*x + 2y*z
 	@test u⋅u == 2
 	@test u∧u == 0
-	@test v∧v == 0
 	@test u⋅v == -t - 2z
 	@test u∧v == 2x*y*z - t*x*y
 end

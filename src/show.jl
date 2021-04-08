@@ -93,7 +93,8 @@ Base.show(io::IO, T::Type{<:MixedMultivector}) = pretty_print_type_parameters(io
 function Base.show(io::IO, ::MIME"text/plain", T::Type{<:AbstractMultivector})
 	show(io, T)
 	Base.print_without_params(T) && return
-	printstyled(io, " (pretty-printed ")
+	println(io)
+	printstyled(io, "(pretty-printed ")
 	invoke(show, Tuple{IO,Type}, io, T) # show with default method
 	printstyled(io, ")")
 end

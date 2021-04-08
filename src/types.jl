@@ -145,7 +145,7 @@ Base.iszero(a::Blade) = iszero(a.coeff)
 Base.iszero(a::CompositeMultivector{<:AbstractVector}) = iszero(a.components)
 Base.iszero(a::CompositeMultivector{<:AbstractDict}) = error("unimplemented")
 
-Base.one(::Type{<:Blade{sig,k,bits,T}}) where {sig,k,bits,T} = Blade{sig,k,bits_scalar(),T}(one(T))
+Base.one(a::Type{<:Blade}) = Blade{signature(a)}(one(eltype(a)), bits_scalar())
 
 
 
@@ -277,16 +277,15 @@ Base.promote_rule(T::Type{<:MixedMultivector{sig}}, S::Type{<:AbstractMultivecto
 # note that the grade/bits parameters should *not* be preserved
 Base.promote_rule(T::Type{<:AbstractMultivector{sig}}, S::Type{<:Scalar}) where sig = best_type(multivectortype(T), T; promote_eltype_with=S)
 
-# hack: instances of `HomogeneousMultivector` which share identical types *expect* for a possibly
-# differing grade or bits parameter should be treated as the "same" type as far as promotion is concerned
-# Base.promote(as::(Blade{sig,k,bits,T} where {k,bits})...) where {sig,T} = as
-# Base.promote(as::(Multivector{sig,k,S} where k)...) where {sig,S} = as
-
 
 
 #= CONVENIENCE CONSTRUCTORS AND CONVERTERS =#
 
 blade_like(a::AbstractMultivector, coeff=1, bits::Unsigned=bits_scalar()) = Blade{signature(a),grade(bits),bits,eltype(a)}(coeff)
+
+Multivector(a::Blade) = convert(best_type(Multivector, a), a)
+MixedMultivector(a::HomogeneousMultivector) = convert(best_type(MixedMultivector, a), a)
+
 
 """
 	mapcomponents(f, a::AbstractMultivector; kwargs...)
@@ -339,8 +338,8 @@ treated as equal if they are both zero.
 ==(a::(Multivector{sig,k,S} where k), b::(Multivector{sig,k,S} where k)) where {sig,S} = grade(a) == grade(b) ? a.components == b.components : iszero(a) && iszero(b)
 ==(a::MixedMultivector{sig,S}, b::MixedMultivector{sig,S}) where {sig,S} = a.components == b.components
 
-==(a::AbstractMultivector, b::Scalar) = iszero(b) || (isscalar(a) && scalar(a) == b)
-==(a::Scalar, b::AbstractMultivector) = iszero(a) || (isscalar(b) && a == scalar(b))
+==(a::AbstractMultivector, b::Scalar) = iszero(b) && iszero(a) || isscalar(a) && scalar(a) == b
+==(a::Scalar, b::AbstractMultivector) = iszero(a) && iszero(b) || isscalar(b) && a == scalar(b)
 
 ==(a::AbstractMultivector{sig}...) where sig = ==(promote(a...)...)
 ==(a::AbstractMultivector...) = false # multivectors with non-identical signatures are teated as non-equal

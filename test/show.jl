@@ -25,3 +25,14 @@ end
 @test isnothing(show(stdout, MIME("text/plain"), x))
 @test isnothing(show(stdout, MIME("text/plain"), x + y))
 @test isnothing(show(stdout, MIME("text/plain"), 1 + y))
+
+@testset "pretty-printed types" begin
+	for sig ∈ [(1, 1, 1), (x=1, y=1, z=1)]
+		pretty_sig = GeometricAlgebra.show_signature(sig)
+		@test sprint(show, Blade{sig,2,0b011,Float64}) == "Blade{$pretty_sig, 2, 0b011, Float64}"
+		@test sprint(show, Blade{sig,2,:bits}) == "Blade{$pretty_sig, 2, :bits, T} where T"
+		@test sprint(show, Blade{sig,2,0b101,Float64} where sig) == "Blade{sig, 2, 0b101, Float64} where sig"
+		@test sprint(show, Multivector{sig,k,S} where {k,S}) == "Multivector{$pretty_sig, k, S} where {k, S}"
+	end
+	@test sprint(show, MixedMultivector) == "MixedMultivector"
+end

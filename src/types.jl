@@ -345,7 +345,13 @@ treated as equal if they are both zero.
 ==(a::AbstractMultivector...) = false # multivectors with non-identical signatures are teated as non-equal
 
 
-Base.isapprox(a::Blade{sig}, b::Blade{sig}; kwargs...) where sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : isapprox(a.coeff, zero(a.coeff); kwargs...) && isapprox(b.coeff, zero(a.coeff); kwargs...)
+function Base.isapprox(a::Blade{sig}, b::Blade{sig}; kwargs...) where sig
+	if bitsof(a) == bitsof(b)
+		isapprox(a.coeff, b.coeff; kwargs...)
+	else
+		isapprox(a.coeff, zero(a.coeff); kwargs...) && isapprox(b.coeff, zero(a.coeff); kwargs...)
+	end
+end
 Base.isapprox(a::T, b::T; kwargs...) where {T<:MixedMultivector} = isapprox(a.components, b.components; kwargs...)
 function Base.isapprox(a::Multivector{sig}, b::Multivector{sig}; kwargs...) where sig
 	if grade(a) == grade(b)

@@ -13,25 +13,36 @@ See also the more mature [Grassmann.jl](https://github.com/chakravala/Grassmann.
 _This code is very young and in rapid development._
 
 ```Julia
-julia> x, y, z = basis((1, 1, 1))
-3-element Vector{Blade{⟨+++⟩, 1, bits, Int64} where bits}:
- 1v1
- 1v2
- 1v3
+julia> x,y,z = basis((x=1,y=1,z=1))
+3-element Vector{Blade{⟨x+,y+,z+⟩, 1, bits, Int64} where bits}:
+ 1x
+ 1y
+ 1z
 
-julia> x^2 == 1
+julia> (1 + 2x + 3x*y + 4x*y*z)x
+MixedMultivector{⟨x+,y+,z+⟩, Vector{Int64}}:
+ 2
+ 1 x + -3 y + 0 z
+ 0 xy + 0 xz + 4 yz
+
+julia> grade(ans, 2)
+Grade-2 Multivector{⟨x+,y+,z+⟩, 2, Vector{Int64}}:
+ 0 xy
+ 0 xz
+ 4 yz
+
+julia> ans[3,2]
+-4
+
+julia> R = exp(π/4*x*y)
+MixedMultivector{⟨x+,y+,z+⟩, Vector{Float64}}:
+ 0.7071067811865476
+ 0.7071067811865476 xy + 0.0 xz + 0.0 yz
+
+julia> ~R*(x + 5z)*R
+MixedMultivector{⟨x+,y+,z+⟩, Vector{Float64}}:
+ 0.0 x + 1.0000000000000002 y + 5.000000000000001 z
+
+julia> log(R) ≈ π/4*x*y
 true
-
-julia> (1 + 2x + 3y)*y
-MixedMultivector{⟨+++⟩, Vector{Int64}}:
- 3
- 0 v1 + 1 v2 + 0 v3
- 2 v12 + 0 v13 + 0 v23
-
-julia> ans[2,1]
--2
-
-julia> ~(x*y*z) # reversion
-Grade-3 Blade{⟨+++⟩, 3, 0b111, Int64}:
- -1 v123
 ```

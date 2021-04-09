@@ -4,6 +4,7 @@ import Base: ==, *, /, \, +, -, ^
 import InteractiveUtils: subtypes
 import Combinatorics: parity
 using SparseArrays
+using TaylorSeries: Taylor1
 
 # for use in documentation to give module-independent cross references
 fullname(method) = "$(parentmodule(method)).$(nameof(method))"
@@ -23,6 +24,8 @@ export ∧, ⋅
 export ~, reversion, involute
 export grade, grades, isscalar, scalar
 include("algebra.jl")
+
+include("special.jl")
 
 export basis
 include("convenience.jl")

@@ -141,6 +141,7 @@ end
 @testset "isapprox()" begin
 	x, y, z = basis((1, 1, 1))
 	@test x^2 ≈ 1
+	@test sin(1f0)x ≈ sin(1)x
 	@test (x + y)^2 ≈ 2
 	@test (1 + x*y)^4 ≈ -4
 

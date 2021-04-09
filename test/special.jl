@@ -9,8 +9,15 @@ using GeometricAlgebra
 		@test exp(-z) ≈ cosh(1) - sinh(1)z
 
 		@test exp(x*y) ≈ cos(1) + sin(1)x*y
+	end
 
-		for a ∈ (x, 2y*x, x + y, x*y + 3y*z)
+	@testset "identities: $label" for (label, objects) ∈ [
+		"scalar square" => (x, 2y*x, x + y, x*y + 3y*z),
+		# convergence of taylor series is spooky, so for these
+		# proof-of-concept tests, only try for small multivectors
+		"non-scalar square" => (t*x - y*z, 1 + 2x)./5,
+	]
+		for a ∈ objects
 			@test tan(a) ≈ sin(a)/cos(a)
 			@test tanh(a) ≈ sinh(a)/cosh(a)
 			@test cot(a) ≈ cos(a)/sin(a)
@@ -25,4 +32,5 @@ using GeometricAlgebra
 			@test coth(a)^2 - 1 ≈ csch(a)^2
 		end
 	end
+
 end

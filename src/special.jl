@@ -8,7 +8,7 @@ function eval_evenodd_trig(a, a², pos, neg, ::Val{even}) where even
 	end
 end
 
-function eval_series(a, fn, order=20)
+function eval_series(a, fn, order=30)
 	T = eltype(a)
 	series = fn(Taylor1(T, order))
 	series(a)

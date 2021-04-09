@@ -10,8 +10,9 @@ constructor(::MixedMultivector{sig}) where sig = MixedMultivector{sig}
 
 -(a::AbstractMultivector) = -one(eltype(a))*a
 
-/(a::AbstractMultivector, b::Scalar) = a*inv(b)
-\(a::Scalar, b::AbstractMultivector) = inv(a)*b
+promote_to(x::T, ::Type{S}) where {T,S} = convert(promote_type(T, S), x)
+/(a::AbstractMultivector, b::Scalar) = a*inv(promote_to(b, eltype(a)))
+\(a::Scalar, b::AbstractMultivector) = inv(promote_to(a, eltype(b)))*b
 
 
 

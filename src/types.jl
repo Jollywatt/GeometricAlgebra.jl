@@ -65,7 +65,7 @@ Blade{sig}(coeff::T, bits) where {sig,T} = Blade{sig,grade(bits),bits,T}(coeff)
 # for internal use only (assumes `k == grade(bits)` without checking)
 Blade{sig,k}(coeff::T, bits) where {sig,k,T} = Blade{sig,k,bits,T}(coeff)
 Blade{sig,k,bits}(coeff::T) where {sig,k,bits,T} = Blade{sig,k,bits,T}(coeff)
-(Blade{sig,k,bits,T} where {k,bits})(coeff, bits) where {sig,T} = Blade{sig}(convert(T, coeff), bits)
+# (Blade{sig,k,bits,T} where {k,bits})(coeff, bits) where {sig,T} = Blade{sig}(convert(T, coeff), bits)
 
 """
 	bitsof(a::Blade{sig,k,bits,T}) = bits
@@ -113,7 +113,6 @@ end
 MixedMultivector{sig}(comps::S) where {sig,S} = MixedMultivector{sig,S}(comps)
 
 
-
 # const UnionMultivectorTypes = Union{Blade,Multivector,AbstractMultivector}
 const CompositeMultivector{S} = Union{Multivector{sig,k,S},MixedMultivector{sig,S}} where {sig,k}
 const Scalar = Union{filter(T -> !(T <: AbstractMultivector), subtypes(Number))...}
@@ -128,11 +127,17 @@ Base.eltype(::Type{<:Blade{sig,k,bits,T} where {sig,k,bits}}) where T = T
 Base.eltype(::Type{<:CompositeMultivector{S}}) where S = valtype(S)
 
 
+ncomponents(::Type{<:Multivector{sig,k}}) where {sig,k} = binomial(dimension(sig), k)
+ncomponents(::Type{<:MixedMultivector{sig}}) where sig = 2^dimension(sig)
+ncomponents(::T) where {T<:AbstractMultivector} = ncomponents(T)
+
+
 
 #= ZERO & ONE CONSTRUCTORS =#
 
 zeroslike(::Type{Vector{T}}, I...) where T = zeros(T, I...)
 zeroslike(::Type{SparseVector{Tv,Ti}}, I...) where {Tv,Ti} = spzeros(Tv, Ti, I...)
+zeroslike(::Type{S}, I...) where {S<:StaticVector} = zeros(S)
 
 Base.zero(::Type{<:Blade{sig,k,bits,T}}) where {sig,k,bits,T} = Blade{sig,k,bits,T}(zero(T))
 Base.zero(::Type{<:Multivector{sig,k,S}}) where {sig,k,S} = Multivector{sig,k}(zeroslike(S, binomial(dimension(sig), k)))
@@ -192,7 +197,17 @@ storagetype(::T) where {T<:AbstractMultivector} = storagetype(T)
 Base.promote_rule(::Type{StorageType{Vector{T}}}, ::Type{StorageType{Vector{S}}}) where {T,S} = StorageType{Vector{promote_type(T, S)}}
 Base.promote_rule(::Type{StorageType{SparseVector{Tv,Ti}}}, ::Type{StorageType{Vector{T}}}) where {Tv,Ti,T} = StorageType{SparseVector{promote_type(Tv, T),Ti}}
 Base.promote_rule(::Type{StorageType{SparseVector{Tv,Ti}}}, ::Type{StorageType{SparseVector{Sv,Si}}}) where {Tv,Ti,Sv,Si} = StorageType{SparseVector{promote_type(Tv, Sv),promote_type(Ti, Si)}}
+# fallback
+Base.promote_rule(::Type{StorageType{T}}, ::Type{StorageType{S}}) where {T,S} = StorageType{promote_type(T, S)}
 
+set_eltype_parameter(::Type{<:Vector}, ::Type{T}) where {T} = Vector{T}
+set_eltype_parameter(::Type{<:SparseVector{Tv,Ti} where Tv}, ::Type{T}) where {T,Ti} = SparseVector{T,Ti}
+set_eltype_parameter(::Type{<:SVector}, ::Type{T}) where {T} = SVector{N,T} where N
+set_eltype_parameter(::Type{<:MVector}, ::Type{T}) where {T} = MVector{N,T} where N
+
+set_size_parameter(::Type{T}, ::Val{N}) where {T,N} = T
+set_size_parameter(::Type{<:SVector{N′,T} where N′}, ::Val{N}) where {N,T} = SVector{N,T}
+set_size_parameter(::Type{<:MVector{N′,T} where N′}, ::Val{N}) where {N,T} = MVector{N,T}
 
 # NOTE: best_type must work with non-concrete types in order for promotion to work with more than two objects.
 # E.g., promote_type(x, x*y, x) == promote_type(promote_type(x, x*y), x)
@@ -207,20 +222,29 @@ unwrap(::Type{T}) where T = T
 	a = unwrap.(a) # normalize Type{Type{A}} -> Type{A} 
 	sig = shared_sig(a...)
 	T = SetT == Nothing ? promote_type(eltype.(a)..., PromT) : SetT
-	S = unwrap(promote_type(storagetype.(a)..., StorageType{Vector{T}}))
+	S = unwrap(promote_type(storagetype.(a)...))
+	if S === StorageType error("storagetype promotion failed") end
+	S = set_eltype_parameter(S, T)
 	sig, T, S
 end
 
+# best type if fastest when returning concrete types (as opposed to `UnionAll`s)
 function best_type(::Type{Blade}, a...; bits::Val{b}=Val(missing), kwargs...) where b
 	sig, T = best_type_parameters(a...; kwargs...)
 	ismissing(b) ? Blade{sig,k,bits,T} where {k,bits} : Blade{sig,grade(b),b,T}
 end
 function best_type(::Type{Multivector}, a...; grade::Val{k}=Val(missing), kwargs...) where k
 	sig, T, S = best_type_parameters(a...; kwargs...)
-	ismissing(k) ? Multivector{sig,k,S} where k : Multivector{sig,k,S}
+	if ismissing(k)
+		Multivector{sig,k,S} where k
+	else
+		N = binomial(dimension(sig), k)
+		Multivector{sig,k,set_size_parameter(S, Val(N))}
+	end
 end
 function best_type(::Type{MixedMultivector}, a...; kwargs...)
 	sig, T, S = best_type_parameters(a...; kwargs...)
+	S = set_size_parameter(S, Val(2^dimension(sig)))
 	MixedMultivector{sig,S}
 end
 
@@ -248,7 +272,17 @@ Base.convert(::Type{<:Multivector{sig,k,S} where k}, a::Multivector) where {sig,
 Base.convert(::Type{<:MixedMultivector{sig,C}}, a::MixedMultivector) where {sig,C} = add!(zero(MixedMultivector{sig,C}), a)
 
 # conversion from lower multivector type
-Base.convert(T::Type{<:Multivector{sig,k,S} where k}, a::Blade) where {sig,S} = add!(zero(Multivector{sig,grade(a),S}), a)
+function Base.convert(T::Type{<:Multivector{sig,k,S} where k}, a::Blade) where {sig,S}
+	T = Multivector{sig,grade(a),S}
+	i = bits_to_key(T, bitsof(a))
+	comps = [i == j ? convert(eltype(S), a.coeff) : zero(eltype(S)) for j ∈ 1:ncomponents(T)]
+	T(comps)
+end
+function Base.convert(T::Type{<:MixedMultivector{sig,S}}, a::Blade) where {sig,S}
+	i = 1 + bitsof(a)
+	comps = [i == j ? convert(eltype(S), a.coeff) : zero(eltype(S)) for j ∈ 1:ncomponents(T)]
+	MixedMultivector{sig,S}(comps)
+end
 Base.convert(T::Type{<:MixedMultivector}, a::HomogeneousMultivector) = add!(zero(T), a)
 
 # conversion from scalar
@@ -283,7 +317,7 @@ Base.promote_rule(T::Type{<:AbstractMultivector{sig}}, S::Type{<:Scalar}) where 
 
 blade_like(a::AbstractMultivector, coeff=1, bits::Unsigned=bits_scalar()) = Blade{signature(a),grade(bits),bits,eltype(a)}(coeff)
 
-Multivector(a::Blade) = convert(best_type(Multivector, a), a)
+Multivector(a::Blade) = convert(best_type(Multivector, a; grade=Val(grade(a))), a)
 MixedMultivector(a::HomogeneousMultivector) = convert(best_type(MixedMultivector, a), a)
 
 
@@ -399,9 +433,10 @@ julia> GeometricAlgebra.getcomponent(a, 3, 2)
 """
 getcomponent
 
-bits_to_key(a::Multivector{sig,k,<:AbstractVector}, bits::Unsigned) where {sig,k} = bits_to_linear_index(bits)
-bits_to_key(a::MixedMultivector{sig,<:AbstractVector}, bits::Unsigned) where sig = firstindex(a.components) + bits
-bits_to_key(a::CompositeMultivector{<:AbstractDict}, bits::Unsigned) = bits
+bits_to_key(::Type{<:Multivector{sig,k,<:AbstractVector}}, bits::Unsigned) where {sig,k} = bits_to_linear_index(bits)
+bits_to_key(::Type{<:MixedMultivector{sig,<:AbstractVector}}, bits::Unsigned) where sig = 1 + bits
+bits_to_key(::Type{<:CompositeMultivector{<:AbstractDict}}, bits::Unsigned) = bits
+bits_to_key(::T, bits) where {T<:AbstractMultivector} = bits_to_key(T, bits)
 
 parity_sign(I) = iseven(parity(sortperm(collect(I)))) ? +1 : -1
 

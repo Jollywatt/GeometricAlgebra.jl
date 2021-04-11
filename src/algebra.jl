@@ -18,6 +18,8 @@ promote_to(x::T, ::Type{S}) where {T,S} = convert(promote_type(T, S), x)
 
 #= ADDITION =#
 
+# warning: `for u ∈ blades(b) ... end` is not fast
+
 # mutating addition which does not require same element/storage types
 function add!(a::CompositeMultivector, b::Blade)
 	a.components[bits_to_key(a, bitsof(b))] += b.coeff
@@ -25,28 +27,27 @@ function add!(a::CompositeMultivector, b::Blade)
 end
 function add!(a::CompositeMultivector, b::CompositeMultivector)
 	for u ∈ blades(b)
-		add!(a, u)
+		a = add!(a, u)
 	end
 	a
 end
-
-function add(As::(HomogeneousMultivector{sig,k} where sig)...) where k
-	Σ = zero(best_type(Multivector, As..., grade=Val(k)))
-	for a ∈ As, b ∈ blades(a)
-		add!(Σ, b)
+function add!(a::MixedMultivector, b::Multivector)
+	for (bits, x) ∈ zip(FixedGradeBits(grade(b)), b.components)
+		a.components[bits_to_key(a, bits)] += x
 	end
-	Σ
+	a
 end
-function add(As::AbstractMultivector...)
-	Σ = zero(best_type(MixedMultivector, As...))
-	for a ∈ As, b ∈ blades(a)
-		add!(Σ, b)
-	end
-	Σ
-end
+# mutating add! falls back to normal add for immutable storagetypes
+add!(a::CompositeMultivector{<:StaticVector}, b::Blade) = add(a, b)
 
-add(a::Union{Blade,CompositeMultivector}) = a
+add(As::Multivector{sig,k,<:AbstractVector}...) where {sig,k} = Multivector{sig,k}(.+((a.components for a ∈ As)...))
+add(As::MixedMultivector{sig,<:AbstractVector}...) where sig = MixedMultivector{sig}(.+((a.components for a ∈ As)...))
 
+add(As::HomogeneousMultivector{sig,k}...) where {sig,k} = add(Multivector.(As)...)
+add(As::AbstractMultivector{sig}...) where sig = add(MixedMultivector.(As)...)
+
+
++(a::AbstractMultivector) = a
 +(a::AbstractMultivector...) = add(a...)
 -(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
@@ -81,7 +82,7 @@ end
 function geometric_prod(a::AbstractMultivector, b::AbstractMultivector)
 	Π = zero(best_type(MixedMultivector, a, b))
 	for u ∈ blades(a), v ∈ blades(b)
-		add!(Π, geometric_prod(u, v))
+		Π = add!(Π, geometric_prod(u, v))
 	end
 	Π
 end
@@ -124,7 +125,7 @@ function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, ::Val{
 
 	for u ∈ blades(a), v ∈ blades(b)
 		if grade(bitsof(u) ⊻ bitsof(v)) == k
-			add!(Π, homogeneous_prod(u, v, k))
+			Π = add!(Π, homogeneous_prod(u, v, k))
 		end
 	end
 	Π
@@ -147,7 +148,7 @@ function graded_prod(a::AbstractMultivector, b::AbstractMultivector, grade_selec
 	for u ∈ blades(a), v ∈ blades(b)
 		k = grade_selector(grade(u), grade(v))
 		0 <= k <= dimension(Π) || continue
-		add!(Π, homogeneous_prod(u, v, k))
+		Π = add!(Π, homogeneous_prod(u, v, k))
 	end
 	Π
 end
@@ -241,10 +242,10 @@ end
 grade(a::Scalar) = 0
 grade(a, k::Integer) where sig = grade(a) == k ? a : zero(a)
 function grade(a::MixedMultivector{sig,S}, k::Integer) where {sig,S}
-	b = zero(Multivector{sig,k,S})
+	b = zero(best_type(Multivector, a, grade=Val(k)))
 	for u ∈ blades(a)
 		if grade(u) == k
-			add!(b, u)
+			b = add!(b, u)
 		end
 	end
 	b

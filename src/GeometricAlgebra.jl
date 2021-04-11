@@ -4,6 +4,7 @@ import Base: ==, *, /, \, +, -, ^
 import InteractiveUtils: subtypes
 import Combinatorics: parity
 using SparseArrays
+using StaticArrays
 using TaylorSeries: Taylor1
 
 # for use in documentation to give module-independent cross references

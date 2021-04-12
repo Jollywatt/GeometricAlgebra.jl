@@ -33,6 +33,7 @@ signature(::T) where {T<:AbstractMultivector} = signature(T)
 
 dimension(::Union{T,Type{T}}) where {T<:AbstractMultivector} = dimension(signature(T))
 
+Base.broadcastable(a::AbstractMultivector) = Ref(a)
 
 """
 	HomogeneousMultivector{sig,k} <: AbstractMultivector{sig}

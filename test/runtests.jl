@@ -8,7 +8,7 @@ using Revise, GeometricAlgebra
 project_root = dirname(dirname(pathof(GeometricAlgebra)))
 cd(joinpath(project_root, "test"))
 
-function runtests(files...)
+function test(files...)
 	@eval @testset ExtendedTestSet "GeometricAlgebra" begin
 		@includetests $files
 	end
@@ -35,17 +35,17 @@ clear_coverage_files() = run(`bash -c "rm $project_root/**/*.cov"`)
 
 if isempty(ARGS)
 	@info """Run this script in interactive mode, and call:
-		 - `runtests("testfile1", "testfile2", ...)`
+		 - `test("testfile1", "testfile2", ...)`
 		   (without `.jl` extensions) to run tests
-		 - `runtests()` to run all tests
+		 - `test()` to run all tests
 		 - `coverage()` to analyse code coverage
 		 - `score()` to show coverage score from last run
 		 - `clear_coverage_files()` to remove `*.cov` files
 		Keep the session alive; changes will be revised and successive runs will be faster.
 		"""
-	!isinteractive() && runtests()
+	!isinteractive() && test()
 elseif "--code-coverage" in ARGS
 	coverage()
 else
-	runtests(ARGS...)
+	test(ARGS...)
 end

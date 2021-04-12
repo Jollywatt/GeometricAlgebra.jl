@@ -180,14 +180,14 @@ function show_multivector(io::IO, a::Multivector; indent=0)
 end
 
 
-function show_multivector_inline(io::IO, a::Multivector; compact=false)
+function show_multivector_inline(io::IO, a::Multivector; compact=false, showzeros=false)
 	if iszero(a)
 		print(io, zero(eltype(a)))
 		return
 	end
 	isfirst = true
 	for b ∈ sorted_blades(a)
-		compact && iszero(b) && continue
+		(!showzeros || compact) && iszero(b) && continue
 		isfirst ? isfirst = false : print(io, " + ")
 		show_blade(io, b; compact)
 	end

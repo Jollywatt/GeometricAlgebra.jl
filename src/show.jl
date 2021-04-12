@@ -121,7 +121,7 @@ function Base.alignment(io::IO, b::Blade)
 	(l, length(plaintext_repr(io, b)) - l)
 end
 function Base.alignment(io::IO, b::CompositeMultivector)
-	(length(plaintext_repr(io, b)), 1)
+	(1, length(plaintext_repr(io, b)))
 end
 
 

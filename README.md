@@ -13,35 +13,39 @@ See also the more mature [Grassmann.jl](https://github.com/chakravala/Grassmann.
 _This code is very young and in rapid development._
 
 ```Julia
-julia> x,y,z = basis((x=1,y=1,z=1))
-3-element Vector{Blade{⟨x+,y+,z+⟩, 1, bits, Int64} where bits}:
+julia> t, x, y, z = basis((t=-1, x=1, y=1, z=1)) # create basis vectors for "-+++" spacetime algebra
+4-element Vector{Blade{⟨t-,x+,y+,z+⟩, 1, bits, Int64} where bits}:
+ 1t
  1x
  1y
  1z
 
-julia> (1 + 2x + 3x*y + 4x*y*z)x
-MixedMultivector{⟨x+,y+,z+⟩, Vector{Int64}}:
+julia> (1 + 2x + 3x*y + 4x*y*z)*x
+MixedMultivector{⟨t-,x+,y+,z+⟩, Vector{Int64}}:
  2
- 1 x + -3 y + 0 z
- 0 xy + 0 xz + 4 yz
+ 1 x + -3 y
+ 4 yz
 
 julia> grade(ans, 2)
-Grade-2 Multivector{⟨x+,y+,z+⟩, 2, Vector{Int64}}:
+Grade-2 Multivector{⟨t-,x+,y+,z+⟩, 2, Vector{Int64}}:
+ 0 tx
+ 0 ty
  0 xy
+ 0 tz
  0 xz
  4 yz
 
-julia> ans[3,2]
+julia> ans[4,3] # access zy component
 -4
 
-julia> R = exp(π/4*x*y)
-MixedMultivector{⟨x+,y+,z+⟩, Vector{Float64}}:
+julia> R = exp(π/4*x*y) # rotor describing quarter turn in xy plane
+MixedMultivector{⟨t-,x+,y+,z+⟩, Vector{Float64}}:
  0.7071067811865476
- 0.7071067811865476 xy + 0.0 xz + 0.0 yz
+ 0.7071067811865475 xy
 
-julia> ~R*(x + 5z)*R
-MixedMultivector{⟨x+,y+,z+⟩, Vector{Float64}}:
- 0.0 x + 1.0000000000000002 y + 5.000000000000001 z
+julia> ~R*(x + 5z)*R # rotor application R̃aR with reversion ~
+MixedMultivector{⟨t-,x+,y+,z+⟩, Vector{Float64}}:
+ 2.220446049250313e-16 x + 1.0 y + 5.0 z
 
 julia> log(R) ≈ π/4*x*y
 true

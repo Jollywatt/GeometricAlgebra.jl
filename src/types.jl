@@ -66,7 +66,6 @@ Blade{sig}(coeff::T, bits) where {sig,T} = Blade{sig,grade(bits),bits,T}(coeff)
 # for internal use only (assumes `k == grade(bits)` without checking)
 Blade{sig,k}(coeff::T, bits) where {sig,k,T} = Blade{sig,k,bits,T}(coeff)
 Blade{sig,k,bits}(coeff::T) where {sig,k,bits,T} = Blade{sig,k,bits,T}(coeff)
-# (Blade{sig,k,bits,T} where {k,bits})(coeff, bits) where {sig,T} = Blade{sig}(convert(T, coeff), bits)
 
 """
 	bitsof(a::Blade{sig,k,bits,T}) = bits
@@ -189,6 +188,7 @@ shared_sig(T::AbstractMultivector...) = shared_sig(typeof.(T)...)
 struct StorageType{S} end
 unwrap(::Type{StorageType{S}}) where S = S
 
+# default_storagetype(sig, Tv, Ti) = SVector{N,Tv} where N
 default_storagetype(sig, Tv, Ti) = Vector{Tv}
 storagetype(::Type{<:Blade{sig,k,bits,T}}) where {sig,k,bits,T} = StorageType{default_storagetype(sig, T, typeof(bits))}
 storagetype(::Type{<:Blade{sig,k,bits,T} where {k,bits}}) where {sig,T} = StorageType{default_storagetype(sig, T, UInt)}
@@ -457,6 +457,8 @@ function getcomponent(a::MixedMultivector, I...)
 	s = parity_sign(I)
 	s*a.components[bits_to_key(a, indices_to_bits(I))]
 end
+
+getcomponent(a::MixedMultivector) = first(a.components)
 
 Base.getindex(a::AbstractMultivector, I::Integer...) = getcomponent(a, I...)
 Base.getindex(a::AbstractMultivector) = getcomponent(a)

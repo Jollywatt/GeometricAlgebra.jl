@@ -8,23 +8,73 @@ function eval_evenodd_trig(a, a², pos, neg, ::Val{even}) where even
 	end
 end
 
-function eval_series(a, fn, order=30)
+SERIES_ORDER = [150]
+
+function eval_series(a, fn, order=first(SERIES_ORDER))
 	T = eltype(a)
 	series = fn(Taylor1(T, order))
 	series(a)
 end
 
-function Base.exp(a::AbstractMultivector)
-	a² = a*a
-	if isscalar(a²)
-		s = scalar(a²)
-		cosha = eval_evenodd_trig(a, s, cosh, cos, Val(true))
-		sinha = eval_evenodd_trig(a, s, sinh, sin, Val(false))
-		cosha + sinha
+isapproxzero(x) = abs(x) <= eps(float(one(x)))/2
+
+crudenorm(a::Scalar) = a
+crudenorm(a::Blade) = a.coeff
+crudenorm(a::CompositeMultivector) = sum(abs.(a.components))
+
+
+
+function exp_with_scalar_square(a, a²)
+	isapproxzero(a²) && return one(a) + a
+
+	norm = sqrt(abs(a²))
+	if a² > 0
+		cosh(norm) + sinh(norm)/norm*a
 	else
-		eval_series(a, exp)
+		cos(norm) + sin(norm)/norm*a
 	end
 end
+
+function exp_series(a, p=1)
+	# TODO: figure out when exp(a) -> exp(a/p)^p is appropriate
+	#       and how to find optimal p
+	a /= p
+
+	result = one(a)
+	term = one(a)
+	for i = 1:100
+		term *= a/i
+		if isapproxzero(crudenorm(term))
+			break
+		end
+		result += term
+	end
+
+	result^p
+end
+
+function Base.exp(a::AbstractMultivector)
+	# use fact that exp(scalar + a) = exp(scalar)exp(a)
+	s = scalar(a)
+	if !iszero(s)
+		prefactor = exp(s)
+		a -= s
+	else
+		prefactor = one(s)
+	end
+
+	a² = a*a
+	if isscalar(a²)
+		prefactor*exp_with_scalar_square(a, scalar(a²))
+	else
+		prefactor*exp_series(a - s)
+	end
+end
+
+Base.exp(a::Blade) = exp_with_scalar_square(a, scalar(a*a))
+
+
+
 
 
 for (fn,     pos,    neg,    even) ∈ [

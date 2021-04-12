@@ -227,7 +227,10 @@ end
 ^(a::Blade, p::Integer) = power_with_scalar_square(a, scalar(a*a), p)
 
 function ^(a::CompositeMultivector, p::Integer)
+	p == 0 && return one(a)
+	p == 1 && return a
 	a² = a*a
+	p == 2 && return a²
 	if isscalar(a²)
 		power_with_scalar_square(a, scalar(a²), p)
 	else
@@ -255,12 +258,10 @@ end
 # grade(a::MixedMultivector, ::typeof(+)) = sum(grade(a, k) for k ∈ 0:2:dimension(a))
 # grade(a::MixedMultivector, ::typeof(-)) = sum(grade(a, k) for k ∈ 1:2:dimension(a))
 
-grades(a::MixedMultivector) = sort(unique(grade.(Iterators.filter(!iszero, blades(a)))))
-
 scalar(a::AbstractMultivector) = getcomponent(a)
 
 isscalar(a::HomogeneousMultivector) = iszero(grade(a))
-isscalar(a::MixedMultivector) = all(iszero.(grades(a)))
+isscalar(a::MixedMultivector) = iszero(a.components[begin + 1:end])
 
 
 

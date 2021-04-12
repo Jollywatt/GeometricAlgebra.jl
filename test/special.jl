@@ -13,11 +13,13 @@ using GeometricAlgebra
 
 	@testset "identities: $label" for (label, objects) ∈ [
 		"scalar square" => (x, 2y*x, x + y, x*y + 3y*z),
-		# convergence of taylor series is spooky, so for these
+		# convergence of series can be spooky, so for these
 		# proof-of-concept tests, only try for small multivectors
 		"non-scalar square" => (t*x - y*z, 1 + 2x)./5,
 	]
 		for a ∈ objects
+			@test exp(a) ≈ cosh(a) + sinh(a)
+
 			@test tan(a) ≈ sin(a)/cos(a)
 			@test tanh(a) ≈ sinh(a)/cosh(a)
 			@test cot(a) ≈ cos(a)/sin(a)

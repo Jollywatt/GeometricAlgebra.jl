@@ -21,7 +21,7 @@ include("types.jl")
 export signature, dimension
 include("signatures.jl")
 
-export ∧, ⋅
+export ∧, ⋅, ⨼, ⨽, ∗
 export ~, reversion, involute
 export grade, grades, isscalar, scalar
 include("algebra.jl")

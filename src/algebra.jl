@@ -106,6 +106,7 @@ Equivalent to, but more efficient than, `grade(geometric_prod(a, b), k)`.
 """
 homogeneous_prod
 
+homogeneous_prod(a::Scalar, b::Scalar, ::Val{k}) where k = iszero(k) ? a*b : zero(a*b)
 function homogeneous_prod(a::Blade, b::Blade, ::Val{k}) where k
 	bits = bitsof(a) ⊻ bitsof(b)
 	if grade(bits) == k
@@ -155,9 +156,58 @@ end
 function graded_prod(a::HomogeneousMultivector, b::HomogeneousMultivector, grade_selector::Function)
 	homogeneous_prod(a, b, grade_selector(grade(a), grade(b)))
 end
+graded_prod(a::AbstractMultivector, b::Scalar, grade_selector) = graded_prod(a, one(a)b, grade_selector)
+graded_prod(a::Scalar, b::AbstractMultivector, grade_selector) = graded_prod(one(b)a, b, grade_selector)
+graded_prod(a::Scalar, b::Scalar, grade_selector) = homogeneous_prod(a, b, grade_selector(0, 0))
 
-∧(a::AbstractMultivector, b::AbstractMultivector) = graded_prod(a, b, +)
-⋅(a::AbstractMultivector, b::AbstractMultivector) = graded_prod(a, b, abs∘-)
+
+"""
+	∧(a, b)
+
+Wedge product of multivectors.
+
+For homogeneous multivectors, `a∧b` is of grade `grade(a) + grade(b)`.
+For mixed multivectors, the definition extends by linearity to ``a∧b = ∑_{pq} ⟨⟨a⟩_p ⟨b⟩_q⟩_{p + q}``.
+"""
+∧(a, b) = graded_prod(a, b, +)
+
+"""
+	⋅(a, b)
+
+Generalized inner product (or "fat" dot product) of multivectors.
+
+For homogeneous multivectors, `a⋅b` is of grade `abs(grade(a) - grade(b))`.
+For mixed multivectors, the definition extends by linearity to ``a⋅b = ∑_{pq} ⟨⟨a⟩_p ⟨b⟩_q⟩_{|p - q|}``.
+"""
+⋅(a, b) = graded_prod(a, b, abs∘-)
+
+"""
+	⨼(a, b)
+
+Left contraction of multivectors.
+
+For homogeneous multivectors, `a⨼b` is of grade `grade(b) - grade(a)`.
+For mixed multivectors, the definition extends by linearity to ``a⨼b = ∑_{pq} ⟨⟨a⟩_p ⟨b⟩_q⟩_{q - p}``.
+"""
+⨼(a, b) = graded_prod(a, b, (p, q) -> q - p)
+
+"""
+	⨽(a, b)
+
+Right contraction of multivectors.
+
+For homogeneous multivectors, `a⨽b` is of grade `grade(a) - grade(b)`.
+For mixed multivectors, the definition extends by linearity to ``a⨽b = ∑_{pq} ⟨⟨a⟩_p ⟨b⟩_q⟩_{p - q}``.
+"""
+⨽(a, b) = graded_prod(a, b, (p, q) -> p - q)
+
+"""
+	∗(a, b)
+
+Scalar product of multivectors, equal to `scalar(a*b)`.
+"""
+∗(a, b) = graded_prod(a, b, (p, q) -> 0)
+
 
 
 

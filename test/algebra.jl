@@ -168,9 +168,11 @@ end
 	@test x∧x == 0
 	@test x∧(y + x) == x*y
 	@test (1 + x)∧(y + x) == x + y + x*y
+	@test 4∧x = 4x
 
 	@test x⋅y == 0
 	@test x⋅x == -t⋅t == 1
+	@test z⋅2 = 2z
 
 	u = x - y
 	v = t*x + 2y*z
@@ -178,5 +180,8 @@ end
 	@test u∧u == 0
 	@test u⋅v == -t - 2z
 	@test u∧v == 2x*y*z - t*x*y
+
+	@test u∗v == scalar(u*v)
+	@test u∗v == scalar(u*v)
 end
 

@@ -3,7 +3,7 @@
 Type hierarchy:
 
            AbstractMultivector
-			/               \
+            /               \
 HomogeneousMultivector     MixedMultivector
    /        \                        
 Blade   Multivector                 │

@@ -168,11 +168,11 @@ end
 	@test x∧x == 0
 	@test x∧(y + x) == x*y
 	@test (1 + x)∧(y + x) == x + y + x*y
-	@test 4∧x = 4x
+	@test 4∧x == 4x
 
 	@test x⋅y == 0
 	@test x⋅x == -t⋅t == 1
-	@test z⋅2 = 2z
+	@test z⋅2 == 2z
 
 	u = x - y
 	v = t*x + 2y*z

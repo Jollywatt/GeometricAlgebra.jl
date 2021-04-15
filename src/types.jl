@@ -251,7 +251,8 @@ end
 
 # single argument form is used to modify parameters (e.g., to change the eltype)
 best_type(a::Type{<:Blade}; kwargs...) = best_type(Blade, a; bits=Val(bitsof(a)), kwargs...)
-best_type(a::Type{<:Multivector}; kwargs...)  = best_type(Multivector, a; grade=Val(grade(a)), kwargs...)
+best_type(a::Type{<:Multivector{sig,k} where sig}; kwargs...) where k = best_type(Multivector, a; grade=Val(k), kwargs...)
+best_type(a::Type{<:Multivector}; kwargs...) = best_type(Multivector, a; kwargs...)
 best_type(a::Type{<:MixedMultivector}; kwargs...) = best_type(MixedMultivector, a; kwargs...)
 best_type(a::AbstractMultivector; kwargs...) = best_type(typeof(a); kwargs...)
 
@@ -264,31 +265,37 @@ Conversion to more general types is possible:
  Blade ⊂ Multivector ⊂ MixedMultivector
 
 The grade parameter of the target type is *not* respected. For subtypes of `HomogeneousMultivector{sig,k}`,
-conversion into a type of a differing grade will produce an object of grade `k`.
+conversion to a type of a differing grade will still produce an object of grade `k`.
 =#
 
 # conversion of element/storage type
 Base.convert(::Type{<:Blade{sig,k,bits,T} where {k,bits}}, a::Blade) where {sig,T} = Blade{sig,grade(a),bitsof(a),T}(a.coeff)
-Base.convert(::Type{<:Multivector{sig,k,S} where k}, a::Multivector) where {sig,S} = add!(zero(Multivector{sig,grade(a),S}), a)
-Base.convert(::Type{<:MixedMultivector{sig,C}}, a::MixedMultivector) where {sig,C} = add!(zero(MixedMultivector{sig,C}), a)
+Base.convert(T::Type{<:Multivector}, a::Multivector) = best_type(T; grade=Val(grade(a)))(a.components)
+Base.convert(::Type{<:MixedMultivector{sig,C}}, a::MixedMultivector) where {sig,C} = MixedMultivector{sig,C}(a.components)
+
+# get (2^dim)-element vector of components for every basis blade in the algebra
+full_components_vector(a::MixedMultivector{sig,<:AbstractVector}) where sig = a.components
+function full_components_vector(a::HomogeneousMultivector)
+	fcv = zeros(eltype(a), 2^dimension(a)) # TODO: use sparse vector? fcv is large and will remain mostly empty
+	for b ∈ blades(a)
+		fcv[begin + bitsof(b)] = b.coeff
+	end
+	fcv
+end
 
 # conversion from lower multivector type
-function Base.convert(T::Type{<:Multivector{sig,k,S} where k}, a::Blade) where {sig,S}
-	T = Multivector{sig,grade(a),S}
+function Base.convert(T::Type{<:Multivector}, a::Blade)
+	T = best_type(T; grade=Val(grade(a)))
 	i = bits_to_key(T, bitsof(a))
-	comps = [i == j ? convert(eltype(S), a.coeff) : zero(eltype(S)) for j ∈ 1:ncomponents(T)]
+	comps = [i == j ? convert(eltype(T), a.coeff) : zero(eltype(T)) for j ∈ 1:ncomponents(T)]
 	T(comps)
 end
-function Base.convert(T::Type{<:MixedMultivector{sig,S}}, a::Blade) where {sig,S}
-	i = 1 + bitsof(a)
-	comps = [i == j ? convert(eltype(S), a.coeff) : zero(eltype(S)) for j ∈ 1:ncomponents(T)]
-	MixedMultivector{sig,S}(comps)
-end
-Base.convert(T::Type{<:MixedMultivector}, a::HomogeneousMultivector) = add!(zero(T), a)
+Base.convert(T::Type{<:MixedMultivector}, a::AbstractMultivector) = T(full_components_vector(a))
+
 
 # conversion from scalar
 Base.convert(::Type{<:Blade{sig,k,bits,T} where {k,bits}}, a::Scalar) where {sig,T} = Blade{sig,0,bits_scalar(),T}(a)
-Base.convert(::Type{<:Multivector{sig,k,S} where k}, a::Scalar) where {sig,S} = zero(Multivector{sig,0,S}) + a
+Base.convert(T::Type{<:Multivector}, a::Scalar) = best_type(T; grade=Val(0))([a])
 Base.convert(T::Type{<:MixedMultivector}, a::Scalar) = zero(T) + a
 
 

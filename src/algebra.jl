@@ -37,8 +37,11 @@ function add!(a::MixedMultivector, b::Multivector)
 	end
 	a
 end
+
 # mutating add! falls back to normal add for immutable storagetypes
 add!(a::CompositeMultivector{<:StaticVector}, b::Blade) = add(a, b)
+add!(a::CompositeMultivector{<:StaticVector}, b::Multivector) = add(a, b)
+add!(a::CompositeMultivector{<:StaticVector}, b::MixedMultivector) = add(a, b)
 
 add(As::Multivector{sig,k,<:AbstractVector}...) where {sig,k} = Multivector{sig,k}(.+((a.components for a ∈ As)...))
 add(As::MixedMultivector{sig,<:AbstractVector}...) where sig = MixedMultivector{sig}(.+((a.components for a ∈ As)...))
@@ -223,23 +226,13 @@ function Base.inv(a::CompositeMultivector)
 	end
 end
 
-# returns (2^dim)-element vector of components for every basis blade in the algebra
-full_components_vector(a::MixedMultivector{sig,<:AbstractVector}) where sig = a.components
-function full_components_vector(a::HomogeneousMultivector)
-	fcv = zeros(eltype(a), 2^dimension(a)) # TODO: use sparse vector? fcv is large and will remain mostly empty
-	for b ∈ blades(a)
-		fcv[begin + bitsof(b)] = b.coeff
-	end
-	fcv
-end
-
 function inv_matrixmethod(a::AbstractMultivector)
 	A = hcat([full_components_vector(a*blade_like(a, 1, unsigned(i - 1)))
 		for i ∈ 1:2^dimension(a)]...)
 	id = full_components_vector(one(a))
 	inv_components = A\id
-	a⁻¹ = MixedMultivector{signature(a)}(inv_components)
 	# result should be converted into the same storage type as original
+	a⁻¹ = best_type(MixedMultivector, a; set_eltype=eltype(inv_components))(inv_components)
 end
 
 

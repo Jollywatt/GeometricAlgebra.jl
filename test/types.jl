@@ -1,5 +1,5 @@
 using GeometricAlgebra
-using StaticArrays
+using GeometricAlgebra: StaticArrays.SVector
 
 @testset "constructors" begin
 	@test iszero(zero(Blade{(1,1,1),2,0b101,Float64}))

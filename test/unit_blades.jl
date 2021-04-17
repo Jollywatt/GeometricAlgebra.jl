@@ -36,18 +36,18 @@ end
 
 @testset "sign_from_swaps()" begin
 	# note that typographically bits are written 'backwards'; v124 == 0b1011
-    @test sign_from_swaps(0b01, 0b10) == +1
-    @test sign_from_swaps(0b10, 0b01) == -1
-    @test sign_from_swaps(0b11, 0b01) == -1
-    @test sign_from_swaps(0b111, 0b01) == +1
+	@test sign_from_swaps(0b01, 0b10) == +1
+	@test sign_from_swaps(0b10, 0b01) == -1
+	@test sign_from_swaps(0b11, 0b01) == -1
+	@test sign_from_swaps(0b111, 0b01) == +1
 end
 
 @testset "factor_from_squares()" begin
-    @test factor_from_squares((1, 1, 1), 0b000) == 1
-    @test factor_from_squares((1, 1, 1), 0b111) == 1
-    @test factor_from_squares((-1, 1, 1), 0b001) == -1
-    @test factor_from_squares((-1, 1, 1), 0b010) == +1
-    @test factor_from_squares((-1, 1, 1), 0b111) == -1
-    @test factor_from_squares((-1, -1, -1), 0b101) == +1
-    @test factor_from_squares((-1, -1, -1), 0b111) == -1
+	@test factor_from_squares((1, 1, 1), 0b000) == 1
+	@test factor_from_squares((1, 1, 1), 0b111) == 1
+	@test factor_from_squares((-1, 1, 1), 0b001) == -1
+	@test factor_from_squares((-1, 1, 1), 0b010) == +1
+	@test factor_from_squares((-1, 1, 1), 0b111) == -1
+	@test factor_from_squares((-1, -1, -1), 0b101) == +1
+	@test factor_from_squares((-1, -1, -1), 0b111) == -1
 end

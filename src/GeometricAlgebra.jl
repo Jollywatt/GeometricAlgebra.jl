@@ -15,6 +15,7 @@ export Blade, Multivector, MixedMultivector
 include("types.jl")
 
 export signature, dimension
+export OffsetSignature
 include("signatures.jl")
 
 export ∧, ⋅, ⨼, ⨽, ∗

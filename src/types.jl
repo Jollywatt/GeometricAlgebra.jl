@@ -479,8 +479,10 @@ end
 
 getcomponent(a::MixedMultivector) = first(a.components)
 
-Base.getindex(a::AbstractMultivector, I::Integer...) = getcomponent(a, I...)
-Base.getindex(a::AbstractMultivector) = getcomponent(a)
+for T ∈ (Integer, Symbol)
+	@eval Base.getindex(a::AbstractMultivector{sig}, I::$T...) where sig = getcomponent(a, normalize_bv_index.(Ref(sig), I)...)
+end
+Base.getindex(a::AbstractMultivector) = getcomponent(a) # for ambiguity
 
 # experimental notations for grade selection
 # Base.getindex(a::AbstractMultivector, I::Vector{<:Integer}) = grade(a, Iterators.only(I))

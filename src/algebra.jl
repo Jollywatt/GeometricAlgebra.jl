@@ -93,7 +93,7 @@ end
 """
 	*(::AbstractMultivector, ::AbstractMultivector)
 
-Geometric product. See `$(fullname(geometric_prod))`.
+Geometric product. See [`$(repr(geometric_prod))`](@ref).
 """
 *(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
@@ -104,7 +104,7 @@ Geometric product. See `$(fullname(geometric_prod))`.
 """
 	homogeneous_prod(a, b, Val(k))
 
-The grade `k` part of the geometric product of `a` and `b`.
+The grade `k` part of the geometric product of `a` and `b`, i.e., ``⟨ab⟩_k``.
 Equivalent to, but more efficient than, `grade(geometric_prod(a, b), k)`.
 """
 homogeneous_prod

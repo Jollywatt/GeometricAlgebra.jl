@@ -7,12 +7,8 @@ using SparseArrays
 using StaticArrays
 using TaylorSeries: Taylor1
 
-# for use in documentation to give module-independent cross references
-fullname(method) = "$(parentmodule(method)).$(nameof(method))"
-
 
 include("unit_blades.jl")
-
 
 export AbstractMultivector, HomogeneousMultivector
 export Blade, Multivector, MixedMultivector

@@ -13,7 +13,7 @@ bits_basis_vector(i) = unsigned(1) << (i - 1)
 Return the positions of the ones in the unsigned integer `bits`.
 
 Used to convert between representations of a unit blade.
-See also [`indices_to_bits`](@ref).
+See also [`$(repr(indices_to_bits))`](@ref).
 
 Examples
 ===
@@ -45,7 +45,7 @@ end
 Create unsigned integer with bits at the positions given in the vector `indices`.
 
 Used to convert between representations of a unit blade.
-See also [`bits_to_indices`](@ref).
+See also [`$(repr(bits_to_indices))`](@ref).
 
 Examples
 ===

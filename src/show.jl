@@ -5,19 +5,6 @@ Magic is used to pretty-print the metric signature as it appears in a type:
 =#
 
 
-"""
-Pretty-print metric signature in short, non-parseable form such as ⟨-+++⟩
-"""
-show_signature(sig) = repr(sig) # fallback
-show_signature(sig::Tuple) = "⟨$(join(map(s -> get(Dict(+1=>"+", -1=>"-"), s, s), sig)))⟩"
-function show_signature(sig::NamedTuple)
-	items = map(zip(keys(sig), sig)) do (label, square)
-		s = get(Dict(+1=>"+", -1=>"-"), square, square)
-		"$label$s"
-	end
-	"⟨$(join(items, ","))⟩"
-end
-
 
 """
 	ShowWrapper

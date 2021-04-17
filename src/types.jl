@@ -152,6 +152,9 @@ Base.iszero(a::CompositeMultivector{<:AbstractDict}) = error("unimplemented")
 
 Base.one(a::Type{<:Blade}) = Blade{signature(a)}(one(eltype(a)), bits_scalar())
 
+Base.oneunit(a::Type{<:Blade}) = Blade{signature(a)}(one(eltype(a)), bitsof(a))
+Base.oneunit(::T) where {T<:AbstractMultivector} = oneunit(T)
+
 
 
 #= MULTIVECTOR TYPE INFERENCE UTILITIES

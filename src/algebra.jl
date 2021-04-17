@@ -345,3 +345,12 @@ involute(a::MixedMultivector) = mapcomponents(u -> (iseven(grade(u)) ? u : -u).c
 
 # TODO: show the Clifford conjugate cong = reversion∘involute be defined as the adjoint?
 
+
+
+# TODO: terminology: 'volume element' or 'pseudoscalar'?
+unit_pseudoscalar(a) = oneunit(best_type(Blade, a; bits=Val(bits_first_of_grade(dimension(a)))))
+
+# TODO: which type of dual operation? aI, Ia, a/I, I\a?
+# the Hodge dual is defined as ``φ ∧ ⋆ϕ = ⟨φ,ϕ⟩ vol`` for forms of the same degree
+# so the choice `dual(a) = aI` agrees with the Hodge dual on blades of the same grade.
+dual(a::AbstractMultivector) = a*unit_pseudoscalar(a)

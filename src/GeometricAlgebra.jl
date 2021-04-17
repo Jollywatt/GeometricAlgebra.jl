@@ -20,6 +20,7 @@ include("signatures.jl")
 export ∧, ⋅, ⨼, ⨽, ∗
 export ~, reversion, involute
 export grade, grades, isscalar, scalar
+export unit_pseudoscalar, dual
 include("algebra.jl")
 
 include("special.jl")

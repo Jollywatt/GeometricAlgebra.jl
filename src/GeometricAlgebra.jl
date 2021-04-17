@@ -3,6 +3,7 @@ module GeometricAlgebra
 import Base: ==, *, /, \, +, -, ^
 import InteractiveUtils: subtypes
 import Combinatorics: parity
+import OffsetArrays: OffsetArray # only ever used by basis(::OffsetSignature)
 using SparseArrays
 using StaticArrays
 using TaylorSeries: Taylor1

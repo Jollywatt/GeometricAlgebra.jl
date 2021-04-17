@@ -1,7 +1,7 @@
 dimension(sig) = length(sig)
 
 basis_labels(sig::Tuple, indices=1:dimension(sig)) = ["v$i" for i ∈ indices]
-basis_labels(sig::NamedTuple{labels}, indices=nothing) where labels = labels
+basis_labels(sig::NamedTuple{labels}) where labels = labels
 
 basis_blade_label(sig::Tuple, indices) = "v"*join(string.(indices))
 basis_blade_label(sig, indices) = join(basis_labels(sig)[indices])

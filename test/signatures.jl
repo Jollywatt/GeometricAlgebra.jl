@@ -11,7 +11,7 @@ using GeometricAlgebra
 	end
 
 	labelled3d = (x=1,y=1,z=1)
-	@testset "symbol indices with $sig" for sig ∈ [labelled3d, OffsetSignature(labelled3d,nothing)]
+	@testset "symbol indices with $sig" for sig ∈ [labelled3d, OffsetSignature(labelled3d,11:13)]
 		x, y, z = basis(sig)
 		@test x[:x] == 1
 		@test y[:x,:y] == 0

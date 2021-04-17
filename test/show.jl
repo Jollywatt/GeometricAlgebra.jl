@@ -22,9 +22,10 @@ xy = x*y
 end
 
 # just test against errors
-@test isnothing(show(stdout, MIME("text/plain"), x))
-@test isnothing(show(stdout, MIME("text/plain"), x + y))
-@test isnothing(show(stdout, MIME("text/plain"), 1 + y))
+for to_show ∈ (x, x + y, 1 + y, Any[100x, 2x*y, 1 + x, 0 + 0y], typeof(x), typeof(x + y))
+	println()
+	@test isnothing(show(stdout, MIME("text/plain"), to_show))
+end
 
 @testset "pretty-printed types" begin
 	for sig ∈ [(1, 1, 1), (x=1, y=1, z=1)]
@@ -36,4 +37,11 @@ end
 		@test compare(sprint(show, Multivector{sig,k,S} where {k,S}), "Multivector{$pretty_sig")
 	end
 	@test sprint(show, MixedMultivector) == "MixedMultivector"
+end
+
+@testset "blade printing" begin
+	@test repr(Blade{(1,1,1)}(42, 0b11)) == "42v12"
+	@test repr(Blade{(x=1,y=1,z=1)}(42, 0b11)) == "42xy"
+	@test repr(Blade{OffsetSignature((-1,1,1,1),0:3)}(42, 0b11)) == "42v01"
+	@test repr(Blade{OffsetSignature((t=-1,x=1,y=1,z=1),0:3)}(42, 0b11)) == "42tx"
 end

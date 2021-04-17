@@ -1,18 +1,42 @@
 dimension(sig) = length(sig)
 
-basis_labels(sig) = basis_labels(sig, 1:dimension(sig))
-basis_labels(sig::Tuple, indices) = ["v$i" for i ∈ indices]
-basis_labels(sig::NamedTuple{labels}, indices) where labels = labels
+basis_labels(sig::Tuple) = 1:dimension(sig)
+basis_labels(sig::NamedTuple{names}) where names = names
 
-basis_blade_label(sig::Tuple, indices) = "v"*join(string.(indices))
-basis_blade_label(sig, indices) = join(basis_labels(sig)[indices])
+basis_blade_label(sig::Tuple, indices, labels=basis_labels(sig)) = "v$(join(labels[indices]))"
+basis_blade_label(sig::NamedTuple, indices, labels=nothing) = join(basis_labels(sig)[indices])
 
+abstract type MetricSignature end
 
-struct OffsetSignature{sig,indices} end
+"""
+	OffsetSignature(sig, indices)
+
+Metric signature `sig` with offset `indices`, enabling non-standard indexing for multivectors.
+
+Example
+===
+```jldoctest
+julia> lorentzian = OffsetSignature((-1,1,1,1), 0:3) # zero-based indexing
+⟨-+++⟩ with indices 0:3
+(pretty-printed OffsetSignature{(-1, 1, 1, 1), 0:3}())
+
+julia> (1:4)'basis(lorentzian) # construct spacetime 4-vector
+Grade-1 Multivector{⟨-+++⟩ with indices 0:3, 1, Vector{Int64}}:
+ 1 v0
+ 2 v1
+ 3 v2
+ 4 v3
+
+julia> ans[0] # get first ("time") component
+1
+```
+"""
+struct OffsetSignature{sig,indices} <: MetricSignature end
 OffsetSignature(sig,indices) = OffsetSignature{sig,indices}()
 Base.getindex(::OffsetSignature{sig}, args...) where sig = getindex(sig, args...)
 Base.length(::OffsetSignature{sig}) where sig = length(sig)
-basis_labels(::OffsetSignature{sig,indices}) where {sig,indices} = basis_labels(sig, indices)
+basis_labels(::OffsetSignature{sig}) where sig = basis_labels(sig)
+basis_blade_label(::OffsetSignature{sig,labels}, indices) where {sig,labels} = basis_blade_label(sig, indices, labels)
 
 
 """

@@ -86,6 +86,14 @@ function Base.show(io::IO, ::MIME"text/plain", T::Type{<:AbstractMultivector})
 	printstyled(io, ")")
 end
 
+# when signatures are displayed on their own, show both the shorthand and the full expression
+function Base.show(io::IO, ::MIME"text/plain", sig::MetricSignature)
+	println(io, show_signature(sig))
+	printstyled(io, "(pretty-printed ")
+	show(io, sig) # show with default method
+	printstyled(io, ")")
+end
+
 
 
 #= BLADE DISPLAY METHODS =#
@@ -108,7 +116,7 @@ function Base.alignment(io::IO, b::Blade)
 	(l, length(plaintext_repr(io, b)) - l)
 end
 function Base.alignment(io::IO, b::CompositeMultivector)
-	(1, length(plaintext_repr(io, b)))
+	(0, length(plaintext_repr(io, b)))
 end
 
 
@@ -133,11 +141,6 @@ end
 
 #= COMPOSITE MULTIVECTOR DISPLAY METHODS =#
 
-sorted_blades(a::Blade) = blades(a)
-sorted_blades(a::CompositeMultivector{<:AbstractVector}) = blades(a)
-sorted_blades(a::CompositeMultivector{<:AbstractDict}) = sort(blades(a), by=(b -> bits(b)))
-
-
 """
 Display a multivector as a column of blades, with coefficients aligned using
 the native alignment mechanism, and blades basis aligned.
@@ -152,7 +155,7 @@ julia> GeometricAlgebra.show_multivector(stdout, 1e3x + y + 1e-3z)
 function show_multivector(io::IO, a::Multivector; indent=0)
 	iszero(a) && return print(io, " "^indent, zero(eltype(a)))
 
-	comps = [(bitsof(u), u.coeff) for u ∈ sorted_blades(a)]
+	comps = [(bitsof(u), u.coeff) for u ∈ blades(a)]
 	alignments = [Base.alignment(io, coeff) for (_, coeff) ∈ comps]
 	L = maximum(first.(alignments))
 	R = maximum(last.(alignments))
@@ -173,7 +176,7 @@ function show_multivector_inline(io::IO, a::Multivector; compact=false, showzero
 		return
 	end
 	isfirst = true
-	for b ∈ sorted_blades(a)
+	for b ∈ blades(a)
 		(!showzeros || compact) && iszero(b) && continue
 		isfirst ? isfirst = false : print(io, " + ")
 		show_blade(io, b; compact)

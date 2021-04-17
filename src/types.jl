@@ -148,7 +148,6 @@ Base.zero(::T) where {T<:AbstractMultivector} = zero(T)
 
 Base.iszero(a::Blade) = iszero(a.coeff)
 Base.iszero(a::CompositeMultivector{<:AbstractVector}) = iszero(a.components)
-Base.iszero(a::CompositeMultivector{<:AbstractDict}) = error("unimplemented")
 
 Base.one(a::Type{<:Blade}) = Blade{signature(a)}(one(eltype(a)), bits_scalar())
 
@@ -427,7 +426,7 @@ Base.isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(promote(a
 blades(a::Blade) = (a,)
 blades(a::Multivector{sig,k,<:AbstractVector}) where {sig,k} = (Blade{sig,k}(coeff, bits) for (coeff, bits) ∈ zip(a.components, FixedGradeBits(k)))
 blades(a::MixedMultivector{sig,<:AbstractVector}) where sig = (Blade{sig}(coeff, unsigned(i - 1)) for (i, coeff) ∈ enumerate(a.components))
-blades(a::CompositeMultivector{<:AbstractDict}) where sig = (Blade{sig}(coeff, bits) for (bits, coeff) ∈ a.components)
+# blades(a::CompositeMultivector{<:AbstractDict}) where sig = (Blade{sig}(coeff, bits) for (bits, coeff) ∈ a.components)
 
 
 """
@@ -455,7 +454,7 @@ getcomponent
 
 bits_to_key(::Type{<:Multivector{sig,k,<:AbstractVector}}, bits::Unsigned) where {sig,k} = bits_to_linear_index(bits)
 bits_to_key(::Type{<:MixedMultivector{sig,<:AbstractVector}}, bits::Unsigned) where sig = 1 + bits
-bits_to_key(::Type{<:CompositeMultivector{<:AbstractDict}}, bits::Unsigned) = bits
+# bits_to_key(::Type{<:CompositeMultivector{<:AbstractDict}}, bits::Unsigned) = bits
 bits_to_key(::T, bits) where {T<:AbstractMultivector} = bits_to_key(T, bits)
 
 parity_sign(I) = iseven(parity(sortperm(collect(I)))) ? +1 : -1

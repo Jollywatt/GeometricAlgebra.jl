@@ -11,11 +11,10 @@ DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
 end; recursive=true)
 
 make() = makedocs(
-	root=joinpath(project_root, "docs"),
 	sitename="GeometricAlgebra.jl",
-	pages=[
-		"Home"=>"index.md",
-	],
+	root=joinpath(project_root, "docs"),
+	modules=[GeometricAlgebra],
+	pages=["index.md", "reference.md"],
 )
 
 deploy() = deploydocs(

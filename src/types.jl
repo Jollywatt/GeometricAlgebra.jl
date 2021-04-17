@@ -163,19 +163,18 @@ The `<:AbstractMultivector` type system is complex -- any multivector type consi
 
  - `multivectortype`: one of `Blade, Multivector, MixedMultivector`
  - `signature`: an all-bits type parameter defining the geometric algebra
- - `storagetype`: the container type `S` which stores components of a `<:CompositeMultivector{S}`
+ - `storagetype`: the container type `S` which stores components of a `<:CompositeMultivector{S}` (not applicable for `Blade`)
  - `eltype`: the numerical type of the components
 
 The direction of promotion for these aspects are, respectively:
 
  - `Blade` -> `Multivector` -> `MixedMultivector`
  -  no promotion occurs -- an error is thrown if types of different signature are compared
- - `Vector` -> `SparseVector`
- -  usual promotion of `<:Number` types
+ - `StaticVector` -> `Vector` -> `SparseVector` - the storage type shouldn't be affected by `Blade` types
+ -  usual promotion behaviour of `<:Number` types
 
-The master function `best_type` performs promotion, and exposes ways of
-setting certain aspects of the resulting type (e.g., requiring a minimum
-`multivectortype` or `eltype`).
+The master function `best_type` performs `<:AbstractMultivector` type promotion, and exposes ways of
+controlling various type parameters (e.g., setting the grade or requiring a minimum `multivectortype` or `eltype`).
 =#
 
 multivectortype(::Type{<:Blade}) = Blade
@@ -185,16 +184,14 @@ multivectortype(::T) where {T<:AbstractMultivector} = multivectortype(T)
 
 shared_sig(::Type{<:AbstractMultivector{sig}}...) where sig = sig
 shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share the same metric signature")
-shared_sig(T::AbstractMultivector...) = shared_sig(typeof.(T)...)
+shared_sig(As::AbstractMultivector...) = shared_sig(typeof.(As)...)
 
 
+# harness built in type promotion system to promote storage types with more semantic code
 struct StorageType{S} end
 unwrap(::Type{StorageType{S}}) where S = S
 
-# default_storagetype(sig, Tv, Ti) = SVector{N,Tv} where N
-default_storagetype(sig, Tv, Ti) = Vector{Tv}
-storagetype(::Type{<:Blade{sig,k,bits,T}}) where {sig,k,bits,T} = StorageType{default_storagetype(sig, T, typeof(bits))}
-storagetype(::Type{<:Blade{sig,k,bits,T} where {k,bits}}) where {sig,T} = StorageType{default_storagetype(sig, T, UInt)}
+storagetype(::Type{<:Blade}) = Union{} # indented to be type promoted with other storage types
 storagetype(::Type{<:CompositeMultivector{S}}) where S = StorageType{S}
 storagetype(::T) where {T<:AbstractMultivector} = storagetype(T)
 
@@ -213,6 +210,11 @@ set_size_parameter(::Type{T}, ::Val{N}) where {T,N} = T
 set_size_parameter(::Type{<:SVector{N′,T} where N′}, ::Val{N}) where {N,T} = SVector{N,T}
 set_size_parameter(::Type{<:MVector{N′,T} where N′}, ::Val{N}) where {N,T} = MVector{N,T}
 
+
+# TODO: eventually `default_storagetype` should chose types appropriately by taking into account
+# the algebra's dimension for optimal memory use/speed
+default_storagetype(sig, Tv, Ti) = Vector{Tv}
+
 # NOTE: best_type must work with non-concrete types in order for promotion to work with more than two objects.
 # E.g., promote_type(x, x*y, x) == promote_type(promote_type(x, x*y), x)
 #                                               \__ non-concrete __/
@@ -220,13 +222,18 @@ set_size_parameter(::Type{<:MVector{N′,T} where N′}, ::Val{N}) where {N,T} =
 
 unwrap(::Type{Type{T}}) where T = T
 unwrap(::Type{T}) where T = T
+# unwrap(::T) where T = T
 
 # must work where each `a...` is a multivector instance *or* a multivector type
 @generated function best_type_parameters(a...; set_eltype::Type{SetT}=Nothing, promote_eltype_with::Type{PromT}=Union{}) where {SetT,PromT}
 	a = unwrap.(a) # normalize Type{Type{A}} -> Type{A} 
 	sig = shared_sig(a...)
 	T = SetT == Nothing ? promote_type(eltype.(a)..., PromT) : SetT
-	S = unwrap(promote_type(storagetype.(a)...))
+	S = promote_type(storagetype.(a)...)
+	if S === Union{}
+		S = default_storagetype(sig, T, UInt)
+	end
+	S = unwrap(S)
 	if S === StorageType error("storagetype promotion failed") end
 	S = set_eltype_parameter(S, T)
 	sig, T, S
@@ -307,6 +314,8 @@ Base.convert(T::Type{<:MixedMultivector}, a::Scalar) = zero(T) + a
 
 Promotion should result in objects of identical types *except* for the parameters {k,bits}, which should not be changed.
 Promotion should only occur between objects of the same signature -- otherwise, fall back on default promotion behaviour.
+
+TODO: is it actually appropriate to define these promote rules? maybe it's more Julian to not do implicit conversions like this...
 =#
 
 # same multivector type

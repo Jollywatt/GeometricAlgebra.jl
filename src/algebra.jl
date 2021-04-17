@@ -46,8 +46,8 @@ add!(a::CompositeMultivector{<:StaticVector}, b::MixedMultivector) = add(a, b)
 add(As::Multivector{sig,k,<:AbstractVector}...) where {sig,k} = Multivector{sig,k}(.+((a.components for a ∈ As)...))
 add(As::MixedMultivector{sig,<:AbstractVector}...) where sig = MixedMultivector{sig}(.+((a.components for a ∈ As)...))
 
-add(As::HomogeneousMultivector{sig,k}...) where {sig,k} = add(Multivector.(As)...)
-add(As::AbstractMultivector{sig}...) where sig = add(MixedMultivector.(As)...)
+add(As::HomogeneousMultivector{sig,k}...) where {sig,k} = add(convert.(best_type(Multivector, As...), As)...)
+add(As::AbstractMultivector{sig}...) where sig = add(convert.(best_type(MixedMultivector, As...), As)...)
 
 
 +(a::AbstractMultivector) = a

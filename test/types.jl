@@ -1,4 +1,5 @@
 using GeometricAlgebra
+using StaticArrays
 
 @testset "constructors" begin
 	@test iszero(zero(Blade{(1,1,1),2,0b101,Float64}))
@@ -148,4 +149,23 @@ end
 	@test ((x + y)/√2)^Int(1e10) ≈ 1 rtol=1e-4
 
 	# TODO: test zero-equalities
+end
+
+@testset "storagetype" begin
+	sig = (1, 1, 1)
+	b = basis(sig)
+	B = convert.(Multivector{sig,1,SVector{k,Int} where k}, b)
+
+	@test b[1]b[2] isa Blade{sig,2}
+	@test B[1]B[2] isa MixedMultivector{sig,<:SVector}
+
+	
+	# we want operations with blades to preserve the storage type 
+	isstatic(a) = GeometricAlgebra.unwrap(GeometricAlgebra.storagetype(a)) <: SVector
+	@test isstatic(B[1] + b[2])
+	@test isstatic(B[1] - b[2])
+	@test isstatic(B[1]b[2])
+	@test isstatic(B[1]/b[2])
+	@test isstatic((B[1] + 1)∧b[2])
+	@test isstatic((B[1] + 1)*b[2])
 end

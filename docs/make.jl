@@ -13,6 +13,9 @@ end; recursive=true)
 make() = makedocs(
 	root=joinpath(project_root, "docs"),
 	sitename="GeometricAlgebra.jl",
+	pages=[
+		"Home"=>"index.md",
+	],
 )
 
 deploy() = deploydocs(

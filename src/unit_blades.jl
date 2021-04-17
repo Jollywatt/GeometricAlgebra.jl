@@ -6,6 +6,27 @@ bits_first_of_grade(k) = (unsigned(1) << k) - unsigned(1)
 bits_basis_vector(i) = unsigned(1) << (i - 1)
 # bits_has_index(bits, i) = isone(bits >> (i - 1) & 1)
 
+function bits_to_indices(bits)
+	indices = Int[]
+	i = 1
+	while bits > 0
+		if isone(bits & 1)
+			push!(indices, i)
+		end
+		i += 1
+		bits >>= 1
+	end
+	indices
+end
+
+function indices_to_bits(indices)
+	bits = bits_scalar()
+	for i ∈ indices
+		bits += bits_basis_vector(i)
+	end
+	bits
+end
+
 
 """
 	bits_to_indices(bits)
@@ -26,18 +47,7 @@ julia> GeometricAlgebra.bits_to_indices(0b1001101)
  7
 ```
 """
-function bits_to_indices(bits)
-	indices = Int[]
-	i = 1
-	while bits > 0
-		if isone(bits & 1)
-			push!(indices, i)
-		end
-		i += 1
-		bits >>= 1
-	end
-	indices
-end
+bits_to_indices
 
 """
 	indices_to_bits(indices)
@@ -55,13 +65,7 @@ julia> GeometricAlgebra.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
 ```
 
 """
-function indices_to_bits(indices)
-	bits = bits_scalar()
-	for i ∈ indices
-		bits += bits_basis_vector(i)
-	end
-	bits
-end
+indices_to_bits
 
 # # this version is 10% slower
 # function bits_to_linear_index(bits::Unsigned)

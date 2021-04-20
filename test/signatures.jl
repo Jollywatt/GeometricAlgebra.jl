@@ -27,5 +27,14 @@ using GeometricAlgebra
 		@test (t*x*y*z)[0,1,2,3] == 1
 	end
 
+end
 
+@testset "@basis" begin
+	@basis x y z=-1
+	@test x isa Blade{signature(x),1}
+	@test x^2 == 1
+	@test z^2 == -1
+
+	@basisall x y
+	@test xy == -yx
 end

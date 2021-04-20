@@ -1,15 +1,13 @@
-basis_blades(sig, k=1) = [Blade{sig}(1, i) for i ∈ bits_of_grade(k, dimension(sig))]
+basis_blades(sig, grade=1) = [Blade{sig}(1, i) for i ∈ bits_of_grade(grade, dimension(sig))]
 
 basis(sig; grade=1) = basis_blades(sig, grade)
 basis(dim::Integer; grade=1) = basis(Tuple(fill(1, dim)); grade=1)
-basis(osig::OffsetSignature{sig,indices}; grade=1) where {sig,indices} = OffsetArray(basis_blades(osig; grade), indices)
+basis(osig::OffsetSignature{sig,indices}; grade=1) where {sig,indices} = OffsetArray(basis_blades(osig, grade), indices)
 
 
 
 
-"""
-Return expression containing variable assignments for each basis blade for the given signature.
-"""
+# return expression containing variable assignments for each basis blade for the given signature.
 function generate_blades(combos, sig)
 	bvs = collect(basis(sig)) # needed because `OffsetArrays` don't work with, e.g., `powerset`
 	vars = Symbol[]
@@ -28,6 +26,7 @@ function generate_blades(combos, sig)
 end
 generate_blades(sig) = generate_blades(x -> [[i] for i ∈ x], sig)
 
+parse_sig(n::Integer) = Tuple(ones(n))
 parse_sig(sig::MetricSignature) = sig
 parse_sig(sig::Tuple{Vararg{<:Integer}}) = sig
 parse_sig(sig::NamedTuple) = sig
@@ -91,9 +90,9 @@ julia> @basis dt=-1 dx=1 dy
 [ Info: Defined basis blades dt, dx, dy, dtdx, dtdy, dxdy, dtdxdy
 
 julia> dt^2 + dxdy*dy
-MixedMultivector{⟨dt-,dx+,dy+⟩, Array{Float64,1}}:
- -1.0
- 1.0 dx
+MixedMultivector{⟨dt-,dx+,dy+⟩, Vector{Int64}}:
+ -1
+ 1 dx
 ```
 """
 macro basis(a, args...)
@@ -103,8 +102,8 @@ end
 """
 	@basisall
 
-Similar to `@basis`, populate the local namespace with basis blades,
-but include names for all permutations of the basis vectors.
+Similarly to `@basis`, populate the local namespace with basis blades,
+but including all permutations of the basis blades.
 
 Note that more than `2^n` variables are defined for a signature of dimension `n`!
 
@@ -115,8 +114,8 @@ julia> @basisall x y z
 [ Info: Defined basis blades x, y, z, xy, yx, xz, zx, yz, zy, xyz, xzy, yxz, yzx, zxy, zyx
 
 julia> zyx
-Grade-3 Blade{⟨x+,y+,z+⟩, 3, Float64, UInt64}:
- -1.0 xyz
+Grade-3 Blade{⟨x+,y+,z+⟩, 3, 0b111, Int64}:
+ -1 xyz
 ```
 """
 macro basisall(a, args...)

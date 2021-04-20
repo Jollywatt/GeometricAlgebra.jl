@@ -24,7 +24,7 @@ R*a*~R # rotate the vector
 
 ## Quick start
 
-### Generate basis vectors for algebra of given signature
+#### Generate basis vectors for algebra of given signature
 
 ```@repl ga
 basis((1, 1, 1)) # also `basis(3)`
@@ -34,7 +34,7 @@ basis((x=-1, y=-1, z=-1)) # labelled anti-Euclidean basis
 basis(OffsetSignature((t=-1, x=+1, y=+1, z=+1), 0:3)) |> sum
 ```
 
-### Perform arithmetic on blades
+#### Perform arithmetic on blades
 
 ```@repl ga3d
 x*y*z # a grade 3 blade 
@@ -46,19 +46,19 @@ x - 3y # a vector, or grade 1 multivector
 ans^10
 ```
 
-### Other products and operations
+#### Other products and operations
 
-| math | code | description
-|------|------|:-----------
-|``a∧b``|`a∧b`, `wedge(a, b)`|wedge product
-|``a⋅b``|`a⋅b`|interior (or "fat" dot) product
-|``a∗b ≡ ⟨ab⟩``|`a∗b == scalar(a*b)`|scalar product (typed `\ast<tab>`)
-|``\tilde{a}``|`~a`|reversion
-|``a⨼b``|`a⨼b`|left contraction (`\intprod<tab>`)
-|``a⨽b``| `a⨽b`|right contraction (`\intprodr<tab>`)
-|``⟨a⟩_k``|`grade(a, k)`|grade production
+| math           | code                 | description
+| ------         | ------               | :-----------
+| ``a∧b``        | `a∧b`                | wedge product (typed `\wedge<tab>`)
+| ``a⋅b``        | `a⋅b`                | interior (or "fat" dot) product
+| ``a∗b ≡ ⟨ab⟩`` | `a∗b == scalar(a*b)` | scalar product (`\ast<tab>`)
+| ``\tilde{a}``  | `~a`                 | reversion
+| ``a⨼b``        | `a⨼b`                | left contraction (`\intprod<tab>`)
+| ``a⨽b``        | `a⨽b`                | right contraction (`\intprodr<tab>`)
+| ``⟨a⟩_k``      | `grade(a, k)`        | grade production
 
-### Component access
+#### Component access
 
 ```@repl ga
 v = basis(3)
@@ -77,8 +77,8 @@ a[:x]
 a[2]
 ```
 
-Especially in the theory of relativity, convention dictates that components of spacetime 4-vectors are numbered from zero.
-This is possible with an [`OffsetSignature`](@ref):
+Physics convention dictates that the components of spacetime tensors are numbered from zero.
+Non one-based indexing is possible with an [`OffsetSignature`](@ref):
 
 ```@repl ga
 STA = OffsetSignature((+1,-1,-1,-1), 0:3)

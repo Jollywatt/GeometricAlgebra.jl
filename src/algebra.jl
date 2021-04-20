@@ -32,7 +32,7 @@ function add!(a::CompositeMultivector, b::CompositeMultivector)
 	a
 end
 function add!(a::MixedMultivector, b::Multivector)
-	for (bits, x) ∈ zip(FixedGradeBits(grade(b)), b.components)
+	for (bits, x) ∈ zip(bits_of_grade(grade(b)), b.components)
 		a.components[bits_to_key(a, bits)] += x
 	end
 	a
@@ -348,7 +348,9 @@ involute(a::MixedMultivector) = mapcomponents(u -> (iseven(grade(u)) ? u : -u).c
 
 
 # TODO: terminology: 'volume element' or 'pseudoscalar'?
-unit_pseudoscalar(a) = oneunit(best_type(Blade, a; bits=Val(bits_first_of_grade(dimension(a)))))
+# InstanceOrType{T} = Union{T,Type{T}}
+unit_pseudoscalar(a::Union{<:AbstractMultivector,Type{<:AbstractMultivector}}) = oneunit(best_type(Blade, a; bits=Val(bits_first_of_grade(dimension(a)))))
+unit_pseudoscalar(sig) = prod(basis(sig))
 
 # TODO: which type of dual operation? aI, Ia, a/I, I\a?
 # the Hodge dual is defined as ``φ ∧ ⋆ϕ = ⟨φ,ϕ⟩ vol`` for forms of the same degree

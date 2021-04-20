@@ -29,6 +29,51 @@ end
 
 
 """
+Return the smallest uint larger than the one given which has
+the same number of binary ones.
+Algorithm is [Gosper's hack](http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation).
+
+```
+julia> GeometricAlgebra.next_bit_permutation(0b1011) |> bitstring
+"00001101"
+```
+"""
+function next_bit_permutation(v::Unsigned)
+	I = one(v)
+	t = v | (v - I)
+	(t + I) | (((~t & -~t) - I) >> (trailing_zeros(v) + I))
+end
+
+struct FixedGradeBits
+	grade::Int
+end
+
+function Base.iterate(fgb::FixedGradeBits, bits=bits_first_of_grade(fgb.grade))
+	(bits, next_bit_permutation(bits))
+end
+
+Base.IteratorSize(::FixedGradeBits) = Base.IsInfinite()
+
+"""
+	bits_of_grade(k[, n])
+
+Generate basis blade bits of grade `k` in ascending order.
+Yields all basis blades in the dimension `n`, if given, otherwise iterate indefinitely.
+
+Example
+===
+```jldoctest
+julia> bits_of_grade(2, 4) .|> UInt8 .|> bitstring
+```
+"""
+
+bits_of_grade(k) = FixedGradeBits(k)
+bits_of_grade(k, n) = Iterators.take(FixedGradeBits(k), binomial(n, k))
+
+
+
+
+"""
 	bits_to_indices(bits)
 
 Return the positions of the ones in the unsigned integer `bits`.
@@ -93,35 +138,6 @@ function linear_index_to_bits(i, k)
 	end
 	bits
 end
-
-"""
-Return the smallest uint larger than the one given which has
-the same number of binary ones.
-Algorithm is [Gosper's hack](http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation).
-
-```
-julia> GeometricAlgebra.next_bit_permutation(0b1011) |> bitstring
-"00001101"
-```
-"""
-function next_bit_permutation(v::Unsigned)
-	I = one(v)
-	t = v | (v - I)
-	(t + I) | (((~t & -~t) - I) >> (trailing_zeros(v) + I))
-end
-
-
-
-struct FixedGradeBits
-	grade::Int
-end
-
-function Base.iterate(fgb::FixedGradeBits, bits=bits_first_of_grade(fgb.grade))
-	(bits, next_bit_permutation(bits))
-end
-
-Base.IteratorSize(::FixedGradeBits) = Base.IsInfinite()
-
 
 
 """

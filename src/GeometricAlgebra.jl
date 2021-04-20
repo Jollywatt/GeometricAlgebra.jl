@@ -2,7 +2,7 @@ module GeometricAlgebra
 
 import Base: ==, *, /, \, +, -, ^
 import InteractiveUtils: subtypes
-import Combinatorics: parity
+import Combinatorics: parity, powerset, permutations
 import OffsetArrays: OffsetArray # only ever used by basis(::OffsetSignature)
 using SparseArrays
 using StaticArrays
@@ -27,7 +27,7 @@ include("algebra.jl")
 
 include("special.jl")
 
-export basis
+export basis, @basis, @basisall
 include("convenience.jl")
 
 include("show.jl")

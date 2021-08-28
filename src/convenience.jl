@@ -114,7 +114,7 @@ julia> @basisall x y z
 [ Info: Defined basis blades x, y, z, xy, yx, xz, zx, yz, zy, xyz, xzy, yxz, yzx, zxy, zyx
 
 julia> zyx
-Grade-3 Blade{⟨x+,y+,z+⟩, 3, 0b111, Int64}:
+Grade-3 Blade{⟨x+,y+,z+⟩, 3, Int64}:
  -1 xyz
 ```
 """

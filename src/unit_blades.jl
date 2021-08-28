@@ -1,3 +1,8 @@
+"""
+Operations on bitstrings representing `unit blades'. E.g., the
+2-blade of unit norm `e₁∧e₃ ≡ e₁₃` is represented by `0b101`.
+"""
+
 grade(bits::Unsigned) = count_ones(bits)
 
 bits_scalar() = unsigned(0)
@@ -79,7 +84,7 @@ bits_of_grade(k, n) = Iterators.take(FixedGradeBits(k), binomial(n, k))
 Return the positions of the ones in the unsigned integer `bits`.
 
 Used to convert between representations of a unit blade.
-See also [`$(repr(indices_to_bits))`](@ref).
+Inverse of [`$(repr(indices_to_bits))`](@ref).
 
 Examples
 ===
@@ -95,12 +100,12 @@ julia> GeometricAlgebra.bits_to_indices(0b1001101)
 bits_to_indices
 
 """
-	indices_to_bits(indices)
+	$(indices_to_bits)(indices)
 
 Create unsigned integer with bits at the positions given in the vector `indices`.
 
 Used to convert between representations of a unit blade.
-See also [`$(repr(bits_to_indices))`](@ref).
+Inverse of [`$(repr(bits_to_indices))`](@ref).
 
 Examples
 ===

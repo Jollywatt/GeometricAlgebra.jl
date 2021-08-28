@@ -1,7 +1,7 @@
 #= SCALAR MULTIPLICATION =#
 
-*(a::Blade{sig,k,bits}, b::Scalar) where {sig,k,bits} = Blade{sig,k,bits}(a.coeff*b)
-*(a::Scalar, b::Blade{sig,k,bits}) where {sig,k,bits} = Blade{sig,k,bits}(a*b.coeff)
+*(a::Blade{sig,k}, b::Scalar) where {sig,k} = Blade{sig,k}(a.coeff*b, bitsof(a))
+*(a::Scalar, b::Blade{sig,k}) where {sig,k} = Blade{sig,k}(a*b.coeff, bitsof(b))
 
 constructor(::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}
 constructor(::MixedMultivector{sig}) where sig = MixedMultivector{sig}
@@ -79,7 +79,7 @@ geometric_prod
 function geometric_prod(a::Blade, b::Blade)
 	sig = shared_sig(a, b)
 	factor, bits = geometric_prod_bits(sig, bitsof(a), bitsof(b))
-	Blade{sig,grade(bits),bits}(factor*(a.coeff*b.coeff))
+	Blade{sig}(factor*(a.coeff*b.coeff), bits)
 end
 
 function geometric_prod(a::AbstractMultivector, b::AbstractMultivector)
@@ -115,7 +115,7 @@ function homogeneous_prod(a::Blade, b::Blade, ::Val{k}) where k
 	if grade(bits) == k
 		geometric_prod(a, b)
 	else
-		zero(best_type(Blade, a, b; bits=Val(bits)))
+		zero(best_type(Blade, a, b; grade=Val(k)))
 	end
 end
 function homogeneous_prod(a::AbstractMultivector, b::AbstractMultivector, ::Val{k}) where k
@@ -254,7 +254,7 @@ function power_with_scalar_square(a::AbstractMultivector, a², p::Integer)
 end
 
 function power_by_squaring(a::AbstractMultivector, p::Integer)
-	p >= 0 || return power_by_squaring(a, abs(p))
+	p >= 0 || return power_by_squaring(inv(a), abs(p))
 	Π = one(best_type(MixedMultivector, a))
 	aⁿ = a
 	while p > 0
@@ -318,8 +318,10 @@ reversionsign(k, x=1) = mod(k, 4) <= 1 ? +x : -x
 
 The reverse of a multivector.
 
-The reversion antiautomorphism ``ρ`` is defined by ``ρ(u) = u`` on vectors
-and ``ρ(ab) = ρ(b)ρ(a)`` on higher-grade elements.
+The reversion antiautomorphism ``ρ``is the linear map defined by
+``ρ(u) = u`` on vectors and ``ρ(ab) = ρ(b)ρ(a)`` on higher-grade elements.
+
+See also [`involute`](@ref).
 """
 reversion, ~
 
@@ -334,8 +336,10 @@ Base.:~(a::AbstractMultivector) = reversion(a)
 
 The involute of a multivector, negating the odd-grade part.
 
-The involution automorphism ``ι`` is defined by ``ι(u) = -u`` on vectors
-and ``ι(ab) = ι(a)ι(b)`` on higher-grade elements.
+The involution automorphism ``ι`` is the linear map defined by
+``ι(u) = -u`` on vectors and ``ι(ab) = ι(a)ι(b)`` on higher-grade elements.
+
+See also [`reversion`](@ref).
 """
 involute
 

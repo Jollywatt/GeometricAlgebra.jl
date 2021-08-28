@@ -23,7 +23,6 @@ end
 
 # just test against errors
 for to_show ∈ (x, x + y, 1 + y, Any[100x, 2x*y, 1 + x, 0 + 0y], typeof(x), typeof(x + y))
-	println()
 	@test isnothing(show(stdout, MIME("text/plain"), to_show))
 end
 
@@ -31,9 +30,8 @@ end
 	for sig ∈ [(1, 1, 1), (x=1, y=1, z=1)]
 		pretty_sig = GeometricAlgebra.show_signature(sig)
 		compare(a, b) = startswith(replace(a, r"\s+"=>""), replace(b, r"\s+"=>""))
-		@test compare(sprint(show, Blade{sig,2,0b011,Float64}), "Blade{$pretty_sig, 2, 0b011, Float64}")
-		@test compare(sprint(show, Blade{sig,2,:bits}), "Blade{$pretty_sig, 2, :bits")
-		@test compare(sprint(show, Blade{sig,2,0b101,Float64} where sig), "Blade{sig,2, 0b101, Float64} where sig")
+		@test compare(sprint(show, Blade{sig,2,Float64}), "Blade{$pretty_sig, 2, Float64}")
+		@test compare(sprint(show, Blade{sig,2,Float64} where sig), "Blade{sig, 2, Float64} where sig")
 		@test compare(sprint(show, Multivector{sig,k,S} where {k,S}), "Multivector{$pretty_sig")
 	end
 	@test sprint(show, MixedMultivector) == "MixedMultivector"

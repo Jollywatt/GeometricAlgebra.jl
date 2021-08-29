@@ -119,18 +119,19 @@ function Base.alignment(io::IO, b::CompositeMultivector)
 	(0, length(plaintext_repr(io, b)))
 end
 
-
+SHOW_IOCONTEXT = Dict(:compact => true)
 
 """
 Display blade with parentheses surrounding coefficient if necessary.
-
+	
 ```jldoctest
 julia> GeometricAlgebra.show_blade(stdout, Blade{(x=1,)}(1 + im, 0b1))
-(1 + 1im) x
+(1+1im) x
 ```
 """
 function show_blade(io::IO, b::Blade; compact=false)
-	Base.show_unquoted(io, b.coeff, 0, Base.operator_precedence(:*))
+	subio = IOContext(io, SHOW_IOCONTEXT...)
+	Base.show_unquoted(subio, b.coeff, 0, Base.operator_precedence(:*))
 	grade(b) == 0 && return
 	compact || print(io, " ") # coefficient--basis separator
 	(iszero(b) && compact) && print(io, '*')

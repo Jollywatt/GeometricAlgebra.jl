@@ -185,21 +185,6 @@ shared_sig(::Type{<:AbstractMultivector{sig}}...) where sig = sig
 shared_sig(::Type{<:AbstractMultivector}...) = error("multivectors must share the same metric signature")
 shared_sig(As::AbstractMultivector...) = shared_sig(typeof.(As)...)
 
-
-# harness built in type promotion system to promote storage types with more semantic code
-struct StorageType{S} end
-unwrap(::Type{StorageType{S}}) where S = S
-
-storagetype(::Type{<:Blade}) = Union{} # indented to be type promoted with other storage types
-storagetype(::Type{<:CompositeMultivector{S}}) where S = StorageType{S}
-storagetype(::T) where {T<:AbstractMultivector} = storagetype(T)
-
-Base.promote_rule(::Type{StorageType{Vector{T}}}, ::Type{StorageType{Vector{S}}}) where {T,S} = StorageType{Vector{promote_type(T, S)}}
-Base.promote_rule(::Type{StorageType{SparseVector{Tv,Ti}}}, ::Type{StorageType{Vector{T}}}) where {Tv,Ti,T} = StorageType{SparseVector{promote_type(Tv, T),Ti}}
-Base.promote_rule(::Type{StorageType{SparseVector{Tv,Ti}}}, ::Type{StorageType{SparseVector{Sv,Si}}}) where {Tv,Ti,Sv,Si} = StorageType{SparseVector{promote_type(Tv, Sv),promote_type(Ti, Si)}}
-# fallback
-Base.promote_rule(::Type{StorageType{T}}, ::Type{StorageType{S}}) where {T,S} = StorageType{promote_type(T, S)}
-
 set_eltype_parameter(::Type{<:Vector}, ::Type{T}) where {T} = Vector{T}
 set_eltype_parameter(::Type{<:SparseVector{Tv,Ti} where Tv}, ::Type{T}) where {T,Ti} = SparseVector{T,Ti}
 set_eltype_parameter(::Type{<:SVector}, ::Type{T}) where {T} = SVector{N,T} where N
@@ -210,41 +195,53 @@ set_size_parameter(::Type{<:SVector{N′,T} where N′}, ::Val{N}) where {N,T} =
 set_size_parameter(::Type{<:MVector{N′,T} where N′}, ::Val{N}) where {N,T} = MVector{N,T}
 
 
-# TODO: eventually `default_storagetype` should chose types appropriately by taking into account
+# `default_storagetype` should chose types appropriately by taking into account
 # the algebra's dimension for optimal memory use/speed
-default_storagetype(sig, Tv, Ti) = Vector{Tv}
+default_storagetype(::Type{Multivector}, T, dim) = dim >= 2^8 ? SparseVector{UInt,T} : Vector{T}
+default_storagetype(::Type{MixedMultivector}, T, dim) = dim >= 8 ? SparseVector{UInt,T} : Vector{T}
 
-# NOTE: best_type must work with non-concrete types in order for promotion to work with more than two objects.
-# E.g., promote_type(x, x*y, x) == promote_type(promote_type(x, x*y), x)
-#                                               \__ non-concrete __/
-# Parameters which are allowed to be unspecified are {k,bits}. If any of {sig,S} are unspecified, do not use best_type to promote.
 
-unwrap(::Type{Type{T}}) where T = T
-unwrap(::Type{T}) where T = T
-# unwrap(::T) where T = T
+# Ad hoc way of determining resulting storagetype from multiple types
+# algorithm: find the type which appears latest in this list...
+const STORAGETYPES = [Nothing, StaticVector, Vector, SparseVector]
+# ...and use that as the resulting storagetype.
 
-# must work where each `a...` is a multivector instance *or* a multivector type
-@generated function best_type_parameters(a...; set_eltype::Type{SetT}=Nothing, promote_eltype_with::Type{PromT}=Union{}) where {SetT,PromT}
-	a = unwrap.(a) # normalize Type{Type{A}} -> Type{A} 
+storagetype(::Type{<:CompositeMultivector{S}}) where S = S
+storagetype(::Type{<:Blade}) = Nothing
+storagetype(::T) where {T<:AbstractMultivector} = storagetype(T)
+
+function promote_storagetype(as)
+	priority(a) = findfirst(S -> a <: S, STORAGETYPES)
+	_, i = findmax(priority.(as))
+	as[i]
+end
+
+function best_type_parameters(::Type{MultivectorType}, a...;
+		set_eltype::Type{SetT}=Nothing, promote_eltype_with::Type{PromT}=Union{}) where {MultivectorType,SetT,PromT}
+
 	sig = shared_sig(a...)
 	T = SetT == Nothing ? promote_type(eltype.(a)..., PromT) : SetT
-	S = promote_type(storagetype.(a)...)
-	if S === Union{}
-		S = default_storagetype(sig, T, UInt)
+
+	if MultivectorType == Blade
+		return sig, T
 	end
-	S = unwrap(S)
-	if S === StorageType error("storagetype promotion failed") end
+
+	S = promote_storagetype(storagetype.(a))
+	if S === Nothing
+		S = default_storagetype(MultivectorType, T, dimension(sig))
+	end
 	S = set_eltype_parameter(S, T)
+
 	sig, T, S
 end
 
-# best type if fastest when returning concrete types (as opposed to `UnionAll`s)
-function best_type(::Type{Blade}, a...; bits::Val{b}=Val(missing), kwargs...) where b
-	sig, T = best_type_parameters(a...; kwargs...)
-	ismissing(b) ? Blade{sig,k,bits,T} where {k,bits} : Blade{sig,grade(b),b,T}
+# best type is fastest when returning concrete types (as opposed to `UnionAll`s)
+function best_type(::Type{Blade}, a...; grade::Val{k}=Val(missing), kwargs...) where k
+	sig, T = best_type_parameters(Blade, a...; kwargs...)
+	ismissing(k) ? Blade{sig,k,T} where {k} : Blade{sig,k,T}
 end
 function best_type(::Type{Multivector}, a...; grade::Val{k}=Val(missing), kwargs...) where k
-	sig, T, S = best_type_parameters(a...; kwargs...)
+	sig, T, S = best_type_parameters(Multivector, a...; kwargs...)
 	if ismissing(k)
 		Multivector{sig,k,S} where k
 	else
@@ -253,7 +250,7 @@ function best_type(::Type{Multivector}, a...; grade::Val{k}=Val(missing), kwargs
 	end
 end
 function best_type(::Type{MixedMultivector}, a...; kwargs...)
-	sig, T, S = best_type_parameters(a...; kwargs...)
+	sig, T, S = best_type_parameters(MixedMultivector, a...; kwargs...)
 	S = set_size_parameter(S, Val(2^dimension(sig)))
 	MixedMultivector{sig,S}
 end

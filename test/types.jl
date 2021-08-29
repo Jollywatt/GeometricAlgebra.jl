@@ -161,7 +161,7 @@ end
 
 	
 	# we want operations with blades to preserve the storage type 
-	isstatic(a) = GeometricAlgebra.unwrap(GeometricAlgebra.storagetype(a)) <: SVector
+	isstatic(a) = GeometricAlgebra.storagetype(a) <: SVector
 	@test isstatic(B[1] + b[2])
 	@test isstatic(B[1] - b[2])
 	@test isstatic(B[1]b[2])

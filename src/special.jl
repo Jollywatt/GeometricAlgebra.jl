@@ -10,7 +10,7 @@ end
 
 SERIES_ORDER = [150]
 
-function eval_series(a, fn, order=first(SERIES_ORDER))
+function eval_series(a, fn, order=SERIES_ORDER[])
 	T = eltype(a)
 	series = fn(Taylor1(T, order))
 	series(a)
@@ -35,14 +35,18 @@ function exp_with_scalar_square(a, a²)
 	end
 end
 
-function exp_series(a, p=1)
-	# TODO: figure out when exp(a) -> exp(a/p)^p is appropriate
-	#       and how to find optimal p
+function exp_series(a)
+	# Series convergence is better when `a` is not too large.
+	# Use the fact that ``exp(a) = exp(a/p)^p`` and choose `p`
+	# so that the norm of `a` is of order one.
+
+	norm = crudenorm(a) # always positive
+	p = max(1, 2^round(Int, log2(norm))) # power of 2 for fast exponentiation
 	a /= p
 
 	result = one(a)
 	term = one(a)
-	for i = 1:100
+	for i = 1:15
 		term *= a/i
 		if isapproxzero(crudenorm(term))
 			break

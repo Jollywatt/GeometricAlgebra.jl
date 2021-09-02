@@ -256,12 +256,9 @@ function best_type(::Type{MixedMultivector}, a...; kwargs...)
 end
 
 # single argument form is used to modify parameters (e.g., to change the eltype)
-best_type(a::Type{<:Blade}; kwargs...) = best_type(Blade, a; grade=Val(grade(a)), kwargs...)
-best_type(a::Type{<:Multivector{sig,k} where sig}; kwargs...) where k = best_type(Multivector, a; grade=Val(k), kwargs...)
-best_type(a::Type{<:Multivector}; kwargs...) = best_type(Multivector, a; kwargs...)
-best_type(a::Type{<:MixedMultivector}; kwargs...) = best_type(MixedMultivector, a; kwargs...)
+best_type(a::Type{<:HomogeneousMultivector{sig,k}}; kwargs...) where {sig,k} = best_type(multivectortype(a), a; grade=Val(k), kwargs...)
+best_type(a::Type{<:AbstractMultivector}; kwargs...) = best_type(multivectortype(a), a; kwargs...)
 best_type(a::AbstractMultivector; kwargs...) = best_type(typeof(a); kwargs...)
-
 
 
 

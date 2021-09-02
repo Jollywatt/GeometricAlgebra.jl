@@ -41,12 +41,15 @@ function exp_series(a)
 	# so that the norm of `a` is of order one.
 
 	norm = crudenorm(a) # always positive
-	p = max(1, 2^round(Int, log2(norm))) # power of 2 for fast exponentiation
+	p = 2^max(0, round(Int, log2(norm))) # power of 2 for fast exponentiation
 	a /= p
 
 	result = one(a)
 	term = one(a)
-	for i = 1:15
+
+	# empirically chosen so that `term` usually underflows before `max_iters` is reached
+	max_iters = ceil(Int, precision(eltype(a))^(3//4))
+	for i = 1:max_iters
 		term *= a/i
 		if isapproxzero(crudenorm(term))
 			break

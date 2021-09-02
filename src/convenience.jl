@@ -1,10 +1,10 @@
 basis_blades(sig, grade=1) = [Blade{sig}(1, i) for i ∈ bits_of_grade(grade, dimension(sig))]
 
-basis(sig; grade=1) = basis_blades(sig, grade)
-basis(dim::Integer; grade=1) = basis(Tuple(fill(1, dim)); grade=1)
+basis(sig; grade=1) = basis_blades(parse_sig(sig), grade)
 basis(osig::OffsetSignature{sig,indices}; grade=1) where {sig,indices} = OffsetArray(basis_blades(osig, grade), indices)
 
 
+basisvector(sig, i) = Blade{sig}(1, bits_basis_vector(i))
 
 
 # return expression containing variable assignments for each basis blade for the given signature.
@@ -26,7 +26,7 @@ function generate_blades(combos, sig)
 end
 generate_blades(sig) = generate_blades(x -> [[i] for i ∈ x], sig)
 
-parse_sig(n::Integer) = Tuple(ones(n))
+parse_sig(n::Integer) = Tuple(ones(Int, n))
 parse_sig(sig::MetricSignature) = sig
 parse_sig(sig::Tuple{Vararg{<:Integer}}) = sig
 parse_sig(sig::NamedTuple) = sig
@@ -34,7 +34,7 @@ parse_sig(labels::Tuple{Vararg{Symbol}}) = NamedTuple{labels}(ones(Int, length(l
 parse_sig(sig::AbstractString) = Tuple(get(Dict('+'=>1, '-'=>-1, '0'=>0), i) do i
 	throw(ArgumentError("Invalid character in signature string: $i"))
 end for i ∈ sig)
-parse_sig(sig) = throw(ArgumentError("could not interpret $sig as metric signature"))
+parse_sig(sig) = throw(ArgumentError("could not interpret $(repr(sig)) as metric signature"))
 
 function parse_sig(sig::Tuple)
 	# signature specified by series of symbols/exprs `label[=square]`
@@ -103,7 +103,7 @@ end
 	@basisall
 
 Similarly to `@basis`, populate the local namespace with basis blades,
-but including all permutations of the basis blades.
+but include all permutations of the basis blades.
 
 Note that more than `2^n` variables are defined for a signature of dimension `n`!
 

@@ -134,7 +134,7 @@ function show_blade(io::IO, b::Blade; compact=false)
 	Base.show_unquoted(subio, b.coeff, 0, Base.operator_precedence(:*))
 	grade(b) == 0 && return
 	compact || print(io, " ") # coefficient--basis separator
-	(iszero(b) && compact) && print(io, '*')
+	(iszero(b) && compact) && print(io, '*') # write `0*x` instead of `0x`, etc
 	show_basis_blade(io, b)
 end
 

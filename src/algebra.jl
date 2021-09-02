@@ -247,7 +247,7 @@ end
 #= EXPONENTIATION =#
 
 # if a² is a scalar, then a²ⁿ = |a²|ⁿ, a²ⁿ⁺¹ = |a²|ⁿa
-function power_with_scalar_square(a::AbstractMultivector, a², p::Integer)
+function power_with_scalar_square(a, a², p::Integer)
 	# if p is even, p = 2n; if odd, p = 2n + 1
 	aⁿ = a²^fld(p, 2)
 	iseven(p) ? aⁿ*one(a) : aⁿ*a
@@ -306,6 +306,11 @@ scalar(a::AbstractMultivector) = getcomponent(a)
 isscalar(a::HomogeneousMultivector) = iszero(grade(a))
 isscalar(a::MixedMultivector) = iszero(a.components[begin + 1:end])
 
+pseudoscalar(a::AbstractMultivector) = getcomponent(a, (1:dimension(a))...)
+pseudoscalar(a::MixedMultivector) = a.components[end]
+
+ispseudoscalar(a::HomogeneousMultivector{sig,k}) where {sig,k} = k == dimension(sig)
+ispseudoscalar(a::MixedMultivector) = iszero(a.components[begin:end - 1])
 
 
 #= AUTOMORPHISMS & DUALITY OPERATIONS =#
@@ -351,12 +356,10 @@ involute(a::MixedMultivector) = mapcomponents(u -> (iseven(grade(u)) ? u : -u).c
 
 
 
-# TODO: terminology: 'volume element' or 'pseudoscalar'?
-# InstanceOrType{T} = Union{T,Type{T}}
-unit_pseudoscalar(a::Union{<:AbstractMultivector,Type{<:AbstractMultivector}}) = oneunit(best_type(Blade, a; bits=Val(bits_first_of_grade(dimension(a)))))
-unit_pseudoscalar(sig) = prod(basis(sig))
+unit_pseudoscalar(a::AbstractMultivector) = Blade{signature(a)}(one(eltype(a)), bits_first_of_grade(dimension(a)))
 
 # TODO: which type of dual operation? aI, Ia, a/I, I\a?
 # the Hodge dual is defined as ``φ ∧ ⋆ϕ = ⟨φ,ϕ⟩ vol`` for forms of the same degree
 # so the choice `dual(a) = aI` agrees with the Hodge dual on blades of the same grade.
 dual(a::AbstractMultivector) = a*unit_pseudoscalar(a)
+dual(a::HomogeneousMultivector) = a⨼unit_pseudoscalar(a)

@@ -1,10 +1,14 @@
 dimension(sig) = length(sig)
 
-basis_labels(sig::Tuple) = 1:dimension(sig)
-basis_labels(sig::NamedTuple{names}) where names = names
+"""
+	basis_blade_label(sig, indices[, labels])
 
-basis_blade_label(sig::Tuple, indices, labels=basis_labels(sig)) = "v$(join(labels[indices]))"
-basis_blade_label(sig::NamedTuple, indices, labels=nothing) = join(basis_labels(sig)[indices])
+Human-readable string representation of the basis blade specified by `indices`.
+
+Basis blade is specified by `indices`, a vector of integers.
+"""
+basis_blade_label(sig, indices, labels=1:dimension(sig)) = "v$(join(labels[indices]))"
+basis_blade_label(sig::NamedTuple{labels}, indices, _) where labels = join(labels[indices])
 
 abstract type MetricSignature end
 
@@ -35,7 +39,6 @@ struct OffsetSignature{sig,indices} <: MetricSignature end
 OffsetSignature(sig,indices) = OffsetSignature{sig,indices}()
 Base.getindex(::OffsetSignature{sig}, args...) where sig = getindex(sig, args...)
 Base.length(::OffsetSignature{sig}) where sig = length(sig)
-basis_labels(::OffsetSignature{sig}) where sig = basis_labels(sig)
 basis_blade_label(::OffsetSignature{sig,labels}, indices) where {sig,labels} = basis_blade_label(sig, indices, labels)
 
 
@@ -43,7 +46,7 @@ basis_blade_label(::OffsetSignature{sig,labels}, indices) where {sig,labels} = b
 Convert human-readable basis vector index or symbol into 1-based integer index
 """
 normalize_bv_index(sig, i) = i
-normalize_bv_index(sig, i::Symbol) = findfirst(==(i), basis_labels(sig))
+normalize_bv_index(sig, i::Symbol) = findfirst(==(string(i)), [basis_blade_label(sig, [i]) for i ∈ 1:dimension(sig)])
 function normalize_bv_index(sig::Union{Tuple,NamedTuple}, i::Integer)
 	r = 1:dimension(sig)
 	i ∈ r ? i : error("index $i is outside range $r for signature $sig")

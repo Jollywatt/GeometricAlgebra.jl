@@ -1,12 +1,15 @@
 #= SCALAR MULTIPLICATION =#
 
-*(a::Blade{sig,k}, b::Scalar) where {sig,k} = Blade{sig,k}(a.coeff*b, bitsof(a))
-*(a::Scalar, b::Blade{sig,k}) where {sig,k} = Blade{sig,k}(a*b.coeff, bitsof(b))
+scalar_multiply(a::Blade{sig}, b) where {sig} = Blade{sig}(a.coeff*b, bitsof(a))
+scalar_multiply(a, b::Blade{sig}) where {sig} = Blade{sig}(a*b.coeff, bitsof(b))
 
 constructor(::Multivector{sig,k}) where {sig,k} = Multivector{sig,k}
 constructor(::MixedMultivector{sig}) where sig = MixedMultivector{sig}
-*(a::CompositeMultivector{<:AbstractVector}, b::Scalar) = constructor(a)(a.components*b)
-*(a::Scalar, b::CompositeMultivector{<:AbstractVector}) = constructor(b)(a*b.components)
+scalar_multiply(a::CompositeMultivector{<:AbstractVector}, b) = constructor(a)(a.components*b)
+scalar_multiply(a, b::CompositeMultivector{<:AbstractVector}) = constructor(b)(a*b.components)
+
+*(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
+*(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
 
 -(a::AbstractMultivector) = -one(eltype(a))*a
 
@@ -43,22 +46,43 @@ add!(a::CompositeMultivector{<:StaticVector}, b::Blade) = add(a, b)
 add!(a::CompositeMultivector{<:StaticVector}, b::Multivector) = add(a, b)
 add!(a::CompositeMultivector{<:StaticVector}, b::MixedMultivector) = add(a, b)
 
-add(As::Multivector{sig,k,<:AbstractVector}...) where {sig,k} = Multivector{sig,k}(.+((a.components for a ∈ As)...))
-add(As::MixedMultivector{sig,<:AbstractVector}...) where sig = MixedMultivector{sig}(.+((a.components for a ∈ As)...))
+function add(As::Multivector{sig,k,<:AbstractVector}...) where {sig,k}
+	length(As) == 1 && return first(As)
+	Multivector{sig,k}(.+((a.components for a ∈ As)...))
+end
+function add(As::MixedMultivector{sig,<:AbstractVector}...) where sig
+	length(As) == 1 && return first(As)
+	MixedMultivector{sig}(.+((a.components for a ∈ As)...))
+end
 
-add(As::HomogeneousMultivector{sig,k}...) where {sig,k} = add(convert.(best_type(Multivector, As...), As)...)
-add(As::AbstractMultivector{sig}...) where sig = add(convert.(best_type(MixedMultivector, As...), As)...)
+function add(As::HomogeneousMultivector{sig,k}...) where {sig,k}
+	length(As) == 1 && return first(As)
+	add(convert.(best_type(Multivector, As...), As)...)
+end
+function add(As::AbstractMultivector{sig}...) where sig
+	length(As) == 1 && return first(As)
+	add(convert.(best_type(MixedMultivector, As...), As)...)
+end
 
 
-+(a::AbstractMultivector) = a
-+(a::AbstractMultivector...) = add(a...)
+scalar_add(a::Blade{sig,0}, b) where {sig} = Blade{sig}(a.coeff + b, bitsof(a))
+scalar_add(a::Multivector{sig,0}, b) where {sig} = Multivector{sig,0}(a.components .+ b)
+scalar_add(a::HomogeneousMultivector, b) = scalar_add(MixedMultivector(a), b)
+function scalar_add(a::MixedMultivector{sig,<:AbstractVector}, b) where {sig}
+	# this allows eltype promotion (unlike, e.g., copying and setting first element)
+	comps = [a.components[begin] + b; a.components[begin + 1:end]]
+	best_type(a, set_eltype=eltype(comps))(comps)
+end
+
+
++(as::AbstractMultivector...) = add(as...)
 -(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
-# scalar addition
-+(a::AbstractMultivector{sig}, b::Scalar) where sig = a + Blade{sig}(b, bits_scalar())
-+(a::Scalar, b::AbstractMultivector) = b + a
--(a::AbstractMultivector, b::Scalar) = a + (-b)
--(a::Scalar, b::AbstractMultivector) = a + (-b)
+# multivector-scalar addition
++(a::AbstractMultivector, b::Scalar) = scalar_add(a, b)
++(a::Scalar, b::AbstractMultivector) = scalar_add(b, a)
+-(a::AbstractMultivector, b::Scalar) = scalar_add(a, (-b))
+-(a::Scalar, b::AbstractMultivector) = scalar_add((-b), a)
 
 
 

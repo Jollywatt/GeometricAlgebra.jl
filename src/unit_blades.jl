@@ -1,6 +1,6 @@
 """
 Operations on bitstrings representing `unit blades'. E.g., the
-2-blade of unit norm `e₁∧e₃ ≡ e₁₃` is represented by `0b101`.
+2-blade of unit norm `e₂∧e₃ ≡ e₂₃` is represented by `0b110`.
 """
 
 grade(bits::Unsigned) = count_ones(bits)
@@ -164,7 +164,7 @@ end
 Compute the overall factor arising from the geometric product between
 repeated basis vectors.
 """
-function factor_from_squares(sig, squares)
+function factor_from_squares(sig, squares::Unsigned)
 	factor = 1
 	bv = 1
 	while squares > 0

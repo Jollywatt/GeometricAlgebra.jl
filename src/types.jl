@@ -115,7 +115,8 @@ MixedMultivector{sig}(comps::S) where {sig,S} = MixedMultivector{sig,S}(comps)
 
 # const UnionMultivectorTypes = Union{Blade,Multivector,AbstractMultivector}
 const CompositeMultivector{S} = Union{Multivector{sig,k,S},MixedMultivector{sig,S}} where {sig,k}
-const Scalar = Union{filter(T -> !(T <: AbstractMultivector), subtypes(Number))...}
+# const Scalar = Union{filter(T -> !(T <: AbstractMultivector), subtypes(Number))...}
+const Scalar = Number
 
 
 """
@@ -130,7 +131,7 @@ Base.eltype(::Type{<:CompositeMultivector{S}}) where S = valtype(S)
 ncomponents(::Type{<:Multivector{sig,k}}) where {sig,k} = binomial(dimension(sig), k)
 ncomponents(::Type{<:MixedMultivector{sig}}) where sig = 2^dimension(sig)
 ncomponents(::T) where {T<:AbstractMultivector} = ncomponents(T)
-
+Base.length(::AbstractMultivector) = error("$length is not defined for multivectors. Do you mean $(repr(ncomponents))()?")
 
 
 #= ZERO & ONE CONSTRUCTORS =#
@@ -195,14 +196,14 @@ set_size_parameter(::Type{<:SVector{N′,T} where N′}, ::Val{N}) where {N,T} =
 set_size_parameter(::Type{<:MVector{N′,T} where N′}, ::Val{N}) where {N,T} = MVector{N,T}
 
 
-# `default_storagetype` should chose types appropriately by taking into account
-# the algebra's dimension for optimal memory use/speed
+# `default_storagetype` should choose types appropriately by taking into account
+# the algebra's dimension for optimal memory useage and performance
 default_storagetype(::Type{Multivector}, T, dim) = dim >= 2^8 ? SparseVector{UInt,T} : Vector{T}
 default_storagetype(::Type{MixedMultivector}, T, dim) = dim >= 8 ? SparseVector{UInt,T} : Vector{T}
 
 
 # Ad hoc way of determining resulting storagetype from multiple types
-# algorithm: find the type which appears latest in this list...
+# Algorithm: find the type which appears latest in this list...
 const STORAGETYPES = [Nothing, StaticVector, Vector, SparseVector]
 # ...and use that as the resulting storagetype.
 
@@ -216,7 +217,7 @@ function promote_storagetype(as)
 	as[i]
 end
 
-function best_type_parameters(::Type{MultivectorType}, a...;
+function _best_type_parameters(::Type{MultivectorType}, a...;
 		set_eltype::Type{SetT}=Nothing, promote_eltype_with::Type{PromT}=Union{}) where {MultivectorType,SetT,PromT}
 
 	sig = shared_sig(a...)
@@ -233,6 +234,15 @@ function best_type_parameters(::Type{MultivectorType}, a...;
 	S = set_eltype_parameter(S, T)
 
 	sig, T, S
+end
+
+_unwrap_type(::Type{Type{T}}) where T = T
+_unwrap_type(T) = T
+
+# memoized version for type stability
+@generated function best_type_parameters(::Type{MultivectorType}, a...;
+		set_eltype::Type{SetT}=Nothing, promote_eltype_with::Type{PromT}=Union{}) where {MultivectorType,SetT,PromT}
+	_best_type_parameters(MultivectorType, _unwrap_type.(a)...; set_eltype=SetT, promote_eltype_with=PromT)
 end
 
 # best type is fastest when returning concrete types (as opposed to `UnionAll`s)
@@ -320,9 +330,9 @@ Base.promote_rule(T::Type{<:MixedMultivector{sig}}, S::Type{<:MixedMultivector{s
 Base.promote_rule(T::Type{<:Multivector{sig}}, S::Type{<:Blade{sig}}) where sig = best_type(Multivector, T, S)
 Base.promote_rule(T::Type{<:MixedMultivector{sig}}, S::Type{<:AbstractMultivector{sig}}) where sig = best_type(MixedMultivector, T, S)
 
-# promotion from scalars
+# promotion from scalars - is this a bad idea? (probably; not needed and explicit conversion is better)
 # note that the grade parameter should *not* be preserved
-Base.promote_rule(T::Type{<:AbstractMultivector{sig}}, S::Type{<:Scalar}) where sig = best_type(multivectortype(T), T; promote_eltype_with=S)
+# Base.promote_rule(T::Type{<:AbstractMultivector{sig}}, S::Type{<:Scalar}) where sig = best_type(multivectortype(T), T; promote_eltype_with=S)
 
 
 
@@ -411,8 +421,8 @@ function Base.isapprox(a::Multivector{sig}, b::Multivector{sig}; kwargs...) wher
 end
 Base.isapprox(a::AbstractMultivector, b::AbstractMultivector; kwargs...) = isapprox(promote(a, b)...; kwargs...)
 
-Base.isapprox(a::AbstractMultivector, b::Scalar; kwargs...) = isapprox(promote(a, b)...; kwargs...)
-Base.isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(promote(a, b)...; kwargs...)
+Base.isapprox(a::AbstractMultivector, b::Scalar; kwargs...) = isapprox(a, one(a)*b; kwargs...)
+Base.isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(a*one(b), b; kwargs...)
 
 
 
@@ -478,8 +488,12 @@ for T ∈ (Integer, Symbol)
 end
 Base.getindex(a::AbstractMultivector) = getcomponent(a) # for ambiguity
 
-# experimental notations for grade selection
+#= experimental notations for grade selection
+What about a[(i,j)] for components and a[k] for grade projection?
+Then if length(a) is the dimension, then a[end] is the pseudoscalar
+Or a[grade=k], a[grade=end]
+=#
 # Base.getindex(a::AbstractMultivector, I::Vector{<:Integer}) = grade(a, Iterators.only(I))
-# Base.getindex(a::AbstractMultivector; grade) = GeometricAlgebra2.grade(a, grade)
+# Base.getindex(a::AbstractMultivector; grade) = GeometricAlgebra.grade(a, grade)
 
 

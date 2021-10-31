@@ -65,7 +65,7 @@ Blade{sig}(coeff::T, bits) where {sig,T} = Blade{sig,grade(bits),T}(coeff, bits)
 
 # for internal use only (assumes `k == grade(bits)` without checking)
 Blade{sig,k}(coeff::T, bits) where {sig,k,T} = Blade{sig,k,T}(coeff, bits)
-(Blade{sig,k,T} where k)(coeff, bits) where {sig,T} = Blade{sig,grade(bits),T}(coeff, bits)
+# (Blade{sig,k,T} where k)(coeff, bits) where {sig,T} = Blade{sig,grade(bits),T}(coeff, bits)
 # Blade{sig,k,bits}(coeff::T) where {sig,k,bits,T} = Blade{sig,k,bits,T}(coeff)
 
 """

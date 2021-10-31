@@ -117,25 +117,24 @@ julia> GeometricAlgebra.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
 """
 indices_to_bits
 
-# # this version is 10% slower
-# function bits_to_linear_index(bits::Unsigned)
-# 	i = 1
-# 	for b ∈ FixedGradeBits(grade(bits))
-# 		if b >= bits
-# 			return i
-# 		end
-# 		i += 1
-# 	end
-# end
+
 function bits_to_linear_index(bits::Unsigned)
+	# From combinatorial number systems, an explicit formula is:
+	# sum(binomial(i, c[i]) for i in 1:length(c)) where c = bits_to_indices(bits)
+	n = 1
+	c = 0
 	i = 1
-	u = bits_first_of_grade(grade(bits))
-	while u < bits
-		u = next_bit_permutation(u)
-		i += 1
+	while bits > 0
+		if isone(bits & 1)
+			n += binomial(c, i)
+			i += 1
+		end
+		bits >>= 1
+		c += 1
 	end
-	i
+	n
 end
+
 function linear_index_to_bits(i, k)
 	bits = bits_scalar()
 	for b ∈ Iterators.take(FixedGradeBits(k), i)

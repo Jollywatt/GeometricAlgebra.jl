@@ -1,7 +1,7 @@
 using GeometricAlgebra:
 	bits_to_indices, indices_to_bits,
-	bits_to_linear_index, linear_index_to_bits,
-	bits_to_multivector_index, multivector_index_to_bits,
+	bits_to_mv_index, mv_index_to_bits,
+	bits_to_mmv_index, mmv_index_to_bits,
 	sign_from_swaps, factor_from_squares
 
 @testset "bits <-> indices" begin
@@ -11,7 +11,7 @@ using GeometricAlgebra:
 	end
 end
 
-@testset "bits <-> linear index" begin
+@testset "bits <-> multivector index" begin
 	cases = [
 		(1, 0) => 0b000,
 		(1, 1) => 0b001,
@@ -25,20 +25,19 @@ end
 		(2, 8) => 0b10111_1111,
 	]
 	@testset "no. $(i) of grade $k: $bits" for ((i, k), bits) ∈ cases
-		@test linear_index_to_bits(i, k) == bits
-		@test bits_to_linear_index(bits) == i
+		@test mv_index_to_bits(i, k) == bits
+		@test bits_to_mv_index(bits) == i
 	end
 
 	for _ ∈ 1:10, bits ∈ (rand(UInt8), rand(UInt16))
-		# warning: bits_to_linear_index() is typically slow for UInt32 or higher
-		@test linear_index_to_bits(bits_to_linear_index(bits), grade(bits)) == bits
+		# warning: bits_to_mv_index() is typically slow for UInt32 or higher
+		@test mv_index_to_bits(bits_to_mv_index(bits), grade(bits)) == bits
 	end
 end
 
-@testset "bits <-> multivector index" begin
+@testset "bits <-> mixed multivector index" begin
 	for dim ∈ 1:8, i ∈ 1:2^dim
-		# warning: bits_to_linear_index() is typically slow for UInt32 or higher
-		@test bits_to_multivector_index(multivector_index_to_bits(i, dim), dim) == i
+		@test bits_to_mmv_index(mmv_index_to_bits(i, dim), dim) == i
 	end
 end
 

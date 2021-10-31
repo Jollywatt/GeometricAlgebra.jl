@@ -25,7 +25,7 @@ promote_to(x::T, ::Type{S}) where {T,S} = convert(promote_type(T, S), x)
 
 # mutating addition which does not require same element/storage types
 function add!(a::CompositeMultivector, b::Blade)
-	a.components[bits_to_key(a, bitsof(b))] += b.coeff
+	a.components[bits_to_index(a, bitsof(b))] += b.coeff
 	a
 end
 function add!(a::CompositeMultivector, b::CompositeMultivector)
@@ -36,7 +36,7 @@ function add!(a::CompositeMultivector, b::CompositeMultivector)
 end
 function add!(a::MixedMultivector, b::Multivector)
 	for (bits, x) ∈ zip(bits_of_grade(grade(b)), b.components)
-		a.components[bits_to_key(a, bits)] += x
+		a.components[bits_to_index(a, bits)] += x
 	end
 	a
 end
@@ -252,13 +252,13 @@ end
 
 function linear_map(a::AbstractMultivector)
 	n = dimension(a)
-	hcat([full_components_vector(a*blade_like(a, 1, multivector_index_to_bits(i, n)))
+	hcat([full_components_vector(a*blade_like(a, 1, mmv_index_to_bits(i, n)))
 		for i ∈ 1:2^dimension(a)]...)
 end
 
 function inv_matrixmethod(a::AbstractMultivector)
 	n = dimension(a)
-	A = hcat([full_components_vector(a*blade_like(a, 1, multivector_index_to_bits(i, n)))
+	A = hcat([full_components_vector(a*blade_like(a, 1, mmv_index_to_bits(i, n)))
 		for i ∈ 1:2^dimension(a)]...)
 	id = full_components_vector(one(a))
 	inv_components = A\id
@@ -321,7 +321,7 @@ grade(a, k::Integer) where sig = grade(a) == k ? a : zero(a)
 
 function grade(a::MixedMultivector{sig}, k::Integer) where sig
 	n = dimension(sig)
-	i = bits_to_multivector_index(bits_first_of_grade(k), n)
+	i = bits_to_index(a, bits_first_of_grade(k))
 	Multivector{sig,k}(a.components[i:i+binomial(n, k) - 1])
 end
 

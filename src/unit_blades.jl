@@ -118,7 +118,7 @@ julia> GeometricAlgebra.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
 indices_to_bits
 
 
-function bits_to_linear_index(bits::Unsigned)
+function bits_to_mv_index(bits::Unsigned)
 	# From combinatorial number systems, an explicit formula is:
 	# sum(binomial(i, c[i]) for i in 1:length(c)) where c = bits_to_indices(bits)
 	ith = 1
@@ -135,7 +135,7 @@ function bits_to_linear_index(bits::Unsigned)
 	ith
 end
 
-function linear_index_to_bits(ith, k)
+function mv_index_to_bits(ith, k)
 	bits = bits_scalar()
 	for b ∈ Iterators.take(FixedGradeBits(k), ith)
 		bits = b
@@ -162,28 +162,23 @@ function multivector_index_offset(k, dim)
 	end
 	ith
 end
-function bits_to_multivector_index(bits, dim)
+function bits_to_mmv_index(bits, dim)
 	# memoized version only faster for rather large k (~10)
-	# return 1 + binomial_sum(dim, grade(bits)) + bits_to_linear_index(bits)
+	# return 1 + binomial_sum(dim, grade(bits)) + bits_to_mv_index(bits)
 
-	multivector_index_offset(grade(bits), dim) + bits_to_linear_index(bits)
+	multivector_index_offset(grade(bits), dim) + bits_to_mv_index(bits)
 end
 
 
 const MULTIVECTOR_INDICES = Dict{Int,Vector{UInt}}()
-function multivector_index_to_bits(ith, dim)
+function mmv_index_to_bits(ith, dim)
 	if !(dim in keys(MULTIVECTOR_INDICES))
 		bits = unsigned.(0:2^dim - 1)
-		MULTIVECTOR_INDICES[dim] = bits[sortperm(bits_to_multivector_index.(bits, dim))]
+		MULTIVECTOR_INDICES[dim] = bits[sortperm(bits_to_mmv_index.(bits, dim))]
 	end
 	MULTIVECTOR_INDICES[dim][ith]
 end
 
-
-bits_to_index(::Type{<:Multivector}, bits) = bits_to_linear_index(bits)
-bits_to_index(::Type{<:MixedMultivector}, bits, dim) = bits_to_multivector_index(bits)
-index_to_bits(::Type{<:Multivector}, ith, k) = linear_index_to_bits(ith, k)
-index_to_bits(::Type{<:MixedMultivector}, ith, dim) = multivector_index_to_bits(ith, dim)
 
 """
 Compute sign flips of blade product due to transposing basis vectors.

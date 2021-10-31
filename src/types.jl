@@ -157,6 +157,19 @@ Base.oneunit(::T) where {T<:AbstractMultivector} = oneunit(T)
 
 
 
+
+
+bits_to_index(a::Type{<:Multivector}, bits) = bits_to_mv_index(bits)
+bits_to_index(a::Type{<:MixedMultivector}, bits) = bits_to_mmv_index(bits, dimension(a))
+index_to_bits(a::Type{<:Multivector}, ith) = mv_index_to_bits(ith, grade(a))
+index_to_bits(a::Type{<:MixedMultivector}, ith) = mmv_index_to_bits(ith, dimension(a))
+
+bits_to_index(a::AbstractMultivector, b) = bits_to_index(typeof(a), b)
+index_to_bits(a::AbstractMultivector, b) = index_to_bits(typeof(a), b)
+
+
+
+
 #= MULTIVECTOR TYPE INFERENCE UTILITIES
 
 The `<:AbstractMultivector` type system is complex -- any multivector type consists of four orthogonal aspects:
@@ -298,7 +311,7 @@ end
 function full_components_vector(a::Blade)
 	n = dimension(a)
 	fcv = zeros(eltype(a), 2^n) # TODO: use sparse vector? fcv is large and will remain mostly empty
-	fcv[bits_to_multivector_index(bitsof(a), n)] = a.coeff
+	fcv[bits_to_mmv_index(bitsof(a), n)] = a.coeff
 	fcv
 end
 
@@ -307,7 +320,7 @@ end
 # conversion from lower multivector type
 function Base.convert(T::Type{<:Multivector}, a::Blade)
 	T = best_type(T; grade=Val(grade(a)))
-	i = bits_to_key(T, bitsof(a))
+	i = bits_to_index(T, bitsof(a))
 	comps = [i == j ? convert(eltype(T), a.coeff) : zero(eltype(T)) for j ∈ 1:ncomponents(T)]
 	T(comps)
 end
@@ -368,7 +381,7 @@ mapcomponents(f, a::Blade; kwargs...) = best_type(a; kwargs...)(f(a), bitsof(a))
 function mapcomponents(f, a::CompositeMultivector; kwargs...)
 	a′ = zero(best_type(a; kwargs...))
 	for b ∈ blades(a)
-		a′.components[bits_to_key(a, bitsof(b))] = f(b)
+		a′.components[bits_to_index(a, bitsof(b))] = f(b)
 	end
 	a′
 end
@@ -438,7 +451,8 @@ Base.isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(a*one(b),
 
 blades(a::Blade) = (a,)
 blades(a::Multivector{sig,k,<:AbstractVector}) where {sig,k} = (Blade{sig,k}(coeff, bits) for (coeff, bits) ∈ zip(a.components, bits_of_grade(k)))
-blades(a::MixedMultivector{sig,<:AbstractVector}) where sig = (Blade{sig}(coeff, multivector_index_to_bits(i, dimension(sig))) for (i, coeff) ∈ enumerate(a.components))
+blades(a::MixedMultivector{sig,<:AbstractVector}) where sig = (Blade{sig}(coeff, index_to_bits(a, i)) for (i, coeff) ∈ enumerate(a.components))
+# blades(a::CompositeMultivector) = (Blade{signature(a)}(coeff, index_to_bits(a, i)) for (i, coeff) ∈ enumerate(a.components))
 # blades(a::CompositeMultivector{<:AbstractDict}) where sig = (Blade{sig}(coeff, bits) for (bits, coeff) ∈ a.components)
 
 
@@ -464,12 +478,7 @@ julia> GeometricAlgebra.getcomponent(a, 3, 2)
 ```
 """
 getcomponent
-
-bits_to_key(::Type{<:Multivector{sig,k,<:AbstractVector}}, bits::Unsigned) where {sig,k} = bits_to_linear_index(bits)
-bits_to_key(::Type{<:MixedMultivector{sig,<:AbstractVector}}, bits::Unsigned) where sig = bits_to_multivector_index(bits, dimension(sig))
-# bits_to_key(::Type{<:CompositeMultivector{<:AbstractDict}}, bits::Unsigned) = bits
-bits_to_key(::T, bits) where {T<:AbstractMultivector} = bits_to_key(T, bits)
-
+ 
 parity_sign(I) = iseven(parity(sortperm(collect(I)))) ? +1 : -1
 
 function getcomponent(a::Blade, I...)
@@ -478,18 +487,13 @@ function getcomponent(a::Blade, I...)
 	s*a.coeff
 end
 
-# getcomponent(a::Multivector, I...) = zero(eltype(a))
-# function getcomponent(a::Multivector{sig,k}, I::Vararg{Any,k}) where {sig,k}
-# 	s = parity_sign(I)
-# 	s*a.components[bits_to_key(a, indices_to_bits(I))]
-# end
+getcomponent(a::MixedMultivector) = first(a.components)
 
 function getcomponent(a::CompositeMultivector, I...)
 	s = parity_sign(I)
-	s*a.components[bits_to_key(a, indices_to_bits(I))]
+	s*a.components[bits_to_index(a, indices_to_bits(I))]
 end
 
-getcomponent(a::MixedMultivector) = first(a.components)
 
 for T ∈ (Integer, Symbol)
 	@eval Base.getindex(a::AbstractMultivector{sig}, I::$T...) where sig = getcomponent(a, normalize_bv_index.(Ref(sig), I)...)

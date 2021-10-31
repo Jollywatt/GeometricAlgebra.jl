@@ -1,5 +1,5 @@
 """
-Operations on bitstrings representing `unit blades'. E.g., the
+Operations on bits representing `unit blades'. E.g., the
 2-blade of unit norm `e₂∧e₃ ≡ e₂₃` is represented by `0b110`.
 """
 
@@ -121,28 +121,69 @@ indices_to_bits
 function bits_to_linear_index(bits::Unsigned)
 	# From combinatorial number systems, an explicit formula is:
 	# sum(binomial(i, c[i]) for i in 1:length(c)) where c = bits_to_indices(bits)
-	n = 1
+	ith = 1
 	c = 0
-	i = 1
+	k = 1
 	while bits > 0
 		if isone(bits & 1)
-			n += binomial(c, i)
-			i += 1
+			ith += binomial(c, k)
+			k += 1
 		end
 		bits >>= 1
 		c += 1
 	end
-	n
+	ith
 end
 
-function linear_index_to_bits(i, k)
+function linear_index_to_bits(ith, k)
 	bits = bits_scalar()
-	for b ∈ Iterators.take(FixedGradeBits(k), i)
+	for b ∈ Iterators.take(FixedGradeBits(k), ith)
 		bits = b
 	end
 	bits
 end
 
+
+# const BINOMIAL_SUMS = Dict{Int,Vector{Int}}()
+# function binomial_sum(n, k)
+# 	k <= 0 && return 0
+# 	n <= k && return 1<<n
+# 	if !(n in keys(BINOMIAL_SUMS))
+# 		BINOMIAL_SUMS[n] = cumsum(binomial.(n, 0:n - 1))
+# 	end
+# 	# @show BINOMIAL_SUMS
+# 	BINOMIAL_SUMS[n][k]
+# end
+
+function multivector_index_offset(k, dim)
+	ith = 0
+	for i in 0:k - 1
+		ith += binomial(dim, i)
+	end
+	ith
+end
+function bits_to_multivector_index(bits, dim)
+	# memoized version only faster for rather large k (~10)
+	# return 1 + binomial_sum(dim, grade(bits)) + bits_to_linear_index(bits)
+
+	multivector_index_offset(grade(bits), dim) + bits_to_linear_index(bits)
+end
+
+
+const MULTIVECTOR_INDICES = Dict{Int,Vector{UInt}}()
+function multivector_index_to_bits(ith, dim)
+	if !(dim in keys(MULTIVECTOR_INDICES))
+		bits = unsigned.(0:2^dim - 1)
+		MULTIVECTOR_INDICES[dim] = bits[sortperm(bits_to_multivector_index.(bits, dim))]
+	end
+	MULTIVECTOR_INDICES[dim][ith]
+end
+
+
+bits_to_index(::Type{<:Multivector}, bits) = bits_to_linear_index(bits)
+bits_to_index(::Type{<:MixedMultivector}, bits, dim) = bits_to_multivector_index(bits)
+index_to_bits(::Type{<:Multivector}, ith, k) = linear_index_to_bits(ith, k)
+index_to_bits(::Type{<:MixedMultivector}, ith, dim) = multivector_index_to_bits(ith, dim)
 
 """
 Compute sign flips of blade product due to transposing basis vectors.

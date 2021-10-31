@@ -1,6 +1,7 @@
 using GeometricAlgebra:
 	bits_to_indices, indices_to_bits,
 	bits_to_linear_index, linear_index_to_bits,
+	bits_to_multivector_index, multivector_index_to_bits,
 	sign_from_swaps, factor_from_squares
 
 @testset "bits <-> indices" begin
@@ -31,6 +32,13 @@ end
 	for _ ∈ 1:10, bits ∈ (rand(UInt8), rand(UInt16))
 		# warning: bits_to_linear_index() is typically slow for UInt32 or higher
 		@test linear_index_to_bits(bits_to_linear_index(bits), grade(bits)) == bits
+	end
+end
+
+@testset "bits <-> multivector index" begin
+	for dim ∈ 1:8, i ∈ 1:2^dim
+		# warning: bits_to_linear_index() is typically slow for UInt32 or higher
+		@test bits_to_multivector_index(multivector_index_to_bits(i, dim), dim) == i
 	end
 end
 

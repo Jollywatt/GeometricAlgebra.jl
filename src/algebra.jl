@@ -250,8 +250,15 @@ function Base.inv(a::CompositeMultivector)
 	end
 end
 
+function linear_map(a::AbstractMultivector)
+	n = dimension(a)
+	hcat([full_components_vector(a*blade_like(a, 1, multivector_index_to_bits(i, n)))
+		for i ∈ 1:2^dimension(a)]...)
+end
+
 function inv_matrixmethod(a::AbstractMultivector)
-	A = hcat([full_components_vector(a*blade_like(a, 1, unsigned(i - 1)))
+	n = dimension(a)
+	A = hcat([full_components_vector(a*blade_like(a, 1, multivector_index_to_bits(i, n)))
 		for i ∈ 1:2^dimension(a)]...)
 	id = full_components_vector(one(a))
 	inv_components = A\id
@@ -311,14 +318,11 @@ end
 
 grade(a::Scalar) = 0
 grade(a, k::Integer) where sig = grade(a) == k ? a : zero(a)
-function grade(a::MixedMultivector{sig,S}, k::Integer) where {sig,S}
-	b = zero(best_type(Multivector, a, grade=Val(k)))
-	for u ∈ blades(a)
-		if grade(u) == k
-			b = add!(b, u)
-		end
-	end
-	b
+
+function grade(a::MixedMultivector{sig}, k::Integer) where sig
+	n = dimension(sig)
+	i = bits_to_multivector_index(bits_first_of_grade(k), n)
+	Multivector{sig,k}(a.components[i:i+binomial(n, k) - 1])
 end
 
 # experimental notation for even/odd grade projections

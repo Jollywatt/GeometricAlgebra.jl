@@ -14,6 +14,7 @@ include("unit_blades.jl")
 export AbstractMultivector, HomogeneousMultivector
 export Blade, Multivector, MixedMultivector
 include("types.jl")
+include("conversion.jl")
 
 export signature, dimension
 export OffsetSignature

@@ -1,3 +1,52 @@
+#= EQUALITY
+
+Only equality between multivectors of the *almost* the same type is defined,
+leveraging the promotion interface to enable comparison between differing types.
+
+Multivector promotion (intentionally) does *not* unify the grade and bits parameters,
+so the following methods must cover types which are identical except for those parameters.
+
+Note that two blades of differing basis or two multivectors of differing grade are
+treated as equal if they are both zero.
+=#
+
+==(a::Blade{sig}, b::Blade{sig}) where sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : iszero(a) && iszero(b)
+==(a::(Multivector{sig,k,S} where k), b::(Multivector{sig,k,S} where k)) where {sig,S} = grade(a) == grade(b) ? a.components == b.components : iszero(a) && iszero(b)
+==(a::MixedMultivector{sig,S}, b::MixedMultivector{sig,S}) where {sig,S} = a.components == b.components
+
+==(a::AbstractMultivector, b::Scalar) = iszero(b) && iszero(a) || isscalar(a) && scalar(a) == b
+==(a::Scalar, b::AbstractMultivector) = iszero(a) && iszero(b) || isscalar(b) && a == scalar(b)
+
+==(a::AbstractMultivector{sig}...) where sig = ==(promote(a...)...)
+==(a::AbstractMultivector...) = false # multivectors with non-identical signatures are teated as non-equal
+
+
+function Base.isapprox(a::Blade{sig}, b::Blade{sig}; kwargs...) where sig
+	if bitsof(a) == bitsof(b)
+		isapprox(a.coeff, b.coeff; kwargs...)
+	else
+		isapprox(a.coeff, zero(a.coeff); kwargs...) && isapprox(b.coeff, zero(a.coeff); kwargs...)
+	end
+end
+Base.isapprox(a::T, b::T; kwargs...) where {T<:MixedMultivector} = isapprox(a.components, b.components; kwargs...)
+function Base.isapprox(a::Multivector{sig}, b::Multivector{sig}; kwargs...) where sig
+	if grade(a) == grade(b)
+		isapprox(a.components, b.components; kwargs...)
+	else
+		# multivectors of different grade are approximately equal is they are both approximately zero
+		isapprox(a, zero(a); kwargs...) && isapprox(b, zero(b); kwargs...)
+	end
+end
+Base.isapprox(a::AbstractMultivector, b::AbstractMultivector; kwargs...) = isapprox(promote(a, b)...; kwargs...)
+
+Base.isapprox(a::AbstractMultivector, b::Scalar; kwargs...) = isapprox(a, one(a)*b; kwargs...)
+Base.isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(a*one(b), b; kwargs...)
+
+
+
+
+
+
 #= SCALAR MULTIPLICATION =#
 
 scalar_multiply(a::Blade{sig}, b) where {sig} = Blade{sig}(a.coeff*b, bitsof(a))
@@ -21,6 +70,21 @@ promote_to(x::T, ::Type{S}) where {T,S} = convert(promote_type(T, S), x)
 
 #= ADDITION =#
 
+
+scalar_add(a::Blade{sig,0}, b) where {sig} = Blade{sig}(a.coeff + b, bitsof(a))
+scalar_add(a::Multivector{sig,0}, b) where {sig} = Multivector{sig,0}(a.components .+ b)
+scalar_add(a::HomogeneousMultivector, b) = scalar_add(MixedMultivector(a), b)
+
+scalar_add!(a::MixedMultivector, b) = (a.components[begin] += b; a)
+function scalar_add(a::MixedMultivector{sig,<:AbstractVector}, b) where {sig}
+	# this allows eltype promotion (unlike, e.g., copying and setting first element)
+	comps = [a.components[begin] + b; a.components[begin + 1:end]]
+	best_type(a, set_eltype=eltype(comps))(comps)
+end
+
+
+
+
 # warning: `for u ∈ blades(b) ... end` is not fast
 
 # mutating addition which does not require same element/storage types
@@ -28,16 +92,8 @@ function add!(a::CompositeMultivector, b::Blade)
 	a.components[bits_to_index(a, bitsof(b))] += b.coeff
 	a
 end
-function add!(a::CompositeMultivector, b::CompositeMultivector)
-	for u ∈ blades(b)
-		a = add!(a, u)
-	end
-	a
-end
-function add!(a::MixedMultivector, b::Multivector)
-	for (bits, x) ∈ zip(bits_of_grade(grade(b)), b.components)
-		a.components[bits_to_index(a, bits)] += x
-	end
+function add!(a::MixedMultivector, b::CompositeMultivector)
+	a.components += full_components_vector(b)
 	a
 end
 
@@ -47,42 +103,32 @@ add!(a::CompositeMultivector{<:StaticVector}, b::Multivector) = add(a, b)
 add!(a::CompositeMultivector{<:StaticVector}, b::MixedMultivector) = add(a, b)
 
 function add(As::Multivector{sig,k,<:AbstractVector}...) where {sig,k}
-	length(As) == 1 && return first(As)
 	Multivector{sig,k}(.+((a.components for a ∈ As)...))
 end
 function add(As::MixedMultivector{sig,<:AbstractVector}...) where sig
-	length(As) == 1 && return first(As)
 	MixedMultivector{sig}(.+((a.components for a ∈ As)...))
 end
 
+# dispatches on blades/multivectors with uniform grade
 function add(As::HomogeneousMultivector{sig,k}...) where {sig,k}
-	length(As) == 1 && return first(As)
 	add(convert.(best_type(Multivector, As...), As)...)
 end
-function add(As::AbstractMultivector{sig}...) where sig
-	length(As) == 1 && return first(As)
+function add(As::AbstractMultivector...)
 	add(convert.(best_type(MixedMultivector, As...), As)...)
 end
 
 
-scalar_add(a::Blade{sig,0}, b) where {sig} = Blade{sig}(a.coeff + b, bitsof(a))
-scalar_add(a::Multivector{sig,0}, b) where {sig} = Multivector{sig,0}(a.components .+ b)
-scalar_add(a::HomogeneousMultivector, b) = scalar_add(MixedMultivector(a), b)
-function scalar_add(a::MixedMultivector{sig,<:AbstractVector}, b) where {sig}
-	# this allows eltype promotion (unlike, e.g., copying and setting first element)
-	comps = [a.components[begin] + b; a.components[begin + 1:end]]
-	best_type(a, set_eltype=eltype(comps))(comps)
-end
 
-
-+(as::AbstractMultivector...) = add(as...)
--(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
-
-# multivector-scalar addition
 +(a::AbstractMultivector, b::Scalar) = scalar_add(a, b)
 +(a::Scalar, b::AbstractMultivector) = scalar_add(b, a)
--(a::AbstractMultivector, b::Scalar) = scalar_add(a, (-b))
--(a::Scalar, b::AbstractMultivector) = scalar_add((-b), a)
++(a::AbstractMultivector) = a
++(as::AbstractMultivector...) = add(as...)
+
+-(a::AbstractMultivector, b::Scalar) = a + (-b)
+-(a::Scalar, b::AbstractMultivector) = a + (-b)
+-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
+
+
 
 
 
@@ -108,11 +154,13 @@ end
 
 function geometric_prod(a::AbstractMultivector, b::AbstractMultivector)
 	Π = zero(best_type(MixedMultivector, a, b))
-	for u ∈ blades(a), v ∈ blades(b)
-		Π = add!(Π, geometric_prod(u, v))
+	for (abits, acomp) ∈ _blades(a), (bbits, bcomp) ∈ _blades(b)
+		factor, bits = geometric_prod_bits(signature(Π), abits, bbits)
+		Π.components[bits_to_mmv_index(bits, dimension(Π))] += factor*acomp*bcomp
 	end
 	Π
 end
+
 
 """
 	*(::AbstractMultivector, ::AbstractMultivector)
@@ -391,3 +439,10 @@ unit_pseudoscalar(a::AbstractMultivector) = Blade{signature(a)}(one(eltype(a)), 
 # so the choice `dual(a) = aI` agrees with the Hodge dual on blades of the same grade.
 dual(a::AbstractMultivector) = a*unit_pseudoscalar(a)
 dual(a::HomogeneousMultivector) = a⨼unit_pseudoscalar(a)
+
+
+# experimental
+
+flip_bits(a::Blade) = Blade{signature(a)}(a.coeff, bits_first_of_grade(dimension(a)) ⊻ a.bits)
+flip_bits(a::Multivector) = best_type(a; grade=Val(dimension(a) - grade(a)))(reverse(a.components))
+flip_bits(a::MixedMultivector) = best_type(a)(reverse(a.components))

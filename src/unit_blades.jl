@@ -11,6 +11,26 @@ bits_first_of_grade(k) = (unsigned(1) << k) - unsigned(1)
 bits_basis_vector(i) = unsigned(1) << (i - 1)
 # bits_has_index(bits, i) = isone(bits >> (i - 1) & 1)
 
+
+"""
+	bits_to_indices(bits)
+
+Return the positions of the ones in the unsigned integer `bits`.
+
+Used to convert between representations of a unit blade.
+Inverse of [`indices_to_bits`](@ref).
+
+Examples
+===
+```jldoctest
+julia> GeometricAlgebra.bits_to_indices(0b1001101)
+4-element Vector{Int64}:
+ 1
+ 3
+ 4
+ 7
+```
+"""
 function bits_to_indices(bits)
 	indices = Int[]
 	i = 1
@@ -24,6 +44,22 @@ function bits_to_indices(bits)
 	indices
 end
 
+"""
+	indices_to_bits(indices)
+
+Create unsigned integer with bits at the positions given in the vector `indices`.
+
+Used to convert between representations of a unit blade.
+Inverse of [`bits_to_indices`](@ref).
+
+Examples
+===
+```jldoctest
+julia> GeometricAlgebra.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
+"0000000000010011"
+```
+
+"""
 function indices_to_bits(indices)
 	bits = bits_scalar()
 	for i ∈ indices
@@ -68,54 +104,19 @@ Yields all basis blades in the dimension `n`, if given, otherwise iterate indefi
 Example
 ===
 ```jldoctest
-julia> bits_of_grade(2, 4) .|> UInt8 .|> bitstring
+julia> GeometricAlgebra.bits_of_grade(2, 4) .|> UInt8 .|> bitstring
+6-element Vector{String}:
+ "00000011"
+ "00000101"
+ "00000110"
+ "00001001"
+ "00001010"
+ "00001100"
 ```
 """
-
 bits_of_grade(k) = FixedGradeBits(k)
 bits_of_grade(k, n) = Iterators.take(FixedGradeBits(k), binomial(n, k))
 
-
-
-
-"""
-	bits_to_indices(bits)
-
-Return the positions of the ones in the unsigned integer `bits`.
-
-Used to convert between representations of a unit blade.
-Inverse of [`$(repr(indices_to_bits))`](@ref).
-
-Examples
-===
-```jldoctest
-julia> GeometricAlgebra.bits_to_indices(0b1001101)
-4-element Vector{Int64}:
- 1
- 3
- 4
- 7
-```
-"""
-bits_to_indices
-
-"""
-	$(indices_to_bits)(indices)
-
-Create unsigned integer with bits at the positions given in the vector `indices`.
-
-Used to convert between representations of a unit blade.
-Inverse of [`$(repr(bits_to_indices))`](@ref).
-
-Examples
-===
-```jldoctest
-julia> GeometricAlgebra.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
-"0000000000010011"
-```
-
-"""
-indices_to_bits
 
 
 function bits_to_mv_index(bits::Unsigned)
@@ -137,7 +138,7 @@ end
 
 function mv_index_to_bits(ith, k)
 	bits = bits_scalar()
-	for b ∈ Iterators.take(FixedGradeBits(k), ith)
+	for b ∈ Iterators.take(bits_of_grade(k), ith)
 		bits = b
 	end
 	bits
@@ -218,3 +219,5 @@ function geometric_prod_bits(sig, a::Unsigned, b::Unsigned)
 	bits = a ⊻ b
 	factor, bits
 end
+
+# geometric_square_sign(sig, a::Unsigned) = sign_from_swaps(a, a)*factor_from_squares(sig, a)

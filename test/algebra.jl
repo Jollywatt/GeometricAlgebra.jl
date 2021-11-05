@@ -160,6 +160,9 @@ end
 
 	@test isscalar(x^2)
 	@test isscalar(x^2 + 0)
+
+	@test (x*y + x*z)[] == 0
+	@test (x*y + x*z)[2,1] == -1
 end
 
 

@@ -77,7 +77,7 @@ Multivector{sig,k}(comps::S) where {sig,k,S} = Multivector{sig,k,S}(comps)
 """
 	MixedMultivector{sig,S} <: AbstractMultivector{sig}
 
-An generally inhomogeneous multivector.
+A (possibly inhomogeneous) multivector.
 
 All elements of a geometric algebra are representable as a `MixedMultivector`.
 

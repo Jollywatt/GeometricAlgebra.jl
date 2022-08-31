@@ -45,17 +45,25 @@ Array{T, 2-dimensional} where T
 ```
 """
 function pretty_print_type_parameters(io::IO, T::Type, fns...)
-	typevars = TypeVar[]
-	while T isa UnionAll # unwrap UnionAll and remember TypeVars
-		push!(typevars, T.var)
-		T = T.body
+	if get(io, :compact, true)::Bool && T isa DataType
+
+		typevars = TypeVar[]
+		while T isa UnionAll # unwrap UnionAll and remember TypeVars
+			push!(typevars, T.var)
+			T = T.body
+		end
+
+		# dump(typevars[1])
+		parameters = [p isa TypeVar ? p : ShowWrapper(fn(p)) for (p, fn) ∈ zip(T.parameters, fns)]
+		S = T.name.wrapper{parameters...}
+		for tv in reverse(typevars) # rewrap into UnionAll
+			S = UnionAll(tv, S)
+		end
+		invoke(show, Tuple{IO,Type}, io, S) # show with default method
+
+	else
+		invoke(show, Tuple{IO,Type}, io, T) # show with default method
 	end
-	parameters = [p isa TypeVar ? p : ShowWrapper(fn(p)) for (p, fn) ∈ zip(T.parameters, fns)]
-	S = T.name.wrapper{parameters...}
-	for tv in reverse(typevars) # rewrap into UnionAll
-		S = UnionAll(tv, S)
-	end
-	invoke(show, Tuple{IO,Type}, io, S) # show with default method
 end
 
 
@@ -80,18 +88,14 @@ Base.show(io::IO, T::Type{<:MixedMultivector}) = pretty_print_type_parameters(io
 function Base.show(io::IO, ::MIME"text/plain", T::Type{<:AbstractMultivector})
 	show(io, T)
 	Base.print_without_params(T) && return
-	println(io)
-	printstyled(io, "(pretty-printed ")
-	invoke(show, Tuple{IO,Type}, io, T) # show with default method
-	printstyled(io, ")")
+	ctx = IOContext(io, :compact => false)
+	printstyled(ctx, " (pretty-printed ", T, ")", color = :light_black)
 end
 
 # when signatures are displayed on their own, show both the shorthand and the full expression
 function Base.show(io::IO, ::MIME"text/plain", sig::MetricSignature)
-	println(io, show_signature(sig))
-	printstyled(io, "(pretty-printed ")
-	show(io, sig) # show with default method
-	printstyled(io, ")")
+	print(io, show_signature(sig))
+	printstyled(io, " (pretty-printed ", sig, ")", color = :light_black)
 end
 
 

@@ -1,4 +1,24 @@
+#=
+The Metric Signature Interface
+
+Signatures should be all-bits values (so they can be the first type parameter of AbstractMultivectors)
+and should implement:
+ - dimension(sig)
+ - getindex(sig, i) to give the norm of the ith basis vector
+and optionally:
+ - default_storage_type(sig) preferred AbstractVector type for components (e.g., SVector, Vector or SparseVector)
+ - basis_blade_label(sig, indices) for custom printing basis blades (e.g., "e12" or "e₁∧e₂" or "dxdy")
+ - show_signature(sig) for pretty-printing in type parameters (e.g., "𝒢(3)" or "⟨+++⟩")
+
+=#
+
+# fallback with (named) tuples in mind
 dimension(sig) = length(sig)
+
+# `default_storagetype` should choose types appropriately by taking into account
+# the algebra's dimension for optimal memory useage and performance
+default_storagetype(sig, T) = dimension(sig) >= 8 ? SparseVector{UInt,T} : Vector{T}
+
 
 """
 	basis_blade_label(sig, indices[, labels])
@@ -38,7 +58,7 @@ julia> ans[0] # get first ("time") component
 struct OffsetSignature{sig,indices} <: MetricSignature end
 OffsetSignature(sig,indices) = OffsetSignature{sig,indices}()
 Base.getindex(::OffsetSignature{sig}, args...) where sig = getindex(sig, args...)
-Base.length(::OffsetSignature{sig}) where sig = length(sig)
+dimension(::OffsetSignature{sig}) where sig = dimension(sig)
 basis_blade_label(::OffsetSignature{sig,labels}, indices) where {sig,labels} = basis_blade_label(sig, indices, labels)
 
 

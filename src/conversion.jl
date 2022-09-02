@@ -36,14 +36,10 @@ set_size_parameter(::Type{T}, ::Val{N}) where {T,N} = T
 set_size_parameter(::Type{<:SVector{N′,T} where N′}, ::Val{N}) where {N,T} = SVector{N,T}
 set_size_parameter(::Type{<:MVector{N′,T} where N′}, ::Val{N}) where {N,T} = MVector{N,T}
 
-# `default_storagetype` should choose types appropriately by taking into account
-# the algebra's dimension for optimal memory useage and performance
-default_storagetype(::Type{Multivector}, T, dim) = dim >= 2^8 ? SparseVector{UInt,T} : Vector{T}
-default_storagetype(::Type{MixedMultivector}, T, dim) = dim >= 8 ? SparseVector{UInt,T} : Vector{T}
 
 # Ad hoc way of determining resulting storagetype from multiple types
 # Algorithm: find the type which appears latest in this list...
-const STORAGETYPES = [Nothing, StaticVector, Vector, SparseVector]
+const STORAGETYPES = [Nothing, StaticVector, Vector, SparseVector, Any]
 # ...and use that as the resulting storagetype.
 
 storagetype(::Type{<:CompositeMultivector{S}}) where S = S
@@ -72,10 +68,6 @@ function _best_type_parameters(::Type{MultivectorType}, a...;
 	end
 
 	S = promote_storagetype(storagetype.(a))
-	if S === Nothing
-		S = default_storagetype(MultivectorType, T, dimension(sig))
-	end
-	S = set_eltype_parameter(S, T)
 
 	sig, T, S
 end
@@ -96,15 +88,20 @@ function best_type(::Type{Blade}, a...; grade::Val{k}=Val(missing), kwargs...) w
 end
 function best_type(::Type{Multivector}, a...; grade::Val{k}=Val(missing), kwargs...) where k
 	sig, T, S = best_type_parameters(Multivector, a...; kwargs...)
+	S === Nothing && (S = default_storagetype(sig, T))
+	S = set_eltype_parameter(S, T)
 	if ismissing(k)
 		Multivector{sig,k,S} where k
 	else
 		N = binomial(dimension(sig), k)
-		Multivector{sig,k,set_size_parameter(S, Val(N))}
+		S = set_size_parameter(S, Val(N))
+		Multivector{sig,k,S}
 	end
 end
 function best_type(::Type{MixedMultivector}, a...; kwargs...)
 	sig, T, S = best_type_parameters(MixedMultivector, a...; kwargs...)
+	S === Nothing && (S = default_storagetype(sig, T))
+	S = set_eltype_parameter(S, T)
 	S = set_size_parameter(S, Val(2^dimension(sig)))
 	MixedMultivector{sig,S}
 end

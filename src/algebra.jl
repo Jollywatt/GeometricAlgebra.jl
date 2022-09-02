@@ -82,8 +82,8 @@ function scalar_add(a::MixedMultivector{sig,<:AbstractVector}, b) where {sig}
 	best_type(a, set_eltype=eltype(comps))(comps)
 end
 
-
-
+# the previous method doesn't work for sparse vectors
+scalar_add(a::MixedMultivector{sig,<:SparseVector}, b) where sig = scalar_add!(copy(a), b)
 
 # warning: `for u ∈ blades(b) ... end` is not fast
 

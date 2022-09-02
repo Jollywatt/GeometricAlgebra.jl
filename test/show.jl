@@ -33,6 +33,8 @@ end
 		@test compare(sprint(show, Blade{sig,2,Float64}), "Blade{$pretty_sig, 2, Float64}")
 		@test compare(sprint(show, Blade{sig,2,Float64} where sig), "Blade{sig, 2, Float64} where sig")
 		@test compare(sprint(show, Multivector{sig,k,S} where {k,S}), "Multivector{$pretty_sig")
+
+		display(Union{Blade{1},Blade{1}})
 	end
 	@test sprint(show, MixedMultivector) == "MixedMultivector"
 end

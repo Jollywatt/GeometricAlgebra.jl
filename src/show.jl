@@ -45,7 +45,7 @@ Array{T, 2-dimensional} where T
 ```
 """
 function pretty_print_type_parameters(io::IO, T::Type, fns...)
-	if get(io, :compact, true)::Bool && T isa DataType
+	if get(io, :compact, true)::Bool && T isa Union{DataType,UnionAll}
 
 		typevars = TypeVar[]
 		while T isa UnionAll # unwrap UnionAll and remember TypeVars
@@ -86,10 +86,11 @@ Base.show(io::IO, T::Type{<:MixedMultivector}) = pretty_print_type_parameters(io
 
 # when type is displayed on its own, be explicit about pretty-printing to avoid confusing the user
 function Base.show(io::IO, ::MIME"text/plain", T::Type{<:AbstractMultivector})
-	show(io, T)
-	Base.print_without_params(T) && return
-	ctx = IOContext(io, :compact => false)
-	printstyled(ctx, " (pretty-printed ", T, ")", color = :light_black)
+	compact = sprint(show, T, context = :compact => true)
+	full = sprint(show, T, context = :compact => false)
+	print(io, compact)
+	compact == full && return
+	printstyled(io, " (pretty-printed ", full, ")", color = :light_black)
 end
 
 # when signatures are displayed on their own, show both the shorthand and the full expression

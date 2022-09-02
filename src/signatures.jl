@@ -41,8 +41,7 @@ Example
 ===
 ```jldoctest
 julia> lorentzian = OffsetSignature((-1,1,1,1), 0:3) # zero-based indexing
-⟨-+++⟩ with indices 0:3
-(pretty-printed OffsetSignature{(-1, 1, 1, 1), 0:3}())
+⟨-+++⟩ with indices 0:3 (pretty-printed OffsetSignature{(-1, 1, 1, 1), 0:3}())
 
 julia> (1:4)'basis(lorentzian) # construct spacetime 4-vector
 Grade-1 Multivector{⟨-+++⟩ with indices 0:3, 1, Vector{Int64}}:

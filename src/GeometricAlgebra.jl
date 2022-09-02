@@ -1,7 +1,6 @@
 module GeometricAlgebra
 
 import Base: ==, *, /, \, +, -, ^
-import InteractiveUtils: subtypes
 import Combinatorics: parity, powerset, permutations
 import OffsetArrays: OffsetArray # only ever used by basis(::OffsetSignature)
 using SparseArrays

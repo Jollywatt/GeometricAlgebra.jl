@@ -93,7 +93,6 @@ MixedMultivector{sig}(comps::S) where {sig,S} = MixedMultivector{sig,S}(comps)
 
 
 const CompositeMultivector{S} = Union{Multivector{sig,k,S},MixedMultivector{sig,S}} where {sig,k}
-# const Scalar = Union{filter(T -> !(T <: AbstractMultivector), subtypes(Number))...}
 const Scalar = Number
 const OrType{X} = Union{X,Type{X}}
 

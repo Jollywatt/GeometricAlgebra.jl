@@ -1,14 +1,22 @@
 using GeometricAlgebra
-using GeometricAlgebra: StaticArrays.MVector
+using GeometricAlgebra: storagetype
+using GeometricAlgebra.SparseArrays
+using GeometricAlgebra.StaticArrays
 
 @testset "constructors" begin
-	# @test iszero(zero(Blade{(1,1,1),2,0b101,Float64}))
 	@test iszero(zero(Blade{(1,1,1)}(big(42), 0b000)))
 	@test iszero(zero(Multivector{(1,1,1),1,Vector{Int}}))
 	@test iszero(zero(MixedMultivector{(1,1,1),Vector{Int}}))
 
 	@test first(basis((1,1,1))) == Blade{(1,1,1)}(1, 0b001)
 	@test  last(basis((1,1,1))) == Blade{(1,1,1)}(1, 0b100)
+
+	@test Multivector(Blade{(1,1)}(42, 0b11)) isa Multivector{(1,1),2}
+	@test MixedMultivector(Blade{(1,1)}(42, 0b11)) isa MixedMultivector
+	@test MixedMultivector(Multivector{(1,1),2}([42])) isa MixedMultivector
+
+	sp = SparseArrays.spzeros(2)
+	@test storagetype(MixedMultivector(Multivector{(1,1),1}(sp))) <: SparseVector
 end
 
 

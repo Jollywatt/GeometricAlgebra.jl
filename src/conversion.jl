@@ -133,13 +133,13 @@ Base.convert(::Type{<:MixedMultivector{sig,C}}, a::MixedMultivector) where {sig,
 # get (2^dim)-element vector of components for every basis blade in the algebra
 function full_components_vector(a::Blade)
 	n = dimension(a)
-	fcv = zeros(eltype(a), 2^n) # TODO: use sparse vector? fcv is large and will remain mostly empty
+	fcv = zeroslike(default_storagetype(a), 2^n)
 	fcv[bits_to_mmv_index(bitsof(a), n)] = a.coeff
 	fcv
 end
 function full_components_vector(a::Multivector)
 	n, k = dimension(a), grade(a)
-	fcv = zeros(eltype(a), 2^n) # TODO: use sparse vector? fcv is large and will remain mostly empty
+	fcv = zeroslike(storagetype(a), 2^n)
 	offset = multivector_index_offset(k, n)
 	fcv[begin + offset : binomial(n, k) + offset] = a.components
 	fcv

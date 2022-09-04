@@ -76,16 +76,13 @@ scalar_add(a::Multivector{sig,0}, b) where {sig} = Multivector{sig,0}(a.componen
 scalar_add(a::HomogeneousMultivector, b) = scalar_add(MixedMultivector(a), b)
 
 scalar_add!(a::MixedMultivector, b) = (a.components[begin] += b; a)
-function scalar_add(a::MixedMultivector{sig,<:AbstractVector}, b) where {sig}
-	# this allows eltype promotion (unlike, e.g., copying and setting first element)
-	comps = [a.components[begin] + b; a.components[begin + 1:end]]
-	best_type(a, set_eltype=eltype(comps))(comps)
+function scalar_add(a::MixedMultivector, b)
+	comps = a.components
+	# @set makes a copy, preserves storage type, promotes eltype
+	comps = @set comps[begin] += b
+	MixedMultivector{signature(a)}(comps)
 end
 
-# the previous method doesn't work for sparse vectors
-scalar_add(a::MixedMultivector{sig,<:SparseVector}, b) where sig = scalar_add!(copy(a), b)
-
-# warning: `for u ∈ blades(b) ... end` is not fast
 
 # mutating addition which does not require same element/storage types
 function add!(a::CompositeMultivector, b::Blade)
@@ -103,18 +100,18 @@ add!(a::CompositeMultivector{<:StaticVector}, b::Multivector) = add(a, b)
 add!(a::CompositeMultivector{<:StaticVector}, b::MixedMultivector) = add(a, b)
 
 function add(As::Multivector{sig,k,<:AbstractVector}...) where {sig,k}
-	Multivector{sig,k}(.+((a.components for a ∈ As)...))
+	Multivector{sig,k}(sum(a.components for a ∈ As))
 end
 function add(As::MixedMultivector{sig,<:AbstractVector}...) where sig
-	MixedMultivector{sig}(.+((a.components for a ∈ As)...))
+	MixedMultivector{sig}(sum(a.components for a ∈ As))
 end
 
 # dispatches on blades/multivectors with uniform grade
 function add(As::HomogeneousMultivector{sig,k}...) where {sig,k}
-	add(convert.(best_type(Multivector, As...), As)...)
+	add(Multivector.(As)...)
 end
 function add(As::AbstractMultivector...)
-	add(convert.(best_type(MixedMultivector, As...), As)...)
+	add(MixedMultivector.(As)...)
 end
 
 
@@ -154,7 +151,7 @@ end
 
 function geometric_prod(a::AbstractMultivector, b::AbstractMultivector)
 	Π = zero(best_type(MixedMultivector, a, b))
-	for (abits, acomp) ∈ _blades(a), (bbits, bcomp) ∈ _blades(b)
+	for (abits, acomp) ∈ nonzero_components(a), (bbits, bcomp) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(signature(Π), abits, bbits)
 		Π.components[bits_to_mmv_index(bits, dimension(Π))] += factor*acomp*bcomp
 	end

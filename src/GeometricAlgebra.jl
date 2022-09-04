@@ -2,9 +2,12 @@ module GeometricAlgebra
 
 import Base: ==, *, /, \, +, -, ^
 import Combinatorics: parity, powerset, permutations
-import OffsetArrays: OffsetArray # only ever used by basis(::OffsetSignature)
+
 using SparseArrays
 using StaticArrays
+using Accessors: @set
+
+import OffsetArrays: OffsetArray # only ever used by basis(::OffsetSignature)
 using TaylorSeries: Taylor1
 
 

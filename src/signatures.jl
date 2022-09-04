@@ -18,7 +18,7 @@ dimension(sig) = length(sig)
 # `default_storagetype` should choose types appropriately by taking into account
 # the algebra's dimension for optimal memory useage and performance
 default_storagetype(sig, T) = dimension(sig) >= 8 ? SparseVector{UInt,T} : Vector{T}
-
+default_storagetype(a::AbstractMultivector) = default_storagetype(signature(a), eltype(a))
 
 """
 	basis_blade_label(sig, indices[, labels])

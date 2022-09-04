@@ -36,7 +36,7 @@ end
 	x, y, z = basis(sig)
 	@test x + y == Multivector{sig,1}([1, 1, 0])
 	@test x + y == y + x
-	@test (x + y) + z == y + x + z
+	@test (x + y) + z == +(y, x, z)
 	@test x + 2 == MixedMultivector{sig}([2, 1, 0, 0, 0, 0, 0, 0])
 	@test x + 0 == x
 	@test x + 3.0y == (3//1)y + x
@@ -59,7 +59,7 @@ end
 		@test x*y == -y*x
 		@test (x*y)*(x*y) == -1
 		@test (y*z)*(t*x) == t*x*y*z
-		@test x*x*x == x
+		@test *(x, x, x) == x
 	end
 
 	@testset "Multivector" begin
@@ -104,11 +104,10 @@ end
 	t, x, y, z = basis((-1, 1, 1, 1))
 	
 	@testset "power_with_scalar_square()" begin
-		using GeometricAlgebra: power_with_scalar_square
-		pwss = power_with_scalar_square
+		pwss = GeometricAlgebra.power_with_scalar_square
 
-		@testset "a = $a" for a ∈ float.([x, 2x*y, x*t])
-			@testset "a^p, p = $p" for p ∈ [-4:4; 13; 14; 171; -333; 10042]
+		@testset "a = $a" for a ∈ float.([x, 2x*y, x*t, x + y])
+			@testset "a^p, p = $p" for p ∈ [-4:4; 13; 14; 171; -133; 200]
 				a² = a*a
 				@assert isscalar(a²)
 				@test pwss(a, scalar(a²), p) == prod(fill(p > 0 ? a : inv(a), abs(p)))

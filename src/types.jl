@@ -124,9 +124,9 @@ Base.eltype(::Type{<:CompositeMultivector{S}}) where S = valtype(S)
 
 #= ZERO & ONE CONSTRUCTORS =#
 
-zeroslike(::Type{Vector{T}}, I...) where T = zeros(T, I...)
-zeroslike(::Type{SparseVector{Tv,Ti}}, I...) where {Tv,Ti} = spzeros(Tv, Ti, I...)
-zeroslike(::Type{S}, I...) where {S<:StaticVector} = zeros(S)
+zeroslike(::Type{Vector{T}}, n) where T = zeros(T, n)
+zeroslike(::Type{SparseVector{Tv,Ti}}, n) where {Tv,Ti} = spzeros(Tv, Ti, n)
+zeroslike(::Type{S}, n) where {S<:StaticVector} = zeros(set_size_parameter(S, Val(n)))
 
 Base.zero(::Type{<:Blade{sig,k,T}}) where {sig,k,T} = Blade{sig,k,T}(zero(T), 0)
 Base.zero(::Type{<:Multivector{sig,k,S}}) where {sig,k,S} = Multivector{sig,k}(zeroslike(S, binomial(dimension(sig), k)))
@@ -153,9 +153,10 @@ bits_to_index(a::OrType{<:MixedMultivector}, bits) = bits_to_mmv_index(bits, dim
 index_to_bits(a::OrType{<:Multivector}, ith) = mv_index_to_bits(ith, grade(a))
 index_to_bits(a::OrType{<:MixedMultivector}, ith) = mmv_index_to_bits(ith, dimension(a))
 
-_blades(a::Blade) = ((bitsof(a), a.coeff),)
-_blades(a::Multivector) = zip(bits_of_grade(grade(a)), a.components)
-_blades(a::MixedMultivector) = zip(mmv_index_to_bits.(1:ncomponents(a), dimension(a)), a.components)
+nonzero_components(a::Blade) = (bitsof(a) => a.coeff,)
+nonzero_components(a::Multivector) = (bits => val for (bits, val) ∈ zip(bits_of_grade(grade(a)), a.components) if !iszero(val))
+nonzero_components(a::MixedMultivector) = (bits => val for (bits, val) ∈ zip(mmv_index_to_bits.(1:ncomponents(a), dimension(a)), a.components) if !iszero(val))
+
 
 
 blades(a::Blade) = (a,)

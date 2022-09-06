@@ -104,10 +104,10 @@ Base.IteratorSize(::BitPermutations) = Base.IsInfinite()
 
 
 """
-	bits_of_grade(k[, n])
+	bits_of_grade(k[, dim])
 
 Generate basis blade bits of grade `k` in ascending order.
-Yields all basis blades in the dimension `n`, if given, otherwise iterate indefinitely.
+Yields all basis blades in the dimension `dim`, if given, otherwise iterate indefinitely.
 
 Example
 ===
@@ -123,8 +123,7 @@ julia> GeometricAlgebra.bits_of_grade(2, 4) .|> UInt8 .|> bitstring
 ```
 """
 bits_of_grade(k) = BitPermutations(k)
-bits_of_grade(k, n) = Iterators.take(BitPermutations(k), binomial(n, k))
-
+bits_of_grade(k, dim) = Iterators.take(BitPermutations(k), binomial(dim, k))
 
 """
 	bits_to_mv_index(bits::Unsigned)
@@ -179,6 +178,9 @@ Convert a unit blade `bits` to a linear index for accessing components of a `Mix
 function bits_to_mmv_index(bits, dim)
 	multivector_index_offset(count_ones(bits), dim) + bits_to_mv_index(bits)
 end
+
+# range of MixedMultivector corresponding to the grade k components
+mmv_slice(k, dim) = multivector_index_offset(k, dim) .+ (1:binomial(dim, k))
 
 
 const MULTIVECTOR_INDICES = Dict{Int,Vector{UInt}}()

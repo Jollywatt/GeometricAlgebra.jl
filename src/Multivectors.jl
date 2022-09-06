@@ -16,6 +16,7 @@ include("types.jl")
 include("signatures.jl")
 include("algebra.jl")
 include("utils.jl")
+include("show.jl")
 
 
 end # module Multivectors

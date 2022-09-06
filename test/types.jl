@@ -9,9 +9,9 @@ using Multivectors:
 	for T in [
 		Blade{(1,1),0,Bool},
 		Multivector{(1,1,1),2,Vector{Int}},
-		Multivector{(),0,Vector{Bool},
-		Multivector{(0,1),2,Vector{Float64},
-		MixedMultivector{(-1,+1,+1,+1),Vector{Float64},
+		Multivector{(),0,Vector{Bool}},
+		Multivector{(0,1),2,Vector{Float64}},
+		MixedMultivector{(-1,+1,+1,+1),Vector{Float64}},
 	]
 		@test zero(T) isa T
 		@test iszero(zero(T))

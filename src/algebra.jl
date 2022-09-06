@@ -38,6 +38,6 @@ add!(a::MixedMultivector, b::MixedMultivector) = (a.components += b.components; 
 
 function add!(a::MixedMultivector, b::Multivector)
 	offset = multivector_index_offset(grade(b), dimension(b))
-	a.components[offset .+ (1:ncomponents(b))] = b.components
+	a.components[mmv_slice(b)] = b.components
 	a
 end

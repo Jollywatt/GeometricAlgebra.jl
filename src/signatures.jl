@@ -29,3 +29,8 @@ struct EuclideanMetric
 end
 dimension(sig::EuclideanMetric) = sig.dim
 Base.getindex(::EuclideanMetric, i) = 1
+
+
+#= Display Methods =#
+
+basis_blade_label(sig, indices) = "v"*join(string.(indices))

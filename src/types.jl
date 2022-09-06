@@ -186,3 +186,11 @@ end
 function MixedMultivector(a::Multivector{Sig,K,C}) where {Sig,K,C}
 	add!(zero(MixedMultivector{Sig,C}), a)
 end
+
+
+
+#= Indexing and Iteration =#
+
+grade(a::MixedMultivector, k) = Multivector{signature(a),k}(a.components[mmv_slice(k, dimension(a))])
+
+mmv_slice(a::Multivector) = mmv_slice(grade(a), dimension(a))

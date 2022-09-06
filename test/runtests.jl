@@ -1,15 +1,14 @@
 #= Run this script interactively: `julia --project -i runtests.jl`
 ... or with arguments `julia --project runtests.jl [testfiles...]` =#
-using Pkg
-Pkg.activate(".")
+
+cd(dirname(PROGRAM_FILE))
+using Pkg; Pkg.activate(".")
 
 using Random, Test, Coverage
 using Revise, Multivectors
 
-project_root = dirname(dirname(pathof(Multivectors)))
-cd(joinpath(project_root, "test"))
 
-alltests() = setdiff(filter(endswith(".jl"), readdir()), [PROGRAM_FILE])
+alltests() = setdiff(filter(endswith(".jl"), readdir()), [basename(PROGRAM_FILE)])
 
 function test(files=alltests())
 	@testset "$file" for file in files

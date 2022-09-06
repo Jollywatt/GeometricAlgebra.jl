@@ -6,14 +6,14 @@ Implementation of multivectors, or ``k``-vectors, as in geometric (Clifford) alg
 """
 module Multivectors
 
-import Base: ==
-
 export AbstractMultivector, HomogeneousMultivector
 export Blade, Multivector, MixedMultivector
 
 include("bits.jl")
 include("types.jl")
 include("signatures.jl")
+include("algebra.jl")
+include("utils.jl")
 
 
 end # module Multivectors

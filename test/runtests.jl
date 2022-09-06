@@ -1,12 +1,13 @@
 #= Run this script interactively: `julia --project -i runtests.jl`
 ... or with arguments `julia --project runtests.jl [testfiles...]` =#
 
-cd(dirname(PROGRAM_FILE))
+cd(joinpath(".", dirname(PROGRAM_FILE)))
 using Pkg; Pkg.activate(".")
 
 using Random, Test, Coverage
 using Revise, Multivectors
 
+const project_root = pathof(Multivectors) |> dirname |> dirname
 
 alltests() = setdiff(filter(endswith(".jl"), readdir()), [basename(PROGRAM_FILE)])
 
@@ -25,12 +26,10 @@ end
 
 function score()
 	local percentage
-	with_logger(NullLogger()) do
-		coverage = process_folder(joinpath(project_root, "src"))
-		covered, total = get_summary(coverage)
-		percentage = round(100covered/total, digits=2)
-	end
-	@info "Coverage: $percentage%"
+	coverage = process_folder(joinpath(project_root, "src"))
+	covered, total = get_summary(coverage)
+	percentage = round(100covered/total, digits=2)
+	@info "Overall coverage: $percentage%"
 end
 
 clear_coverage_files() = run(`bash -c "rm $project_root/**/*.cov"`)

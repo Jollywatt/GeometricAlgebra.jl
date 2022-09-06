@@ -1,1 +1,8 @@
 Manifest.toml
+
+
+# personal ignores
+.DS_Store
+.gitignore
+*.sublime-project
+*.sublime-workspace

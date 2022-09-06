@@ -1,0 +1,1 @@
+dimension(sig::Union{Tuple,NamedTuple}) = length(sig)

@@ -11,6 +11,7 @@ using Revise, Multivectors
 alltests() = setdiff(filter(endswith(".jl"), readdir()), [basename(PROGRAM_FILE)])
 
 function test(files=alltests())
+	
 	@testset "$file" for file in files
 		include(file)
 	end

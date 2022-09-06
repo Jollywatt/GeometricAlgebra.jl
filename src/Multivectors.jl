@@ -8,6 +8,8 @@ module Multivectors
 
 export AbstractMultivector, HomogeneousMultivector
 export Blade, Multivector, MixedMultivector
+export dimension, grade
+
 
 include("bits.jl")
 include("types.jl")

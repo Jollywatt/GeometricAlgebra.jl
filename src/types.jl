@@ -44,6 +44,14 @@ signature(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = Sig
 
 
 """
+	dimension(::AbstractMultivector)
+
+The dimension of the underlying vector space of the geometric algebra.
+See [`ncomponents`](@ref) the number of independent components of a multivector.
+"""
+dimension(::AbstractMultivector{Sig}) where {Sig} = dimension(Sig)
+
+"""
 	HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig}
 
 Supertype of grade `K ∈ ℕ` elements in the geometric algebra with metric signature `Sig`.
@@ -76,6 +84,9 @@ Blade{Sig}(bits, coeff::T) where {Sig,T} = Blade{Sig,count_ones(bits),T}(bits, c
 Blade{Sig}(pair::Pair) where {Sig} = Blade{Sig}(pair...)
 
 bitsof(a::Blade) = a.bits
+
+mv_index(a::Blade) = bits_to_mv_index(bitsof(a))
+mmv_index(a::Blade) = bits_to_mmv_index(bitsof(a), dimension(a))
 
 """
 	Multivector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
@@ -163,37 +174,15 @@ Base.isone(a::Blade) = iszero(grade(a)) && isone(a.coeff)
 function Multivector(a::Blade{Sig,K,T}) where {Sig,K,T}
 	N = ncomponents(Multivector{Sig,K})
 	C = componentstype(Sig, T, N)
-	mv = zero(Multivector{Sig,K,C})
-	i = bits_to_mv_index(bitsof(a))
-	mv.components[i] += a.coeff # TODO: implement this for static arrays
-	mv
+	add!(zero(Multivector{Sig,K,C}), a)
 end
 
 function MixedMultivector(a::Blade{Sig,K,T}) where {Sig,K,T}
 	N = ncomponents(MixedMultivector{Sig})
 	C = componentstype(Sig, T, N)
-	mmv = zero(MixedMultivector{Sig,C})
-	i = bits_to_mmv_index(bitsof(a), dimension(Sig))
-	mmv.components[i] += a.coeff # TODO: implement this for static arrays
-	mmv
+	add!(zero(MixedMultivector{Sig,C}), a)
 end
 
 function MixedMultivector(a::Multivector{Sig,K,C}) where {Sig,K,C}
-	mmv = zero(MixedMultivector{Sig,C})
-	offset = multivector_index_offset(K, dimension(Sig))
-	mmv.components[offset .+ (1:ncomponents(a))] = a.components # TODO: implement this for static arrays
-	mmv
+	add!(zero(MixedMultivector{Sig,C}), a)
 end
-
-#= Equality =#
-
-Base.:(==)(a::Blade{Sig}, b::Blade{Sig}) where Sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : iszero(a) && iszero(b)
-Base.:(==)(a::(Multivector{Sig,K,S} where K), b::(Multivector{Sig,K,S} where K)) where {Sig,S} = grade(a) == grade(b) ? a.components == b.components : iszero(a) && iszero(b)
-Base.:(==)(a::MixedMultivector{Sig,S}, b::MixedMultivector{Sig,S}) where {Sig,S} = a.components == b.components
-
-Base.:(==)(a::AbstractMultivector, b::Number) = iszero(b) && iszero(a) || isscalar(a) && scalar(a) == b
-Base.:(==)(a::Number, b::AbstractMultivector) = iszero(a) && iszero(b) || isscalar(b) && a == scalar(b)
-
-
-
-

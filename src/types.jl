@@ -171,6 +171,9 @@ Base.isone(a::Blade) = iszero(grade(a)) && isone(a.coeff)
 
 #= Conversion =#
 
+Multivector(a::Multivector) = a
+MixedMultivector(a::MixedMultivector) = a
+
 function Multivector(a::Blade{Sig,K,T}) where {Sig,K,T}
 	N = ncomponents(Multivector{Sig,K})
 	C = componentstype(Sig, T, N)

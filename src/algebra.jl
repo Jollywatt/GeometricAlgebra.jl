@@ -41,3 +41,11 @@ function add!(a::MixedMultivector, b::Multivector)
 	a.components[mmv_slice(b)] = b.components
 	a
 end
+
+# add alike types
+Base.:+(As::Multivector{Sig,K}...) where {Sig,K} = Multivector{Sig,K}(sum(a.components for a ∈ As))
+Base.:+(As::MixedMultivector{Sig}...) where {Sig} = MixedMultivector{Sig}(sum(a.components for a ∈ As))
+
+# convert unalike to alike
+Base.:+(As::HomogeneousMultivector{Sig,K}...) where {Sig,K} = +(Multivector.(As)...)
+Base.:+(As::AbstractMultivector{Sig}...) where {Sig} = +(MixedMultivector.(As)...)

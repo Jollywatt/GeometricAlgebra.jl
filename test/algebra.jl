@@ -1,3 +1,6 @@
+using Multivectors:
+	bits_of_grade
+
 @testset "==" begin
 	for sig in [(1,1), (-1,0,+1)], T in [Bool, Int, Float64], k in 1:3
 		@test zero(Blade{sig,k,T}) == Blade{sig}(0 => zero(T))
@@ -21,4 +24,15 @@ end
 	end
 
 	@test a//5 === Blade{(1,1)}(0b01 => 2//1)
+end
+
+@testset "+" begin
+	v = Blade{(0,0,0)}.(bits_of_grade(1, 3) .=> 1)
+	bi = Blade{(0,0,0)}.(bits_of_grade(2, 3) .=> 1)
+
+	@test v[1] + v[2] isa Multivector{(0,0,0),1}
+	@test bi[1] + bi[2] isa Multivector{(0,0,0),2}
+	@test v[1] + bi[2] isa MixedMultivector
+	@test sum(Multivector.(v)) isa Multivector
+	@test sum(MixedMultivector.(bi)) isa MixedMultivector
 end

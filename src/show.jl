@@ -57,7 +57,7 @@ julia> Multivectors.show_multivector(stdout, 1e3v[1] + v[2] + 1e-3v[3])
 function show_multivector(io::IO, a::Multivector; indent=0)
 	iszero(a) && return print(io, " "^indent, zero(eltype(a)))
 
-	alignments = Base.alignment.(io, a.components)
+	alignments = Base.alignment.(Ref(io), a.components)
 	L = maximum(first.(alignments))
 	R = maximum(last.(alignments))
 

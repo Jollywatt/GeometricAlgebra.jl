@@ -1,15 +1,15 @@
 #= Run this script interactively: `julia --project -i runtests.jl`
 ... or with arguments `julia --project runtests.jl [testfiles...]` =#
 
-cd(joinpath(".", dirname(PROGRAM_FILE)))
-using Pkg; Pkg.activate(".")
+cd(dirname(@__FILE__))
+# using Pkg; Pkg.activate(".") # TODO: Multivectors can't be in Project.toml for Pkg.test to work
 
 using Random, Test, Coverage
 using Revise, Multivectors
 
 const project_root = pathof(Multivectors) |> dirname |> dirname
 
-alltests() = setdiff(filter(endswith(".jl"), readdir()), [basename(PROGRAM_FILE)])
+alltests() = setdiff(filter(endswith(".jl"), readdir()), [basename(@__FILE__)])
 
 test(files::String...) = test(files)
 function test(files=alltests())

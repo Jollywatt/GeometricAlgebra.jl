@@ -1,8 +1,6 @@
 Manifest.toml
-
-
-# personal ignores
-.DS_Store
+*.jl.*.cov
+*.jl.cov
+*.jl.mem
+/docs/build/
 .gitignore
-*.sublime-project
-*.sublime-workspace

@@ -1,5 +1,6 @@
 [deps]
 Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
-Multivectors = "11bbe1ca-eae6-48c2-942c-9f17e43de0f0"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

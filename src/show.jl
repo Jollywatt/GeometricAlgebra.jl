@@ -25,8 +25,8 @@ end
 Display blade with parentheses surrounding coefficient if necessary.
 	
 ```jldoctest
-julia> GeometricAlgebra.show_blade(stdout, Blade{(x=1,)}(1 + im, 0b1))
-(1+1im) x
+julia> Multivectors.show_blade(stdout, Blade{(x=1,)}(0b1 => 1 + im))
+(1+1im) v1
 ```
 """
 function show_blade(io::IO, b::Blade; compact=false)
@@ -45,11 +45,13 @@ end
 Display a multivector as a column of blades, with coefficients aligned using
 the native alignment mechanism, and blades basis aligned.
 
-```jldoctest; setup = :( (x, y, z) = basis((x=1, y=1, z=1)) )
-julia> GeometricAlgebra.show_multivector(stdout, 1e3x + y + 1e-3z)
-1000.0   x
-   1.0   y
-   0.001 z
+```jldoctest
+julia> v = Blade{(1,1,1)}.([0b001, 0b010, 0b100] .=> 1);
+
+julia> Multivectors.show_multivector(stdout, 1e3v[1] + v[2] + 1e-3v[3])
+1000.0   v1
+   1.0   v2
+   0.001 v3
 ```
 """
 function show_multivector(io::IO, a::Multivector; indent=0)

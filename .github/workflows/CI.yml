@@ -32,6 +32,10 @@ jobs:
           - os: macOS-latest
             arch: x86
 
+          # this particular version takes much longer to check
+          - os: windows-latest
+            version: '1.6'
+
     runs-on: ${{ matrix.os }}
 
     env:
@@ -60,9 +64,9 @@ jobs:
         uses: julia-actions/julia-runtest@v1
 
       - name: Process coverage data
-        # Only run for 'main' branch running on 'Linux' with the latest version of Julia
+        # Only run for 'master' branch running on 'Linux' with the latest version of Julia
         if: |
-            github.ref_name == 'main' &&
+            github.ref_name == 'master' &&
             runner.os == 'Linux' &&
             matrix.arch == env.codecov-arch &&
             matrix.version == env.codecov-version
@@ -72,9 +76,9 @@ jobs:
           directories: src
       
       - name: Upload code coverage data to codecov.io
-        # Only run for 'main' branch running on 'Linux' with the latest version of Julia
+        # Only run for 'master' branch running on 'Linux' with the latest version of Julia
         if: |
-            github.ref_name == 'main' &&
+            github.ref_name == 'master' &&
             runner.os == 'Linux' &&
             matrix.arch == env.codecov-arch &&
             matrix.version == env.codecov-version

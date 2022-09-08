@@ -13,7 +13,6 @@ alltests() = setdiff(filter(endswith(".jl"), readdir()), [basename(PROGRAM_FILE)
 
 test(files::String...) = test(files)
 function test(files=alltests())
-	
 	@testset "$file" for file in files
 		include(file)
 	end

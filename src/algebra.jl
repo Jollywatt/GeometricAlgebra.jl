@@ -1,12 +1,15 @@
 #= Equality =#
 
 Base.:(==)(a::Blade{Sig}, b::Blade{Sig}) where Sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : iszero(a) && iszero(b)
-Base.:(==)(a::(Multivector{Sig,K,S} where K), b::(Multivector{Sig,K,S} where K)) where {Sig,S} = grade(a) == grade(b) ? a.components == b.components : iszero(a) && iszero(b)
-Base.:(==)(a::MixedMultivector{Sig,S}, b::MixedMultivector{Sig,S}) where {Sig,S} = a.components == b.components
+Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = grade(a) == grade(b) ? all(a.components .== b.components) : iszero(a) && iszero(b)
+Base.:(==)(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig} = all(a.components .== b.components)
 
-Base.:(==)(a::AbstractMultivector, b::Number) = iszero(b) && iszero(a) || isscalar(a) && scalar(a) == b
-Base.:(==)(a::Number, b::AbstractMultivector) = iszero(a) && iszero(b) || isscalar(b) && a == scalar(b)
+Base.:(==)(a::AbstractMultivector, b::Number) = iszero(b) && iszero(a) || isscalar(a) && scalarpart(a) == b
+Base.:(==)(a::Number, b::AbstractMultivector) = iszero(a) && iszero(b) || isscalar(b) && a == scalarpart(b)
 
+# equality between different multivector types
+# TODO: implement without conversions
+Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig} = ==(largest_type(a, b).((a, b))...)
 
 
 #= Scalar Multiplication =#
@@ -49,3 +52,29 @@ Base.:+(As::MixedMultivector{Sig}...) where {Sig} = MixedMultivector{Sig}(sum(a.
 # convert unalike to alike
 Base.:+(As::HomogeneousMultivector{Sig,K}...) where {Sig,K} = +(Multivector.(As)...)
 Base.:+(As::AbstractMultivector{Sig}...) where {Sig} = +(MixedMultivector.(As)...)
+
+Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
+
+
+
+
+#= Geometric Multiplication =#
+
+function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
+	factor, bits = geometric_prod_bits(Sig, bitsof(a), bitsof(b))
+	Blade{Sig}(bits => factor*(a.coeff*b.coeff))
+end
+
+function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+	T = promote_type(eltype(a), eltype(b))
+	C = with_eltype(componentstype(Sig), T)
+	ab = zero(MixedMultivector{Sig,C})
+	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
+		factor, bits = geometric_prod_bits(Sig, abits, bbits)
+		i = bits_to_mmv_index(bits, dimension(Sig))
+		ab.components[i] += factor*(acoeff*bcoeff)
+	end
+	ab
+end
+
+Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)

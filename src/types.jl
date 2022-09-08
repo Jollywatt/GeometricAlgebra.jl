@@ -171,18 +171,17 @@ Base.isone(a::Blade) = iszero(grade(a)) && isone(a.coeff)
 
 #= Conversion =#
 
+Blade(a::Blade) = a
 Multivector(a::Multivector) = a
 MixedMultivector(a::MixedMultivector) = a
 
 function Multivector(a::Blade{Sig,K,T}) where {Sig,K,T}
-	N = ncomponents(Multivector{Sig,K})
-	C = componentstype(Sig, T, N)
+	C = with_eltype(componentstype(Sig), T)
 	add!(zero(Multivector{Sig,K,C}), a)
 end
 
 function MixedMultivector(a::Blade{Sig,K,T}) where {Sig,K,T}
-	N = ncomponents(MixedMultivector{Sig})
-	C = componentstype(Sig, T, N)
+	C = with_eltype(componentstype(Sig), T)
 	add!(zero(MixedMultivector{Sig,C}), a)
 end
 
@@ -190,10 +189,29 @@ function MixedMultivector(a::Multivector{Sig,K,C}) where {Sig,K,C}
 	add!(zero(MixedMultivector{Sig,C}), a)
 end
 
+largest_type(::MixedMultivector, ::AbstractMultivector) = MixedMultivector
+largest_type(::Multivector, ::HomogeneousMultivector) = Multivector
+largest_type(::Blade, ::Blade) = Blade
+largest_type(a, b) = largest_type(b, a)
+
 
 
 #= Indexing and Iteration =#
 
 grade(a::MixedMultivector, k) = Multivector{signature(a),k}(a.components[mmv_slice(k, dimension(a))])
 
+scalarpart(a::Blade{Sig,0}) where {Sig} = a.coeff
+scalarpart(a::Blade) = zero(eltype(a))
+scalarpart(a::CompositeMultivector) = a.components[begin]
+
+isscalar(a::Blade{Sig,0}) where {Sig} = true
+isscalar(a::Blade) = false
+isscalar(a::HomogeneousMultivector{Sig,0}) where {Sig} = true
+isscalar(a::HomogeneousMultivector) = false
+isscalar(a::MixedMultivector) = false
+
 mmv_slice(a::Multivector) = mmv_slice(grade(a), dimension(a))
+
+nonzero_components(a::Blade) = [bitsof(a) => a.coeff][iszero(a.coeff) ? [] : [1]]
+nonzero_components(a::Multivector) = (bits => coeff for (bits, coeff) in zip(bits_of_grade(grade(a), dimension(a)), a.components) if !iszero(coeff))
+nonzero_components(a::MixedMultivector) = (bits => coeff for (bits, coeff) in zip(mmv_index_to_bits(dimension(a)), a.components) if !iszero(coeff))

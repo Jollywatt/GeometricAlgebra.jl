@@ -12,6 +12,9 @@ using Multivectors:
 
 	@test Blade{(1,1)}(0b00 => 0) == Blade{(1,1)}(0b11 => 0)
 	@test zero(Multivector{(1,1,1),0,Vector{Int}}) == zero(Multivector{(1,1,1),3,Vector{Int}})
+
+	v = Blade{(1,1)}.(1:3 .=> 0)
+	@test v[1] == v[2] == v[3]
 end
 
 @testset "scalar *" begin
@@ -35,4 +38,23 @@ end
 	@test v[1] + bi[2] isa MixedMultivector
 	@test sum(Multivector.(v)) isa Multivector
 	@test sum(MixedMultivector.(bi)) isa MixedMultivector
+
+	@test v[1] - v[2] == -v[2] + v[1]
+end
+
+@testset "*" begin
+	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+
+	@test v[1]v[2] == -v[2]v[1]
+	@test v[1]v[1] == -1
+	@test (v[1] + 7v[3])v[2] == v[1]v[2] + 7v[3]v[2]
+	@test (v[1]v[1] + v[2])v[2] == v[2]v[2] - v[2]
+	@test v[1]v[2]v[3] == v[2]v[3]v[1] == v[3]v[1]v[2]
+
+	Ts = [Blade, Multivector, MixedMultivector]
+	for T in Ts
+		@test v[1]v[2] == T(v[1])v[2] == v[1]T(v[2]) == T(v[1])T(v[2])
+	end
+
+	@test Multivector(v[1])MixedMultivector(v[2]v[3]) == v[1]v[2]v[3]
 end

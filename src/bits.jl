@@ -192,13 +192,15 @@ Convert a linear index of a component of a `MixedMultivector` of dimension `dim`
 into the corresponding unit blade. Uses a lookup table `$(@__MODULE__).MULTIVECTOR_INDICES` for speed.
 """
 function mmv_index_to_bits(ith, dim)
+	mmv_index_to_bits(dim)[ith]
+end
+function mmv_index_to_bits(dim)
 	if !(dim in keys(MULTIVECTOR_INDICES))
 		bits = unsigned.(0:2^dim - 1)
 		MULTIVECTOR_INDICES[dim] = bits[sortperm(bits_to_mmv_index.(bits, dim))]
 	end
-	MULTIVECTOR_INDICES[dim][ith]
+	MULTIVECTOR_INDICES[dim]
 end
-
 
 """
 Compute sign flips of blade product due to transposing basis vectors.

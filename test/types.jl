@@ -1,6 +1,7 @@
 using Multivectors:
 	grade,
-	signature
+	signature,
+	largest_type
 
 @testset "constructors" begin
 	@test zero(Blade{(1,1)}(0b11 => 42)) === Blade{(1,1),0,Int}(0b00, 0)
@@ -27,5 +28,13 @@ end
 		@test Multivector(a) isa Multivector{signature(a),grade(a),<:AbstractVector{eltype(a)}}
 		@test MixedMultivector(a) isa MixedMultivector{signature(a),<:AbstractVector{eltype(a)}}
 		@test MixedMultivector(Multivector(a)) isa MixedMultivector{signature(a),<:AbstractVector{eltype(a)}}
+	end
+
+	x = Blade{(1,1)}(0b01 => 5)
+	Ts = [Blade, Multivector, MixedMultivector]
+	for T1 in Ts, T2 in Ts
+		a, b = T1(x), T2(x)
+		@test largest_type(a, b) == largest_type(b, a)
+		@test largest_type(a, b)(a) isa largest_type(a, b)
 	end
 end

@@ -28,7 +28,7 @@ julia> Multivectors.bits_to_indices(0b1001101)
  7
 ```
 """
-function bits_to_indices(bits)
+function bits_to_indices(bits::Unsigned)
 	indices = Int[]
 	i = 1
 	while bits > 0
@@ -48,6 +48,10 @@ Create unsigned integer with bits at the positions given in the vector `indices`
 
 Used to convert between representations of a unit blade.
 Inverse of [`bits_to_indices`](@ref).
+
+!!! warning
+	Produces incorrect results if elements of `indices` are greater than the number of
+	bits in `bits_scalar() <: Unsigned`.
 
 Examples
 ===
@@ -175,7 +179,7 @@ end
 
 Convert a unit blade `bits` to a linear index for accessing components of a `MixedMultivector`. 
 """
-function bits_to_mmv_index(bits, dim)
+function bits_to_mmv_index(bits::Unsigned, dim)
 	multivector_index_offset(count_ones(bits), dim) + bits_to_mv_index(bits)
 end
 

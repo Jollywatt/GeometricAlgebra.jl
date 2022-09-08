@@ -164,9 +164,14 @@ Base.iszero(a::Blade) = iszero(a.coeff)
 Base.iszero(a::CompositeMultivector{<:AbstractVector}) = iszero(a.components)
 
 Base.one(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => one(T))
+Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,0}(oneslike(S, 1))
+Base.one(a::OrType{<:MixedMultivector}) = add_scalar!(zero(a), 1)
 
 Base.isone(a::Blade) = iszero(grade(a)) && isone(a.coeff)
+Base.isone(a::Multivector) = iszero(grade(a)) && isone(a.components[])
+Base.isone(a::MixedMultivector) = isone(a.components[1]) && iszero(a.components[2:end])
 
+Base.copy(a::CompositeMultivector) = constructor(a)(copy(a.components))
 
 
 #= Conversion =#

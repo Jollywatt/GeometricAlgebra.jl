@@ -15,7 +15,10 @@ using Multivectors:
 		MixedMultivector{(-1,+1,+1,+1),Vector{Float64}},
 	]
 		@test zero(T) isa T
+		@test zero(zero(T)) isa T
 		@test iszero(zero(T))
+
+		@test isone(one(T))
 	end
 end
 

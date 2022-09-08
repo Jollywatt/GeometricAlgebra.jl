@@ -58,17 +58,15 @@ Base.:+(As::AbstractMultivector{Sig}...) where {Sig} = +(MixedMultivector.(As)..
 Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 
-# zero-grade multivectors + scalars
+#= Scalar Addition =#
 add_scalar(a::Blade{Sig,0}, b::Number) where {Sig} = Blade{Sig}(0 => a.coeff + b)
-function add_scalar(a::MixedMultivector{Sig,0}, b::Number) where {Sig}
-	# must be careful to preserve the type (but not the eltype) of the components array
-	T = promote_type(eltype(a), eltype(b))
-	comps = convert(with_eltype(typeof(a.components), T), a.components)
-	comps[1] += b
-	Multivector{Sig,0}(comps)
-end
 
-# multivectors + scalars
+add_scalar!(a::Multivector{Sig,0}, b::Number) where {Sig} = (a.components[] += b; a)
+add_scalar(a::Multivector{Sig,0}, b::Number) where {Sig} = add_scalar!(copy(a), b)
+
+add_scalar(a::HomogeneousMultivector, b::Number) = add_scalar!(MixedMultivector(a), b)
+
+add_scalar!(a::MixedMultivector, b::Number) = (a.components[1] += b; a)
 function add_scalar(a::MixedMultivector, b::Number)
 	# must be careful to preserve the type (but not the eltype) of the components array
 	T = promote_type(eltype(a), eltype(b))
@@ -76,7 +74,6 @@ function add_scalar(a::MixedMultivector, b::Number)
 	comps[1] += b
 	MixedMultivector{signature(a)}(comps)
 end
-add_scalar(a::HomogeneousMultivector, b::Number) = add_scalar(MixedMultivector(a), b)
 
 Base.:+(a::AbstractMultivector, b::Number) = add_scalar(a, b)
 Base.:+(a::Number, b::AbstractMultivector) = add_scalar(b, a)
@@ -165,4 +162,3 @@ graded_prod(a::AbstractMultivector, b::Number, grade_selector) = scalar_multiply
 graded_prod(a::Number, b::AbstractMultivector, grade_selector) = scalar_multiply(a, b)
 
 wedge(a, b) = graded_prod(a, b, +)
-wedge(a, b) = graded_prod(a, b, abs∘(-))

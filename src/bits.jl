@@ -150,8 +150,8 @@ end
 """
 	mv_index_to_bits(ith, k)
 
-Convert a linear index of a component of a `k`-grade `Multivector` into the
-corresponding unit blade.
+Convert a linear index for grade-`k` `Multivector` components
+into the corresponding unit blade.
 """
 function mv_index_to_bits(ith, k)
 	bits = bits_scalar()
@@ -188,8 +188,8 @@ const MULTIVECTOR_INDICES = Dict{Int,Vector{UInt}}()
 """
 	mmv_index_to_bits(ith, dim)
 
-Convert a linear index of a component of a `MixedMultivector` of dimension `dim`
-into the corresponding unit blade. Uses a lookup table `$(@__MODULE__).MULTIVECTOR_INDICES` for speed.
+Convert a linear index for `MixedMultivector` components into the corresponding
+unit blade. Uses a lookup table `$(@__MODULE__).MULTIVECTOR_INDICES` for speed.
 """
 function mmv_index_to_bits(ith, dim)
 	mmv_index_to_bits(dim)[ith]

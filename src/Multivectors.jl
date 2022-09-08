@@ -14,9 +14,9 @@ export geometric_prod, scalar_prod
 
 include("bits.jl")
 include("types.jl")
+include("utils.jl")
 include("signatures.jl")
 include("algebra.jl")
-include("utils.jl")
 include("show.jl")
 
 

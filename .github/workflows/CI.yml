@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags: '*'
+
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        arch: [x64, x86]
+        version: ['1.6', '1.7', '1.8']
+
+        exclude:
+          - os: macOS-latest
+            arch: x86
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+        codecov-arch: x64
+        codecov-version: '1.8'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Julia environment
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+
+      - name: Set up Julia caches
+        uses: julia-actions/cache@v1
+        with:
+          cache-name: ${{ matrix.arch }}-${{ matrix.version }}
+
+      - name: Build package
+        uses: julia-actions/julia-buildpkg@v1
+
+      - name: Run tests
+        uses: julia-actions/julia-runtest@v1
+
+      - name: Process coverage data
+        # Only run for 'main' branch running on 'Linux' with the latest version of Julia
+        if: |
+            github.ref_name == 'main' &&
+            runner.os == 'Linux' &&
+            matrix.arch == env.codecov-arch &&
+            matrix.version == env.codecov-version
+      
+        uses: julia-actions/julia-processcoverage@v1
+        with:
+          directories: src
+      
+      - name: Upload code coverage data to codecov.io
+        # Only run for 'main' branch running on 'Linux' with the latest version of Julia
+        if: |
+            github.ref_name == 'main' &&
+            runner.os == 'Linux' &&
+            matrix.arch == env.codecov-arch &&
+            matrix.version == env.codecov-version
+      
+        uses: codecov/codecov-action@v2
+        with:
+          # token: {{ CODECOV_TOKEN }} # not required for public repos
+          files: lcov.info
+          fail_ci_if_error: true
+          verbose: true
+
+  docs:
+    name: Documentation
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Julia environment
+        uses: julia-actions/setup-julia@latest
+        with:
+          version: '1.8'
+
+      - name: Install dependencies
+        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+
+      - name: Build and deploy documentation
+        run: julia --project=docs/ --compile=min -O0 docs/make.jl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}

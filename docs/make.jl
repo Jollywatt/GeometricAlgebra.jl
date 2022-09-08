@@ -1,7 +1,7 @@
 #= Run this script interactively: `julia --project=docs/ -i make.jl`
 ... or with arguments `julia --project=docs/ make.jl [test|fix|make|deploy]` =#
 
-cd(joinpath(".", dirname(PROGRAM_FILE)))
+cd(joinpath(".", dirname(@__FILE__)))
 using Pkg; Pkg.activate(".")
 
 using Documenter, Revise, Multivectors
@@ -17,7 +17,7 @@ make() = makedocs(
     sitename="Multivectors.jl",
     root=joinpath(project_root, "docs"),
     modules=[Multivectors],
-    pages=["index.md", "reference.md"],
+    pages=["index.md"],
 )
 
 deploy() = deploydocs(
@@ -41,6 +41,10 @@ if isempty(ARGS)
         Keep the session alive; changes will be revised and successive runs will be faster.
         Alternatively, run this script passing a command (without parentheses) as an argument.
         """
+    if !isinteractive()
+        make()
+        deploy()
+    end
 end
 
 if "test" in ARGS

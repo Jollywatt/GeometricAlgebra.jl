@@ -25,7 +25,6 @@ function coverage()
 end
 
 function score()
-	local percentage
 	coverage = process_folder(joinpath(project_root, "src"))
 	covered, total = get_summary(coverage)
 	percentage = round(100covered/total, digits=2)

@@ -248,3 +248,6 @@ function geometric_prod_bits(sig, a::Unsigned, b::Unsigned)
 	bits = a ⊻ b
 	factor, bits
 end
+
+reversion_sign(k) = mod(k, 4) <= 1 ? +1 : -1
+geometric_square_factor(sig, a::Unsigned) = reversion_sign(count_ones(a))*factor_from_squares(sig, a)

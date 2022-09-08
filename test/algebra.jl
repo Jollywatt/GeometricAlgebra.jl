@@ -38,9 +38,17 @@ end
 	@test v[1] + bi[2] isa MixedMultivector
 	@test sum(Multivector.(v)) isa Multivector
 	@test sum(MixedMultivector.(bi)) isa MixedMultivector
-
 	@test v[1] - v[2] == -v[2] + v[1]
+
+	@testset "with scalars" begin
+		@test v[1] + 7 == 7 + v[1]
+		@test (v[1] + v[2]) + 7 == v[1] + (v[2] + 7)
+		@test (bi[1] + 8) - 8 == bi[1]
+		@test 1 - v[1] == -(v[1] - 1)
+	end
 end
+
+
 
 @testset "*" begin
 	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
@@ -57,4 +65,16 @@ end
 	end
 
 	@test Multivector(v[1])MixedMultivector(v[2]v[3]) == v[1]v[2]v[3]
+end
+
+@testset "scalar product" begin
+	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+
+	@test scalar_prod(v[1], v[1]) == -1
+	@test scalar_prod(v[1], v[2]) == 0
+	@test typeof(scalar_prod(v[1], v[1])) === typeof(scalar_prod(v[1], v[2]))
+
+	@test scalar_prod(v[2] + v[3], v[2] + v[3]) == 2
+	@test scalar_prod(v[1] + v[2], v[3]) == 0
+	@test scalar_prod(10 + 2v[3], 20 + v[3]) == 202
 end

@@ -9,7 +9,9 @@ Base.:(==)(a::Number, b::AbstractMultivector) = iszero(a) && iszero(b) || isscal
 
 # equality between different multivector types
 # TODO: implement without conversions
-Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig} = ==(largest_type(a, b).((a, b))...)
+Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig} = let T = largest_type(a, b)
+	T(a) == T(b)
+end
 
 
 #= Scalar Multiplication =#
@@ -56,6 +58,31 @@ Base.:+(As::AbstractMultivector{Sig}...) where {Sig} = +(MixedMultivector.(As)..
 Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 
+# zero-grade multivectors + scalars
+add_scalar(a::Blade{Sig,0}, b::Number) where {Sig} = Blade{Sig}(0 => a.coeff + b)
+function add_scalar(a::MixedMultivector{Sig,0}, b::Number) where {Sig}
+	# must be careful to preserve the type (but not the eltype) of the components array
+	T = promote_type(eltype(a), eltype(b))
+	comps = convert(with_eltype(typeof(a.components), T), a.components)
+	comps[1] += b
+	Multivector{Sig,0}(comps)
+end
+
+# multivectors + scalars
+function add_scalar(a::MixedMultivector, b::Number)
+	# must be careful to preserve the type (but not the eltype) of the components array
+	T = promote_type(eltype(a), eltype(b))
+	comps = convert(with_eltype(typeof(a.components), T), a.components)
+	comps[1] += b
+	MixedMultivector{signature(a)}(comps)
+end
+add_scalar(a::HomogeneousMultivector, b::Number) = add_scalar(MixedMultivector(a), b)
+
+Base.:+(a::AbstractMultivector, b::Number) = add_scalar(a, b)
+Base.:+(a::Number, b::AbstractMultivector) = add_scalar(b, a)
+
+Base.:-(a::AbstractMultivector, b::Number) = add_scalar(a, -b)
+Base.:-(a::Number, b::AbstractMultivector) = add_scalar(-b, a)
 
 
 #= Geometric Multiplication =#
@@ -77,4 +104,65 @@ function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}
 	ab
 end
 
+geometric_prod(a::AbstractMultivector, b::Number) = scalar_multiply(a, b)
+geometric_prod(a::Number, b::AbstractMultivector) = scalar_multiply(a, b)
+
 Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
+
+
+
+#= Derived Products =#
+
+
+function homogeneous_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, k::Int) where {Sig}
+	T = promote_type(eltype(a), eltype(b))
+	C = with_eltype(componentstype(Sig), T)
+	ab = zero(MixedMultivector{Sig,C})
+	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
+		bits = abits ⊻ bbits
+		if count_ones(bits) == k
+			factor = sign_from_swaps(abits, bbits)*factor_from_squares(Sig, abits & bbits)
+			i = bits_to_mmv_index(bits, dimension(Sig))
+			ab.components[i] += factor*(acoeff*bcoeff)
+		end
+	end
+	ab
+end
+
+scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? geometric_square_factor(Sig, bitsof(a))*(a.coeff*b.coeff) : zero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = zero(promote_type(eltype(a), eltype(b)))
+
+function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
+	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bits_of_grade(K, dimension(Sig))) .* (a.components .* b.components)))
+end
+scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = zero(promote_type(eltype(a), eltype(b)))
+
+
+function scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig}
+	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), mmv_index_to_bits(dimension(Sig))) .* (a.components .* b.components)))
+end
+scalar_prod(a::AbstractMultivector, b::AbstractMultivector) = let T = largest_type(a, b)
+	scalar_prod(T(a), T(b))
+end
+
+function graded_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, grade_selector::Function) where {Sig}
+	T = promote_type(eltype(a), eltype(b))
+	C = with_eltype(componentstype(Sig), T)
+	ab = zero(MixedMultivector{Sig,C})
+	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
+		bits = abits ⊻ bbits
+		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
+			factor = sign_from_swaps(abits, bbits)*factor_from_squares(Sig, abits & bbits)
+			i = bits_to_mmv_index(bits, dimension(Sig))
+			ab.components[i] += factor*(acoeff*bcoeff)
+		end
+	end
+	ab
+end
+
+# this is correct assuming grade_selector(k, 0) == k == grade_selector(0, k)
+graded_prod(a::AbstractMultivector, b::Number, grade_selector) = scalar_multiply(a, b)
+graded_prod(a::Number, b::AbstractMultivector, grade_selector) = scalar_multiply(a, b)
+
+wedge(a, b) = graded_prod(a, b, +)
+wedge(a, b) = graded_prod(a, b, abs∘(-))

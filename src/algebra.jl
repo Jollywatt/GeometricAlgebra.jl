@@ -162,3 +162,42 @@ graded_prod(a::AbstractMultivector, b::Number, grade_selector) = scalar_multiply
 graded_prod(a::Number, b::AbstractMultivector, grade_selector) = scalar_multiply(a, b)
 
 wedge(a, b) = graded_prod(a, b, +)
+
+
+#= Exponentiation =#
+
+# if a² is a scalar, then a²ⁿ = |a²|ⁿ, a²ⁿ⁺¹ = |a²|ⁿa
+function power_with_scalar_square(a, a², p::Integer)
+	# if p is even, p = 2n; if odd, p = 2n + 1
+	aⁿ = a²^fld(p, 2)
+	iseven(p) ? aⁿ*one(a) : aⁿ*a
+end
+
+function power_by_squaring(a::CompositeMultivector{Sig,C}, p::Integer) where {Sig,C}
+	p < 0 && return power_by_squaring(inv(a), abs(p))
+	Π = one(MixedMultivector{Sig,C})
+	aⁿ = a
+	while p > 0
+		if isone(p & 1)
+			Π *= aⁿ
+		end
+		aⁿ *= aⁿ
+		p >>= 1
+	end
+	Π
+end
+
+Base.:^(a::Blade, p::Integer) = power_with_scalar_square(a, scalarpart(a*a), p)
+
+function Base.:^(a::CompositeMultivector{Sig,C}, p::Integer) where {Sig,C}
+	# TODO: type stability?
+	p == 0 && return one(a)
+	p == 1 && return a
+	a² = a*a
+	p == 2 && return a²
+	if isscalar(a²)
+		power_with_scalar_square(a, scalar(a²), p)
+	else
+		power_by_squaring(a, p)
+	end
+end

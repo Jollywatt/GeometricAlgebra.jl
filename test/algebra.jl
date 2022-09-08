@@ -78,3 +78,16 @@ end
 	@test scalar_prod(v[1] + v[2], v[3]) == 0
 	@test scalar_prod(10 + 2v[3], 20 + v[3]) == 202
 end
+
+@testset "^" begin
+	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	
+	@test v[1]^2 == -1
+	@test v[1]^4003 == -v[1]
+
+	@test (v[2] + v[3])^2 == 2
+	@test (1 + v[1])^2 == 2v[1]
+
+	a = 1 + 2v[2] + 3v[1]v[2]
+	@test a^30 == ((a^2)^3)^5
+end

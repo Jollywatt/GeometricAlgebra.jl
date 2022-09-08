@@ -123,7 +123,7 @@ end
 MixedMultivector{Sig}(comps::S) where {Sig,S} = MixedMultivector{Sig,S}(comps)
 
 
-const CompositeMultivector{S} = Union{Multivector{Sig,K,S},MixedMultivector{Sig,S}} where {Sig,K}
+const CompositeMultivector{Sig,S} = Union{Multivector{Sig,K,S},MixedMultivector{Sig,S}} where {K}
 
 
 #= AbstractMultivector Interface =#
@@ -210,10 +210,10 @@ scalarpart(a::Blade) = zero(eltype(a))
 scalarpart(a::CompositeMultivector) = a.components[begin]
 
 isscalar(a::Blade{Sig,0}) where {Sig} = true
-isscalar(a::Blade) = false
+isscalar(a::Blade) = iszero(a)
 isscalar(a::HomogeneousMultivector{Sig,0}) where {Sig} = true
-isscalar(a::HomogeneousMultivector) = false
-isscalar(a::MixedMultivector) = false
+isscalar(a::HomogeneousMultivector) = iszero(a)
+isscalar(a::MixedMultivector) = iszero(a.components[2:end])
 
 mmv_slice(a::Multivector) = mmv_slice(grade(a), dimension(a))
 

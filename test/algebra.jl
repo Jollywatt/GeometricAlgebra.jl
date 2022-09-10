@@ -34,14 +34,14 @@ end
 	bi = Blade{(0,0,0)}.(bits_of_grade(2, 3) .=> 1)
 
 	@test v[1] + v[2] isa Multivector{(0,0,0),1}
-	@test bi[1] + bi[2] isa Multivector{(0,0,0),2}
+	@test bi[1] + 2.5bi[2] isa Multivector{(0,0,0),2}
 	@test v[1] + bi[2] isa MixedMultivector
 	@test sum(Multivector.(v)) isa Multivector
 	@test sum(MixedMultivector.(bi)) isa MixedMultivector
 	@test v[1] - v[2] == -v[2] + v[1]
 
 	@testset "with scalars" begin
-		@test v[1] + 7 == 7 + v[1]
+		@test v[1] + 7.5 == 7.5 + v[1]
 		@test (v[1] + v[2]) + 7 == v[1] + (v[2] + 7)
 		@test (bi[1] + 8) - 8 == bi[1]
 		@test 1 - v[1] == -(v[1] - 1)
@@ -101,4 +101,14 @@ end
 	@test a^30 == ((a^2)^3)^5
 
 	@test (v[1]v[2] + v[2]v[3])^10 == ((v[1]v[2])^2 + (v[2]v[3])^2)^5
+end
+
+@testset "reversion" begin
+	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	
+	@test reversion(v[1]) == v[1]
+	@test reversion(v[1]v[2]) == v[2]v[1]
+	@test reversion(3v[1]v[2] + v[3]v[4]) == 3v[2]v[1] + v[4]v[3]
+	@test reversion(1 + 2v[1] + 3v[2]v[3] + 4v[1]v[2]v[3]) == 1 + 2v[1] + 3v[3]v[2] + 4v[3]v[2]v[1]
+
 end

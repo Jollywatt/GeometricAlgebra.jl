@@ -64,7 +64,7 @@ add_scalar(a::Blade{Sig,0}, b::Number) where {Sig} = Blade{Sig}(0 => a.coeff + b
 add_scalar!(a::Multivector{Sig,0}, b::Number) where {Sig} = (a.components[] += b; a)
 add_scalar(a::Multivector{Sig,0}, b::Number) where {Sig} = add_scalar!(copy(a), b)
 
-add_scalar(a::HomogeneousMultivector, b::Number) = add_scalar!(MixedMultivector(a), b)
+add_scalar(a::HomogeneousMultivector, b::Number) = add_scalar!(MixedMultivector(a, typeof(b)), b)
 
 add_scalar!(a::MixedMultivector, b::Number) = (a.components[1] += b; a)
 function add_scalar(a::MixedMultivector, b::Number)
@@ -202,3 +202,19 @@ function Base.:^(a::CompositeMultivector{Sig,C}, p::Integer) where {Sig,C}
 		power_by_squaring(a, p)
 	end
 end
+
+
+
+#= Reversion =#
+
+reversion(a::HomogeneousMultivector) = reversion_sign(grade(a))*a
+function reversion(a::MixedMultivector{Sig}) where Sig
+	comps = copy(a.components)
+	dim = dimension(Sig)
+	for k ∈ 0:dim
+		comps[mmv_slice(k, dim)] *= reversion_sign(k)
+	end
+	MixedMultivector{Sig}(comps)
+end
+
+Base.:~(a::AbstractMultivector) = reversion(a)

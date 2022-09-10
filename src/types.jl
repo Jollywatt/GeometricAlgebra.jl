@@ -185,13 +185,19 @@ function Multivector(a::Blade{Sig,K,T}) where {Sig,K,T}
 	add!(zero(Multivector{Sig,K,C}), a)
 end
 
-function MixedMultivector(a::Blade{Sig,K,T}) where {Sig,K,T}
+function MixedMultivector(a::Blade{Sig,K,T′}, T=T′) where {Sig,K,T′}
 	C = with_eltype(componentstype(Sig), T)
 	add!(zero(MixedMultivector{Sig,C}), a)
 end
 
-function MixedMultivector(a::Multivector{Sig,K,C}) where {Sig,K,C}
+function MixedMultivector(a::Multivector{Sig,K,C′}, T=eltype(C′)) where {Sig,K,C′}
+	C = with_eltype(componentstype(Sig), T)
 	add!(zero(MixedMultivector{Sig,C}), a)
+end
+
+function MixedMultivector(a::MixedMultivector{Sig}, T) where {Sig}
+	comps = convert(with_eltype(typeof(a.components), T), a.components)
+	MixedMultivector{Sig}(comps)
 end
 
 largest_type(::MixedMultivector, ::AbstractMultivector) = MixedMultivector

@@ -6,6 +6,8 @@ Implementation of multivectors, or ``k``-vectors, as in geometric (Clifford) alg
 """
 module Multivectors
 
+using StaticArrays
+
 export AbstractMultivector, HomogeneousMultivector
 export Blade, Multivector, MixedMultivector
 export dimension, grade

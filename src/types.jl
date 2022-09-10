@@ -128,6 +128,9 @@ const CompositeMultivector{Sig,S} = Union{Multivector{Sig,K,S},MixedMultivector{
 
 #= AbstractMultivector Interface =#
 
+mv_size(sig, k) = binomial(dimension(sig), k)
+mmv_size(sig) = 2^dimension(sig)
+
 """
 	ncomponents(::CompositeMultivector)
 
@@ -136,9 +139,8 @@ Number of independent components of a multivector object or type.
 In ``n`` dimensions, this is ``\\binom{n}{k}`` for a `Multivector` and
 ``2^n`` for a `MixedMultivector`.
 """
-ncomponents(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = binomial(dimension(Sig), K)
-ncomponents(::OrType{<:MixedMultivector{Sig}}) where {Sig} = 2^dimension(Sig)
-
+ncomponents(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = mv_size(Sig, K)
+ncomponents(::OrType{<:MixedMultivector{Sig}}) where {Sig} = mmv_size(Sig)
 
 """
 	eltype(::AbstractMultivector)
@@ -148,6 +150,9 @@ The numerical type of the components of a multivector object or type.
 Base.eltype(::OrType{<:Blade{Sig,K,T} where {Sig,K}}) where T = T
 Base.eltype(::OrType{<:CompositeMultivector{Sig,S}}) where {Sig,S} = eltype(S)
 
+
+bitsof(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = bits_of_grade(K, dimension(Sig))
+bitsof(::OrType{<:MixedMultivector{Sig}}) where {Sig} = mmv_index_to_bits(dimension(Sig))
 
 
 #= Constructors =#
@@ -161,7 +166,7 @@ Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K
 Base.zero(a::OrType{<:MixedMultivector{Sig,S}}) where {Sig,S} = MixedMultivector{Sig}(zeroslike(S, ncomponents(a)))
 
 Base.iszero(a::Blade) = iszero(a.coeff)
-Base.iszero(a::CompositeMultivector{<:AbstractVector}) = iszero(a.components)
+Base.iszero(a::CompositeMultivector) = iszero(a.components)
 
 Base.one(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => one(T))
 Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,0}(oneslike(S, 1))
@@ -181,17 +186,17 @@ Multivector(a::Multivector) = a
 MixedMultivector(a::MixedMultivector) = a
 
 function Multivector(a::Blade{Sig,K,T}) where {Sig,K,T}
-	C = with_eltype(componentstype(Sig), T)
+	C = componentstype(Sig, mv_size(Sig, K), T)
 	add!(zero(Multivector{Sig,K,C}), a)
 end
 
 function MixedMultivector(a::Blade{Sig,K,T′}, T=T′) where {Sig,K,T′}
-	C = with_eltype(componentstype(Sig), T)
+	C = componentstype(Sig, mmv_size(Sig), T)
 	add!(zero(MixedMultivector{Sig,C}), a)
 end
 
 function MixedMultivector(a::Multivector{Sig,K,C′}, T=eltype(C′)) where {Sig,K,C′}
-	C = with_eltype(componentstype(Sig), T)
+	C = componentstype(Sig, mmv_size(Sig), T)
 	add!(zero(MixedMultivector{Sig,C}), a)
 end
 

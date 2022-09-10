@@ -14,12 +14,16 @@ algebra’s defining signature.
 dimension(sig::Union{Tuple,NamedTuple}) = length(sig)
 
 """
-	componentstype(sig)
+	componentstype(sig, N, T)
 
-Default array type for the components vector of a multivector,
-used when converting a `Blade` into a `CompositeMultivector`.
+Array type to use the components for multivectors of signature `sig`.
+The resulting type should be able to store `N` components (in the case
+of a fixed-size array) of element type `T`.
+
+This is used when converting a `Blade` into a `CompositeMultivector` to
+determine the type of the components array.
 """
-componentstype(sig) = Vector
+componentstype(sig, N, T) = Vector{T}
 
 
 struct EuclideanMetric
@@ -28,6 +32,12 @@ end
 dimension(sig::EuclideanMetric) = sig.dim
 Base.getindex(::EuclideanMetric, i) = 1
 
+struct SMetric
+	dim::Int
+end
+componentstype(::SMetric, N, T) = MVector{N,T}
+dimension(sig::SMetric) = sig.dim
+Base.getindex(::SMetric, i) = 1
 
 #= Display Methods =#
 

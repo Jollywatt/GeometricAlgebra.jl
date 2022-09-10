@@ -4,7 +4,7 @@ using Multivectors:
 @testset "inverses" begin
 	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1,4) .=> 1)
 
-	@testset "scalar squares" begin
+	@testset "scalar a²" begin
 		for a in [
 			v[2],
 			5v[1]v[2],
@@ -15,6 +15,14 @@ using Multivectors:
 		]
 			@test a*inv(a) == 1 == inv(a)*a
 			@test a^3/a == a^2
+		end
+	end
+
+	@testset "scalar aã" begin
+		for a in [
+			v[1]v[2] + 3
+		]
+			@test a*inv(a) == 1 == inv(a)*a
 		end
 	end
 end

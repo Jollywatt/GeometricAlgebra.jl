@@ -21,9 +21,9 @@ end
 	a = Blade{(1,1)}(0b01 => 10)
 
 	for b in [a, Multivector(a), MixedMultivector(a)]
-		@test 3a == a*3
+		@test 3a == a*3.0
 		@test a/10 == 10\a
-		@test -a == a/(-1)
+		@test -a == a/(-1.0)
 	end
 
 	@test a//5 === Blade{(1,1)}(0b01 => 2//1)
@@ -61,11 +61,9 @@ end
 	@test 4 == 2*(v[2] + v[3])*(v[2] + v[3])
 
 	Ts = [Blade, Multivector, MixedMultivector]
-	for T in Ts
-		@test v[1]v[2] == T(v[1])v[2] == v[1]T(v[2]) == T(v[1])T(v[2])
+	for T1 in Ts, T2 in Ts
+		@test v[1]v[2] == T1(v[1])T2(v[2]) == T2(v[1])T1(v[2])
 	end
-
-	@test Multivector(v[1])MixedMultivector(v[2]v[3]) == v[1]v[2]v[3]
 end
 
 @testset "scalar product" begin

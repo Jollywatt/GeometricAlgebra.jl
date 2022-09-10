@@ -39,7 +39,7 @@ add!(a::Multivector, b::Blade) = (a.components[mv_index(b)] += b.coeff; a)
 add!(a::MixedMultivector, b::Blade) = (a.components[mmv_index(b)] += b.coeff; a)
 
 add!(a::Multivector, b::Multivector) = (a.components += b.components; a)
-add!(a::MixedMultivector, b::MixedMultivector) = (a.components += b.components; a)
+add!(a::MixedMultivector, b::MixedMultivector) = (a.components[:] += b.components; a)
 
 function add!(a::MixedMultivector, b::Multivector)
 	offset = multivector_index_offset(grade(b), dimension(b))
@@ -59,12 +59,15 @@ Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 
 #= Scalar Addition =#
+
 add_scalar(a::Blade{Sig,0}, b::Number) where {Sig} = Blade{Sig}(0 => a.coeff + b)
 
 add_scalar!(a::Multivector{Sig,0}, b::Number) where {Sig} = (a.components[] += b; a)
 add_scalar(a::Multivector{Sig,0}, b::Number) where {Sig} = add_scalar!(copy(a), b)
 
-add_scalar(a::HomogeneousMultivector, b::Number) = add_scalar!(MixedMultivector(a, typeof(b)), b)
+add_scalar(a::HomogeneousMultivector, b::Number) = let T = promote_type(eltype(a), typeof(b))
+	add_scalar!(MixedMultivector(a, T), b)
+end
 
 add_scalar!(a::MixedMultivector, b::Number) = (a.components[1] += b; a)
 function add_scalar(a::MixedMultivector, b::Number)
@@ -91,7 +94,7 @@ end
 
 function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	T = promote_type(eltype(a), eltype(b))
-	C = with_eltype(componentstype(Sig), T)
+	C = componentstype(Sig, mmv_size(Sig), T)
 	ab = zero(MixedMultivector{Sig,C})
 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
@@ -110,7 +113,6 @@ Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
 #= Derived Products =#
 
-
 function homogeneous_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, k::Int) where {Sig}
 	T = promote_type(eltype(a), eltype(b))
 	C = with_eltype(componentstype(Sig), T)
@@ -126,7 +128,7 @@ function homogeneous_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Si
 	ab
 end
 
-scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? geometric_square_factor(Sig, bitsof(a))*(a.coeff*b.coeff) : zero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalarpart(a*b) : zero(promote_type(eltype(a), eltype(b)))
 scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = zero(promote_type(eltype(a), eltype(b)))
 
 function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
@@ -144,7 +146,7 @@ end
 
 function graded_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, grade_selector::Function) where {Sig}
 	T = promote_type(eltype(a), eltype(b))
-	C = with_eltype(componentstype(Sig), T)
+	C = componentstype(Sig, mmv_size(Sig), T)
 	ab = zero(MixedMultivector{Sig,C})
 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits

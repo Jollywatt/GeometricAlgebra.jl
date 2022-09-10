@@ -5,7 +5,6 @@ Operations on bits representing “unit blades”. E.g., the
 
 bits_scalar() = unsigned(0)
 bits_first_of_grade(T::Type{<:Unsigned}, k) = (one(T) << k) - one(T)
-bits_first_of_grade(k) = bits_first_of_grade(UInt, k)
 bits_basis_vector(i) = unsigned(1) << (i - 1)
 
 

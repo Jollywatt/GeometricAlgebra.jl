@@ -9,8 +9,7 @@ module Multivectors
 export AbstractMultivector, HomogeneousMultivector
 export Blade, Multivector, MixedMultivector
 export dimension, grade
-export geometric_prod, scalar_prod
-
+export geometric_prod, scalar_prod, wedge, ∧
 
 include("bits.jl")
 include("types.jl")

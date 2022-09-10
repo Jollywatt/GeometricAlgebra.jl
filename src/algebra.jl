@@ -162,6 +162,7 @@ graded_prod(a::AbstractMultivector, b::Number, grade_selector) = scalar_multiply
 graded_prod(a::Number, b::AbstractMultivector, grade_selector) = scalar_multiply(a, b)
 
 wedge(a, b) = graded_prod(a, b, +)
+∧(a, b) = wedge(a, b)
 
 
 #= Exponentiation =#
@@ -196,7 +197,7 @@ function Base.:^(a::CompositeMultivector{Sig,C}, p::Integer) where {Sig,C}
 	a² = a*a
 	p == 2 && return a²
 	if isscalar(a²)
-		power_with_scalar_square(a, scalar(a²), p)
+		power_with_scalar_square(a, scalarpart(a²), p)
 	else
 		power_by_squaring(a, p)
 	end

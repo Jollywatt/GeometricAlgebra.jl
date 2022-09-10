@@ -20,6 +20,7 @@ function test(files=alltests())
 end
 
 function coverage()
+	clear_coverage_files()
 	run(`julia --code-coverage --project runtests.jl`)
 	score()
 end

@@ -1,7 +1,8 @@
 using Multivectors:
 	grade,
 	signature,
-	largest_type
+	largest_type,
+	with_eltype
 
 @testset "constructors" begin
 	@test zero(Blade{(1,1)}(0b11 => 42)) === Blade{(1,1),0,Int}(0b00, 0)
@@ -39,5 +40,15 @@ end
 		a, b = T1(x), T2(x)
 		@test largest_type(a, b) == largest_type(b, a)
 		@test largest_type(a, b)(a) isa largest_type(a, b)
+	end
+end
+
+@testset "eltype" begin
+	for T in [Int, Float64, Complex{Float16}, Rational{Int128}, Bool]
+		a = Blade{(1,1)}(0b11 => one(T))
+
+		@test eltype(a) === T
+		@test eltype(Multivector(a)) === T
+		@test eltype(MixedMultivector(a)) === T
 	end
 end

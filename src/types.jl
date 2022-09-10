@@ -133,7 +133,7 @@ const CompositeMultivector{Sig,S} = Union{Multivector{Sig,K,S},MixedMultivector{
 
 Number of independent components of a multivector object or type.
 
-In ``n`` dimensions, this is ``\binom{n}{k}`` for a `Multivector` and
+In ``n`` dimensions, this is ``\\binom{n}{k}`` for a `Multivector` and
 ``2^n`` for a `MixedMultivector`.
 """
 ncomponents(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = binomial(dimension(Sig), K)
@@ -145,8 +145,8 @@ ncomponents(::OrType{<:MixedMultivector{Sig}}) where {Sig} = 2^dimension(Sig)
 
 The numerical type of the components of a multivector object or type.
 """
-Base.eltype(::OrType{<:Blade{sig,K,T} where {sig,K}}) where T = T
-Base.eltype(::OrType{<:CompositeMultivector{S}}) where S = eltype(S)
+Base.eltype(::OrType{<:Blade{Sig,K,T} where {Sig,K}}) where T = T
+Base.eltype(::OrType{<:CompositeMultivector{Sig,S}}) where {Sig,S} = eltype(S)
 
 
 

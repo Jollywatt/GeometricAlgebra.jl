@@ -13,8 +13,8 @@ using Multivectors:
 	@test Blade{(1,1)}(0b00 => 0) == Blade{(1,1)}(0b11 => 0)
 	@test zero(Multivector{(1,1,1),0,Vector{Int}}) == zero(Multivector{(1,1,1),3,Vector{Int}})
 
-	v = Blade{(1,1)}.(1:3 .=> 0)
-	@test v[1] == v[2] == v[3]
+	o = Blade{(1,1)}.(1:3 .=> 0)
+	@test o[1] == o[2] == o[3]
 end
 
 @testset "scalar *" begin
@@ -58,6 +58,7 @@ end
 	@test (v[1] + 7v[3])v[2] == v[1]v[2] + 7v[3]v[2]
 	@test (v[1]v[1] + v[2])v[2] == v[2]v[2] - v[2]
 	@test v[1]v[2]v[3] == v[2]v[3]v[1] == v[3]v[1]v[2]
+	@test 4 == 2*(v[2] + v[3])*(v[2] + v[3])
 
 	Ts = [Blade, Multivector, MixedMultivector]
 	for T in Ts
@@ -79,10 +80,18 @@ end
 	@test scalar_prod(10 + 2v[3], 20 + v[3]) == 202
 end
 
+@testset "∧" begin
+	v = Blade{(1,1,1)}.(bits_of_grade(1, 3) .=> 1)
+
+	@test v[1]∧v[2] == -v[2]∧v[1] == v[1]v[2]
+	@test (v[1] + v[2])∧v[2] == v[1]v[2]
+	
+end
+
 @testset "^" begin
 	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
 	
-	@test v[1]^2 == -1
+	@test v[1]^2 + 1 == 0
 	@test v[1]^4003 == -v[1]
 
 	@test (v[2] + v[3])^2 == 2
@@ -90,4 +99,6 @@ end
 
 	a = 1 + 2v[2] + 3v[1]v[2]
 	@test a^30 == ((a^2)^3)^5
+
+	@test (v[1]v[2] + v[2]v[3])^10 == ((v[1]v[2])^2 + (v[2]v[3])^2)^5
 end

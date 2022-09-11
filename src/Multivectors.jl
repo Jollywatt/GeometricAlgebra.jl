@@ -11,7 +11,7 @@ using StaticArrays
 export AbstractMultivector, HomogeneousMultivector
 export Blade, Multivector, MixedMultivector
 export dimension, grade
-export geometric_prod, scalar_prod, wedge, ∧, reversion
+export geometric_prod, scalar_prod, wedge, ∧, reversion, involution
 
 include("bits.jl")
 include("types.jl")
@@ -19,6 +19,7 @@ include("utils.jl")
 include("signatures.jl")
 include("algebra.jl")
 include("special.jl")
+include("generated.jl")
 include("show.jl")
 
 

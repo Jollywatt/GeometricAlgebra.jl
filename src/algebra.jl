@@ -92,17 +92,18 @@ function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
 	Blade{Sig}(bits => factor*(a.coeff*b.coeff))
 end
 
-function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	T = promote_type(eltype(a), eltype(b))
-	C = componentstype(Sig, mmv_size(Sig), T)
-	ab = zero(MixedMultivector{Sig,C})
-	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
-		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-		i = bits_to_mmv_index(bits, dimension(Sig))
-		ab.components[i] += factor*(acoeff*bcoeff)
-	end
-	ab
-end
+# function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+# 	T = promote_type(eltype(a), eltype(b))
+# 	C = componentstype(Sig, mmv_size(Sig), T)
+# 	ab = zero(MixedMultivector{Sig,C})
+# 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
+# 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
+# 		i = bits_to_mmv_index(bits, dimension(Sig))
+# 		ab.components[i] += factor*(acoeff*bcoeff)
+# 	end
+# 	ab
+# end
+geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig} = _geometric_prod_gen(a, b)
 
 geometric_prod(a::AbstractMultivector, b::Number) = scalar_multiply(a, b)
 geometric_prod(a::Number, b::AbstractMultivector) = scalar_multiply(a, b)
@@ -209,14 +210,24 @@ end
 
 #= Reversion =#
 
-reversion(a::HomogeneousMultivector) = reversion_sign(grade(a))*a
-function reversion(a::MixedMultivector{Sig}) where Sig
+graded_multiply(f, a::Number) = f(0)*a
+graded_multiply(f, a::HomogeneousMultivector) = f(grade(a))*a
+function graded_multiply(f, a::MixedMultivector{Sig}) where Sig
 	comps = copy(a.components)
 	dim = dimension(Sig)
 	for k ∈ 0:dim
-		comps[mmv_slice(k, dim)] *= reversion_sign(k)
+		comps[mmv_slice(k, dim)] *= f(k)
 	end
 	MixedMultivector{Sig}(comps)
 end
 
+
+reversion(a) = graded_multiply(reversion_sign, a)
 Base.:~(a::AbstractMultivector) = reversion(a)
+
+
+involution(a) = graded_multiply(k -> (-1)^k, a)
+
+clifford_conj(a) = graded_multiply(a) do k
+	(-1)^k*reversion_sign(k)
+end

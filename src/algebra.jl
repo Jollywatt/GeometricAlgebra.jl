@@ -1,16 +1,34 @@
 #= Equality =#
 
 Base.:(==)(a::Blade{Sig}, b::Blade{Sig}) where Sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : iszero(a) && iszero(b)
-Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = grade(a) == grade(b) ? all(a.components .== b.components) : iszero(a) && iszero(b)
-Base.:(==)(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig} = all(a.components .== b.components)
+Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = grade(a) == grade(b) ? a.components == b.components : iszero(a) && iszero(b)
+Base.:(==)(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig} = a.components == b.components
 
-Base.:(==)(a::AbstractMultivector, b::Number) = iszero(b) && iszero(a) || isscalar(a) && scalarpart(a) == b
-Base.:(==)(a::Number, b::AbstractMultivector) = iszero(a) && iszero(b) || isscalar(b) && a == scalarpart(b)
+Base.:(==)(a::AbstractMultivector, b::Number) = isscalar(a) && scalarpart(a) == b
+Base.:(==)(a::Number, b::AbstractMultivector) = isscalar(b) && a == scalarpart(b)
 
 # equality between different multivector types
-# TODO: implement without conversions
+# TODO: implement without conversions?
 Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig} = let T = largest_type(a, b)
 	T(a) == T(b)
+end
+
+#= Approximate Equality =#
+
+isapproxzero(a; kwargs...) = isapprox(a, zero(a); kwargs...)
+isapproxzero(a::Blade; kwargs...) = isapproxzero(a.coeff; kwargs...)
+isapproxzero(a::CompositeMultivector; kwargs...) = isapproxzero(a.components; kwargs...)
+
+Base.isapprox(a::Blade{Sig}, b::Blade{Sig}; kwargs...) where Sig = bitsof(a) == bitsof(b) ? isapprox(a.coeff, b.coeff; kwargs...) : isapproxzero(a) && isapproxzero(b)
+Base.isapprox(a::Multivector{Sig}, b::Multivector{Sig}; kwargs...) where {Sig} = grade(a) == grade(b) ? isapprox(a.components, b.components; kwargs...) : isapproxzero(a) && isapproxzero(b)
+Base.isapprox(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}; kwargs...) where {Sig} = isapprox(a.components, b.components; kwargs...)
+
+# promote scalar to target multivector type and compare component arrays
+Base.:isapprox(a::AbstractMultivector, b::Number; kwargs...) = isapprox(a, add_scalar!(zero(a), b); kwargs...)
+Base.:isapprox(a::Number, b::AbstractMultivector; kwargs...) = isapprox(b, a; kwargs...)
+
+Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}; kwargs...) where {Sig} = let T = largest_type(a, b)
+	isapprox(T(a), T(b); kwargs...)
 end
 
 
@@ -38,7 +56,7 @@ Base.://(a::AbstractMultivector, b::Number) = a*(one(b)//b)
 add!(a::Multivector, b::Blade) = (a.components[mv_index(b)] += b.coeff; a)
 add!(a::MixedMultivector, b::Blade) = (a.components[mmv_index(b)] += b.coeff; a)
 
-add!(a::Multivector, b::Multivector) = (a.components += b.components; a)
+add!(a::Multivector, b::Multivector) = (a.components[:] += b.components; a)
 add!(a::MixedMultivector, b::MixedMultivector) = (a.components[:] += b.components; a)
 
 function add!(a::MixedMultivector, b::Multivector)
@@ -60,16 +78,19 @@ Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 #= Scalar Addition =#
 
+add_scalar!(a::Multivector{Sig,0}, b::Number) where {Sig} = (a.components[] += b; a)
+add_scalar!(a::MixedMultivector, b::Number) = (a.components[1] += b; a)
+
 add_scalar(a::Blade{Sig,0}, b::Number) where {Sig} = Blade{Sig}(0 => a.coeff + b)
 
-add_scalar!(a::Multivector{Sig,0}, b::Number) where {Sig} = (a.components[] += b; a)
-add_scalar(a::Multivector{Sig,0}, b::Number) where {Sig} = add_scalar!(copy(a), b)
+add_scalar(a::Multivector{Sig,0}, b::Number) where {Sig} = let T = promote_type(eltype(a), typeof(b))
+	add_scalar!(Multivector(a, T), b)
+end
 
 add_scalar(a::HomogeneousMultivector, b::Number) = let T = promote_type(eltype(a), typeof(b))
 	add_scalar!(MixedMultivector(a, T), b)
 end
 
-add_scalar!(a::MixedMultivector, b::Number) = (a.components[1] += b; a)
 function add_scalar(a::MixedMultivector, b::Number)
 	# must be careful to preserve the type (but not the eltype) of the components array
 	T = promote_type(eltype(a), eltype(b))

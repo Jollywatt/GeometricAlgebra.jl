@@ -179,14 +179,35 @@ Base.isone(a::MixedMultivector) = isone(a.components[1]) && iszero(a.components[
 Base.copy(a::CompositeMultivector) = constructor(a)(copy(a.components))
 
 
-#= Conversion =#
+#= Conversion ==
+
+Multivectors can be converted into 'larger' types by calling the
+type constructor:
+
+	Blade -> Multivector -> MixedMultivector
+
+The eltype may be set as the second argument, as in `Multivector(a, Float32)`.
+Converting to the same type like `Multivector(a::Multivector)` returns `a`
+identically, but a copy is always made when the eltype is given.
+=#
+
+largest_type(::MixedMultivector, ::AbstractMultivector) = MixedMultivector
+largest_type(::Multivector, ::HomogeneousMultivector) = Multivector
+largest_type(::Blade, ::Blade) = Blade
+largest_type(a, b) = largest_type(b, a)
+
+
 
 Blade(a::Blade) = a
 Multivector(a::Multivector) = a
 MixedMultivector(a::MixedMultivector) = a
 
-function Multivector(a::Blade{Sig,K,T}) where {Sig,K,T}
+function Multivector(a::Blade{Sig,K,T′}, T=T′) where {Sig,K,T′}
 	C = componentstype(Sig, mv_size(Sig, K), T)
+	add!(zero(Multivector{Sig,K,C}), a)
+end
+function Multivector(a::Multivector{Sig,K}, T) where {Sig,K}
+	C = with_eltype(typeof(a.components), T)
 	add!(zero(Multivector{Sig,K,C}), a)
 end
 
@@ -194,21 +215,14 @@ function MixedMultivector(a::Blade{Sig,K,T′}, T=T′) where {Sig,K,T′}
 	C = componentstype(Sig, mmv_size(Sig), T)
 	add!(zero(MixedMultivector{Sig,C}), a)
 end
-
 function MixedMultivector(a::Multivector{Sig,K,C′}, T=eltype(C′)) where {Sig,K,C′}
 	C = componentstype(Sig, mmv_size(Sig), T)
 	add!(zero(MixedMultivector{Sig,C}), a)
 end
-
 function MixedMultivector(a::MixedMultivector{Sig}, T) where {Sig}
-	comps = convert(with_eltype(typeof(a.components), T), a.components)
-	MixedMultivector{Sig}(comps)
+	C = with_eltype(typeof(a.components), T)
+	add!(zero(MixedMultivector{Sig,C}), a)
 end
-
-largest_type(::MixedMultivector, ::AbstractMultivector) = MixedMultivector
-largest_type(::Multivector, ::HomogeneousMultivector) = Multivector
-largest_type(::Blade, ::Blade) = Blade
-largest_type(a, b) = largest_type(b, a)
 
 
 
@@ -220,6 +234,7 @@ scalarpart(a::Blade{Sig,0}) where {Sig} = a.coeff
 scalarpart(a::Blade) = zero(eltype(a))
 scalarpart(a::CompositeMultivector) = a.components[begin]
 
+isscalar(a::Number) = true
 isscalar(a::Blade{Sig,0}) where {Sig} = true
 isscalar(a::Blade) = iszero(a)
 isscalar(a::HomogeneousMultivector{Sig,0}) where {Sig} = true

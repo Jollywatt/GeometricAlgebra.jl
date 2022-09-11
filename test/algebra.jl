@@ -15,6 +15,29 @@ using Multivectors:
 
 	o = Blade{(1,1)}.(1:3 .=> 0)
 	@test o[1] == o[2] == o[3]
+
+	v = Blade{(1,1,1)}(0b101 => 88.3)
+	Ts = [Blade, Multivector, MixedMultivector]
+	for T1 ∈ Ts, T2 ∈ Ts
+		@test T1(v) == T2(v)
+	end
+end
+
+@testset "≈" begin
+	@test Blade{(1,1)}(0b10 => 1) ≈ Blade{(1,1)}(0b10 => 1 + eps())
+	@test Blade{(1,1)}(0b10 => eps()) ≈ 0 atol=eps()
+
+	# ≈ uses 2-norm on arrays, so atol ≥ √n*eps()
+	@test Multivector{(1,1,1),1}(eps()rand(3)) ≈ 0 atol=√3*eps()
+	@test Multivector{(1,1,1),0}([1]) ≈ 1 + eps() atol=eps()
+
+	@test MixedMultivector{(1,1,1)}(1 .+ eps()rand(2^3)) ≈ MixedMultivector{(1,1,1)}(1 .+ eps()rand(2^3))
+
+	v = Blade{(1,1,1)}.(0b101 .=> 10 .+ 1e-6rand(2))
+	Ts = [Blade, Multivector, MixedMultivector]
+	for T1 ∈ Ts, T2 ∈ Ts
+		@test T1(v[1]) ≈ T2(v[2]) atol=1e-6
+	end
 end
 
 @testset "scalar *" begin
@@ -45,6 +68,7 @@ end
 		@test (v[1] + v[2]) + 7 == v[1] + (v[2] + 7)
 		@test (bi[1] + 8) - 8 == bi[1]
 		@test 1 - v[1] == -(v[1] - 1)
+		@test Multivector(v[1]) + 0.5 == v[1] + 1//2
 	end
 end
 

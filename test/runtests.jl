@@ -37,8 +37,7 @@ clear_coverage_files() = run(`bash -c "rm $project_root/**/*.cov"`)
 
 if isempty(ARGS)
 	@info """Run this script in interactive mode, and call:
-		 - `test("testfile1", "testfile2", ...)`
-		   (without `.jl` extensions) to run tests
+		 - `test("testfile1.jl", "testfile2.jl", ...)`
 		 - `test()` to run all tests
 		 - `coverage()` to analyse code coverage
 		 - `score()` to show coverage score from last run

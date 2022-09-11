@@ -24,7 +24,8 @@ Base.isapprox(a::Multivector{Sig}, b::Multivector{Sig}; kwargs...) where {Sig} =
 Base.isapprox(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}; kwargs...) where {Sig} = isapprox(a.components, b.components; kwargs...)
 
 # promote scalar to target multivector type and compare component arrays
-Base.:isapprox(a::AbstractMultivector, b::Number; kwargs...) = isapprox(a, add_scalar!(zero(a), b); kwargs...)
+Base.:isapprox(a::Blade, b::Number; kwargs...) = isapprox(Multivector(a), b; kwargs...)
+Base.:isapprox(a::CompositeMultivector, b::Number; kwargs...) = isapprox(a, zero(a) + b; kwargs...)
 Base.:isapprox(a::Number, b::AbstractMultivector; kwargs...) = isapprox(b, a; kwargs...)
 
 Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}; kwargs...) where {Sig} = let T = largest_type(a, b)

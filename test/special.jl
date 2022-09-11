@@ -1,28 +1,32 @@
 using Multivectors:
+	EuclideanMetric,
 	bits_of_grade
 
 @testset "inverses" begin
-	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1,4) .=> 1)
+	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	@test inv(v[1])v[1] == 1
+	@test inv(5v[1]v[2]) == inv(v[2])inv(v[1])inv(5)
 
-	@testset "scalar a²" begin
-		for a in [
-			v[2],
-			5v[1]v[2],
-			v[2]v[3]v[4]//10,
-			v[2] + 4v[4],
-			2.0v[1] + π*v[2],
-			v[2] + 2v[2]v[3]
+	@testset "dimension $dim" for dim in 0:5
+		mixed_sig = (-1,+1,+1,+1,0)
+		for sig in [
+			EuclideanMetric(dim),
+			mixed_sig[1:dim],
 		]
-			@test a*inv(a) == 1 == inv(a)*a
-			@test a^3/a == a^2
+			a = MixedMultivector{sig}(rand(2^dim))
+			@test inv(a)*a ≈ 1
+			@test a*inv(a) ≈ 1
 		end
 	end
+end
 
-	@testset "scalar aã" begin
-		for a in [
-			v[1]v[2] + 3
-		]
-			@test a*inv(a) == 1 == inv(a)*a
-		end
+@testset "exp" begin
+	v = Blade{(1,1)}.(bits_of_grade(1, 2) .=> 1)
+	@test exp(10000*2pi*v[1]v[2]) ≈ 1
+	
+	for dim in 1:5
+		a = MixedMultivector{EuclideanMetric(dim)}(randn(2^dim))
+		@test exp(a)exp(-a) ≈ 1
+		@test inv(exp(a)) ≈ exp(-a) rtol=1e-4
 	end
 end

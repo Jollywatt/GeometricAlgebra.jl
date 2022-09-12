@@ -32,10 +32,6 @@ jobs:
           - os: macOS-latest
             arch: x86
 
-          # this particular version takes much longer to check
-          - os: windows-latest
-            version: '1.6'
-
     runs-on: ${{ matrix.os }}
 
     env:

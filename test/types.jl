@@ -2,7 +2,9 @@ using Multivectors:
 	grade,
 	signature,
 	largest_type,
-	with_eltype
+	with_eltype,
+	MMetric
+using Multivectors.StaticArrays
 
 @testset "constructors" begin
 	@test zero(Blade{(1,1)}(0b11 => 42)) === Blade{(1,1),0,Int}(0b00, 0)
@@ -51,4 +53,12 @@ end
 		@test eltype(Multivector(a)) === T
 		@test eltype(MixedMultivector(a)) === T
 	end
+end
+
+@testset "MVector" begin
+	sig = MMetric{(1,1,1)}()
+	v = Blade{sig}.(bits_of_grade(1, 3) .=> 1)
+
+	@test Multivector(v[1]) isa Multivector{sig,1,<:MVector}
+	@test MixedMultivector(v[1]) isa MixedMultivector{sig,<:MVector}
 end

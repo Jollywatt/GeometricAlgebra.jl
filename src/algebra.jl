@@ -116,8 +116,8 @@ end
 
 # function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 # 	T = promote_type(eltype(a), eltype(b))
-# 	C = componentstype(Sig, mmv_size(Sig), T)
-# 	ab = zero(MixedMultivector{Sig,C})
+# 	S = componentstype(Sig, mmv_size(Sig), T)
+# 	ab = zero(MixedMultivector{Sig,S})
 # 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 # 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
 # 		i = bits_to_mmv_index(bits, dimension(Sig))
@@ -125,7 +125,7 @@ end
 # 	end
 # 	ab
 # end
-geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig} = _geometric_prod_gen(a, b)
+geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig} = _generated_geometric_prod(a, b)
 
 geometric_prod(a::AbstractMultivector, b::Number) = scalar_multiply(a, b)
 geometric_prod(a::Number, b::AbstractMultivector) = scalar_multiply(a, b)
@@ -138,8 +138,8 @@ Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
 function homogeneous_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, k::Int) where {Sig}
 	T = promote_type(eltype(a), eltype(b))
-	C = with_eltype(componentstype(Sig), T)
-	ab = zero(MixedMultivector{Sig,C})
+	S = with_eltype(componentstype(Sig), T)
+	ab = zero(MixedMultivector{Sig,S})
 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits
 		if count_ones(bits) == k
@@ -169,8 +169,8 @@ end
 
 function graded_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, grade_selector::Function) where {Sig}
 	T = promote_type(eltype(a), eltype(b))
-	C = componentstype(Sig, mmv_size(Sig), T)
-	ab = zero(MixedMultivector{Sig,C})
+	S = componentstype(Sig, mmv_size(Sig), T)
+	ab = zero(MixedMultivector{Sig,S})
 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
@@ -199,9 +199,9 @@ function power_with_scalar_square(a, a², p::Integer)
 	iseven(p) ? aⁿ*one(a) : aⁿ*a
 end
 
-function power_by_squaring(a::CompositeMultivector{Sig,C}, p::Integer) where {Sig,C}
+function power_by_squaring(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
 	p < 0 && return power_by_squaring(inv(a), abs(p))
-	Π = one(MixedMultivector{Sig,C})
+	Π = one(MixedMultivector{Sig,S})
 	aⁿ = a
 	while p > 0
 		if isone(p & 1)
@@ -215,7 +215,7 @@ end
 
 Base.:^(a::Blade, p::Integer) = power_with_scalar_square(a, scalarpart(a*a), p)
 
-function Base.:^(a::CompositeMultivector{Sig,C}, p::Integer) where {Sig,C}
+function Base.:^(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
 	# TODO: type stability?
 	p == 0 && return one(a)
 	p == 1 && return a

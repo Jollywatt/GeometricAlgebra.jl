@@ -32,12 +32,10 @@ end
 dimension(sig::EuclideanMetric) = sig.dim
 Base.getindex(::EuclideanMetric, i) = 1
 
-struct SMetric
-	dim::Int
-end
-componentstype(::SMetric, N, T) = MVector{N,T}
-dimension(sig::SMetric) = sig.dim
-Base.getindex(::SMetric, i) = 1
+struct MMetric{Sig} end
+componentstype(::MMetric, N, T) = MVector{N,T}
+dimension(::MMetric{Sig}) where {Sig} = dimension(Sig)
+Base.getindex(::MMetric{Sig}, i) where {Sig} = Sig[i]
 
 #= Display Methods =#
 

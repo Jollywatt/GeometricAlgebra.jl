@@ -42,13 +42,13 @@ end
 #= CompositeMultivectors =#
 
 """
-Display a multivector as a column of blades, with coefficients aligned using
-the native alignment mechanism, and blades basis aligned.
+Display homogeneous multivector components as a column of blades,
+with coefficients and blades aligned using the native alignment mechanism.
 
 ```jldoctest
-julia> v = Blade{(1,1,1)}.([0b001, 0b010, 0b100] .=> 1);
+julia> a = Multivector{(1,1,1),1}([1e3, 1, 1e-3]);
 
-julia> Multivectors.show_multivector(stdout, 1e3v[1] + v[2] + 1e-3v[3])
+julia> Multivectors.show_multivector(stdout, a)
 1000.0   v1
    1.0   v2
    0.001 v3

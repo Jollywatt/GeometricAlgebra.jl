@@ -4,19 +4,19 @@ const OrType{T} = Union{T,Type{T}}
 	AbstractMultivector{Sig}
 
 Supertype of all elements in the geometric algebra defined by the
-metric signature `Sig` (retrieved with the `signature` method).
+metric signature `Sig`.
 
 Subtypes
 --------
 
 ```
-          AbstractMultivector
-           /               \\
-HomogeneousMultivector   MixedMultivector
-   /       \\                         │
-Blade   Multivector                  │
-            │                        │
-            ╰─ CompositeMultivector ─╯
+                   AbstractMultivector{Sig}
+                     /                  \\
+  HomogeneousMultivector{Sig,K}      MixedMultivector{Sig,S}
+       /                \\                             
+Blade{Sig,K,T}   Multivector{Sig,K,S}                
+                                                   
+                 ╰────── CompositeMultivector{Sig,S} ──────╯
 ```
 
 - `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
@@ -25,7 +25,19 @@ Blade   Multivector                  │
    ``k``-blades are representable as a `Blade` (but always as a `Multivector`).
 - `Multivector`: a homogeneous multivector; a sum of same-grade blades.
 - `MixedMultivector`: an inhomogeneous multivector. All elements in a geometric
-   algebra can be represented as this type.
+   algebra can be represented as this type (though not most efficiently).
+
+Type Parameters
+---------------
+
+- `Sig`: The metric signature which defines the geometric algebra. This can be any
+   all-bits value which satisfies the metric signature interface.
+   For example, `(1, 1, 1)` or `EuclideanSignature(3)` both
+   define the standard geometric algebra of ``ℝ^3``.
+- `T`: The numerical type of the coefficient of a `Blade`.
+- `K`: An `Int` specifying the grade of a `HomogeneousMultivector`.
+- `S`: The storage type of the components of a `CompositeMultivector`. This is
+   assumed to be mutable, and is usually a subtype of `Vector`, `MVector` or `SparseVector`.
 
 """
 abstract type AbstractMultivector{Sig} end
@@ -54,7 +66,12 @@ dimension(::AbstractMultivector{Sig}) where {Sig} = dimension(Sig)
 """
 	HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig}
 
-Supertype of grade `K ∈ ℕ` elements in the geometric algebra with metric signature `Sig`.
+Abstract supertype of `Blade` and `Multivector`.
+
+Parameters
+----------
+- `Sig`: Metric signature defining the geometric algebra, retrieved with `signature()`.
+- `K`: Grade of the blade or multivector, retrieved with `grade()`.
 """
 abstract type HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig} end
 
@@ -72,9 +89,9 @@ A blade of grade `K ∈ ℕ` with basis blade `bits` and scalar coefficient of t
 
 Parameters
 ----------
-- `Sig`: metric signature defining the parent geometric algebra
-- `K`: grade of the blade, equal to `count_ones(bits)`
-- `T`: type of the scalar coefficient
+- `Sig`: Metric signature defining the geometric algebra, retrieved with `signature()`.
+- `K`: Grade of the blade, equal to `count_ones(bits)`, retrieved with `grade()`.
+- `T`: Numerical type of the scalar coefficient, retrieved with `eltype()`.
 """
 struct Blade{Sig,K,T} <: HomogeneousMultivector{Sig,K}
 	bits::UInt
@@ -95,9 +112,9 @@ A homogeneous multivector of grade `K ∈ ℕ` with storage type `S`.
 
 Parameters
 ----------
-- `Sig`: metric signature defining the parent geometric algebra
-- `K`: grade of the multivector
-- `S`: type in which the multivector components are stored; usually a vector-like or dictionary-like type
+- `Sig`: Metric signature defining the geometric algebra, retrieved with `signature()`.
+- `K`: Grade of the multivector, retrieved with `grade()`.
+- `S`: Storage type of the multivector components, generally a subtype of `AbstractVector`.
 """
 struct Multivector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
 	components::S
@@ -114,14 +131,13 @@ All elements of a geometric algebra are representable as a `MixedMultivector`.
 
 Parameters
 ----------
-- `Sig`: metric signature defining the parent geometric algebra
-- `S`: type in which the multivector components are stored; usually a vector-like or dictionary-like type
+- `Sig`: Metric signature defining the geometric algebra, retrieved with `signature()`.
+- `S`: Storage type of the multivector components, generally a subtype of `AbstractVector`.
 """
 struct MixedMultivector{Sig,S} <: AbstractMultivector{Sig}
 	components::S
 end
 MixedMultivector{Sig}(comps::S) where {Sig,S} = MixedMultivector{Sig,S}(comps)
-
 
 const CompositeMultivector{Sig,S} = Union{Multivector{Sig,K,S},MixedMultivector{Sig,S}} where {K}
 
@@ -129,7 +145,7 @@ const CompositeMultivector{Sig,S} = Union{Multivector{Sig,K,S},MixedMultivector{
 #= AbstractMultivector Interface =#
 
 mv_size(sig, k) = binomial(dimension(sig), k)
-mmv_size(sig) = 2^dimension(sig)
+mmv_size(sig) = 1 << dimension(sig) # << constant folds whereas 2^dim doesn't
 
 """
 	ncomponents(::CompositeMultivector)
@@ -203,27 +219,34 @@ Multivector(a::Multivector) = a
 MixedMultivector(a::MixedMultivector) = a
 
 function Multivector(a::Blade{Sig,K,T′}, T=T′) where {Sig,K,T′}
-	C = componentstype(Sig, mv_size(Sig, K), T)
-	add!(zero(Multivector{Sig,K,C}), a)
+	S = componentstype(Sig, mv_size(Sig, K), T)
+	add!(zero(Multivector{Sig,K,S}), a)
 end
 function Multivector(a::Multivector{Sig,K}, T) where {Sig,K}
-	C = with_eltype(typeof(a.components), T)
-	add!(zero(Multivector{Sig,K,C}), a)
+	S = with_eltype(typeof(a.components), T)
+	add!(zero(Multivector{Sig,K,S}), a)
 end
 
 function MixedMultivector(a::Blade{Sig,K,T′}, T=T′) where {Sig,K,T′}
-	C = componentstype(Sig, mmv_size(Sig), T)
-	add!(zero(MixedMultivector{Sig,C}), a)
+	S = componentstype(Sig, mmv_size(Sig), T)
+	add!(zero(MixedMultivector{Sig,S}), a)
 end
-function MixedMultivector(a::Multivector{Sig,K,C′}, T=eltype(C′)) where {Sig,K,C′}
-	C = componentstype(Sig, mmv_size(Sig), T)
-	add!(zero(MixedMultivector{Sig,C}), a)
+function MixedMultivector(a::Multivector{Sig,K,S′}, T=eltype(S′)) where {Sig,K,S′}
+	S = componentstype(Sig, mmv_size(Sig), T)
+	add!(zero(MixedMultivector{Sig,S}), a)
 end
 function MixedMultivector(a::MixedMultivector{Sig}, T) where {Sig}
-	C = with_eltype(typeof(a.components), T)
-	add!(zero(MixedMultivector{Sig,C}), a)
+	S = with_eltype(typeof(a.components), T)
+	add!(zero(MixedMultivector{Sig,S}), a)
 end
 
+
+Base.float(a::Blade) = Blade{signature(a)}(bitsof(a) => float(a.coeff))
+Base.float(a::CompositeMultivector) = constructor(a)(float(a.components))
+
+Base.float(A::Type{Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig,K,float(T)}
+Base.float(A::Type{Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K,with_eltype(S, float(eltype(S)))}
+Base.float(A::Type{MixedMultivector{Sig,S}}) where {Sig,S} = MixedMultivector{Sig,with_eltype(S, float(eltype(S)))}
 
 
 #= Indexing and Iteration =#

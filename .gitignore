@@ -1,6 +1,5 @@
 Manifest.toml
 *.jl.*.cov
-*.jl.cov
-*.jl.mem
+*.jl.*.mem
 /docs/build/
 .gitignore

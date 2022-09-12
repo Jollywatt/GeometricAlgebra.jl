@@ -20,12 +20,15 @@ Blade{Sig,K,T}   Multivector{Sig,K,S}
 ```
 
 - `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
-   Note that the mathematical definition of a ``k``-blade is the wedge product
-   of ``k`` different _vectors_, not necessarily basis vectors. Thus, not all
-   ``k``-blades are representable as a `Blade` (but always as a `Multivector`).
 - `Multivector`: a homogeneous multivector; a sum of same-grade blades.
 - `MixedMultivector`: an inhomogeneous multivector. All elements in a geometric
    algebra can be represented as this type (though not most efficiently).
+
+!!! note
+	The mathematical definition of a ``k``-blade is the wedge product
+	of ``k`` _vectors_, not necessarily basis vectors. Thus, not all
+	``k``-blades are representable as a `Blade`, but are always representable
+	as a sum of `Blade`s, or as a `Multivector`.
 
 Type Parameters
 ---------------
@@ -241,12 +244,12 @@ function MixedMultivector(a::MixedMultivector{Sig}, T) where {Sig}
 end
 
 
-Base.float(a::Blade) = Blade{signature(a)}(bitsof(a) => float(a.coeff))
-Base.float(a::CompositeMultivector) = constructor(a)(float(a.components))
+# Base.float(a::Blade) = Blade{signature(a)}(bitsof(a) => float(a.coeff))
+# Base.float(a::CompositeMultivector) = constructor(a)(float(a.components))
 
-Base.float(A::Type{Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig,K,float(T)}
-Base.float(A::Type{Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K,with_eltype(S, float(eltype(S)))}
-Base.float(A::Type{MixedMultivector{Sig,S}}) where {Sig,S} = MixedMultivector{Sig,with_eltype(S, float(eltype(S)))}
+# Base.float(A::Type{Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig,K,float(T)}
+# Base.float(A::Type{Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K,with_eltype(S, float(eltype(S)))}
+# Base.float(A::Type{MixedMultivector{Sig,S}}) where {Sig,S} = MixedMultivector{Sig,with_eltype(S, float(eltype(S)))}
 
 
 #= Indexing and Iteration =#

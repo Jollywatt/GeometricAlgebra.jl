@@ -224,7 +224,7 @@ end
 	factor_from_squares(sig, bits::Unsigned)
 
 Compute the overall factor arising from the geometric product between
-repeated basis vectors
+repeated basis vectors.
 """
 function factor_from_squares(sig, bits::Unsigned)
 	factor = 1

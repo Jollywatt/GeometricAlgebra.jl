@@ -40,3 +40,9 @@ Base.getindex(::MMetric{Sig}, i) where {Sig} = Sig[i]
 #= Display Methods =#
 
 basis_blade_label(sig, indices) = "v"*join(string.(indices))
+
+
+
+#= Convenience =#
+
+basis(sig) = Blade{sig}.(bits_of_grade(1, dimension(sig)) .=> 1)

@@ -17,7 +17,7 @@ make() = makedocs(
     sitename="Multivectors.jl",
     root=joinpath(project_root, "docs"),
     modules=[Multivectors],
-    pages=["index.md"],
+    pages=["index.md", "reference.md"],
 )
 
 deploy() = deploydocs(

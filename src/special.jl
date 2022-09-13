@@ -30,7 +30,7 @@ function Base.inv(a::CompositeMultivector)
 
 	else
 		aā = a*ā
-		isscalar(aā) && return ā/scalarpart(a*ā)
+		isscalar(aā) && return ā/scalarpart(a*ā) # hope for the best
 	
 		throw("failed to find multivector inverse (which may or may not exist)")
 	end

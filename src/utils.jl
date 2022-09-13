@@ -18,7 +18,6 @@ function __init__()
 	if isdefined(Base.Experimental, :register_error_hint)
 		Base.Experimental.register_error_hint(MethodError) do io, err, argtypes, kwargs
 			# try to detect cases where the method error is due to mixing different metric signatures
-			@show err argtypes
 			if all(isa.(argtypes, Type{<:AbstractMultivector})) && !shared_sig(argtypes...)
 				println(io, "\nPerhaps the multivectors have incompatible metric signatures?")
 			end 

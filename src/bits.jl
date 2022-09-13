@@ -19,7 +19,7 @@ Inverse of [`indices_to_bits`](@ref).
 Examples
 ===
 ```jldoctest
-julia> Multivectors.bits_to_indices(0b1001101)
+julia> GeometricAlgebra.bits_to_indices(0b1001101)
 4-element Vector{Int64}:
  1
  3
@@ -55,7 +55,7 @@ Inverse of [`bits_to_indices`](@ref).
 Examples
 ===
 ```jldoctest
-julia> Multivectors.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
+julia> GeometricAlgebra.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
 "0000000000010011"
 ```
 
@@ -75,7 +75,7 @@ the same number of binary ones.
 Algorithm is [Gosper's hack](http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation).
 
 ```
-julia> Multivectors.next_bit_permutation(0b1011) |> bitstring
+julia> GeometricAlgebra.next_bit_permutation(0b1011) |> bitstring
 "00001101"
 ```
 """
@@ -115,7 +115,7 @@ Yields all basis blades in the dimension `dim`, if given, otherwise iterate inde
 Example
 ===
 ```jldoctest
-julia> Multivectors.bits_of_grade(2, 4) .|> UInt8 .|> bitstring
+julia> GeometricAlgebra.bits_of_grade(2, 4) .|> UInt8 .|> bitstring
 6-element Vector{String}:
  "00000011"
  "00000101"

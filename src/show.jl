@@ -25,7 +25,7 @@ end
 Display blade with parentheses surrounding coefficient if necessary.
 	
 ```jldoctest
-julia> Multivectors.show_blade(stdout, Blade{(x=1,)}(0b1 => 1 + im))
+julia> GeometricAlgebra.show_blade(stdout, Blade{(x=1,)}(0b1 => 1 + im))
 (1+1im) v1
 ```
 """
@@ -48,7 +48,7 @@ with coefficients and blades aligned using the native alignment mechanism.
 ```jldoctest
 julia> a = Multivector{(1,1,1),1}([1e3, 1, 1e-3]);
 
-julia> Multivectors.show_multivector(stdout, a)
+julia> GeometricAlgebra.show_multivector(stdout, a)
 1000.0   v1
    1.0   v2
    0.001 v3

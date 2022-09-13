@@ -1,4 +1,4 @@
-using Multivectors:
+using GeometricAlgebra:
 	bits_to_indices,
 	indices_to_bits,
 	BitPermutations,

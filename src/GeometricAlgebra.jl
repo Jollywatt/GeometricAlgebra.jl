@@ -1,10 +1,10 @@
 """
-Multivectors
+GeometricAlgebra
 ---
 
 Implementation of multivectors, or ``k``-vectors, as in geometric (Clifford) algebra.
 """
-module Multivectors
+module GeometricAlgebra
 
 using StaticArrays
 
@@ -24,4 +24,4 @@ include("generated.jl")
 include("show.jl")
 
 
-end # module Multivectors
+end # module GeometricAlgebra

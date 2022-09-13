@@ -4,31 +4,31 @@
 cd(joinpath(".", dirname(@__FILE__)))
 using Pkg; Pkg.activate(".")
 
-using Documenter, Revise, Multivectors
+using Documenter, Revise, GeometricAlgebra
 
-const project_root = pathof(Multivectors) |> dirname |> dirname
+const project_root = pathof(GeometricAlgebra) |> dirname |> dirname
 
 # apply setup code to all doctests in doc strings
-DocMeta.setdocmeta!(Multivectors, :DocTestSetup, quote
-    using Revise, Multivectors
+DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
+    using Revise, GeometricAlgebra
 end; recursive=true)
 
 make() = makedocs(
-    sitename="Multivectors.jl",
+    sitename="GeometricAlgebra.jl",
     root=joinpath(project_root, "docs"),
-    modules=[Multivectors],
+    modules=[GeometricAlgebra],
     pages=["index.md", "reference.md"],
 )
 
 deploy() = deploydocs(
-    repo = "github.com/Jollywatt/Multivectors.jl.git",
+    repo = "github.com/Jollywatt/GeometricAlgebra.jl.git",
 )
 
-test() = doctest(Multivectors)
+test() = doctest(GeometricAlgebra)
 
 fix() = begin
     Revise.revise()
-    doctest(Multivectors, fix=true)
+    doctest(GeometricAlgebra, fix=true)
     nothing
 end
 

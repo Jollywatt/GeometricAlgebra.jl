@@ -1,4 +1,4 @@
-using Multivectors:
+using GeometricAlgebra:
 	bits_of_grade
 
 @testset "==" begin

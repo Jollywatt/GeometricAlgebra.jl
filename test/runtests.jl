@@ -2,12 +2,12 @@
 ... or with arguments `julia --project runtests.jl [testfiles...]` =#
 
 cd(dirname(@__FILE__))
-# using Pkg; Pkg.activate(".") # TODO: Multivectors can't be in Project.toml for Pkg.test to work
+# using Pkg; Pkg.activate(".") # TODO: GeometricAlgebra can't be in Project.toml for Pkg.test to work
 
 using Random, Test, Coverage
-using Revise, Multivectors
+using Revise, GeometricAlgebra
 
-const project_root = pathof(Multivectors) |> dirname |> dirname
+const project_root = pathof(GeometricAlgebra) |> dirname |> dirname
 
 alltests() = setdiff(filter(endswith(".jl"), readdir()), [basename(@__FILE__)])
 

@@ -200,7 +200,7 @@ Base.copy(a::CompositeMultivector) = constructor(a)(copy(a.components))
 
 #= Conversion ==
 
-Multivectors can be converted into 'larger' types by calling the
+GeometricAlgebra can be converted into 'larger' types by calling the
 type constructor:
 
 	Blade -> Multivector -> MixedMultivector

@@ -1,13 +1,13 @@
 ```@meta
-CurrentModule = Multivectors
+CurrentModule = GeometricAlgebra
 DocTestSetup = quote
-	using Multivectors
+	using GeometricAlgebra
 end
 ```
 
-# Multivectors
+# GeometricAlgebra
 
-[Multivectors.jl](https://github.com/jollywatt/Multivectors.jl) implements basic types for working with geometric (or Clifford) algebras.
+[GeometricAlgebra.jl](https://github.com/jollywatt/GeometricAlgebra.jl) implements basic types for working with geometric (or Clifford) algebras.
 
 ## Quick Start
 
@@ -110,11 +110,11 @@ Additionally, the `Sig` type parameter is used to carry metadata such as basis b
 ```julia
 julia> struct DiracGamma end
 
-julia> Multivectors.dimension(::DiracGamma) = 4
+julia> GeometricAlgebra.dimension(::DiracGamma) = 4
 
 julia> Base.getindex(::DiracGamma, i) = i > 1 ? -1 : +1
 
-julia> Multivectors.basis_blade_label(::DiracGamma, indices) = join("γ"*collect("⁰¹²³")[i] for i in indices)
+julia> GeometricAlgebra.basis_blade_label(::DiracGamma, indices) = join("γ"*collect("⁰¹²³")[i] for i in indices)
 
 julia> Blade{DiracGamma()}(0b1011 => 42)
 Grade-3 Blade{DiracGamma(), 3, Int64}:

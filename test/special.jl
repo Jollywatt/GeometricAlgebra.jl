@@ -1,4 +1,4 @@
-using Multivectors:
+using GeometricAlgebra:
 	EuclideanMetric,
 	bits_of_grade
 

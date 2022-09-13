@@ -1,4 +1,4 @@
-name = "Multivectors"
+name = "GeometricAlgebra"
 uuid = "11bbe1ca-eae6-48c2-942c-9f17e43de0f0"
 authors = ["jollywatt <jo.alex.w@gmail.com>"]
 version = "0.1.0"

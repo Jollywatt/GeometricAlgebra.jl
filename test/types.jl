@@ -1,10 +1,10 @@
-using Multivectors:
+using GeometricAlgebra:
 	grade,
 	signature,
 	largest_type,
 	with_eltype,
 	MMetric
-using Multivectors.StaticArrays
+using GeometricAlgebra.StaticArrays
 
 @testset "constructors" begin
 	@test zero(Blade{(1,1)}(0b11 => 42)) === Blade{(1,1),0,Int}(0b00, 0)

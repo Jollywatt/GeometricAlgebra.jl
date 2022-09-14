@@ -6,17 +6,16 @@ const OrType{T} = Union{T,Type{T}}
 Supertype of all elements in the geometric algebra defined by the
 metric signature `Sig`.
 
-Subtypes
---------
+# Subtypes
 
 ```
                    AbstractMultivector{Sig}
                      /                  \\
-  HomogeneousMultivector{Sig,K}      MixedMultivector{Sig,S}
+   HomogeneousMultivector{Sig,K}    MixedMultivector{Sig,S}
        /                \\                             
-Blade{Sig,K,T}   Multivector{Sig,K,S}                
+Blade{Sig,K,T}    Multivector{Sig,K,S}                
                                                    
-                 ╰────── CompositeMultivector{Sig,S} ──────╯
+                  ╰───── CompositeMultivector{Sig,S} ─────╯
 ```
 
 - `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
@@ -30,8 +29,7 @@ Blade{Sig,K,T}   Multivector{Sig,K,S}
 	``k``-blades are representable as a `Blade`, but are always representable
 	as a sum of `Blade`s, or as a `Multivector`.
 
-Type Parameters
----------------
+# Type Parameters
 
 - `Sig`: The metric signature which defines the geometric algebra. This can be any
    all-bits value which satisfies the metric signature interface.
@@ -71,10 +69,9 @@ dimension(::AbstractMultivector{Sig}) where {Sig} = dimension(Sig)
 
 Abstract supertype of `Blade` and `Multivector`.
 
-Parameters
-----------
-- `Sig`: Metric signature defining the geometric algebra, retrieved with `signature()`.
-- `K`: Grade of the blade or multivector, retrieved with `grade()`.
+# Parameters
+- `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
+- `K`: Grade of the blade or multivector, retrieved with [`grade()`](@ref).
 """
 abstract type HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig} end
 
@@ -88,13 +85,12 @@ grade(::OrType{<:HomogeneousMultivector{Sig,K}}) where {Sig,K} = K
 """
 	Blade{Sig,K,T} <: HomogeneousMultivector{Sig,K}
 
-A blade of grade `K ∈ ℕ` with basis blade `bits` and scalar coefficient of type `T`.
+A blade of grade `K` with basis blade `bits` and scalar coefficient of type `T`.
 
-Parameters
-----------
-- `Sig`: Metric signature defining the geometric algebra, retrieved with `signature()`.
-- `K`: Grade of the blade, equal to `count_ones(bits)`, retrieved with `grade()`.
-- `T`: Numerical type of the scalar coefficient, retrieved with `eltype()`.
+# Parameters
+- `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
+- `K`: Grade of the blade, equal to `count_ones(bits)`, retrieved with [`grade()`](@ref).
+- `T`: Numerical type of the scalar coefficient, retrieved with [`eltype()`](@ref).
 """
 struct Blade{Sig,K,T} <: HomogeneousMultivector{Sig,K}
 	bits::UInt
@@ -111,13 +107,12 @@ mmv_index(a::Blade) = bits_to_mmv_index(bitsof(a), dimension(a))
 """
 	Multivector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
 
-A homogeneous multivector of grade `K ∈ ℕ` with storage type `S`.
+A homogeneous multivector of grade `K` with storage type `S`.
 
-Parameters
-----------
-- `Sig`: Metric signature defining the geometric algebra, retrieved with `signature()`.
-- `K`: Grade of the multivector, retrieved with `grade()`.
-- `S`: Storage type of the multivector components, generally a subtype of `AbstractVector`.
+# Parameters
+- `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
+- `K`: Grade of the multivector, retrieved with [`grade()`](@ref).
+- `S`: Storage type of the multivector components, usually a subtype of `AbstractVector`.
 """
 struct Multivector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
 	components::S
@@ -132,10 +127,9 @@ A (possibly inhomogeneous) multivector.
 
 All elements of a geometric algebra are representable as a `MixedMultivector`.
 
-Parameters
-----------
-- `Sig`: Metric signature defining the geometric algebra, retrieved with `signature()`.
-- `S`: Storage type of the multivector components, generally a subtype of `AbstractVector`.
+# Parameters
+- `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
+- `S`: Storage type of the multivector components, usually a subtype of `AbstractVector`.
 """
 struct MixedMultivector{Sig,S} <: AbstractMultivector{Sig}
 	components::S
@@ -214,7 +208,6 @@ largest_type(::MixedMultivector, ::AbstractMultivector) = MixedMultivector
 largest_type(::Multivector, ::HomogeneousMultivector) = Multivector
 largest_type(::Blade, ::Blade) = Blade
 largest_type(a, b) = largest_type(b, a)
-
 
 
 Blade(a::Blade) = a

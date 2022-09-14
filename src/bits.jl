@@ -16,8 +16,7 @@ Return the positions of the ones in the unsigned integer `bits`.
 Used to convert between representations of a unit blade.
 Inverse of [`indices_to_bits`](@ref).
 
-Examples
-===
+# Examples
 ```jldoctest
 julia> GeometricAlgebra.bits_to_indices(0b1001101)
 4-element Vector{Int64}:
@@ -52,8 +51,7 @@ Inverse of [`bits_to_indices`](@ref).
 	Produces incorrect results if elements of `indices` are greater than the number of
 	bits in `bits_scalar() <: Unsigned`.
 
-Examples
-===
+# Examples
 ```jldoctest
 julia> GeometricAlgebra.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
 "0000000000010011"
@@ -72,8 +70,9 @@ end
 """
 Return the smallest uint larger than the one given which has
 the same number of binary ones.
-Algorithm is [Gosper's hack](http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation).
+Algorithm is [Gosper’s hack](http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation).
 
+# Examples
 ```
 julia> GeometricAlgebra.next_bit_permutation(0b1011) |> bitstring
 "00001101"
@@ -112,8 +111,7 @@ Base.IteratorSize(::BitPermutations) = Base.IsInfinite()
 Generate basis blade bits of grade `k` in ascending order.
 Yields all basis blades in the dimension `dim`, if given, otherwise iterate indefinitely.
 
-Example
-===
+# Examples
 ```jldoctest
 julia> GeometricAlgebra.bits_of_grade(2, 4) .|> UInt8 .|> bitstring
 6-element Vector{String}:

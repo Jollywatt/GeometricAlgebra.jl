@@ -23,8 +23,7 @@ in `AbstractMultivector` subtypes to reduce visual noise.
 Methods may optionally be added for user-defined metric signatures,
 in a similar fashion to `Base.show`.
 
-Examples
-========
+# Examples
 
 ```jldoctest
 julia> sig = (+1,-1,-1,-1)
@@ -54,8 +53,7 @@ The fallback method is:
 show_basis_blade(io, sig, indices) = printstyled(io, "v"*join(string.(indices)); bold=true)
 ```
 
-Examples
-========
+# Examples
 ```julia
 julia> GeometricAlgebra.show_basis_blade(stdout, (1, 1, 1), [1, 3])
 v13
@@ -70,6 +68,7 @@ Blade{⟨++++⟩, 4, Int64} of grade 4:
 ```
 """
 show_basis_blade(io, sig, indices) = printstyled(io, "v"*join(string.(indices)); bold=true)
+show_basis_blade(io, sig::NamedTuple, indices) = printstyled(io, join(keys(sig)[indices]), bold=true)
 
 
 
@@ -103,13 +102,16 @@ Base.getindex(::MMetric{Sig}, i) where {Sig} = Sig[i]
 
 #= Convenience =#
 
-basis(sig) = Blade{sig}.(bits_of_grade(1, dimension(sig)) .=> 1)
-basis(dim::Integer) = basis(ntuple(i -> 1, dim))
+interpret_signature(dim::Integer) = ntuple(i -> 1, dim)
+interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i] for i in sig)
+interpret_signature(sig) = sig
 
+basis(sig) = let sig = interpret_signature(sig)
+	Blade{sig}.(bits_of_grade(1, dimension(sig)) .=> 1)
+end
 
 function generate_blades(combos, sig)
 	bvs = basis(sig)
-	sig = signature(eltype(bvs))
 	defs = Pair{Symbol}[]
 	for (ordered_bvs, indices) ∈ zip(combos(bvs), combos(1:dimension(sig)))
 		varname = sprint(show_basis_blade, sig, indices)
@@ -131,8 +133,7 @@ algebra with metric signature `sig`.
 
 See also [`@basisall`](@ref).
 
-Examples
-========
+# Examples
 
 ```jldoctest
 julia> @basis 3
@@ -145,7 +146,7 @@ julia> 1v2 + 3v12
 ```
 """
 macro basis(sig)
-	generate_blades(powerset, eval(sig))
+	generate_blades(powerset, interpret_signature(eval(sig)))
 end
 
 """
@@ -157,8 +158,7 @@ include all permutations of each blade.
 !!! warning
 	This defines ``2^n`` variables for an ``n`` dimensional signature!
 
-Examples
-========
+# Examples
 
 ```jldoctest
 julia> @basisall (+1,-1)
@@ -169,7 +169,7 @@ true
 ```
 """
 macro basisall(sig)
-	generate_blades(eval(sig)) do bvs
+	generate_blades(interpret_signature(eval(sig))) do bvs
 		Iterators.flatten(permutations.(powerset(bvs)))
 	end
 end

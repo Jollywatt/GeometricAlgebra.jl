@@ -1,15 +1,5 @@
 #= Blades =#
 
-# show basis blade only without scalar coefficient
-function show_basis_blade(io::IO, sig, bits)
-	# blades with higher grade than dimension are always zero,
-	#  and should not have basis blade printed
-	0 < count_ones(bits) <= dimension(sig) || return
-	label = basis_blade_label(sig, bits_to_indices(bits))
-	printstyled(io, label; bold=true)
-end
-show_basis_blade(io::IO, b::Blade) = show_basis_blade(io, signature(b), bitsof(b))
-
 plaintext_repr(io, a) = repr(a; context=IOContext(io, :color=>false))
 
 # make things line up right when printing in arrays
@@ -33,8 +23,11 @@ function show_blade(io::IO, b::Blade; compact=false)
 	subio = IOContext(io, :compact => true)
 	Base.show_unquoted(subio, b.coeff, 0, Base.operator_precedence(:*))
 	grade(b) == 0 && return
-	compact || print(io, " ") # coefficient--basis separator
-	show_basis_blade(io, b)
+	compact || print(io, " ") # coefficient–basis separator
+	# blades with higher grade than dimension are always zero,
+	#  and should not have basis blade printed
+	0 < grade(b) <= dimension(b) || return
+	show_basis_blade(io, signature(b), bits_to_indices(bitsof(b)))
 end
 
 
@@ -66,7 +59,7 @@ function show_multivector(io::IO, a::Multivector; indent=0)
 		print(io, " "^(L - l + indent))
 		Base.show_unquoted(io, a.components[i], 0, Base.operator_precedence(:*))
 		print(io, " "^(R - r), " ")
-		show_basis_blade(io, signature(a), bits)
+		show_basis_blade(io, signature(a), bits_to_indices(bits))
 	end
 end
 
@@ -112,9 +105,15 @@ end
 
 
 
-show_header(io::IO, a::MixedMultivector) = println(io, "$(typeof(a)):")
-show_header(io::IO, a::HomogeneousMultivector) = println(io, "Grade-$(grade(a)) $(typeof(a)):")
-
+function show_header(io::IO, a::Blade)
+	show(io, typeof(a))
+	println(io, ":")
+end
+function show_header(io::IO, a::CompositeMultivector)
+	print(io, length(a.components), "-component ")
+	show(io, typeof(a))
+	println(io, ":")
+end
 
 Base.show(io::IO, a::Blade) = show_blade(io, a; compact=true)
 function Base.show(io::IO, ::MIME"text/plain", a::Blade)
@@ -133,4 +132,54 @@ Base.show(io::IO, a::MixedMultivector) = show_mixedmultivector(io, a; inline=tru
 function Base.show(io::IO, ::MIME"text/plain", a::MixedMultivector)
 	show_header(io, a)
 	show_mixedmultivector(io, a; inline=false, indent=1)
+end
+
+
+
+
+
+#= Metric Signatures =#
+
+
+struct SignatureDisplayWrapper{Sig} end
+Base.show(io::IO, ::SignatureDisplayWrapper{Sig}) where {Sig} = show_signature(io, Sig)
+
+# use `show_signature` to display the first type parameter of multivector types
+# by wrapping `Sig` in `SignatureDisplayWrapper{Sig}()`
+function pretty_print_signature(io, T::Type)
+	if get(io, :compact, true)::Bool && Base.unwrap_unionall(T) isa DataType
+
+		# unwrap UnionAll and remember TypeVars
+		typevars = TypeVar[]
+		T = T
+		while T isa UnionAll
+			push!(typevars, T.var)
+			T = T.body
+		end
+
+		sig, other_parameters... = T.parameters
+		# wrap sig type parameter in pretty-printer
+		sig = sig isa TypeVar ? sig : SignatureDisplayWrapper{sig}()
+		S = T.name.wrapper{sig, other_parameters...}
+
+		# rewrap UnionAll in TypeVars
+		for p in reverse(typevars)
+			S = UnionAll(p, S)
+		end
+
+		invoke(show, Tuple{IO,Type}, io, S) # show with default method
+	else
+		invoke(show, Tuple{IO,Type}, io, T) # show with default method
+	end
+end
+
+Base.show(io::IO, T::Type{<:AbstractMultivector}) = pretty_print_signature(io, T)
+
+# # when type is displayed on its own, be explicit about pretty-printing to avoid confusing the user
+function Base.show(io::IO, ::MIME"text/plain", T::Type{<:AbstractMultivector})
+	compact = sprint(show, T, context = :compact => true)
+	full = sprint(show, T, context = :compact => false)
+	show(io, T)
+	compact == full && return
+	printstyled(io, " (pretty-printed ", full, ")", color = :light_black)
 end

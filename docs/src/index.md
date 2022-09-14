@@ -15,19 +15,19 @@ Construct multivectors by providing the metric signature and grade as type param
 
 ```jldoctest
 julia> u = Multivector{(1,1,1),1}([1, -1, 0])
-Grade-1 Multivector{(1, 1, 1), 1, Vector{Int64}}:
+3-component Multivector{⟨+++⟩, 1, Vector{Int64}}:
   1 v1
  -1 v2
   0 v3
 
 julia> v = Multivector{(1,1,1),2}(1:3)
-Grade-2 Multivector{(1, 1, 1), 2, UnitRange{Int64}}:
+3-component Multivector{⟨+++⟩, 2, UnitRange{Int64}}:
  1 v12
  2 v13
  3 v23
 
 julia> u*v + π
-MixedMultivector{(1, 1, 1), Vector{Float64}}:
+8-component MixedMultivector{⟨+++⟩, Vector{Float64}}:
  3.14159
  1.0 v1 + 1.0 v2 + -1.0 v3
  5.0 v123
@@ -37,14 +37,14 @@ You may also obtain an orthonormal basis for a metric signature:
 
 ```jldoctest
 julia> v = basis((-1,+1,+1,+1))
-4-element Vector{Blade{(-1, 1, 1, 1), 1, Int64}}:
+4-element Vector{Blade{⟨-+++⟩, 1, Int64}}:
  1v1
  1v2
  1v3
  1v4
 
 julia> exp(10000*2π*v[3]v[4])
-MixedMultivector{(-1, 1, 1, 1), Vector{Float64}}:
+16-component MixedMultivector{⟨-+++⟩, Vector{Float64}}:
  1.0
  -9.71365e-13 v34
 ```
@@ -94,7 +94,7 @@ julia> sig = (-1,+1,+1,+1)
 (-1, 1, 1, 1)
 
 julia> Multivector{sig,1}(1:4)
-Grade-1 Multivector{(-1, 1, 1, 1), 1, UnitRange{Int64}}:
+4-component Multivector{⟨-+++⟩, 1, UnitRange{Int64}}:
  1 v1
  2 v2
  3 v3
@@ -105,20 +105,20 @@ julia> signature(ans)
 
 ```
 
-Additionally, the `Sig` type parameter is used to carry metadata such as basis blade labels and the default storage type of multivector components via multiple dispatch.
+Additionally, the `Sig` type parameter carries metadata via multiple dispatch: basis blade labels and the default storage type for multivector components may be defined for each metric signature.
 
-```julia
+```jldoctest
 julia> struct DiracGamma end
 
 julia> GeometricAlgebra.dimension(::DiracGamma) = 4
 
 julia> Base.getindex(::DiracGamma, i) = i > 1 ? -1 : +1
 
-julia> GeometricAlgebra.basis_blade_label(::DiracGamma, indices) = join("γ"*collect("⁰¹²³")[i] for i in indices)
+julia> GeometricAlgebra.show_basis_blade(io, ::DiracGamma, indices) = print(io, join("γ".*GeometricAlgebra.superscript.(indices)))
 
-julia> Blade{DiracGamma()}(0b1011 => 42)
-Grade-3 Blade{DiracGamma(), 3, Int64}:
- 42 γ⁰γ¹γ³
+julia> prod(basis(DiracGamma()))
+Blade{DiracGamma(), 4, Int64}:
+ 1 γ¹γ²γ³γ⁴
 
 ```
 

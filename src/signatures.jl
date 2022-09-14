@@ -98,8 +98,78 @@ componentstype(::MMetric, N, T) = MVector{N,T}
 dimension(::MMetric{Sig}) where {Sig} = dimension(Sig)
 Base.getindex(::MMetric{Sig}, i) where {Sig} = Sig[i]
 
+
+
+
 #= Convenience =#
 
 basis(sig) = Blade{sig}.(bits_of_grade(1, dimension(sig)) .=> 1)
 basis(dim::Integer) = basis(ntuple(i -> 1, dim))
 
+
+function generate_blades(combos, sig)
+	bvs = basis(sig)
+	sig = signature(eltype(bvs))
+	defs = Pair{Symbol}[]
+	for (ordered_bvs, indices) ∈ zip(combos(bvs), combos(1:dimension(sig)))
+		varname = sprint(show_basis_blade, sig, indices)
+		isempty(varname) && continue
+		push!(defs, Symbol(varname) => prod(ordered_bvs))
+	end
+	quote
+		@info "Defined basis blades $($(join(first.(defs), ", ")))"
+		$([ :($(esc(k)) = $v) for (k, v) ∈ defs ]...)
+		nothing
+	end
+end
+
+"""
+	@basis sig
+
+Populate namespace with basis blades of every grade in the geometric
+algebra with metric signature `sig`.
+
+See also [`@basisall`](@ref).
+
+Examples
+========
+
+```jldoctest
+julia> @basis 3
+[ Info: Defined basis blades v, v1, v2, v3, v12, v13, v23, v123
+
+julia> 1v2 + 3v12
+8-component MixedMultivector{⟨+++⟩, Vector{Int64}}:
+ 1 v2
+ 3 v12
+```
+"""
+macro basis(sig)
+	generate_blades(powerset, eval(sig))
+end
+
+"""
+	@basisall sig
+
+Similarly to [`@basis`](@ref), populate namespace with basis blades, but
+include all permutations of each blade.
+
+!!! warning
+	This defines ``2^n`` variables for an ``n`` dimensional signature!
+
+Examples
+========
+
+```jldoctest
+julia> @basisall (+1,-1)
+[ Info: Defined basis blades v, v1, v2, v12, v21
+
+julia> v12 == -v21
+true
+```
+"""
+macro basisall(sig)
+	generate_blades(eval(sig)) do bvs
+		Iterators.flatten(permutations.(powerset(bvs)))
+	end
+end

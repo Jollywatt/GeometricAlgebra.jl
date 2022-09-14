@@ -131,4 +131,5 @@ Blade{DiracGamma(), 4, Int64}:
 
 | Optional methods | Description |
 |:-----------------|:------------|
-| `Multivector.basis_blade_label(sig, indices)` | String representation of basis blade of given indices.
+| `Multivector.show_signature(io, sig)` | Show the metric signature in a compact form.
+| `Multivector.show_basis_blade(io, sig, indices)` | Print the basis blade with the given indices.

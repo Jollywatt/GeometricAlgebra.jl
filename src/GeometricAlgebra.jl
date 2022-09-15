@@ -12,7 +12,7 @@ using Combinatorics: permutations, powerset
 export AbstractMultivector, HomogeneousMultivector
 export Blade, Multivector, MixedMultivector
 export basis, @basis, @basisall
-export signature, dimension, grade
+export signature, dimension, grade, ncomponents
 export geometric_prod, scalar_prod, wedge, ∧, reversion, involution
 
 include("bits.jl")

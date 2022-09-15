@@ -116,7 +116,7 @@ end
 
 # function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 # 	T = promote_type(eltype(a), eltype(b))
-# 	S = componentstype(Sig, mmv_size(Sig), T)
+# 	S = componentstype(Sig, ncomponents(Sig), T)
 # 	ab = zero(MixedMultivector{Sig,S})
 # 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 # 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
@@ -169,7 +169,7 @@ end
 
 function graded_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, grade_selector::Function) where {Sig}
 	T = promote_type(eltype(a), eltype(b))
-	S = componentstype(Sig, mmv_size(Sig), T)
+	S = componentstype(Sig, ncomponents(Sig), T)
 	ab = zero(MixedMultivector{Sig,S})
 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits

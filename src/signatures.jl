@@ -13,6 +13,22 @@ algebra’s defining signature.
 
 dimension(sig::Union{Tuple,NamedTuple}) = length(sig)
 
+
+"""
+	ncomponents(sig)
+	ncomponents(sig, k)
+
+Dimension of (the grade-`k` subspace of) the geometric algebra of metric
+signature `sig`, viewed as a vector space.
+
+If the dimension of the _underlying_ vector space in ``n``, then the algebra
+is ``2^n``-dimensional, and its grade-``k`` subspace ``\\binom{n}{k}``-dimensional.
+"""
+ncomponents(sig) = 2^dimension(sig)
+ncomponents(sig, k) = binomial(dimension(sig), k)
+
+
+
 """
 	show_signature(io, sig)
 
@@ -92,11 +108,15 @@ dimension(sig::EuclideanMetric) = sig.dim
 Base.getindex(::EuclideanMetric, i) = 1
 show_signature(io, sig::EuclideanMetric) = printstyled(io, sig.dim, "D", bold=true)
 
-struct MMetric{Sig} end
-componentstype(::MMetric, N, T) = MVector{N,T}
-dimension(::MMetric{Sig}) where {Sig} = dimension(Sig)
-Base.getindex(::MMetric{Sig}, i) where {Sig} = Sig[i]
 
+struct MetricWithStorage{Sig,S} end
+dimension(::MetricWithStorage{Sig}) where {Sig} = dimension(Sig)
+Base.getindex(::MetricWithStorage{Sig}, i) where {Sig} = Sig[i]
+componentstype(::MetricWithStorage{Sig,S}, N, T) where {Sig,S} = S{N,T}
+function show_signature(io, ::MetricWithStorage{Sig,S}) where {Sig,S}
+	print(io, nameof(S))
+	show_signature(io, Sig)
+end
 
 
 

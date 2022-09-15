@@ -1,5 +1,5 @@
 @generated function _generated_geometric_prod(a::CompositeMultivector{Sig}, b::CompositeMultivector{Sig}) where {Sig}
-	ncomps = mmv_size(Sig)
+	ncomps = ncomponents(Sig)
 
 	comps = [Expr[] for _ ∈ 1:ncomps]
 	for (ai, abits) ∈ enumerate(bitsof(a)), (bi, bbits) ∈ enumerate(bitsof(b))

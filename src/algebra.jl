@@ -35,8 +35,8 @@ end
 
 #= Scalar Multiplication =#
 
-scalar_multiply(a::Blade, b) = Blade{signature(a)}(bitsof(a) => a.coeff*b)
-scalar_multiply(a, b::Blade) = Blade{signature(b)}(bitsof(b) => a*b.coeff)
+scalar_multiply(a::Blade{Sig,K}, b) where {Sig,K} = Blade{Sig,K}(bitsof(a) => a.coeff*b)
+scalar_multiply(a, b::Blade{Sig,K}) where {Sig,K} = Blade{Sig,K}(bitsof(b) => a*b.coeff)
 
 scalar_multiply(a::CompositeMultivector, b) = constructor(a)(a.components*b)
 scalar_multiply(a, b::CompositeMultivector) = constructor(b)(a*b.components)
@@ -199,6 +199,7 @@ function power_by_squaring(a::CompositeMultivector{Sig,S}, p::Integer) where {Si
 end
 
 Base.:^(a::Blade, p::Integer) = power_with_scalar_square(a, scalarpart(a*a), p)
+Base.literal_pow(::typeof(^), a::Blade{Sig}, ::Val{2}) where {Sig} = Blade{Sig,0}(0 => geometric_square_factor(Sig, bitsof(a))*a.coeff^2)
 
 function Base.:^(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
 	# TODO: type stability?

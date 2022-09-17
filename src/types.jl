@@ -91,6 +91,11 @@ end
 Blade{Sig}(bits, coeff::T) where {Sig,T} = Blade{Sig,count_ones(bits),T}(bits, coeff)
 Blade{Sig}(pair::Pair) where {Sig} = Blade{Sig}(pair...)
 
+# warning: does’t check that K == count_ones(bits)
+Blade{Sig,K}(pair::Pair) where {Sig,K} = let (bits, coeff) = pair
+	Blade{Sig,K,typeof(coeff)}(bits, coeff)
+end
+
 bitsof(a::Blade) = a.bits
 
 mv_index(a::Blade) = bits_to_mv_index(bitsof(a))

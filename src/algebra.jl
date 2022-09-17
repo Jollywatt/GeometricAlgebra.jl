@@ -79,25 +79,10 @@ Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 #= Scalar Addition =#
 
-add_scalar!(a::Multivector{Sig,0}, b::Number) where {Sig} = (a.components[] += b; a)
-add_scalar!(a::MixedMultivector, b::Number) = (a.components[1] += b; a)
 
-add_scalar(a::Blade{Sig,0}, b::Number) where {Sig} = Blade{Sig}(0 => a.coeff + b)
-
-add_scalar(a::Multivector{Sig,0}, b::Number) where {Sig} = let T = promote_type(eltype(a), typeof(b))
-	add_scalar!(Multivector(a, T), b)
-end
-
-add_scalar(a::HomogeneousMultivector, b::Number) = let T = promote_type(eltype(a), typeof(b))
-	add_scalar!(MixedMultivector(a, T), b)
-end
-
+add_scalar(a::AbstractMultivector{Sig}, b::Number) where {Sig} = a + Blade{Sig}(0 => b)
 function add_scalar(a::MixedMultivector, b::Number)
-	# must be careful to preserve the type (but not the eltype) of the components array
-	T = promote_type(eltype(a), eltype(b))
-	comps = convert(with_eltype(typeof(a.components), T), a.components)
-	comps[1] += b
-	MixedMultivector{signature(a)}(comps)
+	constructor(a)(copy_setindex(a.components, a.components[1] + b, 1))
 end
 
 Base.:+(a::AbstractMultivector, b::Number) = add_scalar(a, b)

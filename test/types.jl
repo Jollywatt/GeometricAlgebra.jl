@@ -3,8 +3,8 @@ using GeometricAlgebra:
 	signature,
 	largest_type,
 	with_eltype,
-	MMetric
-using GeometricAlgebra.StaticArrays
+	MetricWithStorage
+using GeometricAlgebra.StaticArrays	
 
 @testset "constructors" begin
 	@test zero(Blade{(1,1)}(0b11 => 42)) === Blade{(1,1),0,Int}(0b00, 0)
@@ -55,10 +55,16 @@ end
 	end
 end
 
-@testset "MVector" begin
-	sig = MMetric{(1,1,1)}()
-	v = Blade{sig}.(bits_of_grade(1, 3) .=> 1)
+@testset "different storage types" begin
+	for S in [SVector, MVector]
+		sig = MetricWithStorage{(1,1,1),S}()
+		v = Blade{sig}.(bits_of_grade(1, 3) .=> 1)
 
-	@test Multivector(v[1]) isa Multivector{sig,1,<:MVector}
-	@test MixedMultivector(v[1]) isa MixedMultivector{sig,<:MVector}
+		@test Multivector(v[1]) isa Multivector{sig,1,<:S}
+		@test MixedMultivector(v[1]) isa MixedMultivector{sig,<:S}
+
+		for T in [Blade, Multivector, MixedMultivector]
+			@test isone(one(T(v[1])))
+		end
+	end
 end

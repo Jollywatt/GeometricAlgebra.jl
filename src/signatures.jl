@@ -24,7 +24,7 @@ signature `sig`, viewed as a vector space.
 If the dimension of the _underlying_ vector space in ``n``, then the algebra
 is ``2^n``-dimensional, and its grade-``k`` subspace ``\\binom{n}{k}``-dimensional.
 """
-ncomponents(sig) = 2^dimension(sig)
+ncomponents(sig) = 1 << dimension(sig)  # << constant folds whereas 2^dim doesn't
 ncomponents(sig, k) = binomial(dimension(sig), k)
 
 

@@ -1,5 +1,6 @@
 using GeometricAlgebra:
-	bits_of_grade
+	bits_of_grade,
+	MetricWithStorage
 
 @testset "==" begin
 	for sig in [(1,1), (-1,0,+1)], T in [Bool, Int, Float64], k in 1:3
@@ -133,4 +134,17 @@ end
 	@test reversion(3v[1]v[2] + v[3]v[4]) == 3v[2]v[1] + v[4]v[3]
 	@test reversion(1 + 2v[1] + 3v[2]v[3] + 4v[1]v[2]v[3]) == 1 + 2v[1] + 3v[3]v[2] + 4v[3]v[2]v[1]
 
+end
+
+
+@testset "different storage types" begin
+	for S in [SVector, MVector]
+		sig = MetricWithStorage{(1,1,1),S}()
+		v = basis(sig)
+
+		@test v[1]v[2] == ~(v[2]v[1])
+		@test 5.5Multivector(v[1]) + v[3] == v[3] + 5.5v[1]
+		@test 1 + v[1] == v[1] + 2.0 - v[2]^2
+		@test v[1]^2 + 8.81 == 9.81
+	end
 end

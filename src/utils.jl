@@ -10,9 +10,11 @@ length_from_type(T::Type{<:StaticVector}) = (length(T))
 
 zeroslike(::Type{Vector{T}}, n) where {T} = zeros(T, n)
 zeroslike(::Type{<:MVector{N,T}}, n) where {N,T} = zeros(MVector{n,T})
+zeroslike(::Type{<:SVector{N,T}}, n) where {N,T} = zeros(SVector{n,T})
 
 oneslike(::Type{Vector{T}}, n) where {T} = ones(T, n)
-onesslike(::Type{<:MVector{N,T}}, n) where {N,T} = ones(MVector{n,T})
+oneslike(::Type{<:MVector{N,T}}, n) where {N,T} = ones(MVector{n,T})
+oneslike(::Type{<:SVector{N,T}}, n) where {N,T} = ones(SVector{n,T})
 
 with_eltype(::Type{<:Vector}, T) = Vector{T}
 with_eltype(::Type{<:MVector{N}}, T) where N = MVector{N,T}
@@ -38,3 +40,16 @@ const SUBSCRIPT_DIGITS   = collect("₀₁₂₃₄₅₆₇₈₉")
 const SUPERSCRIPT_DIGITS = collect("⁰¹²³⁴⁵⁶⁷⁸⁹")
 subscript(n::Integer)   = join(SUBSCRIPT_DIGITS[begin .+ reverse(digits(n))])
 superscript(n::Integer) = join(SUPERSCRIPT_DIGITS[begin .+ reverse(digits(n))])
+
+
+
+function copy_setindex(a, val, I...)
+	T = promote_type(eltype(a), typeof(val))
+	a′ = with_eltype(typeof(a), T)(a)
+	if ismutable(a)
+		setindex!(a′, val, I...)
+		a′
+	else
+		setindex(a′, val, I...)
+	end
+end

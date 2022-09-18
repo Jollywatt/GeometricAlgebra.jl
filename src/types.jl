@@ -118,8 +118,7 @@ struct Multivector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
 end
 Multivector{Sig,K}(comps::S) where {Sig,K,S} = Multivector{Sig,K,S}(comps)
 
-mmv_offset(a::Multivector) = multivector_index_offset(grade(a), dimension(a))
-mmv_slice(a::Multivector) = mmv_slice(grade(a), dimension(a))
+mmv_slice(a::Multivector) = mmv_slice(Val(dimension(a)), Val(grade(a)))
 
 
 
@@ -182,8 +181,8 @@ Base.eltype(::OrType{<:Blade{Sig,K,T} where {Sig,K}}) where T = T
 Base.eltype(::OrType{<:CompositeMultivector{Sig,S}}) where {Sig,S} = eltype(S)
 
 
-bitsof(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = bits_of_grade(K, dimension(Sig))
-bitsof(::OrType{<:MixedMultivector{Sig}}) where {Sig} = mmv_index_to_bits(dimension(Sig))
+bitsof(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = mv_bits(Val(dimension(Sig)), Val(K))
+bitsof(::OrType{<:MixedMultivector{Sig}}) where {Sig} = mmv_bits(Val(dimension(Sig)))
 
 
 largest_type(::MixedMultivector, ::AbstractMultivector) = MixedMultivector
@@ -306,7 +305,7 @@ end
 
 #= Indexing and Iteration =#
 
-grade(a::MixedMultivector, k) = Multivector{signature(a),k}(a.components[mmv_slice(k, dimension(a))])
+grade(a::MixedMultivector, k) = Multivector{signature(a),k}(a.components[mmv_slice(Val(dimension(a)), Val(k))])
 
 scalarpart(a::Blade{Sig,0}) where {Sig} = a.coeff
 scalarpart(a::Blade) = zero(eltype(a))
@@ -321,5 +320,4 @@ isscalar(a::MixedMultivector) = all(iszero, a.components[2:end])
 
 
 nonzero_components(a::Blade) = [bitsof(a) => a.coeff][iszero(a.coeff) ? [] : [1]]
-nonzero_components(a::Multivector) = (bits => coeff for (bits, coeff) in zip(bits_of_grade(grade(a), dimension(a)), a.components) if !iszero(coeff))
-nonzero_components(a::MixedMultivector) = (bits => coeff for (bits, coeff) in zip(mmv_index_to_bits(dimension(a)), a.components) if !iszero(coeff))
+nonzero_components(a::CompositeMultivector) = (bits => coeff for (bits, coeff) in zip(bitsof(a), a.components) if !iszero(coeff))

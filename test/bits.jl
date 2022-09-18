@@ -2,10 +2,11 @@ using GeometricAlgebra:
 	bits_to_indices,
 	indices_to_bits,
 	BitPermutations,
-	mv_index_to_bits,
+	mv_bits,
+	mmv_bits,
 	bits_to_mv_index,
 	bits_to_mmv_index,
-	mmv_index_to_bits,
+	mmv_slice,
 	sign_from_swaps,
 	factor_from_squares,
 	geometric_prod_bits
@@ -26,31 +27,32 @@ end
 
 @testset "bits <-> multivector index" begin
 	cases = [
-		(1, 0) => 0b000,
-		(1, 1) => 0b001,
-		(2, 1) => 0b010,
-		(1, 2) => 0b011,
-		(3, 1) => 0b100,
-		(2, 2) => 0b101,
-		(3, 2) => 0b110,
-		(1, 3) => 0b111,
-		(1, 8) => 0b01111_1111,
-		(2, 8) => 0b10111_1111,
+		(3, 0, 1) => 0b000,
+		(3, 1, 1) => 0b001,
+		(3, 1, 2) => 0b010,
+		(3, 2, 1) => 0b011,
+		(3, 1, 3) => 0b100,
+		(3, 2, 2) => 0b101,
+		(3, 2, 3) => 0b110,
+		(3, 3, 1) => 0b111,
+		(8, 7, 1) => 0b01_111_111,
+		(8, 7, 2) => 0b10_111_111,
 	]
-	@testset "no. $(i) of grade $k: $bits" for ((i, k), bits) ∈ cases
-		@test mv_index_to_bits(i, k) == bits
+	@testset "no. $(i) of grade $k: $bits" for ((n, k, i), bits) ∈ cases
+		@test mv_bits(Val(n), Val(k))[i] == bits
 		@test bits_to_mv_index(bits) == i
-	end
-
-	for _ ∈ 1:10, bits ∈ (rand(UInt8), rand(UInt16))
-		# warning: bits_to_mv_index() is typically slow for UInt32 or higher
-		@test mv_index_to_bits(bits_to_mv_index(bits), count_ones(bits)) == bits
 	end
 end
 
 @testset "bits <-> mixed multivector index" begin
 	for dim ∈ 1:2:8, i ∈ 1:2:2^dim
-		@test bits_to_mmv_index(mmv_index_to_bits(i, dim), dim) == i
+		@test bits_to_mmv_index(mmv_bits(Val(dim))[i], dim) == i
+	end
+end
+
+@testset "mmv slices" begin
+	for n ∈ 0:8, k ∈ 0:n
+		@test mmv_bits(Val(n))[mmv_slice(Val(n), Val(k))] == mv_bits(Val(n), Val(k))
 	end
 end
 

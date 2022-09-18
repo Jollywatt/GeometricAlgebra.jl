@@ -8,6 +8,9 @@ bits_first_of_grade(T::Type{<:Unsigned}, k) = (one(T) << k) - one(T)
 bits_basis_vector(i) = unsigned(1) << (i - 1)
 
 
+#= Conversion from Indices to Bits =#
+
+
 """
 	bits_to_indices(bits)
 
@@ -103,8 +106,6 @@ end
 
 Base.IteratorSize(::BitPermutations) = Base.IsInfinite()
 
-
-
 """
 	bits_of_grade(k[, dim])
 
@@ -124,7 +125,57 @@ julia> GeometricAlgebra.bits_of_grade(2, 4) .|> UInt8 .|> bitstring
 ```
 """
 bits_of_grade(k) = BitPermutations(k)
-bits_of_grade(k, dim) = Iterators.take(BitPermutations(k), binomial(dim, k))
+bits_of_grade(k, n) = Iterators.take(BitPermutations(k), binomial(n, k))
+
+
+"""
+	mv_bits(::Val{N}, ::Val{K})
+
+Vector of unit blades corresponding to components of an `N`-dimensional `Multivector` of grade `K`.
+Multivector components are sorted by the numerical value of the unit blade.
+
+# Examples
+```jldoctest
+julia> GeometricAlgebra.mv_bits(Val(4), Val(2)) .|> UInt8 .|> bitstring
+6-element Vector{String}:
+ "00000011"
+ "00000101"
+ "00000110"
+ "00001001"
+ "00001010"
+ "00001100"
+```
+"""
+@generated function mv_bits(::Val{N}, ::Val{K}) where {N,K}
+	collect(bits_of_grade(K, N))
+end
+
+"""
+	mmv_bits(::Val{N})
+
+Vector of unit blades corresponding to components of an `N`-dimensional `MixedMultivector`.
+Mixed multivector components are ordered first by grade then by numerical value of the unit blade,
+so that the grade `K` components are contiguous and given by `mv_bits(Val(N), Val(K))`
+
+# Examples
+```jldoctest
+julia> GeometricAlgebra.mmv_bits(Val(3)) .|> UInt8 .|> bitstring
+8-element Vector{String}:
+ "00000000"
+ "00000001"
+ "00000010"
+ "00000100"
+ "00000011"
+ "00000101"
+ "00000110"
+ "00000111"
+
+```
+"""
+@generated function mmv_bits(::Val{N}) where {N}
+	vcat(collect.(bits_of_grade.(0:N, N))...)
+end
+
 
 """
 	bits_to_mv_index(bits::Unsigned)
@@ -148,25 +199,11 @@ function bits_to_mv_index(bits::Unsigned)
 	ith
 end
 
-"""
-	mv_index_to_bits(ith, k)
 
-Convert a linear index for grade-`k` `Multivector` components
-into the corresponding unit blade.
-"""
-function mv_index_to_bits(ith, k)
-	bits = bits_scalar()
-	for b ∈ Iterators.take(bits_of_grade(k), ith)
-		bits = b
-	end
-	bits
-end
-
-
-function multivector_index_offset(k, dim)
+function multivector_index_offset(n, k)
 	ith = 0
 	for i in 0:k - 1
-		ith += binomial(dim, i)
+		ith += binomial(n, i)
 	end
 	ith
 end
@@ -177,34 +214,19 @@ end
 Convert a unit blade `bits` to a linear index for accessing components of a `MixedMultivector`. 
 """
 function bits_to_mmv_index(bits::Unsigned, dim)
-	multivector_index_offset(count_ones(bits), dim) + bits_to_mv_index(bits)
+	multivector_index_offset(dim, count_ones(bits)) + bits_to_mv_index(bits)
 end
 
 # range of MixedMultivector corresponding to the grade k components
-mmv_slice(k, dim) = multivector_index_offset(k, dim) .+ (1:binomial(dim, k))
+@generated mmv_slice(::Val{N}, ::Val{K}) where {N,K} = multivector_index_offset(N, K) .+ (1:binomial(N, K))
 
 
-const MULTIVECTOR_INDICES = Dict{Int,Vector{UInt}}()
+
+#= Geometric Products of Bits =#
+
 
 """
-	mmv_index_to_bits(ith, dim)
-
-Convert a linear index for `MixedMultivector` components into the corresponding
-unit blade. Uses a lookup table `$(@__MODULE__).MULTIVECTOR_INDICES` for speed.
-"""
-function mmv_index_to_bits(ith, dim)
-	mmv_index_to_bits(dim)[ith]
-end
-function mmv_index_to_bits(dim)
-	if !(dim in keys(MULTIVECTOR_INDICES))
-		bits = unsigned.(0:2^dim - 1)
-		MULTIVECTOR_INDICES[dim] = bits[sortperm(bits_to_mmv_index.(bits, dim))]
-	end
-	MULTIVECTOR_INDICES[dim]
-end
-
-"""
-Compute sign flips of blade product due to transposing basis vectors.
+Compute sign flips of blade product due to transposing basis vectors into sorted order.
 (The full sign of the product will also depend on the basis norms.)
 """
 function sign_from_swaps(a::Unsigned, b::Unsigned)

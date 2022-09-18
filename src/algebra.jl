@@ -146,7 +146,7 @@ scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = zero(promote
 
 
 function scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig}
-	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), mmv_index_to_bits(dimension(Sig))) .* (a.components .* b.components)))
+	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.components .* b.components)))
 end
 scalar_prod(a::AbstractMultivector, b::AbstractMultivector) = let T = largest_type(a, b)
 	scalar_prod(T(a), T(b))
@@ -224,7 +224,7 @@ function graded_multiply(f, a::MixedMultivector{Sig}) where Sig
 	comps = copy(a.components)
 	dim = dimension(Sig)
 	for k ∈ 0:dim
-		comps[mmv_slice(k, dim)] *= f(k)
+		comps[mmv_slice(Val(dim), Val(k))] *= f(k)
 	end
 	MixedMultivector{Sig}(comps)
 end

@@ -2,6 +2,8 @@ using GeometricAlgebra:
 	bits_of_grade,
 	MetricWithStorage
 
+using GeometricAlgebra.StaticArrays
+
 @testset "==" begin
 	for sig in [(1,1), (-1,0,+1)], T in [Bool, Int, Float64], k in 1:3
 		@test zero(Blade{sig,k,T}) == Blade{sig}(0 => zero(T))

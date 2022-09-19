@@ -92,6 +92,7 @@ Base.:-(a::AbstractMultivector, b::Number) = add_scalar(a, -b)
 Base.:-(a::Number, b::AbstractMultivector) = add_scalar(-b, a)
 
 
+
 #= Geometric Multiplication =#
 
 function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
@@ -121,21 +122,6 @@ Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
 #= Derived Products =#
 
-function homogeneous_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, k::Int) where {Sig}
-	T = promote_type(eltype(a), eltype(b))
-	S = with_eltype(componentstype(Sig), T)
-	ab = zero(MixedMultivector{Sig,S})
-	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
-		bits = abits ⊻ bbits
-		if count_ones(bits) == k
-			factor = sign_from_swaps(abits, bbits)*factor_from_squares(Sig, abits & bbits)
-			i = bits_to_mmv_index(bits, dimension(Sig))
-			ab.components[i] += factor*(acoeff*bcoeff)
-		end
-	end
-	ab
-end
-
 scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalarpart(a*b) : zero(promote_type(eltype(a), eltype(b)))
 scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = zero(promote_type(eltype(a), eltype(b)))
 
@@ -151,6 +137,8 @@ end
 scalar_prod(a::AbstractMultivector, b::AbstractMultivector) = let T = largest_type(a, b)
 	scalar_prod(T(a), T(b))
 end
+
+
 
 function graded_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, grade_selector::Function) where {Sig}
 	T = promote_type(eltype(a), eltype(b))

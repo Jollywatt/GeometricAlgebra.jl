@@ -1,6 +1,7 @@
 using GeometricAlgebra:
 	bits_of_grade,
-	MetricWithStorage
+	MetricWithStorage,
+	isapproxzero
 
 using GeometricAlgebra.StaticArrays
 
@@ -24,6 +25,7 @@ using GeometricAlgebra.StaticArrays
 	for T1 ∈ Ts, T2 ∈ Ts
 		@test T1(v) == T2(v)
 	end
+
 end
 
 @testset "≈" begin
@@ -41,6 +43,10 @@ end
 	for T1 ∈ Ts, T2 ∈ Ts
 		@test T1(v[1]) ≈ T2(v[2]) atol=1e-6
 	end
+
+	v = Blade{(1,1,1)}(0b110 => 1)
+	@test isapproxzero(eps()v; atol=eps())
+	@test isapproxzero(eps()v + 0; atol=eps())
 end
 
 @testset "scalar *" begin
@@ -73,6 +79,8 @@ end
 		@test 1 - v[1] == -(v[1] - 1)
 		@test Multivector(v[1]) + 0.5 == v[1] + 1//2
 	end
+
+	@test (1:3)'v == 1v[1] + 2v[2] + 3v[3]
 end
 
 
@@ -86,6 +94,8 @@ end
 	@test (v[1]v[1] + v[2])v[2] == v[2]v[2] - v[2]
 	@test v[1]v[2]v[3] == v[2]v[3]v[1] == v[3]v[1]v[2]
 	@test 4 == 2*(v[2] + v[3])*(v[2] + v[3])
+
+	@test GeometricAlgebra.geometric_prod(v[1], 2) == 2v[1]
 
 	Ts = [Blade, Multivector, MixedMultivector]
 	for T1 in Ts, T2 in Ts
@@ -110,6 +120,8 @@ end
 
 	@test v[1]∧v[2] == -v[2]∧v[1] == v[1]v[2]
 	@test (v[1] + v[2])∧v[2] == v[1]v[2]
+
+	@test v[1]∧10 == 2∧v[1]∧5 == 10v[1]
 	
 end
 

@@ -279,8 +279,9 @@ function MixedMultivector(a::Multivector{Sig,K,S′}, T=eltype(S′)) where {Sig
 	if ismutabletype(S)
 		add!(zero(MixedMultivector{Sig,S}), a) # ensure a copy is made
 	else
-		nbefore = mmv_offset(a) - 1
-		nafter  = N - ncomponents(a) - nbefore
+		slice = mmv_slice(a)
+		nbefore = first(slice) - 1
+		nafter = N - last(slice)
 
 		comps = (ntuple(i -> zero(T), nbefore)..., a.components..., ntuple(i -> zero(T), nafter)...)
 		MixedMultivector{Sig,S}(S(comps))

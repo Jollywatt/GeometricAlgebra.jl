@@ -32,7 +32,7 @@ function score()
 	@info "Overall coverage: $percentage%"
 end
 
-clear_coverage_files() = run(`bash -c "rm $project_root/**/*.cov"`)
+clear_coverage_files() = run(`bash -c "rm -f $project_root/**/*.cov"`)
 
 
 if isempty(ARGS)

@@ -45,7 +45,7 @@ scalar_multiply(a, b::CompositeMultivector) = constructor(b)(a*b.components)
 
 Base.:*(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
 Base.:*(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
-Base.:-(a::AbstractMultivector) = -one(eltype(a))*a
+Base.:-(a::AbstractMultivector) = -realone(eltype(a))*a
 
 promote_to(T, x) = convert(promote_type(T, typeof(x)), x)
 Base.:/(a::AbstractMultivector, b::Scalar) = a*inv(promote_to(eltype(a), b))

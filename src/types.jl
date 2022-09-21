@@ -303,7 +303,17 @@ end
 
 
 
+function Base.similar(M::Type{Multivector{Sig,K}}, aa::AbstractMultivector...) where {Sig,K}
+	T = promote_type(eltype.(aa)...)
+	C = componentstype(Sig, ncomponents(M), T)
+	Multivector{Sig,K,C}
+end
 
+function Base.similar(M::Type{MixedMultivector{Sig}}, aa::AbstractMultivector...) where {Sig}
+	T = promote_type(eltype.(aa)...)
+	C = componentstype(Sig, ncomponents(M), T)
+	MixedMultivector{Sig,C}
+end
 
 
 #= Indexing and Iteration =#
@@ -321,6 +331,5 @@ isscalar(a::HomogeneousMultivector{Sig,0}) where {Sig} = true
 isscalar(a::HomogeneousMultivector) = iszero(a)
 isscalar(a::MixedMultivector) = all(isrealzero, a.components[2:end])
 
-
-nonzero_components(a::Blade) = [bitsof(a) => a.coeff][isrealzero(a.coeff) ? [] : [1]]
-nonzero_components(a::CompositeMultivector) = (bits => coeff for (bits, coeff) in zip(bitsof(a), a.components) if !isrealzero(coeff))
+blades(a::Blade) = [a]
+blades(a::CompositeMultivector{Sig}) where {Sig} = [Blade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.components)]

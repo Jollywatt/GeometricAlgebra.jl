@@ -104,15 +104,11 @@ function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
 end
 
 function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	T = promote_type(eltype(a), eltype(b))
-	S = componentstype(Sig, ncomponents(Sig), T)
-	ab = zero(MixedMultivector{Sig,S})
-	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
-		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-		i = bits_to_mmv_index(bits, dimension(Sig))
-		ab.components[i] += factor*(acoeff*bcoeff)
+	c = zero(similar(MixedMultivector{Sig}, a, b))
+	for ai ∈ blades(a), bi ∈ blades(b)
+		c += ai*bi
 	end
-	ab
+	c
 end
 
 geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
@@ -124,13 +120,13 @@ Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
 #= Derived Products =#
 
-scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalarpart(a*b) : zero(promote_type(eltype(a), eltype(b)))
-scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = zero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalarpart(a*b) : realzero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = realzero(promote_type(eltype(a), eltype(b)))
 
 function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
 	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bits_of_grade(K, dimension(Sig))) .* (a.components .* b.components)))
 end
-scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = zero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = realzero(promote_type(eltype(a), eltype(b)))
 
 
 function scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig}
@@ -143,18 +139,14 @@ end
 
 
 function graded_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, grade_selector::Function) where {Sig}
-	T = promote_type(eltype(a), eltype(b))
-	S = componentstype(Sig, ncomponents(Sig), T)
-	ab = zero(MixedMultivector{Sig,S})
-	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
-		bits = abits ⊻ bbits
-		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
-			factor = sign_from_swaps(abits, bbits)*factor_from_squares(Sig, abits & bbits)
-			i = bits_to_mmv_index(bits, dimension(Sig))
-			ab.components[i] += factor*(acoeff*bcoeff)
+	c = zero(similar(MixedMultivector{Sig}, a, b))
+	for ai ∈ blades(a), bi ∈ blades(b)
+		ci = ai*bi
+		if grade(ci) == grade_selector(grade(ai), grade(bi))
+			c += ci
 		end
 	end
-	ab
+	c
 end
 
 # this is correct assuming grade_selector(k, 0) == k == grade_selector(0, k)

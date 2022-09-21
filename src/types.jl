@@ -237,13 +237,14 @@ Blade(a::Blade) = a
 
 
 # Multivector <- Blade
-function Multivector(a::Blade{Sig,K,T′}, T=T′) where {Sig,K,T′}
+Multivector(a::Blade) = Multivector(a, numberorany(eltype(a)))
+function Multivector(a::Blade{Sig,K}, T) where {Sig,K}
 	S = componentstype(Sig, ncomponents(Sig, K), T)
 	if ismutabletype(S)
 		add!(zero(Multivector{Sig,K,S}), a)
 	else
 		j = mv_index(a)
-		comps = ntuple(i -> i == j ? T(a.coeff) : realzero(T), length_from_type(S))
+		comps = ntuple(i -> i == j ? convert(T, a.coeff) : realzero(T), length_from_type(S))
 		Multivector{Sig,K,S}(S(comps))
 	end
 end
@@ -261,27 +262,28 @@ end
 
 
 # MixedMultivector <- Blade
-function MixedMultivector(a::Blade{Sig,K,T′}, T=T′) where {Sig,K,T′}
+MixedMultivector(a::Blade) = MixedMultivector(a, numberorany(eltype(a)))
+function MixedMultivector(a::Blade{Sig,K}, T) where {Sig,K}
 	S = componentstype(Sig, ncomponents(Sig), T)
 	if ismutabletype(S)
 		add!(zero(MixedMultivector{Sig,S}), a)
 	else
 		j = mmv_index(a)
-		comps = ntuple(i -> i == j ? T(a.coeff) : zero(T), length_from_type(S))
+		comps = ntuple(i -> i == j ? convert(T, a.coeff) : realzero(T), length_from_type(S))
 		MixedMultivector{Sig,S}(S(comps))
 	end
 end
 
 # MixedMultivector <- Multivector
-function MixedMultivector(a::Multivector{Sig,K,S′}, T=eltype(S′)) where {Sig,K,S′}
-	N = ncomponents(Sig)
-	S = componentstype(Sig, N, T)
+MixedMultivector(a::Multivector) = MixedMultivector(a, numberorany(eltype(a)))
+function MixedMultivector(a::Multivector{Sig,K}, T) where {Sig,K}
+	S = componentstype(Sig, ncomponents(Sig), T)
 	if ismutabletype(S)
 		add!(zero(MixedMultivector{Sig,S}), a) # ensure a copy is made
 	else
 		slice = mmv_slice(a)
 		nbefore = first(slice) - 1
-		nafter = N - last(slice)
+		nafter = length_from_type(S) - last(slice)
 
 		comps = (ntuple(i -> realzero(T), nbefore)..., a.components..., ntuple(i -> realzero(T), nafter)...)
 		MixedMultivector{Sig,S}(S(comps))

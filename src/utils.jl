@@ -49,6 +49,8 @@ zeroslike(::Type{<:Vector}, n) = let a = zeros(Int, n)
 	convert(with_eltype(typeof(a), Any), a)
 end
 
+numberorany(T::Type{<:Number}) = T
+numberorany(::Type) = Any
 
 
 #= Miscellaneous =#

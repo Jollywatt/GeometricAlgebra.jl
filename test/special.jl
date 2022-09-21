@@ -12,7 +12,7 @@ using GeometricAlgebra:
 		for sig in [
 			EuclideanMetric(dim),
 			mixed_sig[1:dim],
-		], trials in 1:10
+		], trials in 1:5
 			a = MixedMultivector{sig}(rand(2^dim))
 			@test inv(a)*a ≈ 1 rtol=1e-6
 			@test 1 ≈ inv(a)*a rtol=1e-6
@@ -24,7 +24,7 @@ end
 	v = Blade{(1,1)}.(bits_of_grade(1, 2) .=> 1)
 	@test exp(10000*2pi*v[1]v[2]) ≈ 1
 	
-	for dim in 1:5, trials in 1:10
+	for dim in 1:5, trials in 1:5
 		a = MixedMultivector{EuclideanMetric(dim)}(big.(randn(2^dim)))
 		@test exp(a)exp(-a) ≈ 1
 		@test inv(exp(a)) ≈ exp(-a)

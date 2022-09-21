@@ -1,34 +1,25 @@
-@generated function _generated_geometric_prod(a::CompositeMultivector{Sig}, b::CompositeMultivector{Sig}) where {Sig}
-	ncomps = ncomponents(Sig)
-
-	compexprs = [Expr[] for _ ∈ 1:ncomps]
-	for (ai, abits) ∈ enumerate(bitsof(a)), (bi, bbits) ∈ enumerate(bitsof(b))
-		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-		i = bits_to_mmv_index(bits, dimension(Sig))
-		push!(compexprs[i], :( $factor * (ac[$ai] * bc[$bi]) ))
-	end
-
-	T = promote_type(eltype(a), eltype(b))
-	S = componentstype(Sig, ncomps, T)
-	if ismutabletype(S)
-		assignments = [:( mmv.components[$i] = +($(terms...)) )
-			for (i, terms) in enumerate(compexprs) if !isempty(terms)]
-		quote
-			ac, bc = a.components, b.components
-			mmv = zero(MixedMultivector{$Sig,$S})
-			$(assignments...)
-			return mmv
-		end
-	else
-		args = [isempty(terms) ? zero(T) : :( +($(terms...)) )
-			for terms in compexprs]
-		quote
-			ac, bc = a.components, b.components
-			comps = $S($(args...))
-			MixedMultivector{$Sig,$S}(comps)
-		end
-	end
+function symbolic_components(label, dims...)
+	var = SymbolicUtils.Sym{Array{length(dims),Real}}(label)
+	indices = Iterators.product(Base.OneTo.(dims)...)
+	[SymbolicUtils.Term{Real}(getindex, [var, I...]) for I in indices]
 end
 
-_generated_geometric_prod(a::CompositeMultivector{Sig}, b::Blade{Sig}) where {Sig} = _generated_geometric_prod(a, Multivector(b))
-_generated_geometric_prod(a::Blade{Sig}, b::CompositeMultivector{Sig}) where {Sig} = _generated_geometric_prod(Multivector(a), b)
+
+
+with_eltype(::Type{<:Multivector{Sig,K,C}}, T) where {Sig,K,C} = Multivector{Sig,K,with_eltype(C, T)}
+with_eltype(::Type{<:MixedMultivector{Sig,C}}, T) where {Sig,C} = MixedMultivector{Sig,with_eltype(C, T)}
+
+function symbolic_multivector(T::Type{<:CompositeMultivector{Sig,C}}, label) where {Sig,C}
+	with_eltype(T, Any)(symbolic_components(label, ncomponents(T)))
+end
+symbolic_multivector(a::AbstractMultivector, label) = symbolic_multivector(typeof(a), label)
+
+
+
+function compile_multivector_function(f, x...)
+	syms = Symbol.("x".*string.(1:length(x)))
+	x_symb = symbolic_multivector.(x, syms)
+	y_symb = f(x_symb...)
+
+	comps = y_symb.components
+end

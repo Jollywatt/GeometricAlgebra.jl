@@ -48,7 +48,7 @@ julia> GeometricAlgebra.show_multivector(stdout, a)
 ```
 """
 function show_multivector(io::IO, a::Multivector; indent=0)
-	iszero(a) && return print(io, " "^indent, zero(eltype(a)))
+	iszero(a) && return print(io, " "^indent, realzero(eltype(a)))
 
 	alignments = Base.alignment.(Ref(io), a.components)
 	L = maximum(first.(alignments))
@@ -66,12 +66,12 @@ end
 
 function show_multivector_inline(io::IO, a::Multivector; compact=false, showzeros=false)
 	if iszero(a)
-		print(io, zero(eltype(a)))
+		print(io, realzero(eltype(a)))
 		return
 	end
 	isfirst = true
 	for (bits, coeff) in zip(bits_of_grade(grade(a), dimension(a)), a.components)
-		(!showzeros || compact) && iszero(coeff) && continue
+		(!showzeros || compact) && isrealzero(coeff) && continue
 		isfirst ? isfirst = false : print(io, " + ")
 		show_blade(io, Blade{signature(a)}(bits => coeff); compact)
 	end
@@ -84,7 +84,7 @@ Display an inhomogeneous `MixedMultivector` with each grade on a new line.
 function show_mixedmultivector(io::IO, a::MixedMultivector; inline, indent=0)
 	firstline = true
 	if iszero(a)
-		print(io, " "^indent, zero(eltype(a)))
+		print(io, " "^indent, realzero(eltype(a)))
 		return
 	end
 	for k ∈ 0:dimension(a)

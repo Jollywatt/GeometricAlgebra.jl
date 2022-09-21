@@ -197,26 +197,26 @@ largest_type(a, b) = largest_type(b, a)
 
 #= Constructors =#
 
-constructor(::Blade{Sig,K}) where {Sig,K} = Blade{Sig,K}
-constructor(::Multivector{Sig,K}) where {Sig,K} = Multivector{Sig,K}
-constructor(::MixedMultivector{Sig}) where {Sig} = MixedMultivector{Sig}
+constructor(::OrType{<:Blade{Sig,K}}) where {Sig,K} = Blade{Sig,K}
+constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
+constructor(::OrType{<:MixedMultivector{Sig}}) where {Sig} = MixedMultivector{Sig}
 
 Base.copy(a::CompositeMultivector) = constructor(a)(copy(a.components))
 
-Base.zero(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => zero(T))
+Base.zero(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => realzero(T))
 Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
 Base.zero(a::OrType{<:MixedMultivector{Sig,S}}) where {Sig,S} = MixedMultivector{Sig}(zeroslike(S, ncomponents(a)))
 
-Base.iszero(a::Blade) = iszero(a.coeff)
-Base.iszero(a::CompositeMultivector) = all(iszero, a.components)
+Base.iszero(a::Blade) = isrealzero(a.coeff)
+Base.iszero(a::CompositeMultivector) = all(isrealzero, a.components)
 
-Base.one(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => one(T))
+Base.one(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => realone(T))
 Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,0}(oneslike(S, 1))
-Base.one(a::OrType{<:MixedMultivector}) = zero(a) + one(eltype(a))
+Base.one(a::OrType{<:MixedMultivector}) = zero(a) + realone(eltype(a))
 
 Base.isone(a::Blade) = iszero(grade(a)) && isone(a.coeff)
 Base.isone(a::Multivector) = iszero(grade(a)) && isone(a.components[1])
-Base.isone(a::MixedMultivector) = isone(a.components[1]) && all(iszero, a.components[2:end])
+Base.isone(a::MixedMultivector) = isrealone(a.components[1]) && all(isrealzero, a.components[2:end])
 
 
 
@@ -243,7 +243,7 @@ function Multivector(a::Blade{Sig,K,T′}, T=T′) where {Sig,K,T′}
 		add!(zero(Multivector{Sig,K,S}), a)
 	else
 		j = mv_index(a)
-		comps = ntuple(i -> i == j ? T(a.coeff) : zero(T), length_from_type(S))
+		comps = ntuple(i -> i == j ? T(a.coeff) : realzero(T), length_from_type(S))
 		Multivector{Sig,K,S}(S(comps))
 	end
 end
@@ -283,7 +283,7 @@ function MixedMultivector(a::Multivector{Sig,K,S′}, T=eltype(S′)) where {Sig
 		nbefore = first(slice) - 1
 		nafter = N - last(slice)
 
-		comps = (ntuple(i -> zero(T), nbefore)..., a.components..., ntuple(i -> zero(T), nafter)...)
+		comps = (ntuple(i -> realzero(T), nbefore)..., a.components..., ntuple(i -> realzero(T), nafter)...)
 		MixedMultivector{Sig,S}(S(comps))
 	end
 end
@@ -320,5 +320,5 @@ isscalar(a::HomogeneousMultivector) = iszero(a)
 isscalar(a::MixedMultivector) = all(iszero, a.components[2:end])
 
 
-nonzero_components(a::Blade) = [bitsof(a) => a.coeff][iszero(a.coeff) ? [] : [1]]
-nonzero_components(a::CompositeMultivector) = (bits => coeff for (bits, coeff) in zip(bitsof(a), a.components) if !iszero(coeff))
+nonzero_components(a::Blade) = [bitsof(a) => a.coeff][isrealzero(a.coeff) ? [] : [1]]
+nonzero_components(a::CompositeMultivector) = (bits => coeff for (bits, coeff) in zip(bitsof(a), a.components) if !isrealzero(coeff))

@@ -45,6 +45,7 @@ Base.:*(a::AbstractMultivector, b::Number) = scalar_multiply(a, b)
 Base.:*(a::Number, b::AbstractMultivector) = scalar_multiply(a, b)
 Base.:-(a::AbstractMultivector) = -one(eltype(a))*a
 
+promote_to(T, x) = convert(promote_type(T, typeof(x)), x)
 Base.:/(a::AbstractMultivector, b::Number) = a*inv(promote_to(eltype(a), b))
 Base.:\(a::Number, b::AbstractMultivector) = inv(promote_to(eltype(b), a))*b
 
@@ -70,7 +71,7 @@ end
 Base.:+(As::Multivector{Sig,K}...) where {Sig,K} = Multivector{Sig,K}(sum(a.components for a ∈ As))
 Base.:+(As::MixedMultivector{Sig}...) where {Sig} = MixedMultivector{Sig}(sum(a.components for a ∈ As))
 
-# convert unalike to alike
+# convert unalike to alike # TODO: reduce intermediate allocations
 Base.:+(As::HomogeneousMultivector{Sig,K}...) where {Sig,K} = +(Multivector.(As)...)
 Base.:+(As::AbstractMultivector{Sig}...) where {Sig} = +(MixedMultivector.(As)...)
 
@@ -100,18 +101,17 @@ function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
 	Blade{Sig}(bits => factor*(a.coeff*b.coeff))
 end
 
-# function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-# 	T = promote_type(eltype(a), eltype(b))
-# 	S = componentstype(Sig, ncomponents(Sig), T)
-# 	ab = zero(MixedMultivector{Sig,S})
-# 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
-# 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-# 		i = bits_to_mmv_index(bits, dimension(Sig))
-# 		ab.components[i] += factor*(acoeff*bcoeff)
-# 	end
-# 	ab
-# end
-geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig} = _generated_geometric_prod(a, b)
+function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+	T = promote_type(eltype(a), eltype(b))
+	S = componentstype(Sig, ncomponents(Sig), T)
+	ab = zero(MixedMultivector{Sig,S})
+	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
+		factor, bits = geometric_prod_bits(Sig, abits, bbits)
+		i = bits_to_mmv_index(bits, dimension(Sig))
+		ab.components[i] += factor*(acoeff*bcoeff)
+	end
+	ab
+end
 
 geometric_prod(a::AbstractMultivector, b::Number) = scalar_multiply(a, b)
 geometric_prod(a::Number, b::AbstractMultivector) = scalar_multiply(a, b)

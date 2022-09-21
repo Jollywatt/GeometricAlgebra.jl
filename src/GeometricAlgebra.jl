@@ -8,6 +8,7 @@ module GeometricAlgebra
 
 using StaticArrays
 using Combinatorics: permutations, powerset
+using SymbolicUtils
 
 export AbstractMultivector, HomogeneousMultivector
 export Blade, Multivector, MixedMultivector

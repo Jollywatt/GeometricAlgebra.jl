@@ -2,25 +2,56 @@
 	ismutabletype(a::DataType) = a.mutable
 end
 
-promote_to(T, x) = convert(promote_type(T, typeof(x)), x)
+#= Array-like Type Utilities =#
+
 
 # length of fixed-size contained from its type
 length_from_type(::Type{<:NTuple{N}}) where {N} = (N)
 length_from_type(T::Type{<:StaticVector}) = (length(T))
 
-zeroslike(::Type{Vector{T}}, n) where {T} = zeros(T, n)
+with_eltype(::Type{<:Vector}, T) = Vector{T}
+with_eltype(::Type{<:MVector{N}}, T) where {N} = MVector{N,T}
+with_eltype(::Type{<:SVector{N}}, T) where {N} = SVector{N,T}
+with_eltype(::Type{<:NTuple{N}}, T) where {N} = NTuple{N,T}
+
+
+
+zeroslike(::Type{Vector{T}}, n) where {T<:Number} = zeros(T, n)
 zeroslike(::Type{<:MVector{N,T}}, n) where {N,T} = zeros(MVector{n,T})
 zeroslike(::Type{<:SVector{N,T}}, n) where {N,T} = zeros(SVector{n,T})
 
-oneslike(::Type{Vector{T}}, n) where {T} = ones(T, n)
+oneslike(::Type{Vector{T}}, n) where {T<:Number} = ones(T, n)
 oneslike(::Type{<:MVector{N,T}}, n) where {N,T} = ones(MVector{n,T})
 oneslike(::Type{<:SVector{N,T}}, n) where {N,T} = ones(SVector{n,T})
 
-with_eltype(::Type{<:Vector}, T) = Vector{T}
-with_eltype(::Type{<:MVector{N}}, T) where N = MVector{N,T}
-with_eltype(::Type{<:SVector{N}}, T) where N = SVector{N,T}
-with_eltype(::Type{<:NTuple{N}}, T) where N = NTuple{N,T}
-# with_size(V::Type{<:Vector}, N) = V
+
+#= Tools to handle symbolic eltypes =#
+
+# Multivectors with purely symbolic components have eltype T<:Symbolic,
+# but as soon as they are mixed with e.g., Int, have eltype Any.
+# So we do want so support Vector{Any} storage types for CompositeMultivectors,
+# but this should only happen for symbolic stuff
+
+isrealzero(a::Number) = iszero(a)
+isrealzero(a) = false
+isrealone(a::Number) = isone(a)
+isrealone(a) = false
+
+realzero(T::Type{<:Number}) = zero(T)
+realzero(::Type) = zero(Int)
+realone(T::Type{<:Number}) = one(T)
+realone(::Type) = one(Int)
+
+oneslike(::Type{<:Vector}, n) = let a = ones(Int, n)
+	convert(with_eltype(typeof(a), Any), a)
+end
+zeroslike(::Type{<:Vector}, n) = let a = zeros(Int, n)
+	convert(with_eltype(typeof(a), Any), a)
+end
+
+
+
+#= Miscellaneous =#
 
 shared_sig(::OrType{<:AbstractMultivector{Sig}}...) where {Sig} = true
 shared_sig(::OrType{<:AbstractMultivector}...) = false

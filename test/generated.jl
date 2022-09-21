@@ -2,7 +2,6 @@ using GeometricAlgebra:
 	zeroslike,
 	oneslike,
 	symbolic_multivector
-
 using GeometricAlgebra.SymbolicUtils
 
 
@@ -32,6 +31,11 @@ using GeometricAlgebra.SymbolicUtils
 		@test grade(b^2) == 0
 		@test m*5mm isa MixedMultivector
 		@test 1 + m isa MixedMultivector
+
+		@test m.^(0:3) isa Vector{<:AbstractMultivector}
+
+		@test iszero(m∧m)
+		@test b∧m∧mm isa MixedMultivector
 	end
 
 end

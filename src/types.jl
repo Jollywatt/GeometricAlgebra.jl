@@ -309,7 +309,7 @@ end
 grade(a::MixedMultivector, k) = Multivector{signature(a),k}(a.components[mmv_slice(Val(dimension(a)), Val(k))])
 
 scalarpart(a::Blade{Sig,0}) where {Sig} = a.coeff
-scalarpart(a::Blade) = zero(eltype(a))
+scalarpart(a::Blade) = realzero(eltype(a))
 scalarpart(a::CompositeMultivector) = a.components[begin]
 
 isscalar(a::Number) = true
@@ -317,7 +317,7 @@ isscalar(a::Blade{Sig,0}) where {Sig} = true
 isscalar(a::Blade) = iszero(a)
 isscalar(a::HomogeneousMultivector{Sig,0}) where {Sig} = true
 isscalar(a::HomogeneousMultivector) = iszero(a)
-isscalar(a::MixedMultivector) = all(iszero, a.components[2:end])
+isscalar(a::MixedMultivector) = all(isrealzero, a.components[2:end])
 
 
 nonzero_components(a::Blade) = [bitsof(a) => a.coeff][isrealzero(a.coeff) ? [] : [1]]

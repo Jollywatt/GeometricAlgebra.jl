@@ -1,5 +1,6 @@
 using GeometricAlgebra:
 	grade,
+	bits_of_grade,
 	isscalar,
 	signature,
 	largest_type,

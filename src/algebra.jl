@@ -81,8 +81,8 @@ Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 #= Scalar Addition =#
 
 
-add_scalar(a::AbstractMultivector{Sig}, b::Number) where {Sig} = a + Blade{Sig}(0 => b)
-function add_scalar(a::MixedMultivector, b::Number)
+add_scalar(a::AbstractMultivector{Sig}, b) where {Sig} = a + Blade{Sig}(0 => b)
+function add_scalar(a::MixedMultivector, b)
 	constructor(a)(copy_setindex(a.components, a.components[1] + b, 1))
 end
 
@@ -169,7 +169,7 @@ wedge(a, b) = graded_prod(a, b, +)
 function power_with_scalar_square(a, a², p::Integer)
 	# if p is even, p = 2n; if odd, p = 2n + 1
 	aⁿ = a²^fld(p, 2)
-	iseven(p) ? aⁿ*one(a) : aⁿ*a
+	iseven(p) ? scalar_multiply(aⁿ, one(a)) : scalar_multiply(aⁿ, a)
 end
 
 function power_by_squaring(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}

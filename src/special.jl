@@ -39,13 +39,13 @@ end
 Base.:/(a::AbstractMultivector, b::AbstractMultivector) = a*inv(b)
 Base.:\(a::AbstractMultivector, b::AbstractMultivector) = inv(a)*b
 
-Base.:/(a::Number, b::AbstractMultivector) = a*inv(b)
-Base.:\(a::AbstractMultivector, b::Number) = inv(a)*b
+Base.:/(a::Scalar, b::AbstractMultivector) = a*inv(b)
+Base.:\(a::AbstractMultivector, b::Scalar) = inv(a)*b
 
 
 #= Exponential =#
 
-function exp_with_scalar_square(a, a²::Number)
+function exp_with_scalar_square(a, a²::Scalar)
 	norm = sqrt(abs(a²))
 	if a² > 0
 		cosh(norm) + sinh(norm)/norm*a

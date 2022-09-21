@@ -35,21 +35,23 @@ end
 
 #= Scalar Multiplication =#
 
+const Scalar = Union{Number,SymbolicUtils.Symbolic}
+
 scalar_multiply(a::Blade{Sig,K}, b) where {Sig,K} = Blade{Sig,K}(bitsof(a) => a.coeff*b)
 scalar_multiply(a, b::Blade{Sig,K}) where {Sig,K} = Blade{Sig,K}(bitsof(b) => a*b.coeff)
 
 scalar_multiply(a::CompositeMultivector, b) = constructor(a)(a.components*b)
 scalar_multiply(a, b::CompositeMultivector) = constructor(b)(a*b.components)
 
-Base.:*(a::AbstractMultivector, b::Number) = scalar_multiply(a, b)
-Base.:*(a::Number, b::AbstractMultivector) = scalar_multiply(a, b)
+Base.:*(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
+Base.:*(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
 Base.:-(a::AbstractMultivector) = -one(eltype(a))*a
 
 promote_to(T, x) = convert(promote_type(T, typeof(x)), x)
-Base.:/(a::AbstractMultivector, b::Number) = a*inv(promote_to(eltype(a), b))
-Base.:\(a::Number, b::AbstractMultivector) = inv(promote_to(eltype(b), a))*b
+Base.:/(a::AbstractMultivector, b::Scalar) = a*inv(promote_to(eltype(a), b))
+Base.:\(a::Scalar, b::AbstractMultivector) = inv(promote_to(eltype(b), a))*b
 
-Base.://(a::AbstractMultivector, b::Number) = a*(one(b)//b)
+Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
 
 
 
@@ -86,11 +88,11 @@ function add_scalar(a::MixedMultivector, b)
 	constructor(a)(copy_setindex(a.components, a.components[1] + b, 1))
 end
 
-Base.:+(a::AbstractMultivector, b::Number) = add_scalar(a, b)
-Base.:+(a::Number, b::AbstractMultivector) = add_scalar(b, a)
+Base.:+(a::AbstractMultivector, b::Scalar) = add_scalar(a, b)
+Base.:+(a::Scalar, b::AbstractMultivector) = add_scalar(b, a)
 
-Base.:-(a::AbstractMultivector, b::Number) = add_scalar(a, -b)
-Base.:-(a::Number, b::AbstractMultivector) = add_scalar(-b, a)
+Base.:-(a::AbstractMultivector, b::Scalar) = add_scalar(a, -b)
+Base.:-(a::Scalar, b::AbstractMultivector) = add_scalar(-b, a)
 
 
 
@@ -113,8 +115,8 @@ function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}
 	ab
 end
 
-geometric_prod(a::AbstractMultivector, b::Number) = scalar_multiply(a, b)
-geometric_prod(a::Number, b::AbstractMultivector) = scalar_multiply(a, b)
+geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
+geometric_prod(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
 
 Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
@@ -156,8 +158,8 @@ function graded_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, g
 end
 
 # this is correct assuming grade_selector(k, 0) == k == grade_selector(0, k)
-graded_prod(a::AbstractMultivector, b::Number, grade_selector) = scalar_multiply(a, b)
-graded_prod(a::Number, b::AbstractMultivector, grade_selector) = scalar_multiply(a, b)
+graded_prod(a::AbstractMultivector, b::Scalar, grade_selector) = scalar_multiply(a, b)
+graded_prod(a::Scalar, b::AbstractMultivector, grade_selector) = scalar_multiply(a, b)
 
 wedge(a, b) = graded_prod(a, b, +)
 ∧(a, b) = wedge(a, b)
@@ -169,7 +171,7 @@ wedge(a, b) = graded_prod(a, b, +)
 function power_with_scalar_square(a, a², p::Integer)
 	# if p is even, p = 2n; if odd, p = 2n + 1
 	aⁿ = a²^fld(p, 2)
-	iseven(p) ? scalar_multiply(aⁿ, one(a)) : scalar_multiply(aⁿ, a)
+	iseven(p) ? aⁿ*one(a) : aⁿ*a
 end
 
 function power_by_squaring(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
@@ -206,7 +208,7 @@ end
 
 #= Reversion =#
 
-graded_multiply(f, a::Number) = f(0)*a
+graded_multiply(f, a::Scalar) = f(0)*a
 graded_multiply(f, a::HomogeneousMultivector) = f(grade(a))*a
 function graded_multiply(f, a::MixedMultivector{Sig}) where Sig
 	comps = copy(a.components)

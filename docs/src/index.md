@@ -60,7 +60,7 @@ Blade{⟨+---⟩, 0, Int64}:
  -1
 ```
 
-## Design
+## Multivector Types
 
 
 There are three concrete types for representing elements in a geometric algebra, arranged in the following type hierarchy:
@@ -116,31 +116,49 @@ julia> signature(ans)
 
 ```
 
-Additionally, the `Sig` type parameter carries metadata via multiple dispatch: basis blade labels and the default storage type for multivector components may be defined for each metric signature.
+Additionally, the `Sig` type parameter carries metadata via multiple dispatch.
+This allows various behaviours to be customised for each signature, including the basis blade labels, the default array type of multivector components, and so on.
 
-```jldoctest
-julia> struct DiracGamma end
+Below is an example of how one might define a geometric algebra with specific behaviours:
+```jldoctest dirac
+struct DiracGamma end
 
-julia> GeometricAlgebra.dimension(::DiracGamma) = 4
+# define the algebra
+GeometricAlgebra.dimension(::DiracGamma) = 4
+GeometricAlgebra.basis_vector_norm(::DiracGamma, i) = i > 1 ? -1 : +1
 
-julia> Base.getindex(::DiracGamma, i) = i > 1 ? -1 : +1
+# set the preferred component storage type
+using StaticArrays
+GeometricAlgebra.componentstype(::DiracGamma, N, T) = MVector{N,T}
 
-julia> GeometricAlgebra.show_basis_blade(io, ::DiracGamma, indices) = print(io, join("γ".*GeometricAlgebra.superscript.(indices)))
+# custom labels
+GeometricAlgebra.show_basis_blade(io, ::DiracGamma, indices) = print(io, join("γ".*GeometricAlgebra.superscript.(indices)))
 
-julia> prod(basis(DiracGamma()))
-Blade{DiracGamma(), 4, Int64}:
- 1 γ¹γ²γ³γ⁴
-
+basis(DiracGamma())
+# output
+4-element Vector{Blade{DiracGamma(), 1, Int64}}:
+ 1γ¹
+ 1γ²
+ 1γ³
+ 1γ⁴
 ```
 
 ### [Metric signature interface](@id sig_interface)
 
+The metric signature type parameter may be any `isbits` value satisying the following interface.
+
 | Required methods | Description |
 |:-----------------|:------------|
 | `dimension(sig)` | The dimension of the underlying vector space, or number of basis vectors.
-| `Base.getindex(sig, i)` | The norm of the `i`th basis vector. |
+| `basis_vector_norm(sig, i)` | The norm of the `i`th basis vector. |
 
 | Optional methods | Description |
 |:-----------------|:------------|
-| `Multivector.show_signature(io, sig)` | Show the metric signature in a compact form.
-| `Multivector.show_basis_blade(io, sig, indices)` | Print the basis blade with the given indices.
+| `show_signature(io, sig)` | Show the metric signature in a compact form.
+| `show_basis_blade(io, sig, indices)` | Print the basis blade with the given indices.
+
+The methods above are predefined for:
+
+- `Int`s, defining a Euclidean metric of that dimension,
+- `Tuple`s, defining the norms of each basis vector,
+- `NamedTuple`s, defining the norms and labels.

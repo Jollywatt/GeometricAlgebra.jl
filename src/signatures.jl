@@ -4,7 +4,7 @@ Geometric algebras are defined by a metric signature, which
 is any `isbitstype` object implementing:
 
 - `dimension` giving the dimension of the underlying vector space
-- `getindex` for getting the norm of the ``i``th orthonormal basis vector
+- `basis_vector_norm` for getting the norm of the ``i``th orthonormal basis vector
 
 The first type parameter of an `AbstractMultivector` is the
 algebra’s defining signature.
@@ -12,7 +12,11 @@ algebra’s defining signature.
 =#
 
 dimension(sig::Union{Tuple,NamedTuple}) = length(sig)
+dimension(dim::Integer) = dim
 
+
+basis_vector_norm(sig::Union{Tuple,NamedTuple}, i) = sig[i]
+basis_vector_norm(::Integer, i) = 1
 
 """
 	ncomponents(sig)
@@ -105,13 +109,13 @@ struct EuclideanMetric
 	dim::Int
 end
 dimension(sig::EuclideanMetric) = sig.dim
-Base.getindex(::EuclideanMetric, i) = 1
+basis_vector_norm(::EuclideanMetric, i) = 1
 show_signature(io, sig::EuclideanMetric) = printstyled(io, sig.dim, "D", bold=true)
 
 
 struct MetricWithStorage{Sig,S} end
 dimension(::MetricWithStorage{Sig}) where {Sig} = dimension(Sig)
-Base.getindex(::MetricWithStorage{Sig}, i) where {Sig} = Sig[i]
+basis_vector_norm(::MetricWithStorage{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
 componentstype(::MetricWithStorage{Sig,S}, N, T) where {Sig,S} = S{N,T}
 function show_signature(io, ::MetricWithStorage{Sig,S}) where {Sig,S}
 	print(io, nameof(S))
@@ -122,7 +126,6 @@ end
 
 #= Convenience =#
 
-interpret_signature(dim::Integer) = ntuple(i -> 1, dim)
 interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i] for i in sig)
 interpret_signature(sig) = sig
 

@@ -17,7 +17,12 @@ julia> GeometricAlgebra.show_blade(stdout, Blade{(x=1,)}(0b1 => 1 + im))
 """
 function show_blade(io::IO, b::Blade; compact=false)
 	subio = IOContext(io, :compact => true)
-	Base.show_unquoted(subio, b.coeff, 0, Base.operator_precedence(:*))
+	if compact && isrealzero(b.coeff) print(io, "0")
+	elseif compact && isrealone(b.coeff) isscalar(b) && print(io, "1")
+	elseif compact && isrealone(-b.coeff) print(io, isscalar(b) ? "-1" : "-")
+	else
+		Base.show_unquoted(subio, b.coeff, 0, Base.operator_precedence(:*))
+	end
 	grade(b) == 0 && return
 	compact || print(io, " ") # coefficient–basis separator
 	# blades with higher grade than dimension are always zero,

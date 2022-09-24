@@ -44,5 +44,5 @@ end
 	@test repr(zero(v1 + v2)) == "0"
 	@test repr(zero(v1 + v12)) == "0"
 
-	@test repr(1 + v1 + v2 + 3v12) == "1 + (1v1 + 1v2) + (3v12)"
+	@test repr(1 + v1 + v2 + 3v12) == "1 + (v1 + v2) + (3v12)"
 end

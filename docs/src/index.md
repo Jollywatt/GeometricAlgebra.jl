@@ -39,10 +39,10 @@ You may also obtain an orthonormal basis for a metric signature:
 ```jldoctest
 julia> v = basis((-1,+1,+1,+1))
 4-element Vector{Blade{⟨-+++⟩, 1, Int64}}:
- 1v1
- 1v2
- 1v3
- 1v4
+ v1
+ v2
+ v3
+ v4
 
 julia> exp(10000*2π*v[3]v[4])
 16-component MixedMultivector{⟨-+++⟩, Vector{Float64}}:

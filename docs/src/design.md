@@ -100,10 +100,10 @@ GeometricAlgebra.show_basis_blade(io, ::DiracGamma, indices) = print(io, join("�
 basis(DiracGamma())
 # output
 4-element Vector{Blade{DiracGamma(), 1, Int64}}:
- 1γ¹
- 1γ²
- 1γ³
- 1γ⁴
+ γ¹
+ γ²
+ γ³
+ γ⁴
 ```
 
 

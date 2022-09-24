@@ -183,9 +183,14 @@ julia> basis(Cl(1,3); grade=2)
 ```
 """
 basis(sig; grade=1) = let sig = interpret_signature(sig)
-	Blade{sig}.(bits_of_grade(grade, dimension(sig)) .=> 1)
+	if grade == :all
+		Blade{sig}.(mmv_bits(Val(dimension(sig))) .=> 1)
+	else
+		Blade{sig}.(bits_of_grade(grade, dimension(sig)) .=> 1)
+	end
 end
 
+# make expr assigning each of combos(basis(sig)) to a variable
 function generate_blades(combos, sig)
 	bvs = basis(sig)
 	defs = Pair{Symbol}[]
@@ -248,4 +253,60 @@ macro basisall(sig)
 	generate_blades(interpret_signature(eval(sig))) do bvs
 		Iterators.flatten(permutations.(powerset(bvs)))
 	end
+end
+
+
+"""
+	cayleytable(sig, op=*)
+
+Display the multiplication table for a geometric algeba
+
+The first argument may be a metric signature of a vector of elements
+of the geometric algebra, and `op` may be any binary operator.
+
+# Examples
+```jldoctest
+julia> cayleytable((t=-1, x=1, y=1))
+ (↓) * (→) │   1 │   t     x    y │  tx    ty   xy │ txy
+───────────┼─────┼────────────────┼────────────────┼─────
+         1 │   1 │   t     x    y │  tx    ty   xy │ txy
+───────────┼─────┼────────────────┼────────────────┼─────
+         t │   t │  -1    tx   ty │  -x    -y  txy │ -xy
+         x │   x │ -tx     1   xy │  -t  -txy    y │ -ty
+         y │   y │ -ty   -xy    1 │ txy    -t   -x │  tx
+───────────┼─────┼────────────────┼────────────────┼─────
+        tx │  tx │   x     t  txy │   1    xy   ty │   y
+        ty │  ty │   y  -txy    t │ -xy     1  -tx │  -x
+        xy │  xy │ txy    -y    x │ -ty    tx   -1 │  -t
+───────────┼─────┼────────────────┼────────────────┼─────
+       txy │ txy │ -xy   -ty   tx │   y    -x   -t │   1
+
+julia> cayleytable(basis(3), ∧)
+ (↓) ∧ (→) │   v1    v2   v3
+───────────┼─────────────────
+        v1 │    0   v12  v13
+        v2 │ -v12     0  v23
+        v3 │ -v13  -v23    0
+
+```
+"""
+function cayleytable(sig, args...)
+	dim = dimension(sig)
+	grade_slices = mmv_slice.(Val(dim), Val.(0:dim))
+	separators = first.(grade_slices) #∪ [0, dim + 1]
+	cayleytable(basis(sig, grade=:all), args...; separators)
+end
+
+function cayleytable(mvs::AbstractVector, op=*; separators=[1])
+	table = [op(a, b) for a ∈ mvs, b ∈ mvs]
+	mvs_str = string.(mvs)
+	table
+	pretty_table(
+		string.(table),
+		header = mvs_str,
+		row_names = mvs_str,
+		row_name_column_title = string(:( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) )),
+		vlines = separators,
+		hlines = separators,
+	)
 end

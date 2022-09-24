@@ -19,10 +19,11 @@ using GeometricAlgebra:
 end
 
 @testset "bit permutations" begin
-	@test first(BitPermutations{UInt8}(3)) === UInt8(0b111)
-	@test first(BitPermutations{UInt32}(3)) === UInt32(0b111)
-	@test collect(Iterators.take(BitPermutations(2), 3)) == [0b011, 0b101, 0b110]
-	@test collect(Iterators.take(BitPermutations(5), 3)) == [0b011111, 0b101111, 0b110111]
+	@test first(GeometricAlgebra.BitPermutations{UInt8}(3)) === UInt8(0b111)
+	@test first(GeometricAlgebra.BitPermutations{UInt32}(3)) === UInt32(0b111)
+	@test collect(Iterators.take(bits_of_grade(2), 3)) == [0b011, 0b101, 0b110]
+	@test collect(Iterators.take(bits_of_grade(5), 3)) == [0b011111, 0b101111, 0b110111]
+	@test Iterators.take(bits_of_grade(10), 10) |> collect |> last == 0b11111111101
 end
 
 @testset "bits <-> multivector index" begin

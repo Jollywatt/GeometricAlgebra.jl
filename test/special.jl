@@ -1,10 +1,14 @@
 using GeometricAlgebra:
-	bits_of_grade
+	bits_of_grade,
+	scalarpart
 
 @testset "inverses" begin
 	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
 	@test inv(v[1])v[1] == 1
 	@test inv(5v[1]v[2]) == inv(v[2])inv(v[1])inv(5)
+
+	u = sum(v)
+	@test 1/u == u\1 == u/scalarpart(u^2) == scalarpart(u^2)\u
 
 	@testset "dimension $dim" for dim in 0:5
 		mixed_sig = (-1,+1,+1,+1,0)

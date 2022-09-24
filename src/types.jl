@@ -372,11 +372,15 @@ end
 
 #= Indexing and Iteration =#
 
+grade(a::Blade{Sig,K}, k) where {Sig,K} = K == k ? a : zero(a)
+grade(a::Multivector{Sig,K,C}, k) where {Sig,K,C} = K == k ? a : zero(Multivector{Sig,k,C})
 grade(a::MixedMultivector, k) = Multivector{signature(a),k}(view(a.components, mmv_slice(Val(dimension(a)), Val(k))))
 
 scalarpart(a::Blade{Sig,0}) where {Sig} = a.coeff
 scalarpart(a::Blade) = realzero(eltype(a))
-scalarpart(a::CompositeMultivector) = a.components[begin]
+scalarpart(a::MixedMultivector) = a.components[begin]
+scalarpart(a::Multivector{Sig,0}) where {Sig} = a.components[begin]
+scalarpart(a::Multivector{Sig}) where {Sig} = zero(eltype(a))
 
 isscalar(a::Number) = true
 isscalar(a::Blade{Sig,0}) where {Sig} = true

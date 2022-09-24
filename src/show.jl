@@ -6,9 +6,6 @@ function Base.alignment(io::IO, b::Blade)
 	(l, r) = Base.alignment(io, b.coeff)
 	(l, length(sprint(show, b)) - l)
 end
-function Base.alignment(io::IO, b::CompositeMultivector)
-	(0, length(sprint(show, b)))
-end
 
 """
 Display blade with parentheses surrounding coefficient if necessary.

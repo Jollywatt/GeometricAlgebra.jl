@@ -1,6 +1,8 @@
 using GeometricAlgebra:
 	bits_of_grade,
 	MetricWithStorage,
+	isscalar,
+	scalarpart,
 	isapproxzero
 
 using GeometricAlgebra.StaticArrays
@@ -49,6 +51,20 @@ end
 	@test isapproxzero(eps()v + 0; atol=eps())
 end
 
+@testset "grade projections" begin
+	@basis 3
+
+	@test isscalar(scalarpart(v1))
+	@test scalarpart(v1 + v2) == 0
+	@test scalarpart(v1 + 42) == 42
+
+	@test grade(v1 + v12 + v2, 1) == v1 + v2
+	@test grade(v1 + v2, 0) == 0
+
+	u = v1 + 2v2 + 3v3
+	@test grade(u, grade(u)) === u
+end
+
 @testset "scalar *" begin
 	a = Blade{(1,1)}(0b01 => 10)
 
@@ -82,8 +98,6 @@ end
 
 	@test (1:3)'v == 1v[1] + 2v[2] + 3v[3]
 end
-
-
 
 @testset "*" begin
 	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
@@ -149,7 +163,6 @@ end
 	@test reversion(1 + 2v[1] + 3v[2]v[3] + 4v[1]v[2]v[3]) == 1 + 2v[1] + 3v[3]v[2] + 4v[3]v[2]v[1]
 
 end
-
 
 @testset "different storage types" begin
 	for S in [SVector, MVector]

@@ -103,3 +103,13 @@ julia> prod(ans)
 ```
 
 This makes it easy to achieve near-optimal performance for basic multivector operations by first performing the calculation symbolically, then converting the resulting expression into unrolled code.
+
+
+## Similar Packages
+
+- [ATell-SoundTheory/CliffordAlgebras.jl](https://github.com/ATell-SoundTheory/CliffordAlgebras.jl)
+- [serenity4/GeometricAlgebra.jl](https://github.com/serenity4/GeometricAlgebra.jl)
+- [digitaldomain/Multivectors.jl](https://github.com/digitaldomain/Multivectors.jl)
+- [velexi-research/GeometricAlgebra.jl](https://github.com/velexi-research/GeometricAlgebra.jl)
+- [MasonProtter/GeometricMatrixAlgebras.jl](https://github.com/MasonProtter/GeometricMatrixAlgebras.jl)
+- in the future, [JuliaGeometricAlgebra/GeometricAlgebra.jl](https://github.com/JuliaGeometricAlgebra/GeometricAlgebra.jl)

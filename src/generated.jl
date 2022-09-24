@@ -9,17 +9,18 @@ end
 with_eltype(::Type{<:Multivector{Sig,K,C}}, T) where {Sig,K,C} = Multivector{Sig,K,with_eltype(C, T)}
 with_eltype(::Type{<:MixedMultivector{Sig,C}}, T) where {Sig,C} = MixedMultivector{Sig,with_eltype(C, T)}
 
-function symbolic_multivector(T::Type{<:CompositeMultivector{Sig,C}}, label) where {Sig,C}
-	with_eltype(T, Any)(symbolic_components(label, ncomponents(T)))
+function symbolic_multivector(A::Type{<:CompositeMultivector{Sig,C}}, label) where {Sig,C}
+	with_eltype(A, Any)(symbolic_components(label, ncomponents(A)))
 end
+symbolic_multivector(A::Type{Blade{Sig,K,T}}, label) where {Sig,K,T} = symbolic_multivector(Multivector{Sig,K,componentstype(Sig, ncomponents(Sig, K), T)}, label)
 symbolic_multivector(a::AbstractMultivector, label) = symbolic_multivector(typeof(a), label)
 
 
 """
 	generated_multivector_function(f, a, b, ...)
 
-Trace evaluation of `f(a, b, ...)` by evaluating `f` on symbolic versions of each
-`CompositeMultivector` instance or type `a`, `b`, ..., returning an expression body
+Trace evaluation of `f(a, b, ...)::CompositeMultivector` on symbolic versions of each
+`AbstractMultivector` instance or type `a`, `b`, ..., returning an expression body
 suitable for a `@generated` function.
 
 The names of the arguments to be passed to the function
@@ -47,7 +48,7 @@ function generated_multivector_function(f, x...)
 	y_symb = f(x_symb...)
 
 	comps = SymbolicUtils.Code.toexpr.(y_symb.components)
-	assignments = [:( $sym = $sym.components ) for (i, sym) in enumerate(syms)]
+	assignments = [:( $sym = CompositeMultivector($sym).components ) for (i, sym) in enumerate(syms)]
 
 	comps_expr = if comps isa Vector
 		:( [$(comps...)] )

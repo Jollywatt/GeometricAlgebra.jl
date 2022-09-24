@@ -103,12 +103,14 @@ function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
 	Blade{Sig}(bits => factor*(a.coeff*b.coeff))
 end
 
-function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	c = zero(similar(MixedMultivector{Sig}, a, b))
-	for ai ∈ blades(a), bi ∈ blades(b)
-		c += ai*bi
+@generated function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+	generated_multivector_function(a, b) do a, b
+		c = zero(similar(MixedMultivector{Sig}, a, b))
+		for ai ∈ blades(a), bi ∈ blades(b)
+			c += ai*bi
+		end
+		c
 	end
-	c
 end
 
 geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
@@ -124,32 +126,43 @@ scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitso
 scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = realzero(promote_type(eltype(a), eltype(b)))
 
 function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
-	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bits_of_grade(K, dimension(Sig))) .* (a.components .* b.components)))
+	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.components .* b.components)))
 end
 scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = realzero(promote_type(eltype(a), eltype(b)))
 
 
-function scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig}
-	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.components .* b.components)))
-end
-scalar_prod(a::AbstractMultivector, b::AbstractMultivector) = let T = largest_type(a, b)
-	scalar_prod(T(a), T(b))
-end
+# function scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig}
+# 	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.components .* b.components)))
+# end
+# scalar_prod(a::AbstractMultivector, b::AbstractMultivector) = let T = largest_type(a, b)
+# 	scalar_prod(T(a), T(b))
+# end
+
+scalar_prod(a, b) = graded_prod(a, b, (_, _) -> 0)
 
 
-
-function graded_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, grade_selector::Function) where {Sig}
-	c = zero(similar(MixedMultivector{Sig}, a, b))
-	for ai ∈ blades(a), bi ∈ blades(b)
-		ci = ai*bi
-		if grade(ci) == grade_selector(grade(ai), grade(bi))
-			c += ci
-		end
+function graded_prod(a::Blade{Sig}, b::Blade{Sig}, grade_selector::Function) where {Sig}
+	if count_ones(bitsof(a) ⊻ bitsof(b)) == grade_selector(grade(a), grade(b))
+		a*b
+	else
+		Blade{Sig}(0 => zero(promote_type(eltype(a), eltype(b))))
 	end
-	c
 end
 
-# this is correct assuming grade_selector(k, 0) == k == grade_selector(0, k)
+@generated function graded_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}, grade_selector::Function) where {Sig}
+	generated_multivector_function(a, b) do a, b
+		c = zero(similar(MixedMultivector{Sig}, a, b))
+		for ai ∈ blades(a), bi ∈ blades(b)
+			ci = ai*bi
+			if grade(ci) == grade_selector.instance(grade(ai), grade(bi))
+				c += ci
+			end
+		end
+		c
+	end
+end
+
+# this is correct ONLY IF grade_selector(k, 0) == k == grade_selector(0, k)
 graded_prod(a::AbstractMultivector, b::Scalar, grade_selector) = scalar_multiply(a, b)
 graded_prod(a::Scalar, b::AbstractMultivector, grade_selector) = scalar_multiply(a, b)
 

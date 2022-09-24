@@ -1,7 +1,7 @@
 using GeometricAlgebra:
 	bits_to_indices,
 	indices_to_bits,
-	BitPermutations,
+	bits_of_grade,
 	mv_bits,
 	mmv_bits,
 	bits_to_mv_index,

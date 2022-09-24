@@ -194,6 +194,8 @@ MixedMultivector{Sig}(comps::S) where {Sig,S} = MixedMultivector{Sig,S}(comps)
 
 const CompositeMultivector{Sig,S} = Union{Multivector{Sig,K,S},MixedMultivector{Sig,S}} where {K}
 
+CompositeMultivector(a::Blade) = Multivector(a)
+CompositeMultivector(a::CompositeMultivector) = a
 
 
 #= AbstractMultivector Interface =#
@@ -370,7 +372,7 @@ end
 
 #= Indexing and Iteration =#
 
-grade(a::MixedMultivector, k) = Multivector{signature(a),k}(a.components[mmv_slice(Val(dimension(a)), Val(k))])
+grade(a::MixedMultivector, k) = Multivector{signature(a),k}(view(a.components, mmv_slice(Val(dimension(a)), Val(k))))
 
 scalarpart(a::Blade{Sig,0}) where {Sig} = a.coeff
 scalarpart(a::Blade) = realzero(eltype(a))

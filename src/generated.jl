@@ -10,7 +10,7 @@ with_eltype(::Type{<:Multivector{Sig,K,C}}, T) where {Sig,K,C} = Multivector{Sig
 with_eltype(::Type{<:MixedMultivector{Sig,C}}, T) where {Sig,C} = MixedMultivector{Sig,with_eltype(C, T)}
 
 function symbolic_multivector(A::Type{<:CompositeMultivector{Sig,C}}, label) where {Sig,C}
-	with_eltype(A, Any)(symbolic_components(label, ncomponents(A)))
+	constructor(A)(symbolic_components(label, ncomponents(A)))
 end
 symbolic_multivector(A::Type{Blade{Sig,K,T}}, label) where {Sig,K,T} = symbolic_multivector(Multivector{Sig,K,componentstype(Sig, ncomponents(Sig, K), T)}, label)
 symbolic_multivector(a::AbstractMultivector, label) = symbolic_multivector(typeof(a), label)
@@ -36,31 +36,28 @@ julia> u, v = Multivector.(basis(2))
 julia> using MacroTools: prettify
 
 julia> ex = GeometricAlgebra.generated_multivector_function(*, u, v) |> prettify
-:(let a = a.components, b = b.components
-      (MixedMultivector{2})([a[1] * b[1] + a[2] * b[2], 0, 0, a[1] * b[2] + (-1 * a[2]) * b[1]])
+:(let a = (CompositeMultivector(a)).components, b = (CompositeMultivector(b)).components
+      comps = create_array(Vector{Any}, Int64, Val{1}(), Val{(4,)}(), a[1] * b[1] + a[2] * b[2], 0, 0, a[1] * b[2] + (-1 * a[2]) * b[1])
+      (MixedMultivector{2})(comps)
   end)
 
 ```
 """
 function generated_multivector_function(f, x...)
 	syms = Symbol.('a' .+ (1:length(x)) .- 1)
+	
 	x_symb = symbolic_multivector.(x, syms)
 	y_symb = f(x_symb...)
+	comps = y_symb.components
 
-	comps = SymbolicUtils.Code.toexpr.(y_symb.components)
-	assignments = [:( $sym = CompositeMultivector($sym).components ) for (i, sym) in enumerate(syms)]
+	T = numberorany(promote_type(eltype.(x)...))
+	comps_expr = SymbolicUtils.Code.MakeArray(comps, typeof(comps), T)
 
-	comps_expr = if comps isa Vector
-		:( [$(comps...)] )
-	elseif comps isa MVector
-		:( MVector($(comps...)) )
-	elseif comps isa SVector
-		:( SVector($(comps...)) )
-	end
-
+	assignments = [:( $sym = CompositeMultivector($sym).components ) for sym in syms]
 	quote
 		let $(assignments...)
-			$(constructor(y_symb))($comps_expr)
+			comps = $(SymbolicUtils.Code.toexpr(comps_expr))
+			$(constructor(y_symb))(comps)
 		end
 	end
 end

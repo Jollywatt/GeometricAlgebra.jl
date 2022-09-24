@@ -78,18 +78,28 @@ Blade{Sig,K,T}    Multivector{Sig,K,S}
 - `MixedMultivector`: an inhomogeneous multivector. All elements in a geometric
    algebra can be represented as this type (though not most efficiently).
 
-*Note:*
-	The mathematical definition of a ``k``-blade is the wedge product
-	of ``k`` _vectors_, not necessarily basis vectors. Thus, not all
-	``k``-blades are representable as a `Blade`, but are always representable
-	as a sum of `Blade`s, or a `Multivector`.
 
-These types have up to three of type parameters:
+## Symbolic Algebra and Code Generation
 
-- `Sig`: The metric signature which defines the geometric algebra. This can be any
-   all-bits value which satisfies the metric signature interface.
-- `T`: The numerical type of the coefficient of a `Blade`.
-- `K`: An `Int` specifying the grade of a `HomogeneousMultivector`.
-- `S`: The storage type of the components of a `CompositeMultivector`. This is
-   assumed to be mutable, and is usually a subtype of `Vector`, `MVector` or `SparseVector`.
+Thanks to the wonderful [`SymbolicUtils`](https://symbolicutils.juliasymbolics.org/) package, the same code originally written for numerical multivectors readily works with symbolic components.
+For example, we can compute the product of two vectors symbolically as follows:
 
+```julia
+julia> GeometricAlgebra.symbolic_components.([:x, :y], 3)
+2-element Vector{Vector{SymbolicUtils.Term{Real, Nothing}}}:
+ [x[1], x[2], x[3]]
+ [y[1], y[2], y[3]]
+
+julia> Multivector{3,1}.(ans)
+2-element Vector{Multivector{3, 1, Vector{SymbolicUtils.Term{Real, Nothing}}}}:
+ x[1]v1 + x[2]v2 + x[3]v3
+ y[1]v1 + y[2]v2 + y[3]v3
+
+julia> prod(ans)
+8-component MixedMultivector{3, Vector{Any}}:
+ x[1]*y[1] + x[2]*y[2] + x[3]*y[3]
+ x[1]*y[2] - x[2]*y[1] v12 + x[1]*y[3] - x[3]*y[1] v13 + x[2]*y[3] - x[3]*y[2] v23
+
+```
+
+This makes it easy to achieve near-optimal performance for basic multivector operations by first performing the calculation symbolically, then converting the resulting expression into unrolled code.

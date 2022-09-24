@@ -17,7 +17,11 @@ make() = makedocs(
     sitename="GeometricAlgebra.jl",
     root=joinpath(project_root, "docs"),
     modules=[GeometricAlgebra],
-    pages=["index.md", "reference.md"],
+    pages=[
+        "index.md",
+        "design.md",
+        "reference.md",
+    ],
 )
 
 deploy() = deploydocs(

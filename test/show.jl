@@ -29,8 +29,8 @@ end
 	@test contains(sprint(show, Blade{sig,2,Int}), prettysig)
 	@test contains(sprint(show, Blade{sig,K,Int} where {K}), prettysig)
 
-	@test sprint(show, MIME("text/plain"), Blade{3}) == "Blade{3}"
-	@test sprint(show, MIME("text/plain"), Blade{(1,1,1)}) == "Blade{⟨+++⟩} (pretty-printed Blade{(1, 1, 1)})"
+	@test startswith(sprint(show, MIME("text/plain"), Blade{3}), "Blade{3")
+	@test startswith(sprint(show, MIME("text/plain"), Blade{(1,1,1)}), "Blade{⟨+++⟩")
 end
 
 @testset "multivector printing" begin

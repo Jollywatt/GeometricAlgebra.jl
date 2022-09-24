@@ -6,17 +6,11 @@ is any `isbitstype` object implementing:
 - `dimension` giving the dimension of the underlying vector space
 - `basis_vector_norm` for getting the norm of the ``i``th orthonormal basis vector
 
-The first type parameter of an `AbstractMultivector` is the
+The first type parameter of an `AbstractMultivector` subtype is the
 algebra’s defining signature.
 
 =#
 
-dimension(sig::Union{Tuple,NamedTuple}) = length(sig)
-dimension(dim::Integer) = dim
-
-
-basis_vector_norm(sig::Union{Tuple,NamedTuple}, i) = sig[i]
-basis_vector_norm(::Integer, i) = 1
 
 """
 	ncomponents(sig)
@@ -105,14 +99,50 @@ determine the type of the components array.
 componentstype(sig, N, T) = Vector{T}
 
 
-struct EuclideanMetric
-	dim::Int
-end
-dimension(sig::EuclideanMetric) = sig.dim
-basis_vector_norm(::EuclideanMetric, i) = 1
-show_signature(io, sig::EuclideanMetric) = printstyled(io, sig.dim, "D", bold=true)
+#= Built-in Metric Signatures =#
+
+# Int: Euclidean space
+dimension(dim::Integer) = dim
+basis_vector_norm(::Integer, i) = 1
+
+# Tuple, NamedTuple
+dimension(sig::Union{Tuple,NamedTuple}) = length(sig)
+basis_vector_norm(sig::Union{Tuple,NamedTuple}, i) = sig[i]
+
+# Cl(p, q, r)
+"""
+	Cl(p, q=0, r=0)
+
+Metric signature where `p`, `q` and `r` is the number of
+basis vectors of norm `+1`, `-1` and `0`, respectively.
+
+# Examples
+```jldoctest
+julia> basis(Cl(1,3))
+4-element Vector{Blade{Cl(1,3), 1, Int64}}:
+ 1v1
+ 1v2
+ 1v3
+ 1v4
+
+julia> ans .^ 2
+4-element Vector{Blade{Cl(1,3), 0, Int64}}:
+  1
+ -1
+ -1
+ -1
+```
+"""
+struct Cl{P,Q,R} end
+Cl(p::Integer, q::Integer=0, r::Integer=0) = Cl{p,q,r}()
+dimension(::Cl{P,Q,R}) where {P,Q,R} = P + Q + R
+basis_vector_norm(::Cl{P,Q,R}, i) where {P,Q,R} = i <= P ? 1 : i <= P + Q ? -1 : 0
+show_signature(io, ::Cl{P,Q,R}) where {P,Q,R} = print(io, "Cl($P,$Q,$R)")
+show_signature(io, ::Cl{P,Q,0}) where {P,Q} = print(io, "Cl($P,$Q)")
+Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature, sig)
 
 
+# experimental
 struct MetricWithStorage{Sig,S} end
 dimension(::MetricWithStorage{Sig}) where {Sig} = dimension(Sig)
 basis_vector_norm(::MetricWithStorage{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
@@ -129,8 +159,31 @@ end
 interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i] for i in sig)
 interpret_signature(sig) = sig
 
-basis(sig) = let sig = interpret_signature(sig)
-	Blade{sig}.(bits_of_grade(1, dimension(sig)) .=> 1)
+"""
+	basis(sig; grade=1)
+
+Return basis blades for the geometric algebra defined by the metric signature `sig`.
+
+# Examples
+```jldoctest
+julia> basis(3)
+3-element Vector{Blade{3, 1, Int64}}:
+ 1v1
+ 1v2
+ 1v3
+
+julia> basis(Cl(1,3); grade=2)
+6-element Vector{Blade{Cl(1,3), 2, Int64}}:
+ 1v12
+ 1v13
+ 1v23
+ 1v14
+ 1v24
+ 1v34
+```
+"""
+basis(sig; grade=1) = let sig = interpret_signature(sig)
+	Blade{sig}.(bits_of_grade(grade, dimension(sig)) .=> 1)
 end
 
 function generate_blades(combos, sig)
@@ -163,7 +216,7 @@ julia> @basis 3
 [ Info: Defined basis blades v, v1, v2, v3, v12, v13, v23, v123
 
 julia> 1v2 + 3v12
-8-component MixedMultivector{⟨+++⟩, Vector{Int64}}:
+8-component MixedMultivector{3, Vector{Int64}}:
  1 v2
  3 v12
 ```

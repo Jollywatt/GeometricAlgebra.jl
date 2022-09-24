@@ -1,14 +1,13 @@
-#= Blades =#
 
-plaintext_repr(io, a) = repr(a; context=IOContext(io, :color=>false))
+#= Blades =#
 
 # make things line up right when printing in arrays
 function Base.alignment(io::IO, b::Blade)
 	(l, r) = Base.alignment(io, b.coeff)
-	(l, length(plaintext_repr(io, b)) - l)
+	(l, length(sprint(show, b)) - l)
 end
 function Base.alignment(io::IO, b::CompositeMultivector)
-	(0, length(plaintext_repr(io, b)))
+	(0, length(sprint(show, b)))
 end
 
 """
@@ -136,6 +135,18 @@ end
 
 
 
+#= Pretty-printing =#
+
+
+# display object with given show function along with unabbreviated form if different
+function show_pretty(io, showfn, x)
+	compact = sprint(showfn, x, context = :compact => true)
+	full = sprint(show, x, context = :compact => false)
+	showfn(io, x)
+	compact == full && return
+	printstyled(io, " (pretty-printed ", full, ")", color = :light_black)
+end
+
 
 
 #= Metric Signatures =#
@@ -144,7 +155,7 @@ end
 struct SignatureDisplayWrapper{Sig} end
 Base.show(io::IO, ::SignatureDisplayWrapper{Sig}) where {Sig} = show_signature(io, Sig)
 
-# use `show_signature` to display the first type parameter of multivector types
+# use `show_signature` to pretty-print the first type parameter of multivector types
 # by wrapping `Sig` in `SignatureDisplayWrapper{Sig}()`
 function pretty_print_signature(io, T::Type)
 	if get(io, :compact, true)::Bool && Base.unwrap_unionall(T) isa DataType
@@ -160,26 +171,22 @@ function pretty_print_signature(io, T::Type)
 		sig, other_parameters... = T.parameters
 		# wrap sig type parameter in pretty-printer
 		sig = sig isa TypeVar ? sig : SignatureDisplayWrapper{sig}()
-		S = T.name.wrapper{sig, other_parameters...}
+		T = T.name.wrapper{sig, other_parameters...}
 
 		# rewrap UnionAll in TypeVars
 		for p in reverse(typevars)
-			S = UnionAll(p, S)
+			T = UnionAll(p, T)
 		end
-
-		invoke(show, Tuple{IO,Type}, io, S) # show with default method
-	else
-		invoke(show, Tuple{IO,Type}, io, T) # show with default method
 	end
+
+	invoke(show, Tuple{IO,Type}, io, T) # show with default method
 end
 
-Base.show(io::IO, T::Type{<:AbstractMultivector}) = pretty_print_signature(io, T)
 
-# # when type is displayed on its own, be explicit about pretty-printing to avoid confusing the user
+
+
+# when type is displayed on its own, show in full to avoid confusing the user
+Base.show(io::IO, T::Type{<:AbstractMultivector}) = pretty_print_signature(io, T)
 function Base.show(io::IO, ::MIME"text/plain", T::Type{<:AbstractMultivector})
-	compact = sprint(show, T, context = :compact => true)
-	full = sprint(show, T, context = :compact => false)
-	show(io, T)
-	compact == full && return
-	printstyled(io, " (pretty-printed ", full, ")", color = :light_black)
+	show_pretty(io, show, T)
 end

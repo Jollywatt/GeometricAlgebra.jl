@@ -28,7 +28,7 @@ body are the literal symbols `:a`, `:b`, etc.
 # Examples
 ```jldoctest
 julia> u, v = Multivector.(basis(2))
-2-element Vector{Multivector{⟨++⟩, 1, Vector{Int64}}}:
+2-element Vector{Multivector{2, 1, Vector{Int64}}}:
  1v1
  1v2
 
@@ -36,7 +36,7 @@ julia> using MacroTools: prettify
 
 julia> ex = GeometricAlgebra.generated_multivector_function(*, u, v) |> prettify
 :(let a = a.components, b = b.components
-      (MixedMultivector{⟨++⟩})([a[1] * b[1] + a[2] * b[2], 0, 0, a[1] * b[2] + (-1 * a[2]) * b[1]])
+      (MixedMultivector{2})([a[1] * b[1] + a[2] * b[2], 0, 0, a[1] * b[2] + (-1 * a[2]) * b[1]])
   end)
 
 ```

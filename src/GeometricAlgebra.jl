@@ -1,8 +1,22 @@
 """
-GeometricAlgebra
----
+# GeometricAlgebra
 
-Implementation of multivectors, or ``k``-vectors, as in geometric (Clifford) algebra.
+Implements multivector (or ``k``-vector) types from geometric algebra (a.k.a. Clifford algebra).
+
+## Exported Types
+
+```
+                   AbstractMultivector{Sig}
+                     /                  \\
+   HomogeneousMultivector{Sig,K}    MixedMultivector{Sig,S}
+       /                \\                             
+Blade{Sig,K,T}    Multivector{Sig,K,S}                
+                                                   
+                  ╰───── CompositeMultivector{Sig,S} ─────╯
+```
+
+See [`basis`](@ref) and [`@basis`](@ref) to get started.
+
 """
 module GeometricAlgebra
 
@@ -10,12 +24,12 @@ using StaticArrays
 using Combinatorics: permutations, powerset
 using SymbolicUtils
 
-export AbstractMultivector, HomogeneousMultivector
-export Blade, Multivector, MixedMultivector
+export AbstractMultivector, HomogeneousMultivector, Blade, Multivector, MixedMultivector
 export basis, @basis, @basisall
 export signature, dimension, grade, ncomponents
-export blades
 export geometric_prod, scalar_prod, wedge, ∧, reversion, involution
+export blades
+export Cl
 
 include("bits.jl")
 include("types.jl")

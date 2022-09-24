@@ -48,7 +48,7 @@ Base.broadcastable(a::AbstractMultivector) = Ref(a)
 """
 	signature(::AbstractMultivector{Sig}) -> Sig
 
-The metric signature type parameter of the multivector object or type.
+The metric signature type parameter of the multivector instance or type.
 """
 signature(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = Sig
 
@@ -57,7 +57,7 @@ signature(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = Sig
 """
 	HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig}
 
-Abstract supertype of `Blade` and `Multivector`.
+Abstract supertype of [`Blade`](@ref) and [`Multivector`](@ref).
 
 # Parameters
 - `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
@@ -68,7 +68,7 @@ abstract type HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig} end
 """
 	grade(::HomogeneousMultivector{Sig,K}) -> K
 
-The grade of a homogeneous multivector (`Blade` or `Multivector`) object or type.
+The grade of a homogeneous multivector (a `Blade` or `Multivector`) instance or type.
 """
 grade(::OrType{<:HomogeneousMultivector{Sig,K}}) where {Sig,K} = K
 
@@ -89,6 +89,20 @@ struct Blade{Sig,K,T} <: HomogeneousMultivector{Sig,K}
 	coeff::T
 end
 Blade{Sig}(bits, coeff::T) where {Sig,T} = Blade{Sig,count_ones(bits),T}(bits, coeff)
+"""
+
+	Blade{Sig}(bits, coeff)
+	Blade{Sig}(bits => coeff)
+
+Basis blade with indices encoded by `bits` and scalar coefficient `coeff`.
+
+# Examples
+```jldoctest
+julia> Blade{3}(0b110 => 42) # a grade 2 blade in 3 dimensions
+Blade{3, 2, Int64}:
+ 42 v23
+```
+"""
 Blade{Sig}(pair::Pair) where {Sig} = Blade{Sig}(pair...)
 
 # warning: does’t check that K == count_ones(bits)
@@ -116,6 +130,21 @@ A homogeneous multivector of grade `K` with storage type `S`.
 struct Multivector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
 	components::S
 end
+
+"""
+	Multivector{Sig,K}(comps)
+
+Multivector of grade `K` with components vector `comps`.
+
+# Examples
+```jldoctest
+julia> Multivector{3,2}(1:3) # 3D bivector
+3-component Multivector{3, 2, UnitRange{Int64}}:
+ 1 v12
+ 2 v13
+ 3 v23
+```
+"""
 Multivector{Sig,K}(comps::S) where {Sig,K,S} = Multivector{Sig,K,S}(comps)
 
 mmv_slice(a::Multivector) = mmv_slice(Val(dimension(a)), Val(grade(a)))
@@ -136,6 +165,29 @@ All elements of a geometric algebra are representable as a `MixedMultivector`.
 struct MixedMultivector{Sig,S} <: AbstractMultivector{Sig}
 	components::S
 end
+
+"""
+	MixedMultivector{Sig}(comps)
+
+Inhomogeneous multivector with components vector `comps`. The components are ordered
+first by grade then lexicographically (see [`GeometricAlgebra.mmv_bits`](@ref)).
+
+# Examples
+```jldoctest
+julia> MixedMultivector{3}(1:2^3)
+8-component MixedMultivector{3, UnitRange{Int64}}:
+ 1
+ 2 v1 + 3 v2 + 4 v3
+ 5 v12 + 6 v13 + 7 v23
+ 8 v123
+
+julia> grade(ans, 1)
+3-component Multivector{3, 1, UnitRange{Int64}}:
+ 2 v1
+ 3 v2
+ 4 v3
+```
+"""
 MixedMultivector{Sig}(comps::S) where {Sig,S} = MixedMultivector{Sig,S}(comps)
 
 
@@ -161,7 +213,7 @@ dimension(::AbstractMultivector{Sig}) where {Sig} = dimension(Sig)
 """
 	ncomponents(::CompositeMultivector)
 
-Number of independent components of a multivector object or type.
+Number of independent components of a multivector instance or type.
 
 In ``n`` dimensions, this is ``\\binom{n}{k}`` for a `Multivector` and
 ``2^n`` for a `MixedMultivector`.
@@ -175,7 +227,7 @@ Base.length(::AbstractMultivector) = error(
 """
 	eltype(::AbstractMultivector)
 
-The numerical type of the components of a multivector object or type.
+The numerical type of the components of a multivector instance or type.
 """
 Base.eltype(::OrType{<:Blade{Sig,K,T} where {Sig,K}}) where T = T
 Base.eltype(::OrType{<:CompositeMultivector{Sig,S}}) where {Sig,S} = eltype(S)

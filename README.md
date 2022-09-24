@@ -48,7 +48,7 @@ julia> exp(10000*2π*v[3]v[4])
 
 Macros are provided for interactive use:
 
-```jldoctest
+```julia
 julia> @basis "+---"
 [ Info: Defined basis blades v, v1, v2, v3, v4, v12, v13, v14, v23, v24, v34, v123, v124, v134, v234, v1234
 

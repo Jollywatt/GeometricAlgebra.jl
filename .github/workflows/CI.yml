@@ -25,12 +25,8 @@ jobs:
 
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        arch: [x64, x86]
+        arch: [x64]
         version: ['1.6', '1.7', '1.8']
-
-        exclude:
-          - os: macOS-latest
-            arch: x86
 
     runs-on: ${{ matrix.os }}
 

@@ -42,10 +42,10 @@ realzero(::Type) = zero(Int)
 realone(T::Type{<:Number}) = one(T)
 realone(::Type) = one(Int)
 
-oneslike(::Type{<:Vector}, n) = let a = ones(Int, n)
+oneslike(::Type{<:Vector}, dims...) = let a = ones(Int, dims...)
 	convert(with_eltype(typeof(a), Any), a)
 end
-zeroslike(::Type{<:Vector}, n) = let a = zeros(Int, n)
+zeroslike(::Type{<:Vector}, dims...) = let a = zeros(Int, dims...)
 	convert(with_eltype(typeof(a), Any), a)
 end
 

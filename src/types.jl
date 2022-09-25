@@ -146,6 +146,7 @@ julia> Multivector{3,2}(1:3) # 3D bivector
 ```
 """
 Multivector{Sig,K}(comps::S) where {Sig,K,S} = Multivector{Sig,K,S}(comps)
+Multivector(comps::AbstractVector) = Multivector{length(comps),1}(comps)
 
 mmv_slice(a::Multivector) = mmv_slice(Val(dimension(a)), Val(grade(a)))
 

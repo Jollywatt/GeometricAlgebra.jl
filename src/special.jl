@@ -1,7 +1,28 @@
 #= Multiplicative Inverses =#
 
-Base.inv(a::Blade) = a/scalarpart(a^2)
-function Base.inv(a::CompositeMultivector)
+matrix_repr(a::HomogeneousMultivector) = matrix_repr(MixedMultivector(a))
+function matrix_repr(a::MixedMultivector)
+	N = ncomponents(a)
+	if eltype(a) <: Number
+		mat = zeros(eltype(a), N, N)
+	else
+		mat = Matrix{Any}(undef, N, N)
+		fill!(mat, 0)
+	end
+	for (i, b) ∈ enumerate(basis(signature(a), grade=:all))
+		mat[:,i] = MixedMultivector(a*b).components
+	end
+	mat
+end
+
+function inv_matrix_method(a::CompositeMultivector)
+	A = matrix_repr(a)
+	id = MixedMultivector(one(a)).components
+	A⁻¹ = A\id
+	MixedMultivector{signature(a)}(A⁻¹)
+end
+
+function inv_formula_method(a::CompositeMultivector)
 	# In low dimensions, explicit formulae exist.
 	# See https://doi.org/10.1016/j.amc.2017.05.027
 
@@ -28,11 +49,17 @@ function Base.inv(a::CompositeMultivector)
 		end
 		return c/scalarpart(a*c)
 
+	else	
+		throw("only implemented for dimensions 0:5")
+	end
+end
+
+Base.inv(a::Blade) = a/scalarpart(a^2)
+function Base.inv(a::CompositeMultivector)
+	if dimension(a) <= 5
+		inv_formula_method(a)
 	else
-		aā = a*ā
-		isscalar(aā) && return ā/scalarpart(a*ā) # hope for the best
-	
-		throw("failed to find multivector inverse (which may or may not exist)")
+		inv_matrix_method(a)
 	end
 end
 

@@ -115,6 +115,7 @@ end
 
 geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
 geometric_prod(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
+geometric_prod(a::Scalar, b::Scalar) = a*b
 
 Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
@@ -165,6 +166,7 @@ end
 # this is correct ONLY IF grade_selector(k, 0) == k == grade_selector(0, k)
 graded_prod(a::AbstractMultivector, b::Scalar, grade_selector) = scalar_multiply(a, b)
 graded_prod(a::Scalar, b::AbstractMultivector, grade_selector) = scalar_multiply(a, b)
+graded_prod(a::Scalar, b::Scalar, grade_selector) = a*b
 
 wedge(a, b) = graded_prod(a, b, +)
 ∧(a, b) = wedge(a, b)

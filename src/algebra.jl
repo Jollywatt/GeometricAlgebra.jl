@@ -108,9 +108,9 @@ end
 
 function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(MixedMultivector{Sig}, a, b))
-	for (abits, ai) ∈ nonzero_components(a), (bbits, bi) ∈ nonzero_components(b)
+	for (abits::UInt, ai) ∈ nonzero_components(a), (bbits::UInt, bi) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-		i = bits_to_mmv_index(bits, dimension(Sig))
+		i = bits_index(dimension(Sig), bits)
 		c = setindex!!(c, c.comps[i] + factor*(ai*bi), i)
 	end
 	c
@@ -154,12 +154,27 @@ function graded_prod(grade_selector::Function, a::Blade{Sig}, b::Blade{Sig}) whe
 	end
 end
 
+function graded_prod(grade_selector::Function, a::HomogeneousMultivector{Sig,P}, b::HomogeneousMultivector{Sig,Q}) where {Sig,P,Q}
+	K = grade_selector(P, Q)
+	c = zero(similar(Multivector{Sig,K}, a, b))
+	for (abits, ai) ∈ nonzero_components(a), (bbits, bi) ∈ nonzero_components(b)
+		bits = abits ⊻ bbits
+		if count_ones(bits) == K
+			factor = geometric_prod_factor(Sig, abits, bbits)
+			i = bits_to_mv_index(bits)
+			c = setindex!!(c, c.comps[i] + factor*(ai*bi), i)
+		end
+	end
+	c
+end
+
 function graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(MixedMultivector{Sig}, a, b))
 	for (abits, ai) ∈ nonzero_components(a), (bbits, bi) ∈ nonzero_components(b)
-		factor, bits = geometric_prod_bits(Sig, abits, bbits)
+		bits = abits ⊻ bbits
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
-			i = bits_to_mmv_index(bits, dimension(Sig))
+			factor = geometric_prod_factor(Sig, abits, bbits)
+			i = bits_index(dimension(Sig), bits)
 			c = setindex!!(c, c.comps[i] + factor*(ai*bi), i)
 		end
 	end
@@ -226,7 +241,7 @@ end
 
 
 
-#= Reversion =#
+#= Reversion and Dualities =#
 
 graded_multiply(f, a::Scalar) = f(0)*a
 graded_multiply(f, a::HomogeneousMultivector) = f(grade(a))*a
@@ -248,4 +263,13 @@ involution(a) = graded_multiply(k -> (-1)^k, a)
 
 clifford_conj(a) = graded_multiply(a) do k
 	(-1)^k*reversion_sign(k)
+end
+
+# this probably shouldn’t be called “dual”
+dual(a::Blade) = let bits = (unsigned(1) << dimension(a)) - 1
+	Blade{signature(a)}(bits ⊻ bitsof(a) => a.coeff)
+end
+dual(a::MixedMultivector) = constructor(a)(reverse(a.comps))
+dual(a::Multivector{Sig,K}) where {Sig,K} = let K′ = dimension(Sig) - K
+	Multivector{Sig,K′}(reverse(a.comps))
 end

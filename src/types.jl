@@ -113,7 +113,7 @@ end
 bitsof(a::Blade) = a.bits
 
 mv_index(a::Blade) = bits_to_mv_index(bitsof(a))
-mmv_index(a::Blade) = bits_to_mmv_index(bitsof(a), dimension(a))
+mmv_index(a::Blade) = bits_index(dimension(a), bitsof(a))
 
 
 
@@ -396,8 +396,8 @@ isscalar(a::MixedMultivector) = all(isrealzero, a.comps[2:end])
 blades(a::Blade) = [a]
 blades(a::CompositeMultivector{Sig}) where {Sig} = [Blade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.comps)]
 
-nonzero_components(a::Blade) = (bitsof(a) => a.coeff,)
-nonzero_components(a::CompositeMultivector) = (bits => coeff for (bits, coeff) ∈ zip(bitsof(a), a.comps))
+nonzero_components(a::Blade) = isrealzero(a.coeff) ? () : (bitsof(a) => a.coeff,)
+nonzero_components(a::CompositeMultivector) = Iterators.filter(!isrealzero∘last, zip(bitsof(a), a.comps))
 
 
 

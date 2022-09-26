@@ -4,9 +4,8 @@ Operations on bits representing “unit blades”. E.g., the
 """
 
 bits_scalar() = unsigned(0)
-bits_first_of_grade(T::Type{<:Unsigned}, k) = (one(T) << k) - one(T)
+bits_first_of_grade(k, T=UInt) = (one(T) << k) - one(T)
 bits_basis_vector(i) = unsigned(1) << (i - 1)
-
 
 #= Conversion from Indices to Bits =#
 
@@ -100,11 +99,12 @@ struct BitPermutations{T<:Unsigned}
 end
 BitPermutations(n) = BitPermutations{UInt}(n)
 
-function Base.iterate(fgb::BitPermutations{T}, bits=bits_first_of_grade(T, fgb.n)) where T
+function Base.iterate(fgb::BitPermutations{T}, bits=bits_first_of_grade(fgb.n, T)) where T
 	(bits, next_bit_permutation(bits))
 end
 
 Base.IteratorSize(::BitPermutations) = Base.IsInfinite()
+Base.eltype(::Type{BitPermutations{T}}) where {T} = T
 
 """
 	bits_of_grade(k[, dim])
@@ -221,6 +221,9 @@ end
 @generated mmv_slice(::Val{N}, ::Val{K}) where {N,K} = multivector_index_offset(N, K) .+ (1:binomial(N, K))
 
 
+@generated bits_indices(::Val{Dim}) where {Dim} = sortperm(mmv_bits(Val(Dim)))
+@inline bits_index(dim, bits) = bits_indices(Val(dim))[begin + bits]
+
 
 #= Geometric Products of Bits =#
 
@@ -259,6 +262,19 @@ function factor_from_squares(sig, bits::Unsigned)
 	factor
 end
 
+geometric_prod_matrix(sig) = let bits = 0:bits_first_of_grade(dimension(sig))
+	Int[sign_from_swaps(a, b)factor_from_squares(sig, a & b) for a ∈ bits, b ∈ bits]
+end
+@generated geometric_prod_matrix(::Val{Sig}) where {Sig} = geometric_prod_matrix(Sig)
+
+@inline function geometric_prod_factor(sig, a, b)::Int
+	if false # dimension(sig) <= 10 # limit geometric_prod_matrix cache to 8MB
+		# doesn’t seem worth it...
+		geometric_prod_matrix(Val(sig))[begin + a, begin + b]
+	else
+		sign_from_swaps(a, b)factor_from_squares(sig, a & b)
+	end
+end
 
 """
 	geometric_prod_bits(sig, a::Unsigned, b::Unsigned)
@@ -267,7 +283,7 @@ Compute the geometric product between unit blades. Returns a tuple
 of the overall scalar factor and the resulting unit blade.
 """
 function geometric_prod_bits(sig, a::Unsigned, b::Unsigned)
-	factor = sign_from_swaps(a, b)*factor_from_squares(sig, a & b)
+	factor = geometric_prod_factor(sig, a, b)
 	bits = a ⊻ b
 	factor, bits
 end

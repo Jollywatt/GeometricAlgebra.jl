@@ -5,7 +5,7 @@ using GeometricAlgebra:
 	mv_bits,
 	mmv_bits,
 	bits_to_mv_index,
-	bits_to_mmv_index,
+	bits_index,
 	mmv_slice,
 	sign_from_swaps,
 	factor_from_squares,
@@ -47,7 +47,7 @@ end
 
 @testset "bits <-> mixed multivector index" begin
 	for dim ∈ 1:2:8, i ∈ 1:2:2^dim
-		@test bits_to_mmv_index(mmv_bits(Val(dim))[i], dim) == i
+		@test bits_index(dim, mmv_bits(Val(dim))[i]) == i
 	end
 end
 

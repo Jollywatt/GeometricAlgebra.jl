@@ -140,6 +140,18 @@ end
 	
 end
 
+@testset "⋅" begin
+	v = basis(3)
+	@test v[1]⋅v[1] == v[2]⋅v[2] == 1
+	@test v[1]⋅v[2] == 0
+	@test (v[1]v[2])⋅v[2] == v[2]⋅(v[2]v[1]) == v[1]
+	@test (1 + v[1] + 2v[2]v[3])⋅v[3] == v[3] + 2v[2]
+	@test v[1]⋅8 == 2⋅v[1]⋅(2⋅2)
+
+	v = basis("-+++")
+	@test (1 + v[1])⋅(10 + 5v[1]) == 10 + (5 + 10)v[1] - 5
+end
+
 @testset "^" begin
 	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
 	

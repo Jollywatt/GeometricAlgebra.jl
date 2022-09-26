@@ -13,6 +13,8 @@ Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	T(a) == T(b)
 end
 
+
+
 #= Approximate Equality =#
 
 isapproxzero(a; kwargs...) = isapprox(a, zero(a); kwargs...)
@@ -31,6 +33,7 @@ Base.:isapprox(a::Number, b::AbstractMultivector; kwargs...) = isapprox(b, a; kw
 Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}; kwargs...) where {Sig} = let T = largest_type(a, b)
 	isapprox(T(a), T(b); kwargs...)
 end
+
 
 
 #= Scalar Multiplication =#
@@ -80,8 +83,8 @@ Base.:+(As::AbstractMultivector{Sig}...) where {Sig} = +(MixedMultivector.(As)..
 Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 
-#= Scalar Addition =#
 
+#= Scalar Addition =#
 
 add_scalar(a::AbstractMultivector{Sig}, b) where {Sig} = a + Blade{Sig}(0 => b)
 function add_scalar(a::MixedMultivector, b)
@@ -176,6 +179,10 @@ graded_prod(grade_selector, a::Scalar, b::Scalar) = a*b
 
 wedge(a, b) = graded_prod(+, a, b)
 ∧(a, b) = wedge(a, b)
+
+inner(a, b) = graded_prod(abs∘-, a, b)
+⋅(a, b) = inner(a, b)
+
 
 
 #= Exponentiation =#

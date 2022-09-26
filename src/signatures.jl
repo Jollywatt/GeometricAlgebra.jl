@@ -121,10 +121,10 @@ basis vectors of norm `+1`, `-1` and `0`, respectively.
 ```jldoctest
 julia> basis(Cl(1,3))
 4-element Vector{Blade{Cl(1,3), 1, Int64}}:
- 1v1
- 1v2
- 1v3
- 1v4
+ v1
+ v2
+ v3
+ v4
 
 julia> ans .^ 2
 4-element Vector{Blade{Cl(1,3), 0, Int64}}:
@@ -172,20 +172,22 @@ See also [`@basis`](@ref) and [`@basisall`](@ref).
 ```jldoctest
 julia> basis(3)
 3-element Vector{Blade{3, 1, Int64}}:
- 1v1
- 1v2
- 1v3
+ v1
+ v2
+ v3
 
 julia> prod(basis("-+++"))
+Blade{⟨-+++⟩, 4, Int64}:
+ 1 v1234
 
 julia> basis(Cl(1,3); grade=2)
 6-element Vector{Blade{Cl(1,3), 2, Int64}}:
- 1v12
- 1v13
- 1v23
- 1v14
- 1v24
- 1v34
+ v12
+ v13
+ v23
+ v14
+ v24
+ v34
 ```
 """
 basis(sig; grade=1) = let sig = interpret_signature(sig)

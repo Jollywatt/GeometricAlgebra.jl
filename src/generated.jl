@@ -28,13 +28,13 @@ body are the literal symbols `:a`, `:b`, etc.
 ```jldoctest
 julia> u, v = Multivector.(basis(2))
 2-element Vector{Multivector{2, 1, Vector{Int64}}}:
- 1v1
- 1v2
+ v1
+ v2
 
 julia> using MacroTools: prettify
 
 julia> ex = GeometricAlgebra.generated_multivector_function(*, u, v) |> prettify
-:(let a = (CompositeMultivector(a)).comps, b = (CompositeMultivector(b)).comps
+:(let a = components(a), b = components(b)
       comps = create_array(Vector{Any}, Int64, Val{1}(), Val{(4,)}(), a[1] * b[1] + a[2] * b[2], 0, 0, a[1] * b[2] + (-1 * a[2]) * b[1])
       (MixedMultivector{2})(comps)
   end)
@@ -69,14 +69,14 @@ end
 components(a::CompositeMultivector) = a.comps
 
 struct SingletonVector{T} <: AbstractVector{T}
-	x::T
+	el::T
 	index::Int
 	length::Int
 end
-Base.getindex(a::SingletonVector{T}, i) where {T} = a.index == i ? a.x : zero(T)
 Base.length(a::SingletonVector) = a.length
+Base.size(a::SingletonVector) = (length(a),)
+Base.getindex(a::SingletonVector{T}, i) where {T} = a.index == i ? a.el : zero(T)
 function Base.iterate(a::SingletonVector, i = 1)
 	i > a.length && return
 	(a[i], i + 1)
 end
-Base.size(a::SingletonVector) = (length(a),)

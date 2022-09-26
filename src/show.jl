@@ -2,7 +2,7 @@
 #= Blades =#
 
 # make things line up right when printing in arrays
-function Base.alignment(io::IO, b::Blade)
+function Base.alignment(io::IO, @nospecialize(b::Blade))
 	(l, r) = Base.alignment(io, b.coeff)
 	(l, length(sprint(show, b)) - l)
 end
@@ -15,7 +15,7 @@ julia> GeometricAlgebra.show_blade(stdout, Blade{(x=1,)}(0b1 => 1 + im))
 (1+1im) x
 ```
 """
-function show_blade(io::IO, b::Blade; compact=false)
+function show_blade(io::IO, @nospecialize(b::Blade); compact=false)
 	subio = IOContext(io, :compact => true)
 	if compact && isrealzero(b.coeff) print(io, "0")
 	elseif compact && isrealone(b.coeff) isscalar(b) && print(io, "1")
@@ -48,7 +48,7 @@ julia> GeometricAlgebra.show_multivector(stdout, a)
    0.001 v3
 ```
 """
-function show_multivector(io::IO, a::Multivector; indent=0)
+function show_multivector(io::IO, @nospecialize(a::Multivector); indent=0)
 	# TODO: showzeros argument
 	iszero(a) && return print(io, " "^indent, realzero(eltype(a)))
 
@@ -66,7 +66,7 @@ function show_multivector(io::IO, a::Multivector; indent=0)
 end
 
 
-function show_multivector_inline(io::IO, a::Multivector; compact=false, showzeros=false)
+function show_multivector_inline(io::IO, @nospecialize(a::Multivector); compact=false, showzeros=false)
 	if iszero(a)
 		print(io, realzero(eltype(a)))
 		return
@@ -83,7 +83,7 @@ end
 """
 Display an inhomogeneous `MixedMultivector` with each grade on a new line.
 """
-function show_mixedmultivector(io::IO, a::MixedMultivector; inline, indent=0)
+function show_mixedmultivector(io::IO, @nospecialize(a::MixedMultivector); inline, indent=0)
 	firstline = true
 	if iszero(a)
 		print(io, " "^indent, realzero(eltype(a)))
@@ -107,31 +107,31 @@ end
 
 
 
-function show_header(io::IO, a::Blade)
+function show_header(io::IO, @nospecialize(a::Blade))
 	show(io, typeof(a))
 	println(io, ":")
 end
-function show_header(io::IO, a::CompositeMultivector)
+function show_header(io::IO, @nospecialize(a::CompositeMultivector))
 	print(io, length(a.comps), "-component ")
 	show(io, typeof(a))
 	println(io, ":")
 end
 
-Base.show(io::IO, a::Blade) = show_blade(io, a; compact=true)
-function Base.show(io::IO, ::MIME"text/plain", a::Blade)
+Base.show(io::IO, @nospecialize(a::Blade)) = show_blade(io, a; compact=true)
+function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Blade))
 	show_header(io, a)
 	print(io, " ")
 	show_blade(io, a)
 end
 
-Base.show(io::IO, a::Multivector) = show_multivector_inline(io, a; compact=true)
-function Base.show(io::IO, ::MIME"text/plain", a::Multivector)
+Base.show(io::IO, @nospecialize(a::Multivector)) = show_multivector_inline(io, a; compact=true)
+function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Multivector))
 	show_header(io, a)
 	show_multivector(io, a; indent=1)
 end
 
-Base.show(io::IO, a::MixedMultivector) = show_mixedmultivector(io, a; inline=true)
-function Base.show(io::IO, ::MIME"text/plain", a::MixedMultivector)
+Base.show(io::IO, @nospecialize(a::MixedMultivector)) = show_mixedmultivector(io, a; inline=true)
+function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::MixedMultivector))
 	show_header(io, a)
 	show_mixedmultivector(io, a; inline=false, indent=1)
 end

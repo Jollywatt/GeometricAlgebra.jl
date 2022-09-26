@@ -1,8 +1,8 @@
 #= Equality =#
 
 Base.:(==)(a::Blade{Sig}, b::Blade{Sig}) where Sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : iszero(a) && iszero(b)
-Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = grade(a) == grade(b) ? a.components == b.components : iszero(a) && iszero(b)
-Base.:(==)(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig} = a.components == b.components
+Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = grade(a) == grade(b) ? a.comps == b.comps : iszero(a) && iszero(b)
+Base.:(==)(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig} = a.comps == b.comps
 
 Base.:(==)(a::AbstractMultivector, b::Number) = isscalar(a) && scalarpart(a) == b
 Base.:(==)(a::Number, b::AbstractMultivector) = isscalar(b) && a == scalarpart(b)
@@ -17,11 +17,11 @@ end
 
 isapproxzero(a; kwargs...) = isapprox(a, zero(a); kwargs...)
 isapproxzero(a::Blade; kwargs...) = isapproxzero(a.coeff; kwargs...)
-isapproxzero(a::CompositeMultivector; kwargs...) = isapproxzero(a.components; kwargs...)
+isapproxzero(a::CompositeMultivector; kwargs...) = isapproxzero(a.comps; kwargs...)
 
 Base.isapprox(a::Blade{Sig}, b::Blade{Sig}; kwargs...) where Sig = bitsof(a) == bitsof(b) ? isapprox(a.coeff, b.coeff; kwargs...) : isapproxzero(a) && isapproxzero(b)
-Base.isapprox(a::Multivector{Sig}, b::Multivector{Sig}; kwargs...) where {Sig} = grade(a) == grade(b) ? isapprox(a.components, b.components; kwargs...) : isapproxzero(a) && isapproxzero(b)
-Base.isapprox(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}; kwargs...) where {Sig} = isapprox(a.components, b.components; kwargs...)
+Base.isapprox(a::Multivector{Sig}, b::Multivector{Sig}; kwargs...) where {Sig} = grade(a) == grade(b) ? isapprox(a.comps, b.comps; kwargs...) : isapproxzero(a) && isapproxzero(b)
+Base.isapprox(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}; kwargs...) where {Sig} = isapprox(a.comps, b.comps; kwargs...)
 
 # promote scalar to target multivector type and compare component arrays
 Base.:isapprox(a::Blade, b::Number; kwargs...) = isapprox(Multivector(a), b; kwargs...)
@@ -40,8 +40,8 @@ const Scalar = Union{Number,SymbolicUtils.Symbolic}
 scalar_multiply(a::Blade{Sig,K}, b) where {Sig,K} = Blade{Sig,K}(bitsof(a) => a.coeff*b)
 scalar_multiply(a, b::Blade{Sig,K}) where {Sig,K} = Blade{Sig,K}(bitsof(b) => a*b.coeff)
 
-scalar_multiply(a::CompositeMultivector, b) = constructor(a)(a.components*b)
-scalar_multiply(a, b::CompositeMultivector) = constructor(b)(a*b.components)
+scalar_multiply(a::CompositeMultivector, b) = constructor(a)(a.comps*b)
+scalar_multiply(a, b::CompositeMultivector) = constructor(b)(a*b.comps)
 
 Base.:*(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
 Base.:*(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
@@ -57,21 +57,21 @@ Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
 
 #= Addition =#
 
-add!(a::Multivector, b::Blade) = (a.components[mv_index(b)] += b.coeff; a)
-add!(a::MixedMultivector, b::Blade) = (a.components[mmv_index(b)] += b.coeff; a)
+add!(a::Multivector, b::Blade) = (a.comps[mv_index(b)] += b.coeff; a)
+add!(a::MixedMultivector, b::Blade) = (a.comps[mmv_index(b)] += b.coeff; a)
 
-add!(a::Multivector, b::Multivector) = (a.components[:] += b.components; a)
-add!(a::MixedMultivector, b::MixedMultivector) = (a.components[:] += b.components; a)
+add!(a::Multivector, b::Multivector) = (a.comps[:] += b.comps; a)
+add!(a::MixedMultivector, b::MixedMultivector) = (a.comps[:] += b.comps; a)
 
 function add!(a::MixedMultivector, b::Multivector)
 	offset = multivector_index_offset(grade(b), dimension(b))
-	a.components[mmv_slice(b)] = b.components
+	a.comps[mmv_slice(b)] = b.comps
 	a
 end
 
 # add alike types
-Base.:+(As::Multivector{Sig,K}...) where {Sig,K} = Multivector{Sig,K}(sum(a.components for a ∈ As))
-Base.:+(As::MixedMultivector{Sig}...) where {Sig} = MixedMultivector{Sig}(sum(a.components for a ∈ As))
+Base.:+(As::Multivector{Sig,K}...) where {Sig,K} = Multivector{Sig,K}(sum(a.comps for a ∈ As))
+Base.:+(As::MixedMultivector{Sig}...) where {Sig} = MixedMultivector{Sig}(sum(a.comps for a ∈ As))
 
 # convert unalike to alike # TODO: reduce intermediate allocations
 Base.:+(As::HomogeneousMultivector{Sig,K}...) where {Sig,K} = +(Multivector.(As)...)
@@ -85,7 +85,7 @@ Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 add_scalar(a::AbstractMultivector{Sig}, b) where {Sig} = a + Blade{Sig}(0 => b)
 function add_scalar(a::MixedMultivector, b)
-	constructor(a)(copy_setindex(a.components, a.components[1] + b, 1))
+	constructor(a)(copy_setindex(a.comps, a.comps[1] + b, 1))
 end
 
 Base.:+(a::AbstractMultivector, b::Scalar) = add_scalar(a, b)
@@ -108,7 +108,7 @@ function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}
 	for (abits, ai) ∈ nonzero_components(a), (bbits, bi) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
 		i = bits_to_mmv_index(bits, dimension(Sig))
-		c = setindex!!(c, c.components[i] + factor*(ai*bi), i)
+		c = setindex!!(c, c.comps[i] + factor*(ai*bi), i)
 	end
 	c
 end
@@ -129,13 +129,13 @@ scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitso
 scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = realzero(promote_type(eltype(a), eltype(b)))
 
 function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
-	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.components .* b.components)))
+	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps)))
 end
 scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = realzero(promote_type(eltype(a), eltype(b)))
 
 
 function scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig}
-	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.components .* b.components)))
+	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps)))
 end
 scalar_prod(a::AbstractMultivector, b::AbstractMultivector) = let T = largest_type(a, b)
 	scalar_prod(T(a), T(b))
@@ -157,7 +157,7 @@ function graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::A
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
 			i = bits_to_mmv_index(bits, dimension(Sig))
-			c = setindex!!(c, c.components[i] + factor*(ai*bi), i)
+			c = setindex!!(c, c.comps[i] + factor*(ai*bi), i)
 		end
 	end
 	c
@@ -224,7 +224,7 @@ end
 graded_multiply(f, a::Scalar) = f(0)*a
 graded_multiply(f, a::HomogeneousMultivector) = f(grade(a))*a
 function graded_multiply(f, a::MixedMultivector{Sig}) where Sig
-	comps = copy(a.components)
+	comps = copy(a.comps)
 	dim = dimension(Sig)
 	for k ∈ 0:dim
 		comps[mmv_slice(Val(dim), Val(k))] *= f(k)

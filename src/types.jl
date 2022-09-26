@@ -128,7 +128,7 @@ A homogeneous multivector of grade `K` with storage type `S`.
 - `S`: Storage type of the multivector components, usually a subtype of `AbstractVector`.
 """
 struct Multivector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
-	components::S
+	comps::S
 end
 
 """
@@ -164,7 +164,7 @@ All elements of a geometric algebra are representable as a `MixedMultivector`.
 - `S`: Storage type of the multivector components, usually a subtype of `AbstractVector`.
 """
 struct MixedMultivector{Sig,S} <: AbstractMultivector{Sig}
-	components::S
+	comps::S
 end
 
 """
@@ -256,22 +256,22 @@ constructor(::OrType{<:Blade{Sig,K}}) where {Sig,K} = Blade{Sig,K}
 constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
 constructor(::OrType{<:MixedMultivector{Sig}}) where {Sig} = MixedMultivector{Sig}
 
-Base.copy(a::CompositeMultivector) = constructor(a)(copy(a.components))
+Base.copy(a::CompositeMultivector) = constructor(a)(copy(a.comps))
 
 Base.zero(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => realzero(T))
 Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
 Base.zero(a::OrType{<:MixedMultivector{Sig,S}}) where {Sig,S} = MixedMultivector{Sig}(zeroslike(S, ncomponents(a)))
 
 Base.iszero(a::Blade) = isrealzero(a.coeff)
-Base.iszero(a::CompositeMultivector) = all(isrealzero, a.components)
+Base.iszero(a::CompositeMultivector) = all(isrealzero, a.comps)
 
 Base.one(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => realone(T))
 Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,0}(oneslike(S, 1))
 Base.one(a::OrType{<:MixedMultivector}) = zero(a) + realone(eltype(a))
 
 Base.isone(a::Blade) = iszero(grade(a)) && isone(a.coeff)
-Base.isone(a::Multivector) = iszero(grade(a)) && isone(a.components[1])
-Base.isone(a::MixedMultivector) = isrealone(a.components[1]) && all(isrealzero, a.components[2:end])
+Base.isone(a::Multivector) = iszero(grade(a)) && isone(a.comps[1])
+Base.isone(a::MixedMultivector) = isrealone(a.comps[1]) && all(isrealzero, a.comps[2:end])
 
 
 
@@ -312,7 +312,7 @@ function Multivector(a::Multivector{Sig,K}, T) where {Sig,K}
 	if issetindexable(S)
 		add!(zero(Multivector{Sig,K,S}), a) # ensure a copy is made
 	else
-		Multivector{Sig,K,S}(convert(S, a.components))
+		Multivector{Sig,K,S}(convert(S, a.comps))
 	end
 end
 
@@ -343,7 +343,7 @@ function MixedMultivector(a::Multivector{Sig,K}, T) where {Sig,K}
 		nbefore = first(slice) - 1
 		nafter = n - last(slice)
 
-		comps = (ntuple(i -> realzero(T), nbefore)..., a.components..., ntuple(i -> realzero(T), nafter)...)
+		comps = (ntuple(i -> realzero(T), nbefore)..., a.comps..., ntuple(i -> realzero(T), nafter)...)
 		MixedMultivector{Sig,S}(S(comps))
 	end
 end
@@ -355,7 +355,7 @@ function MixedMultivector(a::MixedMultivector{Sig}, T) where {Sig}
 	if issetindexable(S)
 		add!(zero(MixedMultivector{Sig,S}), a) # ensure a copy is made
 	else
-		MixedMultivector{Sig,S}(convert(S, a.components))
+		MixedMultivector{Sig,S}(convert(S, a.comps))
 	end
 end
 
@@ -378,12 +378,12 @@ end
 
 grade(a::Blade{Sig,K}, k) where {Sig,K} = K == k ? a : zero(a)
 grade(a::Multivector{Sig,K,C}, k) where {Sig,K,C} = K == k ? a : zero(Multivector{Sig,k,C})
-grade(a::MixedMultivector, k) = Multivector{signature(a),k}(view(a.components, mmv_slice(Val(dimension(a)), Val(k))))
+grade(a::MixedMultivector, k) = Multivector{signature(a),k}(view(a.comps, mmv_slice(Val(dimension(a)), Val(k))))
 
 scalarpart(a::Blade{Sig,0}) where {Sig} = a.coeff
 scalarpart(a::Blade) = realzero(eltype(a))
-scalarpart(a::MixedMultivector) = a.components[begin]
-scalarpart(a::Multivector{Sig,0}) where {Sig} = a.components[begin]
+scalarpart(a::MixedMultivector) = a.comps[begin]
+scalarpart(a::Multivector{Sig,0}) where {Sig} = a.comps[begin]
 scalarpart(a::Multivector{Sig}) where {Sig} = zero(eltype(a))
 
 isscalar(a::Number) = true
@@ -391,21 +391,21 @@ isscalar(a::Blade{Sig,0}) where {Sig} = true
 isscalar(a::Blade) = iszero(a)
 isscalar(a::HomogeneousMultivector{Sig,0}) where {Sig} = true
 isscalar(a::HomogeneousMultivector) = iszero(a)
-isscalar(a::MixedMultivector) = all(isrealzero, a.components[2:end])
+isscalar(a::MixedMultivector) = all(isrealzero, a.comps[2:end])
 
 blades(a::Blade) = [a]
-blades(a::CompositeMultivector{Sig}) where {Sig} = [Blade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.components)]
+blades(a::CompositeMultivector{Sig}) where {Sig} = [Blade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.comps)]
 
 nonzero_components(a::Blade) = (bitsof(a) => a.coeff,)
-nonzero_components(a::CompositeMultivector) = (bits => coeff for (bits, coeff) ∈ zip(bitsof(a), a.components))
+nonzero_components(a::CompositeMultivector) = (bits => coeff for (bits, coeff) ∈ zip(bitsof(a), a.comps))
 
 
 
 function setindex!!(a::CompositeMultivector, val, i)
-	if issetindexable(a.components)
-		setindex!(a.components, val, i)
+	if issetindexable(a.comps)
+		setindex!(a.comps, val, i)
 		a
 	else
-		constructor(a)(setindex(a.components, val, i))
+		constructor(a)(setindex(a.comps, val, i))
 	end
 end

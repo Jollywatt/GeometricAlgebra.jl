@@ -34,7 +34,7 @@ julia> u, v = Multivector.(basis(2))
 julia> using MacroTools: prettify
 
 julia> ex = GeometricAlgebra.generated_multivector_function(*, u, v) |> prettify
-:(let a = (CompositeMultivector(a)).components, b = (CompositeMultivector(b)).components
+:(let a = (CompositeMultivector(a)).comps, b = (CompositeMultivector(b)).comps
       comps = create_array(Vector{Any}, Int64, Val{1}(), Val{(4,)}(), a[1] * b[1] + a[2] * b[2], 0, 0, a[1] * b[2] + (-1 * a[2]) * b[1])
       (MixedMultivector{2})(comps)
   end)
@@ -46,7 +46,7 @@ function generated_multivector_function(f, x...)
 	
 	x_symb = symbolic_multivector.(x, syms)
 	y_symb = f(x_symb...)
-	comps = y_symb.components
+	comps = y_symb.comps
 
 	T = numberorany(promote_type(eltype.(x)...))
 	comps_expr = SymbolicUtils.Code.MakeArray(comps, typeof(comps), T)
@@ -66,7 +66,7 @@ function components(a::Blade{Sig,K}) where {Sig,K}
 	i = bits_to_mv_index(bitsof(a))
 	SingletonVector(a.coeff, i, ncomponents(Sig, K))
 end
-components(a::CompositeMultivector) = a.components
+components(a::CompositeMultivector) = a.comps
 
 struct SingletonVector{T} <: AbstractVector{T}
 	x::T

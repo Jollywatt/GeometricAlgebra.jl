@@ -52,14 +52,14 @@ function show_multivector(io::IO, a::Multivector; indent=0)
 	# TODO: showzeros argument
 	iszero(a) && return print(io, " "^indent, realzero(eltype(a)))
 
-	alignments = Base.alignment.(Ref(io), collect(a.components))
+	alignments = Base.alignment.(Ref(io), collect(a.comps))
 	L = maximum(first.(alignments))
 	R = maximum(last.(alignments))
 
 	for (i, (bits, (l, r))) ∈ enumerate(zip(bits_of_grade(grade(a), dimension(a)), alignments))
 		i > 1 && println(io)
 		print(io, " "^(L - l + indent))
-		Base.show_unquoted(io, a.components[i], 0, Base.operator_precedence(:*))
+		Base.show_unquoted(io, a.comps[i], 0, Base.operator_precedence(:*))
 		print(io, " "^(R - r), " ")
 		show_basis_blade(io, signature(a), bits_to_indices(bits))
 	end
@@ -72,7 +72,7 @@ function show_multivector_inline(io::IO, a::Multivector; compact=false, showzero
 		return
 	end
 	isfirst = true
-	for (bits, coeff) in zip(bits_of_grade(grade(a), dimension(a)), a.components)
+	for (bits, coeff) in zip(bits_of_grade(grade(a), dimension(a)), a.comps)
 		(!showzeros || compact) && isrealzero(coeff) && continue
 		isfirst ? isfirst = false : print(io, " + ")
 		show_blade(io, Blade{signature(a)}(bits => coeff); compact)
@@ -112,7 +112,7 @@ function show_header(io::IO, a::Blade)
 	println(io, ":")
 end
 function show_header(io::IO, a::CompositeMultivector)
-	print(io, length(a.components), "-component ")
+	print(io, length(a.comps), "-component ")
 	show(io, typeof(a))
 	println(io, ":")
 end

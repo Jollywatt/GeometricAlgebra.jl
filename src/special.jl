@@ -10,14 +10,14 @@ function matrix_repr(a::MixedMultivector)
 		fill!(mat, 0)
 	end
 	for (i, b) ∈ enumerate(basis(signature(a), grade=:all))
-		mat[:,i] = MixedMultivector(a*b).components
+		mat[:,i] = MixedMultivector(a*b).comps
 	end
 	mat
 end
 
 function inv_matrix_method(a::CompositeMultivector)
 	A = matrix_repr(a)
-	id = MixedMultivector(one(a)).components
+	id = MixedMultivector(one(a)).comps
 	A⁻¹ = A\id
 	MixedMultivector{signature(a)}(A⁻¹)
 end
@@ -83,10 +83,10 @@ end
 
 
 infnorm(a::Blade) = abs(a.coeff)
-infnorm(a::CompositeMultivector) = maximum(abs.(a.components))
+infnorm(a::CompositeMultivector) = maximum(abs.(a.comps))
 
 twonorm(a::Blade) = abs(a.coeff)
-twonorm(a::CompositeMultivector) = sqrt(sum(abs2.(a.components)))
+twonorm(a::CompositeMultivector) = sqrt(sum(abs2.(a.comps)))
 
 exp_series(a::HomogeneousMultivector) = exp_series(MixedMultivector(a))
 function exp_series(a::MixedMultivector{Sig,C}) where {Sig,C}

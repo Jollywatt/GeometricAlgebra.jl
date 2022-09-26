@@ -20,7 +20,7 @@ See [`basis`](@ref) and [`@basis`](@ref) to get started.
 """
 module GeometricAlgebra
 
-using StaticArrays
+using StaticArrays, SparseArrays
 using Combinatorics: permutations, powerset
 using SymbolicUtils
 using PrettyTables: pretty_table

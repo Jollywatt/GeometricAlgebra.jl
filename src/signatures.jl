@@ -19,7 +19,7 @@ algebra’s defining signature.
 Dimension of (the grade-`k` subspace of) the geometric algebra of metric
 signature `sig`, viewed as a vector space.
 
-If the dimension of the _underlying_ vector space in ``n``, then the algebra
+If the dimension of the _underlying_ vector space (see [`dimension`](@ref)) in ``n``, then the algebra
 is ``2^n``-dimensional, and its grade-``k`` subspace ``\\binom{n}{k}``-dimensional.
 """
 ncomponents(sig) = 1 << dimension(sig)  # << constant folds whereas 2^dim doesn't
@@ -55,17 +55,12 @@ show_signature(io, sig::Tuple) = print(io, "⟨$(join(map(s -> get(Dict(+1=>"+",
 
 
 """
-	show_basis_blade(io, sig, indices)
+	show_basis_blade(io, sig, indices::Vector{Int})
 
-Show the basis blade which is the product of the unit vectors in `indices`
-in a geometric algebra defined by `sig`.
+Show the basis blade with unit vectors in `indices` for the geometric algebra
+defined by `sig`.
 Methods dispatching on `sig` should be added to customise basis blade labels
 for particular algebras.
-	
-The fallback method is:
-```julia
-show_basis_blade(io, sig, indices) = printstyled(io, "v"*join(string.(indices)); bold=true)
-```
 
 # Examples
 ```julia
@@ -81,7 +76,13 @@ Blade{⟨++++⟩, 4, Int64} of grade 4:
  1 𝒆₁∧𝒆₂∧𝒆₃∧𝒆₄
 ```
 """
-show_basis_blade(io, sig, indices) = printstyled(io, "v"*join(string.(indices)); bold=true)
+function show_basis_blade(io, sig, indices)
+	if dimension(sig) < 10
+		printstyled(io, "v"*join(string.(indices)); bold=true)
+	else
+		printstyled(io, join(string.("v", indices)); bold=true)
+	end
+end
 show_basis_blade(io, sig::NamedTuple, indices) = printstyled(io, join(keys(sig)[indices]), bold=true)
 
 
@@ -89,14 +90,14 @@ show_basis_blade(io, sig::NamedTuple, indices) = printstyled(io, join(keys(sig)[
 """
 	componentstype(sig, N, T)
 
-Array type to use the components for multivectors of signature `sig`.
+Default array type used to store components of multivectors of signature `sig`.
 The resulting type should be able to store `N` components (in the case
-of a fixed-size array) of element type `T`.
+of a fixed-size array) of type `T`.
 
-This is used when converting a `Blade` into a `CompositeMultivector` to
-determine the type of the components array.
+The fallback method returns `Vector{T}` for `dimension(sig) <= 8`, and
+`SparseVector{T}` otherwise.
 """
-componentstype(sig, N, T) = Vector{T}
+componentstype(sig, N, T) = dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
 
 
 #= Built-in Metric Signatures =#
@@ -146,10 +147,11 @@ Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature,
 struct MetricWithStorage{Sig,S} end
 dimension(::MetricWithStorage{Sig}) where {Sig} = dimension(Sig)
 basis_vector_norm(::MetricWithStorage{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
-componentstype(::MetricWithStorage{Sig,S}, N, T) where {Sig,S} = S{N,T}
+componentstype(::MetricWithStorage{Sig,S}, N, T) where {Sig,S<:StaticVector} = S{N,T}
+componentstype(::MetricWithStorage{Sig,SparseVector}, N, T) where {Sig} = SparseVector{T}
 function show_signature(io, ::MetricWithStorage{Sig,S}) where {Sig,S}
-	print(io, nameof(S))
 	show_signature(io, Sig)
+	print(io, " with $(nameof(S))")
 end
 
 
@@ -164,6 +166,8 @@ interpret_signature(sig) = sig
 
 Return basis blades for the geometric algebra defined by the metric signature `sig`.
 
+See also [`@basis`](@ref) and [`@basisall`](@ref).
+
 # Examples
 ```jldoctest
 julia> basis(3)
@@ -171,6 +175,8 @@ julia> basis(3)
  1v1
  1v2
  1v3
+
+julia> prod(basis("-+++"))
 
 julia> basis(Cl(1,3); grade=2)
 6-element Vector{Blade{Cl(1,3), 2, Int64}}:

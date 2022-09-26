@@ -4,12 +4,12 @@ using GeometricAlgebra:
 	isscalar,
 	signature,
 	largest_type,
-	with_eltype,
 	MetricWithStorage
-using GeometricAlgebra.StaticArrays	
+using GeometricAlgebra.StaticArrays
+using GeometricAlgebra.SparseArrays
 
 @testset "constructors" begin
-	@test zero(Blade{(1,1)}(0b11 => 42)) === Blade{(1,1),0,Int}(0b00, 0)
+	@test zero(Blade{2}(0b11 => 42)) === Blade{2,0,Int}(0b00, 0)
 	@test one(Blade{(1,1)}(0b11 => 42.0)) === Blade{(1,1),0,Float64}(0b00, 1)
 
 	for T in [
@@ -32,7 +32,7 @@ end
 	for a in [
 		Blade{(1,1)}(0b00 => 42),
 		Blade{(1,0,1)}(0b001 => 42.0),
-		Blade{(1,1,1)}(0b111 => big(42)),
+		Blade{3}(0b111 => big(42)),
 	]
 		@test Multivector(a) isa Multivector{signature(a),grade(a),<:AbstractVector{eltype(a)}}
 		@test MixedMultivector(a) isa MixedMultivector{signature(a),<:AbstractVector{eltype(a)}}
@@ -74,9 +74,9 @@ end
 end
 
 @testset "different storage types" begin
-	for S in [SVector, MVector]
+	@testset "$S" for S in [SVector, MVector, SparseVector]
 		sig = MetricWithStorage{(1,1,1),S}()
-		v = Blade{sig}.(bits_of_grade(1, 3) .=> 1)
+		v = basis(sig)
 
 		@test Multivector(v[1]) isa Multivector{sig,1,<:S}
 		@test MixedMultivector(v[1]) isa MixedMultivector{sig,<:S}

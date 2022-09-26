@@ -6,6 +6,7 @@ using GeometricAlgebra:
 	isapproxzero
 
 using GeometricAlgebra.StaticArrays
+using GeometricAlgebra.SparseArrays
 
 @testset "==" begin
 	for sig in [(1,1), (-1,0,+1)], T in [Bool, Int, Float64], k in 1:3
@@ -165,7 +166,7 @@ end
 end
 
 @testset "different storage types" begin
-	for S in [SVector, MVector]
+	for S in [SVector, MVector, SparseVector]
 		sig = MetricWithStorage{(1,1,1),S}()
 		v = basis(sig)
 

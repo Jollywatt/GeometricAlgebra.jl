@@ -49,9 +49,10 @@ julia> GeometricAlgebra.show_multivector(stdout, a)
 ```
 """
 function show_multivector(io::IO, a::Multivector; indent=0)
+	# TODO: showzeros argument
 	iszero(a) && return print(io, " "^indent, realzero(eltype(a)))
 
-	alignments = Base.alignment.(Ref(io), a.components)
+	alignments = Base.alignment.(Ref(io), collect(a.components))
 	L = maximum(first.(alignments))
 	R = maximum(last.(alignments))
 

@@ -392,3 +392,17 @@ isscalar(a::MixedMultivector) = all(isrealzero, a.components[2:end])
 
 blades(a::Blade) = [a]
 blades(a::CompositeMultivector{Sig}) where {Sig} = [Blade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.components)]
+
+nonzero_components(a::Blade) = (bitsof(a) => a.coeff,)
+nonzero_components(a::CompositeMultivector) = (bits => coeff for (bits, coeff) ∈ zip(bitsof(a), a.components))
+
+
+
+function setindex!!(a::CompositeMultivector, val, i)
+	if ismutable(a.components)
+		setindex!(a.components, val, i)
+		a
+	else
+		constructor(a)(setindex(a.components, val, i))
+	end
+end

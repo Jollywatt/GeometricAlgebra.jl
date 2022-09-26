@@ -6,9 +6,7 @@ end
 
 
 
-with_eltype(::Type{<:Multivector{Sig,K,C}}, T) where {Sig,K,C} = Multivector{Sig,K,with_eltype(C, T)}
-with_eltype(::Type{<:MixedMultivector{Sig,C}}, T) where {Sig,C} = MixedMultivector{Sig,with_eltype(C, T)}
-
+symbolic_multivector(a::Type{<:Blade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(Multivector{Sig,K}, label)
 function symbolic_multivector(A::Type{<:CompositeMultivector{Sig,C}}, label) where {Sig,C}
 	constructor(A)(symbolic_components(label, ncomponents(A)))
 end
@@ -53,7 +51,7 @@ function generated_multivector_function(f, x...)
 	T = numberorany(promote_type(eltype.(x)...))
 	comps_expr = SymbolicUtils.Code.MakeArray(comps, typeof(comps), T)
 
-	assignments = [:( $sym = CompositeMultivector($sym).components ) for sym in syms]
+	assignments = [:( $sym = components($sym) ) for sym in syms]
 	quote
 		let $(assignments...)
 			comps = $(SymbolicUtils.Code.toexpr(comps_expr))
@@ -61,3 +59,24 @@ function generated_multivector_function(f, x...)
 		end
 	end
 end
+
+# way to convert a Blade to a Multivector without allocating a full components array
+# TODO: take this more seriously
+function components(a::Blade{Sig,K}) where {Sig,K}
+	i = bits_to_mv_index(bitsof(a))
+	SingletonVector(a.coeff, i, ncomponents(Sig, K))
+end
+components(a::CompositeMultivector) = a.components
+
+struct SingletonVector{T} <: AbstractVector{T}
+	x::T
+	index::Int
+	length::Int
+end
+Base.getindex(a::SingletonVector{T}, i) where {T} = a.index == i ? a.x : zero(T)
+Base.length(a::SingletonVector) = a.length
+function Base.iterate(a::SingletonVector, i = 1)
+	i > a.length && return
+	(a[i], i + 1)
+end
+Base.size(a::SingletonVector) = (length(a),)

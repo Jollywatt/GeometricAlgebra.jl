@@ -24,10 +24,10 @@ function show_blade(io::IO, @nospecialize(b::Blade); compact=false)
 		Base.show_unquoted(subio, b.coeff, 0, Base.operator_precedence(:*))
 	end
 	grade(b) == 0 && return
-	compact || print(io, " ") # coefficient–basis separator
 	# blades with higher grade than dimension are always zero,
 	#  and should not have basis blade printed
 	0 < grade(b) <= dimension(b) || return
+	compact || print(io, " ") # coefficient–basis separator
 	show_basis_blade(io, signature(b), bits_to_indices(bitsof(b)))
 end
 
@@ -48,32 +48,41 @@ julia> GeometricAlgebra.show_multivector(stdout, a)
    0.001 v3
 ```
 """
-function show_multivector(io::IO, @nospecialize(a::Multivector); indent=0)
+function show_multivector(io::IO, @nospecialize(a::Multivector); indent=0, showzeros=true)
 	# TODO: showzeros argument
 	iszero(a) && return print(io, " "^indent, realzero(eltype(a)))
 
-	alignments = Base.alignment.(Ref(io), collect(a.comps))
+	comps = zip(bitsof(a), a.comps)
+	if !showzeros
+		comps = Iterators.filter(!iszero∘last, comps)
+	end
+
+	comps = collect(comps)
+
+	alignments = Base.alignment.(Ref(io), last.(comps))
 	L = maximum(first.(alignments))
 	R = maximum(last.(alignments))
 
-	for (i, (bits, (l, r))) ∈ enumerate(zip(bits_of_grade(grade(a), dimension(a)), alignments))
-		i > 1 && println(io)
+	firstline = true
+	for ((bits, coeff), (l, r)) ∈ zip(comps, alignments)
+		firstline || println(io)
 		print(io, " "^(L - l + indent))
-		Base.show_unquoted(io, a.comps[i], 0, Base.operator_precedence(:*))
+		Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
 		print(io, " "^(R - r), " ")
 		show_basis_blade(io, signature(a), bits_to_indices(bits))
+		firstline = false
 	end
 end
 
 
 function show_multivector_inline(io::IO, @nospecialize(a::Multivector); compact=false, showzeros=false)
-	if iszero(a)
+	if (!showzeros || compact) && iszero(a)
 		print(io, realzero(eltype(a)))
 		return
 	end
 	isfirst = true
 	for (bits, coeff) in zip(bits_of_grade(grade(a), dimension(a)), a.comps)
-		(!showzeros || compact) && isrealzero(coeff) && continue
+		!showzeros && isrealzero(coeff) && continue
 		isfirst ? isfirst = false : print(io, " + ")
 		show_blade(io, Blade{signature(a)}(bits => coeff); compact)
 	end
@@ -83,25 +92,28 @@ end
 """
 Display an inhomogeneous `MixedMultivector` with each grade on a new line.
 """
-function show_mixedmultivector(io::IO, @nospecialize(a::MixedMultivector); inline, indent=0)
-	firstline = true
+function show_mixedmultivector(io::IO, @nospecialize(a::MixedMultivector); inline, indent=0, showzeros=false)
 	if iszero(a)
 		print(io, " "^indent, realzero(eltype(a)))
 		return
 	end
+	firstline = true
 	for k ∈ 0:dimension(a)
 		ak = grade(a, k)
-		if iszero(ak) continue end
-		if firstline
-			firstline = false
-		else
-			print(io, inline ? " + " : "\n")
+
+		!showzeros && iszero(ak) && continue
+		firstline || print(io, inline ? " + " : "\n")
+
+		if firstline || !inline
+			print(io, " "^indent)
 		end
-		print(io, " "^indent)
+
 		showparens = inline && (0 < k < dimension(a))
 		showparens && print(io, "(")
-		show_multivector_inline(io, ak; compact=inline)
+		show_multivector_inline(io, ak; compact=inline, showzeros)
 		showparens && print(io, ")")
+
+		firstline = false
 	end
 end
 
@@ -165,7 +177,6 @@ function pretty_print_signature(io, T::Type)
 
 		# unwrap UnionAll and remember TypeVars
 		typevars = TypeVar[]
-		T = T
 		while T isa UnionAll
 			push!(typevars, T.var)
 			T = T.body

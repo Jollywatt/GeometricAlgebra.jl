@@ -239,6 +239,9 @@ Base.eltype(::OrType{<:CompositeMultivector{Sig,S}}) where {Sig,S} = eltype(S)
 bitsof(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = mv_bits(Val(dimension(Sig)), Val(K))
 bitsof(::OrType{<:MixedMultivector{Sig}}) where {Sig} = mmv_bits(Val(dimension(Sig)))
 
+bits_index(a::Multivector, bits) = bits_to_mv_index(bits)
+bits_index(a::MixedMultivector, bits) = bits_index(dimension(a), bits)
+
 
 largest_type(::MixedMultivector, ::AbstractMultivector) = MixedMultivector
 largest_type(::Multivector, ::HomogeneousMultivector) = Multivector

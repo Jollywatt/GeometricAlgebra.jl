@@ -27,9 +27,9 @@ using PrettyTables: pretty_table
 
 export AbstractMultivector, HomogeneousMultivector, Blade, Multivector, MixedMultivector
 export basis, @basis, @basisall, cayleytable
-export signature, dimension, grade, ncomponents
-export geometric_prod, scalar_prod, wedge, ∧, inner, ⋅, reversion, involution
-export blades
+export signature, dimension, grade, ncomponents, blades
+export geometric_prod, scalar_prod, wedge, ∧, inner, ⋅, lcontract, ⨼, rcontract, ⨽
+export reversion, involution
 export Cl
 
 include("bits.jl")

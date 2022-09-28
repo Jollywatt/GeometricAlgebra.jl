@@ -217,7 +217,7 @@ function bits_to_mmv_index(bits::Unsigned, dim)
 	multivector_index_offset(dim, count_ones(bits)) + bits_to_mv_index(bits)
 end
 
-# range of MixedMultivector corresponding to the grade k components
+# range of MixedMultivector components corresponding to the grade k part
 @generated mmv_slice(::Val{N}, ::Val{K}) where {N,K} = multivector_index_offset(N, K) .+ (1:binomial(N, K))
 
 
@@ -225,8 +225,8 @@ end
 @inline bits_index(dim, bits) = bits_indices(Val(dim))[begin + bits]
 
 
-#= Geometric Products of Bits =#
 
+#= Geometric Products of Bits =#
 
 """
 Compute sign flips of blade product due to transposing basis vectors into sorted order.
@@ -270,6 +270,7 @@ end
 @inline function geometric_prod_factor(sig, a, b)::Int
 	if false # dimension(sig) <= 10 # limit geometric_prod_matrix cache to 8MB
 		# doesn’t seem worth it...
+		# TODO: proper benchmark test
 		geometric_prod_matrix(Val(sig))[begin + a, begin + b]
 	else
 		sign_from_swaps(a, b)factor_from_squares(sig, a & b)

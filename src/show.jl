@@ -17,9 +17,9 @@ julia> GeometricAlgebra.show_blade(stdout, Blade{(x=1,)}(0b1 => 1 + im))
 """
 function show_blade(io::IO, @nospecialize(b::Blade); compact=false)
 	subio = IOContext(io, :compact => true)
-	if compact && isrealzero(b.coeff) print(io, "0")
-	elseif compact && isrealone(b.coeff) isscalar(b) && print(io, "1")
-	elseif compact && isrealone(-b.coeff) print(io, isscalar(b) ? "-1" : "-")
+	if compact && isnumberzero(b.coeff) print(io, "0")
+	elseif compact && isnumberone(b.coeff) isscalar(b) && print(io, "1")
+	elseif compact && isnumberone(-b.coeff) print(io, isscalar(b) ? "-1" : "-")
 	else
 		Base.show_unquoted(subio, b.coeff, 0, Base.operator_precedence(:*))
 	end
@@ -50,7 +50,7 @@ julia> GeometricAlgebra.show_multivector(stdout, a)
 """
 function show_multivector(io::IO, @nospecialize(a::Multivector); indent=0, showzeros=true)
 	# TODO: showzeros argument
-	iszero(a) && return print(io, " "^indent, realzero(eltype(a)))
+	iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
 	comps = zip(bitsof(a), a.comps)
 	if !showzeros
@@ -77,12 +77,12 @@ end
 
 function show_multivector_inline(io::IO, @nospecialize(a::Multivector); compact=false, showzeros=false)
 	if (!showzeros || compact) && iszero(a)
-		print(io, realzero(eltype(a)))
+		print(io, numberzero(eltype(a)))
 		return
 	end
 	isfirst = true
 	for (bits, coeff) in zip(bits_of_grade(grade(a), dimension(a)), a.comps)
-		!showzeros && isrealzero(coeff) && continue
+		!showzeros && isnumberzero(coeff) && continue
 		isfirst ? isfirst = false : print(io, " + ")
 		show_blade(io, Blade{signature(a)}(bits => coeff); compact)
 	end
@@ -94,7 +94,7 @@ Display an inhomogeneous `MixedMultivector` with each grade on a new line.
 """
 function show_mixedmultivector(io::IO, @nospecialize(a::MixedMultivector); inline, indent=0, showzeros=false)
 	if iszero(a)
-		print(io, " "^indent, realzero(eltype(a)))
+		print(io, " "^indent, numberzero(eltype(a)))
 		return
 	end
 	firstline = true

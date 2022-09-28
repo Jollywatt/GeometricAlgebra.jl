@@ -48,7 +48,7 @@ scalar_multiply(a, b::CompositeMultivector) = constructor(b)(a*b.comps)
 
 Base.:*(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
 Base.:*(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
-Base.:-(a::AbstractMultivector) = -realone(eltype(a))*a
+Base.:-(a::AbstractMultivector) = -numberone(eltype(a))*a
 
 promote_to(T, x) = convert(promote_type(T, typeof(x)), x)
 Base.:/(a::AbstractMultivector, b::Scalar) = a*inv(promote_to(eltype(a), b))
@@ -128,13 +128,13 @@ Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
 #= Derived Products =#
 
-scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalarpart(a*b) : realzero(promote_type(eltype(a), eltype(b)))
-scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = realzero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalarpart(a*b) : numberzero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
 function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
 	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps)))
 end
-scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = realzero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
 
 function scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig}

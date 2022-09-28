@@ -343,7 +343,7 @@ function MixedMultivector(a::Multivector{Sig,K}, T) where {Sig,K}
 		nbefore = first(slice) - 1
 		nafter = n - last(slice)
 
-		comps = (ntuple(i -> realzero(T), nbefore)..., a.comps..., ntuple(i -> realzero(T), nafter)...)
+		comps = ntuple(i -> i ∈ slice ? a.comps[i - nbefore] : realzero(T), Val(n))
 		MixedMultivector{Sig,S}(S(comps))
 	end
 end

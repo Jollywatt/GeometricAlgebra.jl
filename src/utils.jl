@@ -7,6 +7,7 @@ end
 issetindexable(T::Type) = ismutabletype(T)
 issetindexable(::Type{<:AbstractSparseArray}) = true
 issetindexable(a) = issetindexable(typeof(a))
+issetindexable(::Type{<:MVector{N,T}}) where {N,T} = isbitstype(T) # see https://github.com/JuliaArrays/StaticArrays.jl/issues/27
 
 with_eltype(::Type{<:Vector}, T) = Vector{T}
 with_eltype(::Type{<:MVector{N}}, T) where {N} = MVector{N,T}

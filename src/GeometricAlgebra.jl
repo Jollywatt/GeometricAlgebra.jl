@@ -30,6 +30,7 @@ export basis, @basis, @basisall, cayleytable
 export signature, dimension, grade, ncomponents, blades
 export geometric_prod, scalar_prod, wedge, ∧, inner, ⋅, lcontract, ⨼, rcontract, ⨽
 export reversion, involution
+export vector_repr, matrix_repr
 export Cl
 
 include("bits.jl")

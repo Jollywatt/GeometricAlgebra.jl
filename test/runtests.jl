@@ -1,5 +1,5 @@
-#= Run this script interactively: `julia --project -i runtests.jl`
-... or with arguments `julia --project runtests.jl [testfiles...]` =#
+#= Run this script interactively: `julia -i runtests.jl`
+... or with arguments `julia runtests.jl [testfiles...]` =#
 
 cd(dirname(@__FILE__))
 # using Pkg; Pkg.activate(".") # TODO: GeometricAlgebra can't be in Project.toml for Pkg.test to work

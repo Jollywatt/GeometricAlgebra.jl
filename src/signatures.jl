@@ -266,11 +266,12 @@ end
 
 """
 	cayleytable(sig, op=*)
+	cayleytable(objs, op=*)
 
 Display the multiplication table for a geometric algeba
 
-The first argument may be a metric signature of a vector of elements
-of the geometric algebra, and `op` may be any binary operator.
+The first argument may be a metric signature or a vector of objects
+which can be combined with the binary operator `op`.
 
 # Examples
 ```jldoctest

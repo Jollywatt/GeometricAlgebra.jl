@@ -1,14 +1,54 @@
 #= Multiplicative Inverses =#
 
+"""
+	vector_repr(a::AbstractMultivector)
+
+Vector representation of a multivector.
+
+This is a linear operator. See also [`matrix_repr`](@ref).
+
+# Examples
+```jldoctest
+julia> @basis 2
+[ Info: Defined basis blades v, v1, v2, v12
+
+julia> vector_repr(v1*v2) == matrix_repr(v1)vector_repr(v2)
+true
+```
+"""
+vector_repr(a::AbstractMultivector) = collect(MixedMultivector(a).comps)
+
+"""
+	matrix_repr(a::AbstractMultivector)
+
+Matrix representation of a multivector.
+
+This is an injective homomorphism from the geometric algebra
+to a matrix subalgebra (i.e., it is linear, and preserves algebraic products).
+
+See also [`vector_repr`](@ref).
+
+# Examples
+```jldoctest
+julia> @basis 2
+[ Info: Defined basis blades v, v1, v2, v12
+
+julia> matrix_repr(v1)
+4×4 Matrix{Int64}:
+ 0  1  0  0
+ 1  0  0  0
+ 0  0  0  1
+ 0  0  1  0
+
+julia> matrix_repr(v1*v2) == matrix_repr(v1)matrix_repr(v2)
+true
+```
+"""
 matrix_repr(a::HomogeneousMultivector) = matrix_repr(MixedMultivector(a))
 function matrix_repr(a::MixedMultivector)
-	N = ncomponents(a)
-	if eltype(a) <: Number
-		mat = zeros(eltype(a), N, N)
-	else
-		mat = Matrix{Any}(undef, N, N)
-		fill!(mat, 0)
-	end
+	N, T = ncomponents(a), eltype(a)
+	mat = Matrix{numberorany(T)}(undef, N, N)
+	fill!(mat, numberzero(T))
 	for (i, b) ∈ enumerate(basis(signature(a), grade=:all))
 		mat[:,i] = MixedMultivector(a*b).comps
 	end

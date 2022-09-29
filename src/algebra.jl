@@ -204,7 +204,11 @@ A graded product of multivectors, generalising the wedge ``∧``, inner ``⋅`` 
 
 If `grade(a) == p` and `grade(b) == q`, then `graded_prod(f, a, b)` is equivalent
 to the grade `f(p, q)` part of `a*b`.
-For multivectors of mixed grade, this definition is extended by linearity.
+For multivectors ``A`` and ``B`` of mixed grade, this definition is extended by linearity:
+```math
+	(A, B) ↦ \\sum_{p,q} ⟨⟨A⟩_p ⟨B⟩_q⟩_{f(p, q)}
+```
+where ``⟨⋅⟩_k`` denotes the grade ``k`` part.
 """
 graded_prod
 
@@ -214,7 +218,8 @@ graded_prod
 
 Wedge product of multivectors.
 
-This is a grade-raising operation, also known as the _outer_ or _alternating_ product.
+This is a grade-raising operation, also known as the _outer_ or _alternating_ product,
+equivalent to [`graded_prod(+, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ∧ b` is the grade ``p + q`` part of `a*b`.
 """
 wedge(a, b) = graded_prod(+, a, b)
@@ -228,7 +233,7 @@ a ∧ b = wedge(a, b)
 
 Inner product of multivectors.
 
-This is a grade lowering operation.
+This is a grade lowering operation, equivalent to [`graded_prod(abs∘-, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⋅ b` is the grade ``|p - q|`` part of `a*b`.
 """
 inner(a, b) = graded_prod(abs∘-, a, b)
@@ -242,6 +247,7 @@ inner(a, b) = graded_prod(abs∘-, a, b)
 
 Left contraction of multivectors. See also [`rcontract`](@ref).
 
+Equivalent to [`graded_prod((p, q) -> q - p, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨼ b` is the grade ``q - p`` part of `a*b`.
 """
 lcontract(a, b) = graded_prod((-)∘-, a, b)
@@ -255,6 +261,7 @@ lcontract(a, b) = graded_prod((-)∘-, a, b)
 
 Left contraction of multivectors. See also [`lcontract`](@ref).
 
+Equivalent to [`graded_prod(-, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨽ b` is the grade ``p - q`` part of `a*b`.
 """
 rcontract(a, b) = graded_prod(-, a, b)

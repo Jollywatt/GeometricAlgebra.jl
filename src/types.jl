@@ -203,13 +203,14 @@ CompositeMultivector(a::CompositeMultivector) = a
 
 
 """
+	dimension(sig)
 	dimension(::AbstractMultivector)
 
 The dimension of the underlying vector space of the geometric algebra.
 See [`ncomponents`](@ref) for the dimension of the algebra (i.e., the
 number of independent components of a general multivector).
 """
-dimension(::AbstractMultivector{Sig}) where {Sig} = dimension(Sig)
+dimension(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = dimension(Sig)
 
 
 

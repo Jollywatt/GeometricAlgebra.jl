@@ -129,6 +129,12 @@ Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
 #= Scalar Product =#
 
+"""
+	a ⊙ b
+	scalar_prod(a, b)
+
+Scalar part of the multivector product `a*b`.
+"""
 scalar_prod(a::Scalar, b::Scalar) = a*b
 scalar_prod(a::AbstractMultivector, b::Scalar) = scalarpart(a)*b
 scalar_prod(a::Scalar, b::AbstractMultivector) = a*scalarpart(b)
@@ -144,17 +150,36 @@ scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = numberzero(p
 scalar_prod(a::MixedMultivector{Sig}, b::Multivector{Sig,K}) where {Sig,K} = scalar_prod(grade(a, K), b)
 scalar_prod(a::Multivector{Sig,K}, b::MixedMultivector{Sig}) where {Sig,K} = scalar_prod(a, grade(b, K))
 
+scalar_prod(a::CompositeMultivector{Sig}, b::Blade{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(b))*(a.comps[bits_index(a, bitsof(b))]*b.coeff)
+scalar_prod(a::Blade{Sig}, b::CompositeMultivector{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(a))*(a.coeff*b.comps[bits_index(b, bitsof(a))])
+
 function scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig}
 	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps)))
 end
 
+"$(@doc scalar_prod)"
+a ⊙ b = scalar_prod(a, b)
 
-#= Graded Products =#
 
-# these are correct ONLY IF grade_selector(k, 0) == k == grade_selector(0, k)
-graded_prod(grade_selector, a::Scalar, b::Scalar) = a*b
-graded_prod(grade_selector, a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
-graded_prod(grade_selector, a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
+
+#= Graded Product =#
+
+"""
+	graded_prod(grade_selector::Function, a, b)
+
+A graded product of multivectors, generalising the wedge ``∧``, inner ``⋅`` and contraction products.
+
+If `grade(a) == p` and `grade(b) == q`, then `graded_prod(f, a, b)` is equivalent
+to the grade `f(p, q)` part of `a*b`.
+For multivectors ``A`` and ``B`` of mixed grade, this definition is extended by linearity:
+```math
+	(A, B) ↦ \\sum_{p,q} ⟨⟨A⟩_p ⟨B⟩_q⟩_{f(p, q)}
+```
+where ``⟨⋅⟩_k`` denotes the grade ``k`` part.
+"""
+graded_prod(grade_selector, a::Scalar, b::Scalar) = iszero(grade_selector(0, 0)) ? a*b : zero(promote_type(a, b))
+graded_prod(grade_selector, a::AbstractMultivector, b::Scalar) = grade(a) == (grade_selector(grade(a), 0)) ? scalar_multiply(a, b) : zero(a)
+graded_prod(grade_selector, a::Scalar, b::AbstractMultivector) = grade(b) == (grade_selector(0, grade(b))) ? scalar_multiply(a, b) : zero(a)
 
 function graded_prod(grade_selector::Function, a::Blade{Sig}, b::Blade{Sig}) where {Sig}
 	if count_ones(bitsof(a) ⊻ bitsof(b)) == grade_selector(grade(a), grade(b))
@@ -197,20 +222,9 @@ end
 	end
 end
 
-"""
-	graded_prod(grade_selector::Function, a, b)
 
-A graded product of multivectors, generalising the wedge ``∧``, inner ``⋅`` and contraction products.
 
-If `grade(a) == p` and `grade(b) == q`, then `graded_prod(f, a, b)` is equivalent
-to the grade `f(p, q)` part of `a*b`.
-For multivectors ``A`` and ``B`` of mixed grade, this definition is extended by linearity:
-```math
-	(A, B) ↦ \\sum_{p,q} ⟨⟨A⟩_p ⟨B⟩_q⟩_{f(p, q)}
-```
-where ``⟨⋅⟩_k`` denotes the grade ``k`` part.
-"""
-graded_prod
+#= Derived Products =#
 
 """
 	a ∧ b
@@ -268,7 +282,6 @@ rcontract(a, b) = graded_prod(-, a, b)
 
 "$(@doc rcontract)"
 ⨽(a, b) = rcontract(a, b)
-
 
 
 

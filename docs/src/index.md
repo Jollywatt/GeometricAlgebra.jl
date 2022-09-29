@@ -14,40 +14,42 @@ end
 Construct multivectors by providing the metric signature and grade as type parameters:
 
 ```jldoctest
-julia> u = Multivector{(1,1,1),1}([1, -1, 0])
-3-component Multivector{⟨+++⟩, 1, Vector{Int64}}:
+julia> u = Multivector([1, -1, 0]) # 3D Euclidean vector
+3-component Multivector{3, 1, Vector{Int64}}:
   1 v1
  -1 v2
   0 v3
 
-julia> v = Multivector{(1,1,1),2}(1:3)
-3-component Multivector{⟨+++⟩, 2, UnitRange{Int64}}:
+julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
+6-component Multivector{⟨-+++⟩, 2, UnitRange{Int64}}:
  1 v12
  2 v13
  3 v23
+ 4 v14
+ 5 v24
+ 6 v34
 
-julia> u*v + π
-8-component MixedMultivector{⟨+++⟩, Vector{Float64}}:
- 3.14159
- 1.0 v1 + 1.0 v2 + -1.0 v3
- 5.0 v123
+julia> (v + 1)^2
+16-component MixedMultivector{⟨-+++⟩, Vector{Int64}}:
+ -48
+ 2 v12 + 4 v13 + 6 v23 + 8 v14 + 10 v24 + 12 v34
+ 16 v1234
 
 ```
 
 You may also obtain an orthonormal basis for a metric signature:
 
 ```jldoctest
-julia> v = basis((-1,+1,+1,+1))
-4-element Vector{Blade{⟨-+++⟩, 1, Int64}}:
+julia> v = basis(3)
+3-element Vector{Blade{3, 1, Int64}}:
  v1
  v2
  v3
- v4
 
-julia> exp(10000*2π*v[3]v[4])
-16-component MixedMultivector{⟨-+++⟩, Vector{Float64}}:
+julia> exp(10000*2π*v[2]v[3])
+8-component MixedMultivector{3, Vector{Float64}}:
  1.0
- -9.71365e-13 v34
+ -9.71365e-13 v23
 ```
 
 Macros are provided for interactive use:
@@ -56,7 +58,6 @@ Macros are provided for interactive use:
 julia> @basis "+---"
 [ Info: Defined basis blades v, v1, v2, v3, v4, v12, v13, v14, v23, v24, v34, v123, v124, v134, v234, v1234
 
-julia> v1234^2
-Blade{⟨+---⟩, 0, Int64}:
- -1
+julia> @basisall (t = +1, x = -1)
+[ Info: Defined basis blades t, x, tx, xt
 ```

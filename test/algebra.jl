@@ -121,9 +121,9 @@ end
 @testset "scalar product" begin
 	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
 
-	@test scalar_prod(v[1], v[1]) == -1
-	@test scalar_prod(v[1], v[2]) == 0
-	@test typeof(scalar_prod(v[1], v[1])) === typeof(scalar_prod(v[1], v[2]))
+	@test v[1] ⊙ v[1] == -1
+	@test v[1] ⊙ v[2] == 0
+	@test v[1] ⊙ (1 + v[1]v[2]) isa Real
 
 	@test scalar_prod(v[2] + v[3], v[2] + v[3]) == 2
 	@test scalar_prod(v[1] + v[2], v[3]) == 0
@@ -137,7 +137,6 @@ end
 	@test (v[1] + v[2])∧v[2] == v[1]v[2]
 
 	@test v[1]∧10 == 2∧v[1]∧5 == 10v[1]
-	
 end
 
 @testset "⋅" begin
@@ -150,6 +149,15 @@ end
 
 	v = basis("-+++")
 	@test (1 + v[1])⋅(10 + 5v[1]) == 10 + (5 + 10)v[1] - 5
+end
+
+@testset "⨼, ⨽" begin
+	@basisall 3
+
+	@test v123⨽v32 == v1 == ~(v23⨼v321)
+	@test iszero(7⨽(v1 + v2))
+	@test v2⨽(10 + v123) == 10v2
+	@test 2⨼2 == 4
 end
 
 @testset "^" begin

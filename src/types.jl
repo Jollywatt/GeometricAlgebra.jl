@@ -384,11 +384,11 @@ grade(a::Blade{Sig,K}, k) where {Sig,K} = K == k ? a : zero(a)
 grade(a::Multivector{Sig,K,C}, k) where {Sig,K,C} = K == k ? a : zero(Multivector{Sig,k,C})
 grade(a::MixedMultivector, k) = Multivector{signature(a),k}(view(a.comps, mmv_slice(Val(dimension(a)), Val(k))))
 
-scalarpart(a::Blade{Sig,0}) where {Sig} = a.coeff
-scalarpart(a::Blade) = numberzero(eltype(a))
-scalarpart(a::MixedMultivector) = a.comps[begin]
-scalarpart(a::Multivector{Sig,0}) where {Sig} = a.comps[begin]
-scalarpart(a::Multivector{Sig}) where {Sig} = zero(eltype(a))
+scalar(a::Blade{Sig,0}) where {Sig} = a.coeff
+scalar(a::Blade) = numberzero(eltype(a))
+scalar(a::MixedMultivector) = a.comps[begin]
+scalar(a::Multivector{Sig,0}) where {Sig} = a.comps[begin]
+scalar(a::Multivector{Sig}) where {Sig} = zero(eltype(a))
 
 isscalar(a::Number) = true
 isscalar(a::Blade{Sig,0}) where {Sig} = true

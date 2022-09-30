@@ -4,8 +4,8 @@ Base.:(==)(a::Blade{Sig}, b::Blade{Sig}) where Sig = bitsof(a) == bitsof(b) ? a.
 Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = grade(a) == grade(b) ? a.comps == b.comps : iszero(a) && iszero(b)
 Base.:(==)(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig} = a.comps == b.comps
 
-Base.:(==)(a::AbstractMultivector, b::Number) = isscalar(a) && scalarpart(a) == b
-Base.:(==)(a::Number, b::AbstractMultivector) = isscalar(b) && a == scalarpart(b)
+Base.:(==)(a::AbstractMultivector, b::Number) = isscalar(a) && scalar(a) == b
+Base.:(==)(a::Number, b::AbstractMultivector) = isscalar(b) && a == scalar(b)
 
 # equality between different multivector types
 # TODO: implement without conversions?
@@ -133,18 +133,16 @@ Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 	a ⊙ b
 	scalar_prod(a, b)
 
-Scalar part of the multivector product `a*b`.
+Scalar part of the multivector product `a*b`, as a `<:Number`.
 """
 scalar_prod(a::Scalar, b::Scalar) = a*b
-scalar_prod(a::AbstractMultivector, b::Scalar) = scalarpart(a)*b
-scalar_prod(a::Scalar, b::AbstractMultivector) = a*scalarpart(b)
+scalar_prod(a::AbstractMultivector, b::Scalar) = scalar(a)*b
+scalar_prod(a::Scalar, b::AbstractMultivector) = a*scalar(b)
 
-scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalarpart(a*b) : numberzero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalar(a*b) : numberzero(promote_type(eltype(a), eltype(b)))
 scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
-function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
-	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps)))
-end
+scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K} = sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps))
 scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
 scalar_prod(a::MixedMultivector{Sig}, b::Multivector{Sig,K}) where {Sig,K} = scalar_prod(grade(a, K), b)
@@ -153,9 +151,7 @@ scalar_prod(a::Multivector{Sig,K}, b::MixedMultivector{Sig}) where {Sig,K} = sca
 scalar_prod(a::CompositeMultivector{Sig}, b::Blade{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(b))*(a.comps[bits_index(a, bitsof(b))]*b.coeff)
 scalar_prod(a::Blade{Sig}, b::CompositeMultivector{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(a))*(a.coeff*b.comps[bits_index(b, bitsof(a))])
 
-function scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig}
-	Blade{Sig}(0 => sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps)))
-end
+scalar_prod(a::MixedMultivector{Sig}, b::MixedMultivector{Sig}) where {Sig} = sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps))
 
 "$(@doc scalar_prod)"
 a ⊙ b = scalar_prod(a, b)
@@ -308,7 +304,7 @@ function power_by_squaring(a::CompositeMultivector{Sig,S}, p::Integer) where {Si
 	Π
 end
 
-Base.:^(a::Blade, p::Integer) = power_with_scalar_square(a, scalarpart(a*a), p)
+Base.:^(a::Blade, p::Integer) = power_with_scalar_square(a, scalar(a*a), p)
 Base.literal_pow(::typeof(^), a::Blade{Sig}, ::Val{2}) where {Sig} = Blade{Sig,0}(0 => geometric_square_factor(Sig, bitsof(a))*a.coeff^2)
 
 function Base.:^(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
@@ -318,7 +314,7 @@ function Base.:^(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
 	a² = a*a
 	p == 2 && return a²
 	if isscalar(a²)
-		power_with_scalar_square(a, scalarpart(a²), p)
+		power_with_scalar_square(a, scalar(a²), p)
 	else
 		power_by_squaring(a, p)
 	end

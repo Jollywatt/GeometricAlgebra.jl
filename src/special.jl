@@ -70,31 +70,31 @@ function inv_formula_method(a::CompositeMultivector)
 	ā = clifford_conj(a)
 
 	if dim <= 2
-		return ā/scalarpart(a*ā)
+		return ā/scalar(a*ā)
 
 	elseif dim == 3
 		āâã = ā*involution(a)*reversion(a)
-		return āâã/scalarpart(a*āâã)
+		return āâã/scalar(a*āâã)
 
 	elseif dim == 4
 		b = ā*graded_multiply(a*ā) do k
 			k ∈ (3, 4) ? -1 : 1
 		end
-		return b/scalarpart(a*b)
+		return b/scalar(a*b)
 
 	elseif dim == 5
 		b = ā*reversion(a*ā)
 		c = b*graded_multiply(a*b) do k
 			k ∈ (1, 4) ? -1 : 1
 		end
-		return c/scalarpart(a*c)
+		return c/scalar(a*c)
 
 	else	
 		throw("only implemented for dimensions 0:5")
 	end
 end
 
-Base.inv(a::Blade) = a/scalarpart(a^2)
+Base.inv(a::Blade) = a/scalar(a^2)
 function Base.inv(a::CompositeMultivector)
 	if dimension(a) <= 5
 		inv_formula_method(a)
@@ -155,14 +155,20 @@ end
 function Base.exp(a::AbstractMultivector)
 	a² = a^2
 	if isscalar(a²)
-		exp_with_scalar_square(a, scalarpart(a²))
+		exp_with_scalar_square(a, scalar(a²))
 	else
 		exp_series(a)
 	end
 end
 
 
+#= Roots =#
 
+Base.sqrt(a::Blade{Sig,0}) where {Sig} = Blade{Sig,0}(0 => sqrt(a.coeff))
+Base.sqrt(a::CompositeMultivector) = isscalar(a) ? sqrt(scalar(a))one(a) : error("sqrt() not yet implemented for general multivectors")
+
+
+#= Trigonometric =#
 
 function eval_evenodd_trig(a, a², pos, neg, ::Val{even}) where even
 	s = sign(a²)
@@ -190,7 +196,7 @@ for (fn,     pos,    neg,    even) ∈ [
 	@eval function Base.$fn(a::AbstractMultivector)
 		a² = a*a
 		if isscalar(a²)
-			eval_evenodd_trig(a, scalarpart(a²), $pos, $neg, Val($even))
+			eval_evenodd_trig(a, scalar(a²), $pos, $neg, Val($even))
 		else
 			error("$($fn)() not yet implemented for multivectors with non-scalar squares")
 		end

@@ -2,7 +2,7 @@ using GeometricAlgebra:
 	bits_of_grade,
 	MetricWithStorage,
 	isscalar,
-	scalarpart,
+	scalar,
 	isapproxzero
 
 using GeometricAlgebra.StaticArrays
@@ -55,9 +55,9 @@ end
 @testset "grade projections" begin
 	@basis 3
 
-	@test isscalar(scalarpart(v1))
-	@test scalarpart(v1 + v2) == 0
-	@test scalarpart(v1 + 42) == 42
+	@test isscalar(scalar(v1))
+	@test scalar(v1 + v2) == 0
+	@test scalar(v1 + 42) == 42
 
 	@test grade(v1 + v12 + v2, 1) == v1 + v2
 	@test grade(v1 + v2, 0) == 0

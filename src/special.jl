@@ -110,6 +110,7 @@ Base.:/(a::Scalar, b::AbstractMultivector) = a*inv(b)
 Base.:\(a::AbstractMultivector, b::Scalar) = inv(a)*b
 
 
+
 #= Exponential =#
 
 function exp_with_scalar_square(a, a²::Scalar)
@@ -159,3 +160,51 @@ function Base.exp(a::AbstractMultivector)
 		exp_series(a)
 	end
 end
+
+
+
+
+function eval_evenodd_trig(a, a², pos, neg, ::Val{even}) where even
+	s = sign(a²)
+	norm = sqrt(abs(a²))
+	if even
+		s > 0 ? pos(norm) : s < 0 ? neg(norm) : one(a)
+	else
+		s > 0 ? pos(norm)*a/norm : s < 0 ? neg(norm)*a/norm : a
+	end
+end
+
+
+for (fn,     pos,    neg,    even) ∈ [
+	(:cosh,  :cosh,  :cos,   true),
+	(:cos,   :cos,   :cosh,  true),
+	(:sinh,  :sinh,  :sin,   false),
+	(:sin,   :sin,   :sinh,  false),
+	(:tanh,  :tanh,  :tan,   false),
+	(:tan,   :tan,   :tanh,  false),
+	(:asinh, :asinh, :asin,  false),
+	(:asin,  :asin,  :asinh, false),
+	(:atanh, :atanh, :atan,  false),
+	(:atan,  :atan,  :atanh, false),
+]
+	@eval function Base.$fn(a::AbstractMultivector)
+		a² = a*a
+		if isscalar(a²)
+			eval_evenodd_trig(a, scalarpart(a²), $pos, $neg, Val($even))
+		else
+			error("$($fn)() not yet implemented for multivectors with non-scalar squares")
+		end
+	end
+end
+
+for (fn,    invfn) ∈ [
+	(:sec,  :cos),
+	(:sech, :cosh),
+	(:csc,  :sin),
+	(:csch, :sinh),
+	(:cot,  :tan),
+	(:coth, :tanh),
+]
+	@eval Base.$fn(a::AbstractMultivector) = inv(Base.$invfn(a))
+end
+

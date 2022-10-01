@@ -55,6 +55,14 @@ function matrix_repr(a::MixedMultivector)
 	mat
 end
 
+function via_matrix_repr(f::Function, a::AbstractMultivector)
+	m = matrix_repr(a)
+	m′ = f(m)
+	MixedMultivector{signature(a)}(m′[:,1])
+end
+
+
+
 function inv_matrix_method(a::CompositeMultivector)
 	A = matrix_repr(a)
 	id = MixedMultivector(one(a)).comps
@@ -99,7 +107,7 @@ function Base.inv(a::CompositeMultivector)
 	if dimension(a) <= 5
 		inv_formula_method(a)
 	else
-		inv_matrix_method(a)
+		inv_matrix_method(a) # ?? replace with via_matrix_repr(inv, a)
 	end
 end
 
@@ -134,8 +142,12 @@ twonorm(a::CompositeMultivector) = sqrt(sum(abs2.(a.comps)))
 exp_series(a::HomogeneousMultivector) = exp_series(MixedMultivector(a))
 function exp_series(a::MixedMultivector{Sig,C}) where {Sig,C}
 	# Series convergence is better when `a` is not too large.
-	# Use the fact that ``exp(a) = exp(a/p)^p`` and choose `p`
+	# Use the fact that ``exp(λa) = exp(λ)exp(a/p)^p`` and choose `p`
 	# so that the 2-norm of `a` is of order one.
+
+	λ = scalar(a)
+	a -= λ
+
 	norm = twonorm(a)
 	p = 2^max(0, floor(Int, log2(norm))) # power of 2 for fast exponentiation
 	a /= p
@@ -150,7 +162,7 @@ function exp_series(a::MixedMultivector{Sig,C}) where {Sig,C}
 		result += term
 	end
 
-	result^p
+	exp(λ)result^p
 end
 
 
@@ -164,10 +176,14 @@ function Base.exp(a::AbstractMultivector)
 end
 
 
-#= Roots =#
+
+#= Roots and Logs =#
 
 Base.sqrt(a::Blade{Sig,0}) where {Sig} = Blade{Sig,0}(0 => sqrt(a.coeff))
-Base.sqrt(a::CompositeMultivector) = isscalar(a) ? sqrt(scalar(a))one(a) : error("sqrt() not yet implemented for general multivectors")
+Base.sqrt(a::CompositeMultivector) = isscalar(a) ? sqrt(scalar(a))one(a) : via_matrix_repr(sqrt, a)
+
+Base.log(a::AbstractMultivector) = via_matrix_repr(log, a)
+
 
 
 #= Trigonometric =#
@@ -183,24 +199,24 @@ function eval_evenodd_trig(a, a², pos, neg, ::Val{even}) where even
 end
 
 
-for (fn,     pos,    neg,    even) ∈ [
-	(:cosh,  :cosh,  :cos,   true),
-	(:cos,   :cos,   :cosh,  true),
-	(:sinh,  :sinh,  :sin,   false),
-	(:sin,   :sin,   :sinh,  false),
-	(:tanh,  :tanh,  :tan,   false),
-	(:tan,   :tan,   :tanh,  false),
-	(:asinh, :asinh, :asin,  false),
-	(:asin,  :asin,  :asinh, false),
-	(:atanh, :atanh, :atan,  false),
-	(:atan,  :atan,  :atanh, false),
+for (pos,    neg,    even) ∈ [
+	(:cosh,  :cos,   true),
+	(:cos,   :cosh,  true),
+	(:sinh,  :sin,   false),
+	(:sin,   :sinh,  false),
+	(:tanh,  :tan,   false),
+	(:tan,   :tanh,  false),
+	(:asinh, :asin,  false),
+	(:asin,  :asinh, false),
+	(:atanh, :atan,  false),
+	(:atan,  :atanh, false),
 ]
-	@eval function Base.$fn(a::AbstractMultivector)
+	@eval function Base.$pos(a::AbstractMultivector)
 		a² = a*a
 		if isscalar(a²)
 			eval_evenodd_trig(a, scalar(a²), $pos, $neg, Val($even))
 		else
-			error("$($fn)() not yet implemented for multivectors with non-scalar squares")
+			via_matrix_repr($pos, a)
 		end
 	end
 end

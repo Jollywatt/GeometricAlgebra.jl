@@ -37,3 +37,12 @@ end
 		@test inv(exp(a)) ≈ exp(-a)
 	end
 end
+
+@testset "matrix method fallbacks" begin
+	v = basis(3)
+
+	a = 1 + v[1] + 2v[1]v[3]
+	@test log(exp(a)) ≈ a
+
+	@test exp(log(a)/2) ≈ sqrt(a)
+end

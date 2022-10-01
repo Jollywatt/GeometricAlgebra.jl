@@ -115,7 +115,9 @@ Base.:\(a::AbstractMultivector, b::Scalar) = inv(a)*b
 
 function exp_with_scalar_square(a, a²::Scalar)
 	norm = sqrt(abs(a²))
-	if a² > 0
+	if iszero(norm)
+		one(a) + a
+	elseif a² > 0
 		cosh(norm) + sinh(norm)/norm*a
 	else
 		cos(norm) + sin(norm)/norm*a

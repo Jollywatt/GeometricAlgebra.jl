@@ -26,6 +26,10 @@ end
 @testset "exp" begin
 	v = Blade{(1,1)}.(bits_of_grade(1, 2) .=> 1)
 	@test exp(10000*2pi*v[1]v[2]) ≈ 1
+
+	@test exp(0v[1]) == 1
+	@test exp(3v[1]) ≈ cosh(3) + sinh(3)v[1]
+	@test exp(3v[1]v[2]) ≈ cos(3) + sin(3)v[1]v[2]
 	
 	for dim in 1:5, trials in 1:5
 		a = MixedMultivector{dim}(big.(randn(2^dim)))

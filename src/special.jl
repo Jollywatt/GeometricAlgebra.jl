@@ -158,7 +158,7 @@ function exp_series(a::MixedMultivector{Sig,C}) where {Sig,C}
 	max_iters = 200
 	for i in 1:max_iters
 		term *= a/i
-		infnorm(term) < eps(eltype(term)) && break
+		infnorm(term) < eps(real(eltype(term))) && break
 		result += term
 	end
 

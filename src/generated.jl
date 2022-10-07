@@ -1,9 +1,12 @@
+# fallback herustic: use symbolic optimisation unless dim too big
+use_symbolic_optim(sig) = dimension(sig) <= 8
+
+
 function symbolic_components(label, dims...)
 	var = SymbolicUtils.Sym{Array{length(dims),Real}}(label)
 	indices = Iterators.product(Base.OneTo.(dims)...)
 	[SymbolicUtils.Term{Real}(getindex, [var, I...]) for I in indices]
 end
-
 
 
 symbolic_multivector(a::Type{<:Blade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(Multivector{Sig,K}, label)
@@ -15,43 +18,46 @@ symbolic_multivector(a::AbstractMultivector, label) = symbolic_multivector(typeo
 
 
 """
-	generated_multivector_function(f, a, b, ...)
+	symbolic_optim(f, a, b, ...)
 
 Trace evaluation of `f(a, b, ...)::CompositeMultivector` on symbolic versions of each
-`AbstractMultivector` instance or type `a`, `b`, ..., returning an expression body
-suitable for a `@generated` function.
+`AbstractMultivector` instance or type `a`, `b`, ..., returning an expression suitable
+as the body of `@generated` function.
 
-The names of the arguments to be passed to the function
-body are the literal symbols `:a`, `:b`, etc.
+!!! important
+	The names of the function arguments must be `"a"`, `"b"`, `"c"`, etc, as these are
+	the names used in the expression retuned by `symbolic_optim`.
+
+If `use_symbolic_optim(sig)` returns `false`, the function body simply calls `f(a, b, ...)`.
 
 # Examples
 ```jldoctest
-julia> u, v = Multivector.(basis(2))
-2-element Vector{Multivector{2, 1, Vector{Int64}}}:
- v1
- v2
+using MacroTools: prettify
+u, v = Multivector.(basis(2))
+ex = GeometricAlgebra.symbolic_optim(*, u, v) |> prettify
 
-julia> using MacroTools: prettify
-
-julia> ex = GeometricAlgebra.generated_multivector_function(*, u, v) |> prettify
+# output
 :(let a = components(a), b = components(b)
       comps = create_array(Vector{Any}, Int64, Val{1}(), Val{(4,)}(), a[1] * b[1] + a[2] * b[2], 0, 0, a[1] * b[2] + (-1 * a[2]) * b[1])
       (MixedMultivector{2})(comps)
   end)
-
 ```
 """
-function generated_multivector_function(f, x...)
-	syms = Symbol.('a' .+ (1:length(x)) .- 1)
+function symbolic_optim(f, x::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
+	abc = Symbol.('a' .+ (0:length(x) - 1))
+
+	if !use_symbolic_optim(Sig)
+		return :( $f($(abc...)) )
+	end
 	
-	x_symb = symbolic_multivector.(x, syms)
+	x_symb = symbolic_multivector.(x, abc)
 	y_symb = f(x_symb...)
 	comps = y_symb.comps
 
 	T = numberorany(promote_type(eltype.(x)...))
 	comps_expr = SymbolicUtils.Code.MakeArray(comps, typeof(comps), T)
 
-	assignments = [:( $sym = components($sym) ) for sym in syms]
+	assignments = [:( $a = components($a) ) for a in abc]
 	quote
 		let $(assignments...)
 			comps = $(SymbolicUtils.Code.toexpr(comps_expr))
@@ -75,7 +81,7 @@ struct SingletonVector{T} <: AbstractVector{T}
 end
 Base.length(a::SingletonVector) = a.length
 Base.size(a::SingletonVector) = (length(a),)
-Base.getindex(a::SingletonVector{T}, i) where {T} = a.index == i ? a.el : zero(T)
+Base.getindex(a::SingletonVector{T}, i) where {T} = a.index == i ? a.el : numberzero(T)
 function Base.iterate(a::SingletonVector, i = 1)
 	i > a.length && return
 	(a[i], i + 1)

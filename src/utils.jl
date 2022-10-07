@@ -1,23 +1,54 @@
+#= Tools to handle symbolic eltypes =#
+
+# Multivectors with purely symbolic components have SymbolicUtils.Symbolic eltype.
+# For sym::SymbolicUtils.Sym, iszero(sym) is a symbolic expression “sym == 0”,
+# but we generally want `iszero(sym) == false` because it *could* be non-zero.
+# Furthermore, If a symbolic Blade is promoted to a Multivector, its eltype will
+# be Union{Int,Sym} or Any, so we want to handle Any eltypes gracefully.
+
+
+isnumberzero(a::Number) = iszero(a)
+isnumberone(a::Number) = isone(a)
+
+# don't treat a symbolic type as one/zero, even if it could represent one
+isnumberzero(a) = false
+isnumberone(a) = false
+
+numberzero(T::Type{<:Number}) = zero(T)
+numberone(T::Type{<:Number}) = one(T)
+
+numberzero(::Type) = zero(Int)
+numberone(::Type) = one(Int)
+
+numberorany(T::Type{<:Number}) = T
+numberorany(::Type) = Any
+
+
+#= Array-like Type Utilities =#
+
+# initialize zeros/ones while abstracting away array type
+zeroslike(::Type{<:Array{T}}, dims...) where {T<:Number} = zeros(T, dims...)
+ oneslike(::Type{<:Array{T}}, dims...) where {T<:Number} =  ones(T, dims...)
+zeroslike(::Type{<:Array}, dims...) = convert(Array{Any}, zeros(Int, dims...))
+ oneslike(::Type{<:Array}, dims...) = convert(Array{Any},  ones(Int, dims...))
+zeroslike(::Type{<:MArray{N,T}}, dims...) where {N,T} = zeros(MArray{Tuple{dims...},numberorany(T)})
+ oneslike(::Type{<:MArray{N,T}}, dims...) where {N,T} =  ones(MArray{Tuple{dims...},numberorany(T)})
+zeroslike(::Type{<:SArray{N,T}}, dims...) where {N,T} = zeros(SArray{Tuple{dims...},numberorany(T)})
+ oneslike(::Type{<:SArray{N,T}}, dims...) where {N,T} =  ones(SArray{Tuple{dims...},numberorany(T)})
+zeroslike(::Type{<:SparseVector{Tv}}, dims...) where {Tv} = spzeros(Tv, dims...)
+ oneslike(::Type{<:SparseVector{Tv}}, dims...) where {Tv} = sparse(ones(Tv, dims...))
+
+
+
 @static if VERSION < v"1.7"
 	ismutabletype(a::DataType) = a.mutable
 end
 
-#= Array-like Type Utilities =#
-
+# whether array supports `setindex!`
 issetindexable(T::Type) = ismutabletype(T)
 issetindexable(::Type{<:AbstractSparseArray}) = true
 issetindexable(a) = issetindexable(typeof(a))
 issetindexable(::Type{<:MVector{N,T}}) where {N,T} = isbitstype(T) # see https://github.com/JuliaArrays/StaticArrays.jl/issues/27
-
-zeroslike(::Type{<:Array{T}}, dims...) where {T<:Number} = zeros(T, dims...)
-zeroslike(::Type{<:MArray{N,T}}, dims...) where {N,T} = zeros(MArray{Tuple{dims...},T})
-zeroslike(::Type{<:SArray{N,T}}, dims...) where {N,T} = zeros(SArray{Tuple{dims...},T})
-zeroslike(::Type{<:SparseVector{T}}, dims...) where {T} = spzeros(T, dims...)
-
-oneslike(::Type{<:Array{T}}, dims...) where {T<:Number} = ones(T, dims...)
-oneslike(::Type{<:MArray{N,T}}, dims...) where {N,T} = ones(MArray{Tuple{dims...},T})
-oneslike(::Type{<:SArray{N,T}}, dims...) where {N,T} = ones(SArray{Tuple{dims...},T})
-oneslike(::Type{<:SparseVector{N,T}}, dims...) where {N,T} = sparse(ones(T, dims...))
 
 
 with_eltype(::Type{<:Vector}, T) = Vector{T}
@@ -25,6 +56,7 @@ with_eltype(::Type{<:MVector{N}}, T) where {N} = MVector{N,T}
 with_eltype(::Type{<:SVector{N}}, T) where {N} = SVector{N,T}
 with_eltype(::Type{<:SparseVector}, T) = SparseVector{T}
 
+# copy array and set element in one step
 function copy_setindex(a, val, I...)
 	T = promote_type(eltype(a), typeof(val))
 	a′ = with_eltype(typeof(a), T)(a)
@@ -37,28 +69,6 @@ function copy_setindex(a, val, I...)
 end
 
 
-#= Tools to handle symbolic eltypes =#
-
-# Multivectors with purely symbolic components have eltype T<:Symbolic,
-# but as soon as they are mixed with e.g., Int, have eltype Any.
-# So we do want so support Vector{Any} storage types for CompositeMultivectors,
-# but this should only happen for symbolic stuff
-
-isnumberzero(a::Number) = iszero(a)
-isnumberzero(a) = false
-isnumberone(a::Number) = isone(a)
-isnumberone(a) = false
-
-numberzero(T::Type{<:Number}) = zero(T)
-numberzero(::Type) = zero(Int)
-numberone(T::Type{<:Number}) = one(T)
-numberone(::Type) = one(Int)
-
-oneslike(T::Type{<:Array}, dims...) = convert(Array{Any}, ones(Int, dims...))
-zeroslike(T::Type{<:Array}, dims...) = convert(Array{Any}, zeros(Int, dims...))
-
-numberorany(T::Type{<:Number}) = T
-numberorany(::Type) = Any
 
 
 #= Miscellaneous =#
@@ -71,7 +81,10 @@ function __init__()
 		Base.Experimental.register_error_hint(MethodError) do io, err, argtypes, kwargs
 			# try to detect cases where the method error is due to mixing different metric signatures
 			if all(isa.(argtypes, Type{<:AbstractMultivector})) && !shared_sig(argtypes...)
-				println(io, "\nPerhaps the multivectors have incompatible metric signatures?")
+				println(io, """\n\n
+					The metric signatures of the multivectors are:
+					 $(join(sprint.(show_signature, signature.(argtypes)), ", "))
+					Perhaps these algebras are incompatible with $(err.f)?""")
 			end 
 		end
 	end

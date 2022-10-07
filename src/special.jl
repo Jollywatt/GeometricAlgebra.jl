@@ -124,7 +124,7 @@ Base.:\(a::AbstractMultivector, b::Scalar) = inv(a)*b
 function exp_with_scalar_square(a, a²::Scalar)
 	norm = sqrt(abs(a²))
 	if iszero(norm)
-		one(a) + a
+		one(a)/one(norm) + a # div for type stability
 	elseif a² > 0
 		cosh(norm) + sinh(norm)/norm*a
 	else
@@ -159,6 +159,7 @@ function exp_series(a::MixedMultivector{Sig,C}) where {Sig,C}
 	for i in 1:max_iters
 		term *= a/i
 		infnorm(term) < eps(real(eltype(term))) && break
+		# add!(result, term)
 		result += term
 	end
 

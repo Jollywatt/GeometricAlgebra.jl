@@ -63,8 +63,8 @@ Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
 add!(a::Multivector, b::Blade) = (a.comps[mv_index(b)] += b.coeff; a)
 add!(a::MixedMultivector, b::Blade) = (a.comps[mmv_index(b)] += b.coeff; a)
 
-add!(a::Multivector, b::Multivector) = (a.comps[:] += b.comps; a)
-add!(a::MixedMultivector, b::MixedMultivector) = (a.comps[:] += b.comps; a)
+add!(a::Multivector, b::Multivector) = (a.comps .+= b.comps; a)
+add!(a::MixedMultivector, b::MixedMultivector) = (a.comps .+= b.comps; a)
 
 function add!(a::MixedMultivector, b::Multivector)
 	offset = multivector_index_offset(grade(b), dimension(b))
@@ -110,7 +110,7 @@ function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
 	Blade{Sig}(bits => factor*(a.coeff*b.coeff))
 end
 
-function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(MixedMultivector{Sig}, a, b))
 	for (abits::UInt, ai) ∈ nonzero_components(a), (bbits::UInt, bi) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
@@ -120,7 +120,7 @@ function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}
 	c
 end
 
-@generated geometric_prod_gen(a, b) = generated_multivector_function(geometric_prod, a, b)
+@generated geometric_prod(a, b) = symbolic_optim(_geometric_prod, a, b)
 
 
 Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
@@ -131,9 +131,9 @@ Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
 """
 	a ⊙ b
-	scalar_prod(a, b)
+	scalar_prod(a, b) -> Number
 
-Scalar part of the multivector product `a*b`, as a `<:Number`.
+Scalar part of the multivector product `a*b`.
 """
 scalar_prod(a::Scalar, b::Scalar) = a*b
 scalar_prod(a::AbstractMultivector, b::Scalar) = scalar(a)*b
@@ -185,7 +185,7 @@ function graded_prod(grade_selector::Function, a::Blade{Sig}, b::Blade{Sig}) whe
 	end
 end
 
-function graded_prod(grade_selector::Function, a::HomogeneousMultivector{Sig,P}, b::HomogeneousMultivector{Sig,Q}) where {Sig,P,Q}
+function _graded_prod(grade_selector::Function, a::HomogeneousMultivector{Sig,P}, b::HomogeneousMultivector{Sig,Q}) where {Sig,P,Q}
 	K = grade_selector(P, Q)
 	c = zero(similar(Multivector{Sig,K}, a, b))
 	for (abits, ai) ∈ nonzero_components(a), (bbits, bi) ∈ nonzero_components(b)
@@ -199,7 +199,7 @@ function graded_prod(grade_selector::Function, a::HomogeneousMultivector{Sig,P},
 	c
 end
 
-function graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(MixedMultivector{Sig}, a, b))
 	for (abits, ai) ∈ nonzero_components(a), (bbits, bi) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits
@@ -212,9 +212,9 @@ function graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::A
 	c
 end
 
-@generated function graded_prod_gen(grade_selector, a, b)
-	generated_multivector_function(a, b) do a, b
-		graded_prod(grade_selector.instance, a, b)
+@generated function graded_prod(grade_selector, a, b)
+	symbolic_optim(a, b) do a, b
+		_graded_prod(grade_selector.instance, a, b)
 	end
 end
 
@@ -291,7 +291,6 @@ function power_with_scalar_square(a, a², p::Integer)
 end
 
 function power_by_squaring(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
-	p < 0 && return power_by_squaring(inv(a), abs(p))
 	Π = one(MixedMultivector{Sig,S})
 	aⁿ = a
 	while p > 0
@@ -309,6 +308,7 @@ Base.literal_pow(::typeof(^), a::Blade{Sig}, ::Val{2}) where {Sig} = Blade{Sig,0
 
 function Base.:^(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
 	# TODO: type stability?
+	p < 0 && return inv(a)^abs(p)
 	p == 0 && return one(a)
 	p == 1 && return a
 	a² = a*a

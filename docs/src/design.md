@@ -130,7 +130,7 @@ julia> prod(ans)
 
 ```
 
-This makes it easy to achieve high performance for basic multivector operations by first performing the calculation symbolically, then converting the resulting expression into unrolled code. (See [`generated_multivector_function`](@ref) for details.)
+This makes it easy to achieve high performance for basic multivector operations by first performing the calculation symbolically, then converting the resulting expression into unrolled code. (See [`symbolic_optim`](@ref) for details.)
 
 ```julia
 julia> u, v = Multivector{4,2}.(eachcol(rand(6,2)));

@@ -130,16 +130,7 @@ julia> prod(ans)
 
 ```
 
-This makes it easy to achieve high performance for basic multivector operations by first performing the calculation symbolically, then converting the resulting expression into unrolled code. (See [`symbolic_optim`](@ref) for details.)
+This makes it easy to optimize multivector operations by first performing the general calculation symbolically, then converting the resulting expression into unrolled code.
+ (See [`symbolic_optim()`](@ref) for details.)
 
-```julia
-julia> u, v = Multivector{4,2}.(eachcol(rand(6,2)));
-
-julia> @time u*v
-  0.000009 seconds (2 allocations: 208 bytes)
-16-component MixedMultivector{4, Vector{Float64}}:
- -1.31598
- -0.076872 v12 + 0.620294 v13 + 0.344733 v23 + 0.509282 v14 + -0.670917 v24 + -0.619376 v34
- 1.34338 v1234
-
-```
+By default, symbolic code generation is used for most products in up to eight dimensions (above which general algebraic expressions become unwieldy). This can be changed a per-algebra basis by defining methods for [`use_symbolic_optim()`](@ref).

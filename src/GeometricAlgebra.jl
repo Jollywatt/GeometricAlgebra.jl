@@ -28,7 +28,7 @@ using PrettyTables: pretty_table
 export AbstractMultivector, HomogeneousMultivector, Blade, Multivector, MixedMultivector
 export basis, @basis, @basisall, cayleytable
 export signature, dimension, grade, scalar, ncomponents, blades
-export geometric_prod, scalar_prod, ⊙, wedge, ∧, inner, ⋅, lcontract, ⨼, rcontract, ⨽
+export geometric_prod, scalar_prod, ⊙, wedge, ∧, inner, ⋅, lcontract, ⨼, rcontract, ⨽, clifford_conj, var"'ᶜ"
 export reversion, involution
 export vector_repr, matrix_repr
 export Cl

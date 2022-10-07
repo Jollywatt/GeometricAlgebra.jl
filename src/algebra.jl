@@ -112,10 +112,10 @@ end
 
 function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(MixedMultivector{Sig}, a, b))
-	for (abits::UInt, ai) ∈ nonzero_components(a), (bbits::UInt, bi) ∈ nonzero_components(b)
+	for (abits::UInt, acoeff) ∈ nonzero_components(a), (bbits::UInt, bcoeff) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
 		i = bits_index(dimension(Sig), bits)
-		c = setindex!!(c, c.comps[i] + factor*(ai*bi), i)
+		c = setindex!!(c, c.comps[i] + factor*(acoeff*bcoeff), i)
 	end
 	c
 end
@@ -142,6 +142,7 @@ scalar_prod(a::Scalar, b::AbstractMultivector) = a*scalar(b)
 scalar_prod(a::Blade{Sig,K}, b::Blade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalar(a*b) : numberzero(promote_type(eltype(a), eltype(b)))
 scalar_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
+# these are 𝒪(n) while scalar(geom_prod(a, b)) is 𝒪(n^2)
 scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K} = sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps))
 scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
@@ -188,12 +189,12 @@ end
 function _graded_prod(grade_selector::Function, a::HomogeneousMultivector{Sig,P}, b::HomogeneousMultivector{Sig,Q}) where {Sig,P,Q}
 	K = grade_selector(P, Q)
 	c = zero(similar(Multivector{Sig,K}, a, b))
-	for (abits, ai) ∈ nonzero_components(a), (bbits, bi) ∈ nonzero_components(b)
+	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits
 		if count_ones(bits) == K
 			factor = geometric_prod_factor(Sig, abits, bbits)
 			i = bits_index(c, bits)
-			c = setindex!!(c, c.comps[i] + factor*(ai*bi), i)
+			c = setindex!!(c, c.comps[i] + factor*(acoeff*bcoeff), i)
 		end
 	end
 	c
@@ -201,12 +202,12 @@ end
 
 function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(MixedMultivector{Sig}, a, b))
-	for (abits, ai) ∈ nonzero_components(a), (bbits, bi) ∈ nonzero_components(b)
+	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
 			factor = geometric_prod_factor(Sig, abits, bbits)
 			i = bits_index(c, bits)
-			c = setindex!!(c, c.comps[i] + factor*(ai*bi), i)
+			c = setindex!!(c, c.comps[i] + factor*(acoeff*bcoeff), i)
 		end
 	end
 	c
@@ -283,7 +284,7 @@ rcontract(a, b) = graded_prod(-, a, b)
 
 #= Exponentiation =#
 
-# if a² is a scalar, then a²ⁿ = |a²|ⁿ, a²ⁿ⁺¹ = |a²|ⁿa
+# if a² is a scalar, then a²ⁿ = |a²|ⁿ and a²ⁿ⁺¹ = |a²|ⁿa
 function power_with_scalar_square(a, a², p::Integer)
 	# if p is even, p = 2n; if odd, p = 2n + 1
 	aⁿ = a²^fld(p, 2)
@@ -335,22 +336,64 @@ function graded_multiply(f, a::MixedMultivector{Sig}) where Sig
 	MixedMultivector{Sig}(comps)
 end
 
+"""
+	~a
+	reversion(a::AbstractMultivector)
 
+Reversion of a multivector.
+
+Reversion is an anti-automorphism defined by reversing
+the order of the geometric product: `~(a*b) == ~b * ~a`.
+"""
 reversion(a) = graded_multiply(reversion_sign, a)
+
+"$(@doc reversion)"
 Base.:~(a::AbstractMultivector) = reversion(a)
 
 
+"""
+	involution(a)
+
+Involute of a multivector.
+
+Involution is an automorphism defined by reflecting through the origin:
+for homogeneous multivectors, `involution(a) == (-1)^grade(a)*a`.
+"""
 involution(a) = graded_multiply(k -> (-1)^k, a)
 
+"""
+	a'ᶜ
+	clifford_conj(a)
+
+Clifford conjugate of a multivector.
+
+Equivalent to `reversion(involution(a))`.
+"""
 clifford_conj(a) = graded_multiply(a) do k
 	(-1)^k*reversion_sign(k)
 end
 
-# this probably shouldn’t be called “dual”
-dual(a::Blade) = let bits = (unsigned(1) << dimension(a)) - 1
-	Blade{signature(a)}(bits ⊻ bitsof(a) => a.coeff)
-end
-dual(a::MixedMultivector) = constructor(a)(reverse(a.comps))
-dual(a::Multivector{Sig,K}) where {Sig,K} = let K′ = dimension(Sig) - K
+"$(@doc clifford_conj)"
+var"'ᶜ"(a) = clifford_conj(a)
+
+
+"""
+	flipdual(a::AbstractMultivector)
+
+A linear duality defined on homogeneous multivectors by
+```math
+a ∧ flipdual(a) = λI
+```
+where ``λI`` is a pseudoscalar.
+
+The `flipdual` is cheap to compute: the bits of a `Blade` are flipped, and the components vector
+of a `CompositeMultivector` are reversed.
+However, it does not satisfy as many nice properties as other dualities
+such as the Hodge dual, instead possibly differing by a scalar factor.
+Useful in projective geometry contexts, where scalar factors are largely arbitrary.
+"""
+flipdual(a::Blade) = Blade{signature(a)}(bits_first_of_grade(dimension(a)) ⊻ bitsof(a) => a.coeff)
+flipdual(a::MixedMultivector) = constructor(a)(reverse(a.comps))
+flipdual(a::Multivector{Sig,K}) where {Sig,K} = let K′ = dimension(Sig) - K
 	Multivector{Sig,K′}(reverse(a.comps))
 end

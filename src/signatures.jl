@@ -268,34 +268,37 @@ end
 	cayleytable(sig, op=*)
 	cayleytable(objs, op=*)
 
-Display the multiplication table for a geometric algeba
+Display a multivector multiplication table.
 
-The first argument may be a metric signature or a vector of objects
+The first argument may be a metric signature or any vector of objects
 which can be combined with the binary operator `op`.
 
 # Examples
 ```jldoctest
-julia> cayleytable((t=-1, x=1, y=1))
- (↓) * (→) │   1 │   t     x    y │  tx    ty   xy │ txy
-───────────┼─────┼────────────────┼────────────────┼─────
-         1 │   1 │   t     x    y │  tx    ty   xy │ txy
-───────────┼─────┼────────────────┼────────────────┼─────
-         t │   t │  -1    tx   ty │  -x    -y  txy │ -xy
-         x │   x │ -tx     1   xy │  -t  -txy    y │ -ty
-         y │   y │ -ty   -xy    1 │ txy    -t   -x │  tx
-───────────┼─────┼────────────────┼────────────────┼─────
-        tx │  tx │   x     t  txy │   1    xy   ty │   y
-        ty │  ty │   y  -txy    t │ -xy     1  -tx │  -x
-        xy │  xy │ txy    -y    x │ -ty    tx   -1 │  -t
-───────────┼─────┼────────────────┼────────────────┼─────
-       txy │ txy │ -xy   -ty   tx │   y    -x   -t │   1
+julia> cayleytable(3)
+ (↓) * (→) │    1 │   v1     v2    v3 │  v12    v13   v23 │ v123
+───────────┼──────┼───────────────────┼───────────────────┼──────
+         1 │    1 │   v1     v2    v3 │  v12    v13   v23 │ v123
+───────────┼──────┼───────────────────┼───────────────────┼──────
+        v1 │   v1 │    1    v12   v13 │   v2     v3  v123 │  v23
+        v2 │   v2 │ -v12      1   v23 │  -v1  -v123    v3 │ -v13
+        v3 │   v3 │ -v13   -v23     1 │ v123    -v1   -v2 │  v12
+───────────┼──────┼───────────────────┼───────────────────┼──────
+       v12 │  v12 │  -v2     v1  v123 │   -1   -v23   v13 │  -v3
+       v13 │  v13 │  -v3  -v123    v1 │  v23     -1  -v12 │   v2
+       v23 │  v23 │ v123    -v3    v2 │ -v13    v12    -1 │  -v1
+───────────┼──────┼───────────────────┼───────────────────┼──────
+      v123 │ v123 │  v23   -v13   v12 │  -v3     v2   -v1 │   -1
 
-julia> cayleytable(basis(3), ∧)
- (↓) ∧ (→) │   v1    v2   v3
-───────────┼─────────────────
-        v1 │    0   v12  v13
-        v2 │ -v12     0  v23
-        v3 │ -v13  -v23    0
+julia> cayleytable(basis((t=-1, x=1, y=1, z=1); grade=2), ∧)
+ (↓) ∧ (→) │   tx     ty    xy    tz     xz    yz
+───────────┼──────────────────────────────────────
+        tx │    0      0     0     0      0  txyz
+        ty │    0      0     0     0  -txyz     0
+        xy │    0      0     0  txyz      0     0
+        tz │    0      0  txyz     0      0     0
+        xz │    0  -txyz     0     0      0     0
+        yz │ txyz      0     0     0      0     0
 
 ```
 """

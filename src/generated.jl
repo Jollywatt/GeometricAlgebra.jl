@@ -1,4 +1,12 @@
-# fallback herustic: use symbolic optimisation unless dim too big
+"""
+	use_symbolic_optim(sig) -> Bool
+
+Whether to use symbolic code generation to optimize some
+operations in the geometric algebra with metric signature `sig`.
+
+By default, this is enabled if `dimension(sig) ≤ 8` as a heuristic
+(in many dimensions, algebraic expressions may become too unwieldy).
+"""
 use_symbolic_optim(sig) = dimension(sig) <= 8
 
 

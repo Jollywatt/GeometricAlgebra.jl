@@ -4,8 +4,7 @@
 	vector_repr(a::AbstractMultivector)
 
 Vector representation of a multivector.
-
-This is a linear operator. See also [`matrix_repr`](@ref).
+See also [`matrix_repr`](@ref).
 
 # Examples
 ```jldoctest

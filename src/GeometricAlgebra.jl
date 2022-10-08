@@ -8,11 +8,11 @@ Implements multivector (or ``k``-vector) types from geometric algebra (a.k.a. Cl
 ```
                    AbstractMultivector{Sig}
                      /                  \\
-   HomogeneousMultivector{Sig,K}    MixedMultivector{Sig,S}
-       /                \\                             
-Blade{Sig,K,T}    Multivector{Sig,K,S}                
+   HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
+       /               \\                             
+Blade{Sig,K,T}   KVector{Sig,K,S}                
                                                    
-                  ╰───── CompositeMultivector{Sig,S} ─────╯
+                 ╰─── CompositeMultivector{Sig,S} ───╯
 ```
 
 See [`basis`](@ref) and [`@basis`](@ref) to get started.
@@ -25,7 +25,7 @@ using Combinatorics: permutations, powerset
 using SymbolicUtils
 using PrettyTables: pretty_table
 
-export AbstractMultivector, HomogeneousMultivector, Blade, Multivector, MixedMultivector
+export AbstractMultivector, HomogeneousMultivector, Blade, KVector, Multivector
 export basis, @basis, @basisall, cayleytable
 export signature, dimension, grade, scalar, ncomponents, blades
 export geometric_prod, scalar_prod, ⊙, wedge, ∧, inner, ⋅, lcontract, ⨼, rcontract, ⨽, clifford_conj, var"'ᶜ"

@@ -3,7 +3,7 @@
 # Multivectors with purely symbolic components have SymbolicUtils.Symbolic eltype.
 # For sym::SymbolicUtils.Sym, iszero(sym) is a symbolic expression “sym == 0”,
 # but we generally want `iszero(sym) == false` because it *could* be non-zero.
-# Furthermore, If a symbolic Blade is promoted to a Multivector, its eltype will
+# Furthermore, If a symbolic Blade is promoted to a KVector, its eltype will
 # be Union{Int,Sym} or Any, so we want to handle Any eltypes gracefully.
 
 

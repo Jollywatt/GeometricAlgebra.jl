@@ -40,7 +40,7 @@ Display homogeneous multivector components as a column of blades,
 with coefficients and blades aligned using the native alignment mechanism.
 
 ```jldoctest
-julia> a = Multivector{(1,1,1),1}([1e3, 1, 1e-3]);
+julia> a = KVector{(1,1,1),1}([1e3, 1, 1e-3]);
 
 julia> GeometricAlgebra.show_multivector(stdout, a)
 1000.0   v1
@@ -48,7 +48,7 @@ julia> GeometricAlgebra.show_multivector(stdout, a)
    0.001 v3
 ```
 """
-function show_multivector(io::IO, @nospecialize(a::Multivector); indent=0, showzeros=true)
+function show_multivector(io::IO, @nospecialize(a::KVector); indent=0, showzeros=true)
 	# TODO: showzeros argument
 	iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
@@ -75,7 +75,7 @@ function show_multivector(io::IO, @nospecialize(a::Multivector); indent=0, showz
 end
 
 
-function show_multivector_inline(io::IO, @nospecialize(a::Multivector); compact=false, showzeros=false)
+function show_multivector_inline(io::IO, @nospecialize(a::KVector); compact=false, showzeros=false)
 	if (!showzeros || compact) && iszero(a)
 		print(io, numberzero(eltype(a)))
 		return
@@ -90,9 +90,9 @@ end
 
 
 """
-Display an inhomogeneous `MixedMultivector` with each grade on a new line.
+Display an inhomogeneous `Multivector` with each grade on a new line.
 """
-function show_mixedmultivector(io::IO, @nospecialize(a::MixedMultivector); inline, indent=0, showzeros=false)
+function show_mixedmultivector(io::IO, @nospecialize(a::Multivector); inline, indent=0, showzeros=false)
 	if iszero(a)
 		print(io, " "^indent, numberzero(eltype(a)))
 		return
@@ -136,14 +136,14 @@ function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Blade))
 	show_blade(io, a)
 end
 
-Base.show(io::IO, @nospecialize(a::Multivector)) = show_multivector_inline(io, a; compact=true)
-function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Multivector))
+Base.show(io::IO, @nospecialize(a::KVector)) = show_multivector_inline(io, a; compact=true)
+function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::KVector))
 	show_header(io, a)
 	show_multivector(io, a; indent=1)
 end
 
-Base.show(io::IO, @nospecialize(a::MixedMultivector)) = show_mixedmultivector(io, a; inline=true)
-function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::MixedMultivector))
+Base.show(io::IO, @nospecialize(a::Multivector)) = show_mixedmultivector(io, a; inline=true)
+function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Multivector))
 	show_header(io, a)
 	show_mixedmultivector(io, a; inline=false, indent=1)
 end

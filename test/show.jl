@@ -8,7 +8,7 @@ using GeometricAlgebra:
 		Blade{(1,1)}(0b00 => 42),
 		Blade{(1,)}(0b1 => 1.1),
 		Blade{(1,1,1)}(0b111 => true),
-	], b in [a, Multivector(a), MixedMultivector(a)]
+	], b in [a, KVector(a), Multivector(a)]
 		@test isnothing(show(io, b))
 		@test isnothing(show(io, MIME("text/plain"), b))
 		@test repr(b) isa String
@@ -19,7 +19,7 @@ end
 	sig = (+1,-1,-1,-1)
 	prettysig = sprint(show_signature, sig)
 
-	for T in [Blade, Multivector, MixedMultivector, HomogeneousMultivector]
+	for T in [Blade, KVector, Multivector, HomogeneousMultivector]
 		@test contains(sprint(show, T{sig}), prettysig)
 		@test contains(sprint(show, Val{T{sig}}), prettysig)
 		@test sprint(show, T) == string(nameof(T))

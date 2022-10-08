@@ -15,7 +15,7 @@ julia> vector_repr(v1*v2) == matrix_repr(v1)vector_repr(v2)
 true
 ```
 """
-vector_repr(a::AbstractMultivector) = collect(MixedMultivector(a).comps)
+vector_repr(a::AbstractMultivector) = collect(Multivector(a).comps)
 
 """
 	matrix_repr(a::AbstractMultivector)
@@ -43,13 +43,13 @@ julia> matrix_repr(v1*v2) == matrix_repr(v1)matrix_repr(v2)
 true
 ```
 """
-matrix_repr(a::HomogeneousMultivector) = matrix_repr(MixedMultivector(a))
-function matrix_repr(a::MixedMultivector)
+matrix_repr(a::HomogeneousMultivector) = matrix_repr(Multivector(a))
+function matrix_repr(a::Multivector)
 	N, T = ncomponents(a), eltype(a)
 	mat = Matrix{numberorany(T)}(undef, N, N)
 	fill!(mat, numberzero(T))
 	for (i, b) ∈ enumerate(basis(signature(a), grade=:all))
-		mat[:,i] = MixedMultivector(a*b).comps
+		mat[:,i] = Multivector(a*b).comps
 	end
 	mat
 end
@@ -57,16 +57,16 @@ end
 function via_matrix_repr(f::Function, a::AbstractMultivector)
 	m = matrix_repr(a)
 	m′ = f(m)
-	MixedMultivector{signature(a)}(m′[:,1])
+	Multivector{signature(a)}(m′[:,1])
 end
 
 
 
 function inv_matrix_method(a::CompositeMultivector)
 	A = matrix_repr(a)
-	id = MixedMultivector(one(a)).comps
+	id = Multivector(one(a)).comps
 	A⁻¹ = A\id
-	MixedMultivector{signature(a)}(A⁻¹)
+	Multivector{signature(a)}(A⁻¹)
 end
 
 function inv_formula_method(a::CompositeMultivector)
@@ -138,8 +138,8 @@ infnorm(a::CompositeMultivector) = maximum(abs.(a.comps))
 twonorm(a::Blade) = abs(a.coeff)
 twonorm(a::CompositeMultivector) = sqrt(sum(abs2.(a.comps)))
 
-exp_series(a::HomogeneousMultivector) = exp_series(MixedMultivector(a))
-function exp_series(a::MixedMultivector{Sig,C}) where {Sig,C}
+exp_series(a::HomogeneousMultivector) = exp_series(Multivector(a))
+function exp_series(a::Multivector{Sig,C}) where {Sig,C}
 	# Series convergence is better when `a` is not too large.
 	# Use the fact that ``exp(λa) = exp(λ)exp(a/p)^p`` and choose `p`
 	# so that the 2-norm of `a` is of order one.

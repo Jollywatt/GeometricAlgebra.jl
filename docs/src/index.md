@@ -14,14 +14,14 @@ end
 Construct multivectors by providing the metric signature and grade as type parameters:
 
 ```jldoctest
-julia> u = Multivector([1, -1, 0]) # 3D Euclidean vector
-3-component Multivector{3, 1, Vector{Int64}}:
+julia> u = KVector([1, -1, 0]) # 3D Euclidean vector
+3-component KVector{3, 1, Vector{Int64}}:
   1 v1
  -1 v2
   0 v3
 
-julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
-6-component Multivector{⟨-+++⟩, 2, UnitRange{Int64}}:
+julia> v = KVector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
+6-component KVector{⟨-+++⟩, 2, UnitRange{Int64}}:
  1 v12
  2 v13
  3 v23
@@ -30,7 +30,7 @@ julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
  6 v34
 
 julia> (v + 1)^2
-16-component MixedMultivector{⟨-+++⟩, Vector{Int64}}:
+16-component Multivector{⟨-+++⟩, Vector{Int64}}:
  -48
  2 v12 + 4 v13 + 6 v23 + 8 v14 + 10 v24 + 12 v34
  16 v1234
@@ -47,7 +47,7 @@ julia> v = basis(3)
  v3
 
 julia> exp(10000*2π*v[2]v[3])
-8-component MixedMultivector{3, Vector{Float64}}:
+8-component Multivector{3, Vector{Float64}}:
  1.0
  -9.71365e-13 v23
 ```

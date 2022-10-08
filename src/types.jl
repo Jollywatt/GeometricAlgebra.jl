@@ -11,23 +11,23 @@ metric signature `Sig`.
 ```
                    AbstractMultivector{Sig}
                      /                  \\
-   HomogeneousMultivector{Sig,K}    MixedMultivector{Sig,S}
-       /                \\                             
-Blade{Sig,K,T}    Multivector{Sig,K,S}                
+   HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
+       /               \\                             
+Blade{Sig,K,T}   KVector{Sig,K,S}                
                                                    
-                  ╰───── CompositeMultivector{Sig,S} ─────╯
+                 ╰─── CompositeMultivector{Sig,S} ───╯
 ```
 
 - `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
-- `Multivector`: a homogeneous multivector; a sum of same-grade blades.
-- `MixedMultivector`: an inhomogeneous multivector. All elements in a geometric
+- `KVector`: a homogeneous multivector; a sum of same-grade blades.
+- `Multivector`: an inhomogeneous multivector. All elements in a geometric
    algebra can be represented as this type (though not most efficiently).
 
 !!! note
 	The mathematical definition of a ``k``-blade is the wedge product
 	of ``k`` _vectors_, not necessarily basis vectors. Thus, not all
 	``k``-blades are representable as a `Blade`, but are always representable
-	as a sum of `Blade`s, or as a `Multivector`.
+	as a sum of `Blade`s, or as a `KVector`.
 
 # Type Parameters
 
@@ -57,7 +57,7 @@ signature(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = Sig
 """
 	HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig}
 
-Abstract supertype of [`Blade`](@ref) and [`Multivector`](@ref).
+Abstract supertype of [`Blade`](@ref) and [`KVector`](@ref).
 
 # Parameters
 - `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
@@ -68,7 +68,7 @@ abstract type HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig} end
 """
 	grade(::HomogeneousMultivector{Sig,K}) -> K
 
-The grade of a homogeneous multivector (a `Blade` or `Multivector`) instance or type.
+The grade of a homogeneous multivector (a `Blade` or `KVector`) instance or type.
 """
 grade(::OrType{<:HomogeneousMultivector{Sig,K}}) where {Sig,K} = K
 
@@ -118,7 +118,7 @@ mmv_index(a::Blade) = bits_index(dimension(a), bitsof(a))
 
 
 """
-	Multivector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
+	KVector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
 
 A homogeneous multivector of grade `K` with storage type `S`.
 
@@ -127,75 +127,75 @@ A homogeneous multivector of grade `K` with storage type `S`.
 - `K`: Grade of the multivector, retrieved with [`grade()`](@ref).
 - `S`: Storage type of the multivector components, usually a subtype of `AbstractVector`.
 """
-struct Multivector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
+struct KVector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
 	comps::S
 end
 
 """
-	Multivector{Sig,K}(comps)
+	KVector{Sig,K}(comps)
 
-Multivector of grade `K` with components vector `comps`.
+KVector of grade `K` with components vector `comps`.
 
 # Examples
 ```jldoctest
-julia> Multivector{3,2}(1:3) # 3D bivector
-3-component Multivector{3, 2, UnitRange{Int64}}:
+julia> KVector{3,2}(1:3) # 3D bivector
+3-component KVector{3, 2, UnitRange{Int64}}:
  1 v12
  2 v13
  3 v23
 ```
 """
-Multivector{Sig,K}(comps::S) where {Sig,K,S} = Multivector{Sig,K,S}(comps)
-Multivector(comps::AbstractVector) = Multivector{length(comps),1}(comps)
+KVector{Sig,K}(comps::S) where {Sig,K,S} = KVector{Sig,K,S}(comps)
+KVector(comps::AbstractVector) = KVector{length(comps),1}(comps)
 
-mmv_slice(a::Multivector) = mmv_slice(Val(dimension(a)), Val(grade(a)))
+mmv_slice(a::KVector) = mmv_slice(Val(dimension(a)), Val(grade(a)))
 
 
 
 """
-	MixedMultivector{Sig,S} <: AbstractMultivector{Sig}
+	Multivector{Sig,S} <: AbstractMultivector{Sig}
 
 A (possibly inhomogeneous) multivector.
 
-All elements of a geometric algebra are representable as a `MixedMultivector`.
+All elements of a geometric algebra are representable as a `Multivector`.
 
 # Parameters
 - `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
 - `S`: Storage type of the multivector components, usually a subtype of `AbstractVector`.
 """
-struct MixedMultivector{Sig,S} <: AbstractMultivector{Sig}
+struct Multivector{Sig,S} <: AbstractMultivector{Sig}
 	comps::S
 end
 
 """
-	MixedMultivector{Sig}(comps)
+	Multivector{Sig}(comps)
 
 Inhomogeneous multivector with components vector `comps`. The components are ordered
 first by grade then lexicographically (see [`GeometricAlgebra.mmv_bits`](@ref)).
 
 # Examples
 ```jldoctest
-julia> MixedMultivector{3}(1:2^3)
-8-component MixedMultivector{3, UnitRange{Int64}}:
+julia> Multivector{3}(1:2^3)
+8-component Multivector{3, UnitRange{Int64}}:
  1
  2 v1 + 3 v2 + 4 v3
  5 v12 + 6 v13 + 7 v23
  8 v123
 
 julia> grade(ans, 1)
-3-component Multivector{3, 1, UnitRange{Int64}}:
+3-component KVector{3, 1, UnitRange{Int64}}:
  2 v1
  3 v2
  4 v3
 ```
 """
-MixedMultivector{Sig}(comps::S) where {Sig,S} = MixedMultivector{Sig,S}(comps)
+Multivector{Sig}(comps::S) where {Sig,S} = Multivector{Sig,S}(comps)
 
 
 
-const CompositeMultivector{Sig,S} = Union{Multivector{Sig,K,S},MixedMultivector{Sig,S}} where {K}
+const CompositeMultivector{Sig,S} = Union{KVector{Sig,K,S},Multivector{Sig,S}} where {K}
 
-CompositeMultivector(a::Blade) = Multivector(a)
+CompositeMultivector(a::Blade) = KVector(a)
 CompositeMultivector(a::CompositeMultivector) = a
 
 
@@ -219,11 +219,11 @@ dimension(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = dimension(Sig)
 
 Number of independent components of a multivector instance or type.
 
-In ``n`` dimensions, this is ``\\binom{n}{k}`` for a `Multivector` and
-``2^n`` for a `MixedMultivector`.
+In ``n`` dimensions, this is ``\\binom{n}{k}`` for a `KVector` and
+``2^n`` for a `Multivector`.
 """
-ncomponents(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = ncomponents(Sig, K)
-ncomponents(::OrType{<:MixedMultivector{Sig}}) where {Sig} = ncomponents(Sig)
+ncomponents(::OrType{<:KVector{Sig,K}}) where {Sig,K} = ncomponents(Sig, K)
+ncomponents(::OrType{<:Multivector{Sig}}) where {Sig} = ncomponents(Sig)
 
 Base.length(::AbstractMultivector) = error(
 	"$length is not defined for multivectors. Do you mean $(repr(ncomponents))()?")
@@ -237,15 +237,15 @@ Base.eltype(::OrType{<:Blade{Sig,K,T} where {Sig,K}}) where T = T
 Base.eltype(::OrType{<:CompositeMultivector{Sig,S}}) where {Sig,S} = eltype(S)
 
 
-bitsof(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = mv_bits(Val(dimension(Sig)), Val(K))
-bitsof(::OrType{<:MixedMultivector{Sig}}) where {Sig} = mmv_bits(Val(dimension(Sig)))
+bitsof(::OrType{<:KVector{Sig,K}}) where {Sig,K} = mv_bits(Val(dimension(Sig)), Val(K))
+bitsof(::OrType{<:Multivector{Sig}}) where {Sig} = mmv_bits(Val(dimension(Sig)))
 
-bits_index(a::Multivector, bits) = bits_to_mv_index(bits)
-bits_index(a::MixedMultivector, bits) = bits_index(dimension(a), bits)
+bits_index(a::KVector, bits) = bits_to_mv_index(bits)
+bits_index(a::Multivector, bits) = bits_index(dimension(a), bits)
 
 
-largest_type(::MixedMultivector, ::AbstractMultivector) = MixedMultivector
-largest_type(::Multivector, ::HomogeneousMultivector) = Multivector
+largest_type(::Multivector, ::AbstractMultivector) = Multivector
+largest_type(::KVector, ::HomogeneousMultivector) = KVector
 largest_type(::Blade, ::Blade) = Blade
 largest_type(a, b) = largest_type(b, a)
 
@@ -257,25 +257,25 @@ largest_type(a, b) = largest_type(b, a)
 #= Constructors =#
 
 constructor(::OrType{<:Blade{Sig,K}}) where {Sig,K} = Blade{Sig,K}
-constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
-constructor(::OrType{<:MixedMultivector{Sig}}) where {Sig} = MixedMultivector{Sig}
+constructor(::OrType{<:KVector{Sig,K}}) where {Sig,K} = KVector{Sig,K}
+constructor(::OrType{<:Multivector{Sig}}) where {Sig} = Multivector{Sig}
 
 Base.copy(a::CompositeMultivector) = constructor(a)(copy(a.comps))
 
 Base.zero(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => numberzero(T))
-Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
-Base.zero(a::OrType{<:MixedMultivector{Sig,S}}) where {Sig,S} = MixedMultivector{Sig}(zeroslike(S, ncomponents(a)))
+Base.zero(a::OrType{<:KVector{Sig,K,S}}) where {Sig,K,S} = KVector{Sig,K}(zeroslike(S, ncomponents(a)))
+Base.zero(a::OrType{<:Multivector{Sig,S}}) where {Sig,S} = Multivector{Sig}(zeroslike(S, ncomponents(a)))
 
 Base.iszero(a::Blade) = isnumberzero(a.coeff)
 Base.iszero(a::CompositeMultivector) = all(isnumberzero, a.comps)
 
 Base.one(::OrType{<:Blade{Sig,K,T}}) where {Sig,K,T} = Blade{Sig}(0 => numberone(T))
-Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,0}(oneslike(S, 1))
-Base.one(a::OrType{<:MixedMultivector}) = zero(a) + numberone(eltype(a))
+Base.one(::OrType{<:KVector{Sig,K,S}}) where {Sig,K,S} = KVector{Sig,0}(oneslike(S, 1))
+Base.one(a::OrType{<:Multivector}) = zero(a) + numberone(eltype(a))
 
 Base.isone(a::Blade) = iszero(grade(a)) && isone(a.coeff)
-Base.isone(a::Multivector) = iszero(grade(a)) && isone(a.comps[1])
-Base.isone(a::MixedMultivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comps[2:end])
+Base.isone(a::KVector) = iszero(grade(a)) && isone(a.comps[1])
+Base.isone(a::Multivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comps[2:end])
 
 
 
@@ -284,10 +284,10 @@ Base.isone(a::MixedMultivector) = isnumberone(a.comps[1]) && all(isnumberzero, a
 Elements of a geometric algebra can be converted into 'larger' types
 by calling the type constructor:
 
-	Blade -> Multivector -> MixedMultivector
+	Blade -> KVector -> Multivector
 
-The eltype may be set as the second argument, as in `Multivector(a, Float32)`.
-Converting to the same type returns identically, `Multivector(a::Multivector) === a`,
+The eltype may be set as the second argument, as in `KVector(a, Float32)`.
+Converting to the same type returns identically, `KVector(a::KVector) === a`,
 but a copy is *always* made when the second eltype argument is given.
 =#
 
@@ -295,107 +295,107 @@ but a copy is *always* made when the second eltype argument is given.
 Blade(a::Blade) = a
 
 
-# Multivector <- Blade
-Multivector(a::Blade) = Multivector(a, numberorany(eltype(a)))
-function Multivector(a::Blade{Sig,K}, T) where {Sig,K}
+# KVector <- Blade
+KVector(a::Blade) = KVector(a, numberorany(eltype(a)))
+function KVector(a::Blade{Sig,K}, T) where {Sig,K}
 	n = ncomponents(Sig, K)
 	S = componentstype(Sig, n, T)
 	if issetindexable(S)
-		add!(zero(Multivector{Sig,K,S}), a)
+		add!(zero(KVector{Sig,K,S}), a)
 	else
 		j = mv_index(a)
 		comps = ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)
-		Multivector{Sig,K,S}(S(comps))
+		KVector{Sig,K,S}(S(comps))
 	end
 end
 
-# Multivector <- Multivector
-Multivector(a::Multivector) = a
-function Multivector(a::Multivector{Sig,K}, T) where {Sig,K}
+# KVector <- KVector
+KVector(a::KVector) = a
+function KVector(a::KVector{Sig,K}, T) where {Sig,K}
 	S = componentstype(Sig, ncomponents(Sig, K), T)
 	if issetindexable(S)
-		add!(zero(Multivector{Sig,K,S}), a) # ensure a copy is made
+		add!(zero(KVector{Sig,K,S}), a) # ensure a copy is made
 	else
-		Multivector{Sig,K,S}(convert(S, a.comps))
+		KVector{Sig,K,S}(convert(S, a.comps))
 	end
 end
 
 
-# MixedMultivector <- Blade
-MixedMultivector(a::Blade) = MixedMultivector(a, numberorany(eltype(a)))
-function MixedMultivector(a::Blade{Sig,K}, T) where {Sig,K}
+# Multivector <- Blade
+Multivector(a::Blade) = Multivector(a, numberorany(eltype(a)))
+function Multivector(a::Blade{Sig,K}, T) where {Sig,K}
 	n = ncomponents(Sig)
 	S = componentstype(Sig, n, T)
 	if issetindexable(S)
-		add!(zero(MixedMultivector{Sig,S}), a)
+		add!(zero(Multivector{Sig,S}), a)
 	else
 		j = mmv_index(a)
 		comps = ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)
-		MixedMultivector{Sig,S}(S(comps))
+		Multivector{Sig,S}(S(comps))
 	end
 end
 
-# MixedMultivector <- Multivector
-MixedMultivector(a::Multivector) = MixedMultivector(a, numberorany(eltype(a)))
-function MixedMultivector(a::Multivector{Sig,K}, T) where {Sig,K}
+# Multivector <- KVector
+Multivector(a::KVector) = Multivector(a, numberorany(eltype(a)))
+function Multivector(a::KVector{Sig,K}, T) where {Sig,K}
 	n = ncomponents(Sig)
 	S = componentstype(Sig, n, T)
 	if issetindexable(S)
-		add!(zero(MixedMultivector{Sig,S}), a) # ensure a copy is made
+		add!(zero(Multivector{Sig,S}), a) # ensure a copy is made
 	else
 		slice = mmv_slice(a)
 		nbefore = first(slice) - 1
 		nafter = n - last(slice)
 
 		comps = ntuple(i -> i ∈ slice ? a.comps[i - nbefore] : numberzero(T), Val(n))
-		MixedMultivector{Sig,S}(S(comps))
+		Multivector{Sig,S}(S(comps))
 	end
 end
 
-# MixedMultivector <- MixedMultivector
-MixedMultivector(a::MixedMultivector) = a
-function MixedMultivector(a::MixedMultivector{Sig}, T) where {Sig}
+# Multivector <- Multivector
+Multivector(a::Multivector) = a
+function Multivector(a::Multivector{Sig}, T) where {Sig}
 	S = componentstype(Sig, ncomponents(Sig), T)
 	if issetindexable(S)
-		add!(zero(MixedMultivector{Sig,S}), a) # ensure a copy is made
+		add!(zero(Multivector{Sig,S}), a) # ensure a copy is made
 	else
-		MixedMultivector{Sig,S}(convert(S, a.comps))
+		Multivector{Sig,S}(convert(S, a.comps))
 	end
 end
 
 
 
-function Base.similar(M::Type{Multivector{Sig,K}}, aa::AbstractMultivector...) where {Sig,K}
+function Base.similar(M::Type{KVector{Sig,K}}, aa::AbstractMultivector...) where {Sig,K}
 	T = promote_type(eltype.(aa)...)
 	C = componentstype(Sig, ncomponents(M), T)
-	Multivector{Sig,K,C}
+	KVector{Sig,K,C}
 end
 
-function Base.similar(M::Type{MixedMultivector{Sig}}, aa::AbstractMultivector...) where {Sig}
+function Base.similar(M::Type{Multivector{Sig}}, aa::AbstractMultivector...) where {Sig}
 	T = promote_type(eltype.(aa)...)
 	C = componentstype(Sig, ncomponents(M), T)
-	MixedMultivector{Sig,C}
+	Multivector{Sig,C}
 end
 
 
 #= Indexing and Iteration =#
 
 grade(a::Blade{Sig,K}, k) where {Sig,K} = K == k ? a : zero(a)
-grade(a::Multivector{Sig,K,C}, k) where {Sig,K,C} = K == k ? a : zero(Multivector{Sig,k,C})
-grade(a::MixedMultivector, k) = Multivector{signature(a),k}(view(a.comps, mmv_slice(Val(dimension(a)), Val(k))))
+grade(a::KVector{Sig,K,C}, k) where {Sig,K,C} = K == k ? a : zero(KVector{Sig,k,C})
+grade(a::Multivector, k) = KVector{signature(a),k}(view(a.comps, mmv_slice(Val(dimension(a)), Val(k))))
 
 scalar(a::Blade{Sig,0}) where {Sig} = a.coeff
 scalar(a::Blade) = numberzero(eltype(a))
-scalar(a::MixedMultivector) = a.comps[begin]
-scalar(a::Multivector{Sig,0}) where {Sig} = a.comps[begin]
-scalar(a::Multivector{Sig}) where {Sig} = zero(eltype(a))
+scalar(a::Multivector) = a.comps[begin]
+scalar(a::KVector{Sig,0}) where {Sig} = a.comps[begin]
+scalar(a::KVector{Sig}) where {Sig} = zero(eltype(a))
 
 isscalar(a::Number) = true
 isscalar(a::Blade{Sig,0}) where {Sig} = true
 isscalar(a::Blade) = iszero(a)
 isscalar(a::HomogeneousMultivector{Sig,0}) where {Sig} = true
 isscalar(a::HomogeneousMultivector) = iszero(a)
-isscalar(a::MixedMultivector) = all(isnumberzero, a.comps[2:end])
+isscalar(a::Multivector) = all(isnumberzero, a.comps[2:end])
 
 blades(a::Blade) = [a]
 blades(a::CompositeMultivector{Sig}) where {Sig} = [Blade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.comps)]

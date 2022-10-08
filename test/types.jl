@@ -15,10 +15,10 @@ using GeometricAlgebra.SparseArrays
 	for T in [
 		Int,
 		Blade{(1,1),0,Bool},
-		Multivector{(1,1,1),2,Vector{Int}},
-		Multivector{(),0,Vector{Bool}},
-		Multivector{(0,1),2,Vector{Float64}},
-		MixedMultivector{(-1,+1,+1,+1),Vector{Float64}},
+		KVector{(1,1,1),2,Vector{Int}},
+		KVector{(),0,Vector{Bool}},
+		KVector{(0,1),2,Vector{Float64}},
+		Multivector{(-1,+1,+1,+1),Vector{Float64}},
 	]
 		@test zero(T) isa T
 		@test zero(zero(T)) isa T
@@ -28,20 +28,20 @@ using GeometricAlgebra.SparseArrays
 	end
 end
 
-@testset "Blade -> Multivector -> MixedMultivector" begin
+@testset "Blade -> KVector -> Multivector" begin
 	for a in [
 		Blade{(1,1)}(0b00 => 42),
 		Blade{(1,0,1)}(0b001 => 42.0),
 		Blade{3}(0b111 => big(42)),
 	]
-		@test Multivector(a) isa Multivector{signature(a),grade(a),<:AbstractVector{eltype(a)}}
-		@test MixedMultivector(a) isa MixedMultivector{signature(a),<:AbstractVector{eltype(a)}}
-		@test MixedMultivector(Multivector(a)) isa MixedMultivector{signature(a),<:AbstractVector{eltype(a)}}
+		@test KVector(a) isa KVector{signature(a),grade(a),<:AbstractVector{eltype(a)}}
+		@test Multivector(a) isa Multivector{signature(a),<:AbstractVector{eltype(a)}}
+		@test Multivector(KVector(a)) isa Multivector{signature(a),<:AbstractVector{eltype(a)}}
 	end
 
 	x = Blade{(1,1)}(0b01 => 5)
 
-	Ts = [Blade, Multivector, MixedMultivector]
+	Ts = [Blade, KVector, Multivector]
 	for T1 in Ts, T2 in Ts
 		a, b = T1(x), T2(x)
 		@test largest_type(a, b) == largest_type(b, a)
@@ -49,18 +49,18 @@ end
 	end
 
 	for (M1, M2) in [
+		Blade => KVector,
+		KVector => KVector,
 		Blade => Multivector,
+		KVector => Multivector,
 		Multivector => Multivector,
-		Blade => MixedMultivector,
-		Multivector => MixedMultivector,
-		MixedMultivector => MixedMultivector,
 	], T in [Int, Float64, ComplexF32]
 		@test eltype(M2(M1(x), T)) === T
 	end
 
 	@test_throws ErrorException length(x)
-	@test ncomponents(Multivector(x)) == 2
-	@test ncomponents(MixedMultivector(x)) == 4
+	@test ncomponents(KVector(x)) == 2
+	@test ncomponents(Multivector(x)) == 4
 end
 
 @testset "eltype" begin
@@ -68,8 +68,8 @@ end
 		a = Blade{(1,1)}(0b11 => one(T))
 
 		@test eltype(a) === T
+		@test eltype(KVector(a)) === T
 		@test eltype(Multivector(a)) === T
-		@test eltype(MixedMultivector(a)) === T
 	end
 end
 
@@ -78,19 +78,19 @@ end
 		sig = MetricWithStorage{(1,1,1),S}()
 		v = basis(sig)
 
-		@test Multivector(v[1]) isa Multivector{sig,1,<:S}
-		@test MixedMultivector(v[1]) isa MixedMultivector{sig,<:S}
+		@test KVector(v[1]) isa KVector{sig,1,<:S}
+		@test Multivector(v[1]) isa Multivector{sig,<:S}
 
-		for T in [Blade, Multivector, MixedMultivector]
+		for T in [Blade, KVector, Multivector]
 			@test isone(one(T(v[1])))
 		end
 
 		for (M1, M2) in [
+			Blade => KVector,
+			KVector => KVector,
 			Blade => Multivector,
+			KVector => Multivector,
 			Multivector => Multivector,
-			Blade => MixedMultivector,
-			Multivector => MixedMultivector,
-			MixedMultivector => MixedMultivector,
 		], T in [Int, Float64, ComplexF32]
 			@test eltype(M2(M1(v[1]), T)) === T
 		end

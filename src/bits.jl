@@ -131,8 +131,8 @@ bits_of_grade(k, n) = Iterators.take(BitPermutations(k), binomial(n, k))
 """
 	mv_bits(::Val{N}, ::Val{K})
 
-Vector of unit blades corresponding to components of an `N`-dimensional `Multivector` of grade `K`.
-Multivector components are sorted by the numerical value of the unit blade.
+Vector of unit blades corresponding to components of an `N`-dimensional `KVector` of grade `K`.
+KVector components are sorted by the numerical value of the unit blade.
 
 # Examples
 ```jldoctest
@@ -153,7 +153,7 @@ end
 """
 	mmv_bits(::Val{N})
 
-Vector of unit blades corresponding to components of an `N`-dimensional `MixedMultivector`.
+Vector of unit blades corresponding to components of an `N`-dimensional `Multivector`.
 Mixed multivector components are ordered first by grade then by numerical value of the unit blade,
 so that the grade `K` components are contiguous and given by `mv_bits(Val(N), Val(K))`
 
@@ -180,7 +180,7 @@ end
 """
 	bits_to_mv_index(bits::Unsigned)
 
-Convert a unit blade `bits` to a linear index for accessing components of a `Multivector`. 
+Convert a unit blade `bits` to a linear index for accessing components of a `KVector`. 
 """
 function bits_to_mv_index(bits::Unsigned)
 	# From combinatorial number systems, an explicit formula is:
@@ -211,13 +211,13 @@ end
 """
 	bits_to_mmv_index(bits::Unsigned)
 
-Convert a unit blade `bits` to a linear index for accessing components of a `MixedMultivector`. 
+Convert a unit blade `bits` to a linear index for accessing components of a `Multivector`. 
 """
 function bits_to_mmv_index(bits::Unsigned, dim)
 	multivector_index_offset(dim, count_ones(bits)) + bits_to_mv_index(bits)
 end
 
-# range of MixedMultivector components corresponding to the grade k part
+# range of Multivector components corresponding to the grade k part
 @generated mmv_slice(::Val{N}, ::Val{K}) where {N,K} = multivector_index_offset(N, K) .+ (1:binomial(N, K))
 
 

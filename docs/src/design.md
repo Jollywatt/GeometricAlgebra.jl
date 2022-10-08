@@ -7,7 +7,7 @@ end
 
 # Design and Internals
 
-## Multivector Types
+## KVector Types
 
 
 There are three concrete types for representing elements in a geometric algebra, arranged in the following type hierarchy:
@@ -15,23 +15,23 @@ There are three concrete types for representing elements in a geometric algebra,
 ```
                    AbstractMultivector{Sig}
                      /                  \
-   HomogeneousMultivector{Sig,K}    MixedMultivector{Sig,S}
+   HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
        /                \                             
-Blade{Sig,K,T}    Multivector{Sig,K,S}                
+Blade{Sig,K,T}    KVector{Sig,K,S}                
                                                    
                   ╰───── CompositeMultivector{Sig,S} ─────╯
 ```
 
 - `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
-- `Multivector`: a homogeneous multivector; a sum of same-grade blades.
-- `MixedMultivector`: an inhomogeneous multivector. All elements in a geometric
+- `KVector`: a homogeneous multivector; a sum of same-grade blades.
+- `Multivector`: an inhomogeneous multivector. All elements in a geometric
    algebra can be represented as this type (though not most efficiently).
 
 !!! note
 	The mathematical definition of a ``k``-blade is the wedge product
 	of ``k`` _vectors_, not necessarily basis vectors. Thus, not all
 	``k``-blades are representable as a `Blade`, but are always representable
-	as a sum of `Blade`s, or a `Multivector`.
+	as a sum of `Blade`s, or a `KVector`.
 
 These types have up to three of type parameters:
 
@@ -118,13 +118,13 @@ julia> GeometricAlgebra.symbolic_components.([:x, :y], 3)
  [x[1], x[2], x[3]]
  [y[1], y[2], y[3]]
 
-julia> Multivector{3,1}.(ans)
-2-element Vector{Multivector{3, 1, Vector{SymbolicUtils.Term{Real, Nothing}}}}:
+julia> KVector{3,1}.(ans)
+2-element Vector{KVector{3, 1, Vector{SymbolicUtils.Term{Real, Nothing}}}}:
  x[1]v1 + x[2]v2 + x[3]v3
  y[1]v1 + y[2]v2 + y[3]v3
 
 julia> prod(ans)
-8-component MixedMultivector{3, Vector{Any}}:
+8-component Multivector{3, Vector{Any}}:
  x[1]*y[1] + x[2]*y[2] + x[3]*y[3]
  x[1]*y[2] - x[2]*y[1] v12 + x[1]*y[3] - x[3]*y[1] v13 + x[2]*y[3] - x[3]*y[2] v23
 

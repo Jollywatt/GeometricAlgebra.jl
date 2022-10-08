@@ -13,18 +13,18 @@ using GeometricAlgebra.SparseArrays
 		@test zero(Blade{sig,k,T}) == Blade{sig}(0 => zero(T))
 		@test one(Blade{sig,k,T}) == Blade{sig}(0 => one(T))
 
-		@test zero(Multivector{sig,k,Vector{T}}) == Multivector{sig,k}(zeros(T, binomial(dimension(sig), k)))
-		@test zero(MixedMultivector{sig,Vector{T}}) == MixedMultivector{sig}(zeros(T, 2^dimension(sig)))
+		@test zero(KVector{sig,k,Vector{T}}) == KVector{sig,k}(zeros(T, binomial(dimension(sig), k)))
+		@test zero(Multivector{sig,Vector{T}}) == Multivector{sig}(zeros(T, 2^dimension(sig)))
 	end
 
 	@test Blade{(1,1)}(0b00 => 0) == Blade{(1,1)}(0b11 => 0)
-	@test zero(Multivector{(1,1,1),0,Vector{Int}}) == zero(Multivector{(1,1,1),3,Vector{Int}})
+	@test zero(KVector{(1,1,1),0,Vector{Int}}) == zero(KVector{(1,1,1),3,Vector{Int}})
 
 	o = Blade{(1,1)}.(1:3 .=> 0)
 	@test o[1] == o[2] == o[3]
 
 	v = Blade{(1,1,1)}(0b101 => 88.3)
-	Ts = [Blade, Multivector, MixedMultivector]
+	Ts = [Blade, KVector, Multivector]
 	for T1 ∈ Ts, T2 ∈ Ts
 		@test T1(v) == T2(v)
 	end
@@ -36,13 +36,13 @@ end
 	@test Blade{(1,1)}(0b10 => eps()) ≈ 0 atol=eps()
 
 	# ≈ uses 2-norm on arrays, so atol ≥ √n*eps()
-	@test Multivector{(1,1,1),1}(eps()rand(3)) ≈ 0 atol=√3*eps()
-	@test Multivector{(1,1,1),0}([1]) ≈ 1 + eps() atol=eps()
+	@test KVector{(1,1,1),1}(eps()rand(3)) ≈ 0 atol=√3*eps()
+	@test KVector{(1,1,1),0}([1]) ≈ 1 + eps() atol=eps()
 
-	@test MixedMultivector{(1,1,1)}(1 .+ eps()rand(2^3)) ≈ MixedMultivector{(1,1,1)}(1 .+ eps()rand(2^3))
+	@test Multivector{(1,1,1)}(1 .+ eps()rand(2^3)) ≈ Multivector{(1,1,1)}(1 .+ eps()rand(2^3))
 
 	v = Blade{(1,1,1)}.(0b101 .=> 10 .+ 1e-6rand(2))
-	Ts = [Blade, Multivector, MixedMultivector]
+	Ts = [Blade, KVector, Multivector]
 	for T1 ∈ Ts, T2 ∈ Ts
 		@test T1(v[1]) ≈ T2(v[2]) atol=1e-6
 	end
@@ -69,7 +69,7 @@ end
 @testset "scalar *" begin
 	a = Blade{(1,1)}(0b01 => 10)
 
-	for b in [a, Multivector(a), MixedMultivector(a)]
+	for b in [a, KVector(a), Multivector(a)]
 		@test 3a == a*3.0
 		@test a/10 == 10\a
 		@test -a == a/(-1.0)
@@ -82,11 +82,11 @@ end
 	v = Blade{(0,0,0)}.(bits_of_grade(1, 3) .=> 1)
 	bi = Blade{(0,0,0)}.(bits_of_grade(2, 3) .=> 1)
 
-	@test v[1] + v[2] isa Multivector{(0,0,0),1}
-	@test bi[1] + 2.5bi[2] isa Multivector{(0,0,0),2}
-	@test v[1] + bi[2] isa MixedMultivector
-	@test sum(Multivector.(v)) isa Multivector
-	@test sum(MixedMultivector.(bi)) isa MixedMultivector
+	@test v[1] + v[2] isa KVector{(0,0,0),1}
+	@test bi[1] + 2.5bi[2] isa KVector{(0,0,0),2}
+	@test v[1] + bi[2] isa Multivector
+	@test sum(KVector.(v)) isa KVector
+	@test sum(Multivector.(bi)) isa Multivector
 	@test v[1] - v[2] == -v[2] + v[1]
 
 	@testset "with scalars" begin
@@ -94,7 +94,7 @@ end
 		@test (v[1] + v[2]) + 7 == v[1] + (v[2] + 7)
 		@test (bi[1] + 8) - 8 == bi[1]
 		@test 1 - v[1] == -(v[1] - 1)
-		@test Multivector(v[1]) + 0.5 == v[1] + 1//2
+		@test KVector(v[1]) + 0.5 == v[1] + 1//2
 	end
 
 	@test (1:3)'v == 1v[1] + 2v[2] + 3v[3]
@@ -112,7 +112,7 @@ end
 
 	@test GeometricAlgebra.geometric_prod(v[1], 2) == 2v[1]
 
-	Ts = [Blade, Multivector, MixedMultivector]
+	Ts = [Blade, KVector, Multivector]
 	for T1 in Ts, T2 in Ts
 		@test v[1]v[2] == T1(v[1])T2(v[2]) == T2(v[1])T1(v[2])
 	end

@@ -25,9 +25,9 @@ Blade{Sig,K,T}   KVector{Sig,K,S}
 
 !!! note
 	The mathematical definition of a ``k``-blade is the wedge product
-	of ``k`` _vectors_, not necessarily basis vectors, as in `Blade`.
+	of ``k`` _vectors_, not necessarily _basis_ vectors (as in `Blade`).
 	Thus, not all ``k``-blades are representable as a `Blade`, but as a
-	`KVector` (or `Multivector`).
+	`KVector` (or `Multivector`) instead.
 
 # Type Parameters
 
@@ -48,7 +48,7 @@ Base.broadcastable(a::AbstractMultivector) = Ref(a)
 """
 	signature(::AbstractMultivector{Sig}) -> Sig
 
-The metric signature type parameter of the multivector instance or type.
+The metric signature type parameter of the multivector instance (or type).
 """
 signature(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = Sig
 
@@ -68,7 +68,7 @@ abstract type HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig} end
 """
 	grade(::HomogeneousMultivector{Sig,K}) -> K
 
-The grade of a homogeneous multivector (a `Blade` or `KVector`) instance or type.
+The grade of a homogeneous multivector (a `Blade` or `KVector`) instance (or type).
 """
 grade(::OrType{<:HomogeneousMultivector{Sig,K}}) where {Sig,K} = K
 
@@ -155,7 +155,7 @@ mmv_slice(a::KVector) = mmv_slice(Val(dimension(a)), Val(grade(a)))
 """
 	Multivector{Sig,S} <: AbstractMultivector{Sig}
 
-A (possibly inhomogeneous) multivector.
+A general (possibly inhomogeneous) multivector.
 
 All elements of a geometric algebra are representable as a `Multivector`.
 
@@ -170,8 +170,8 @@ end
 """
 	Multivector{Sig}(comps)
 
-Inhomogeneous multivector with components vector `comps`. The components are ordered
-first by grade then lexicographically (see [`GeometricAlgebra.mmv_bits`](@ref)).
+General multivector with components vector `comps`. The components are ordered
+first by grade, then lexicographically (see [`GeometricAlgebra.mmv_bits`](@ref)).
 
 # Examples
 ```jldoctest
@@ -217,7 +217,7 @@ dimension(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = dimension(Sig)
 """
 	ncomponents(::CompositeMultivector)
 
-Number of independent components of a multivector instance or type.
+Number of independent components of a multivector instance (or type).
 
 In ``n`` dimensions, this is ``\\binom{n}{k}`` for a `KVector` and
 ``2^n`` for a `Multivector`.
@@ -231,7 +231,7 @@ Base.length(::AbstractMultivector) = error(
 """
 	eltype(::AbstractMultivector)
 
-The numerical type of the components of a multivector instance or type.
+The numerical type of the components of a multivector instance (or type).
 """
 Base.eltype(::OrType{<:Blade{Sig,K,T} where {Sig,K}}) where T = T
 Base.eltype(::OrType{<:CompositeMultivector{Sig,S}}) where {Sig,S} = eltype(S)

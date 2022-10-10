@@ -30,10 +30,10 @@ symbolic_multivector(a::AbstractMultivector, label) = symbolic_multivector(typeo
 
 Trace evaluation of `f(a, b, ...)::CompositeMultivector` on symbolic versions of each
 `AbstractMultivector` instance or type `a`, `b`, ..., returning an expression suitable
-as the body of `@generated` function.
+as the body of a `@generated` function.
 
 !!! important
-	The names of the function arguments must be `"a"`, `"b"`, `"c"`, etc, as these are
+	The names of the generated function arguments must be `"a"`, `"b"`, `"c"`, etc, as these are
 	the names used in the expression retuned by `symbolic_optim`.
 
 If `use_symbolic_optim(sig)` returns `false`, the function body simply calls `f(a, b, ...)`.

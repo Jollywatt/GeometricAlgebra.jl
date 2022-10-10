@@ -1,6 +1,6 @@
 # Reference
 
-## KVector Types
+## Multivector Types
 
 ```@autodocs
 Pages = ["types.jl"]

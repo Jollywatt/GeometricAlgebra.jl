@@ -76,8 +76,8 @@ Blade{Sig,K,T}   KVector{Sig,K,S}
 ```
 
 - `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
-- `KVector`: a homogeneous multivector; a sum of same-grade blades.
-- `Multivector`: an inhomogeneous multivector. All elements in a geometric
+- `KVector`: a ``k``-vector or homogeneous multivector; a sum of same-grade blades.
+- `Multivector`: a general multivector. All elements in a geometric
    algebra can be represented as this type (though not most efficiently).
 
 

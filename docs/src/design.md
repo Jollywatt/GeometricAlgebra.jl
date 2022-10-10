@@ -7,7 +7,7 @@ end
 
 # Design and Internals
 
-## KVector Types
+## Multivector Types
 
 
 There are three concrete types for representing elements in a geometric algebra, arranged in the following type hierarchy:
@@ -23,15 +23,15 @@ Blade{Sig,K,T}    KVector{Sig,K,S}
 ```
 
 - `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
-- `KVector`: a homogeneous multivector; a sum of same-grade blades.
-- `Multivector`: an inhomogeneous multivector. All elements in a geometric
+- `KVector`: a ``k``-vector or homogeneous multivector; a sum of same-grade blades.
+- `Multivector`: a general multivector. All elements in a geometric
    algebra can be represented as this type (though not most efficiently).
 
 !!! note
 	The mathematical definition of a ``k``-blade is the wedge product
-	of ``k`` _vectors_, not necessarily basis vectors. Thus, not all
-	``k``-blades are representable as a `Blade`, but are always representable
-	as a sum of `Blade`s, or a `KVector`.
+	of ``k`` _vectors_, not necessarily _basis_ vectors (as in `Blade`).
+	Thus, not all ``k``-blades are representable as a `Blade`, but as a
+	`KVector` (or `Multivector`) instead.
 
 These types have up to three of type parameters:
 
@@ -39,8 +39,7 @@ These types have up to three of type parameters:
    all-bits value which satisfies the [metric signature interface](@ref sig-interface).
 - `T`: The numerical type of the coefficient of a `Blade`.
 - `K`: An `Int` specifying the grade of a `HomogeneousMultivector`.
-- `S`: The storage type of the components of a `CompositeMultivector`. This is
-   assumed to be mutable, and is usually a subtype of `Vector`, `MVector` or `SparseVector`.
+- `S`: The storage type of the components vector of a `CompositeMultivector`.
 
 
 ## Metric Signatures
@@ -69,7 +68,7 @@ Blade{(t = -1, x = 1, y = 1, z = 1), 4, Int64}:
 
 
 The metric signature type parameter may be any `isbits` value satisying the following interface.
-As well as defining the geometric algebra, the signature is used to defines basis blade labels, the default array type for multivector components, and so on.
+As well as defining the geometric algebra, the signature is used to specify basis blade labels, the default array type for multivector components, and other metadata.
 
 | Required methods | Description |
 |:-----------------|:------------|
@@ -78,9 +77,11 @@ As well as defining the geometric algebra, the signature is used to defines basi
 
 | Optional methods | Description |
 |:-----------------|:------------|
-| `componentstype(sig, N, T)` | Preferred array type for `CompositeMultivector` components. (Default is `Vector{T}`.)
-| `show_signature(io, sig)` | Show the metric signature in a compact form.
-| `show_basis_blade(io, sig, indices)` | Print the basis blade with the given indices.
+| `show_signature(io, sig)` | Show the metric signature in a compact human-readable form.
+| `show_basis_blade(io, sig, indices)` | Print a basis blade with the given indices (e.g., `v12` or `𝒆₁∧𝒆₂`).
+| `componentstype(sig, N, T)` | Preferred array type for `CompositeMultivector` components. (Default is `Vector{T}` in low dimensions and `SparseVector{T}` otherwise.)
+| `symbolic_optim(sig)` | Whether to use symbolic code generation to optimise multivector products. (Default is true for low dimensions.)
+
 
 Below is an example of how one might define a geometric algebra with specific behaviours:
 ```jldoctest
@@ -95,15 +96,17 @@ using StaticArrays
 GeometricAlgebra.componentstype(::DiracGamma, N, T) = MVector{N,T}
 
 # custom labels
-GeometricAlgebra.show_basis_blade(io, ::DiracGamma, indices) = print(io, join("γ".*GeometricAlgebra.superscript.(indices)))
+function GeometricAlgebra.show_basis_blade(io, ::DiracGamma, indices)
+	print(io, join("γ".*GeometricAlgebra.superscript.(indices .- 1)))
+end
 
 basis(DiracGamma())
 # output
 4-element Vector{Blade{DiracGamma(), 1, Int64}}:
+ γ⁰
  γ¹
  γ²
  γ³
- γ⁴
 ```
 
 

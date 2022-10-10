@@ -250,13 +250,13 @@ If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⋅ b` is the
 
 Note that for scalars `a` and `b`, the inner product reduces to scalar multiplication,
 in contrast to some authors (see [^D02] for discussion).
-
-[^D02]: Leo Dorst, "The Inner Products of Geometric Algebra", 2002.
-	[doi:10.1007/978-1-4612-0089-5_2](https://dx.doi.org/10.1007/978-1-4612-0089-5_2)
 """
 inner(a, b) = graded_prod(abs∘-, a, b)
 
-"$(@doc inner)"
+"""
+$(@doc inner)
+[^D02]: Leo Dorst, "The Inner Products of Geometric Algebra", 2002. [doi:10.1007/978-1-4612-0089-5_2](https://dx.doi.org/10.1007/978-1-4612-0089-5_2)
+"""
 ⋅(a, b) = inner(a, b)
 
 """
@@ -332,6 +332,11 @@ end
 
 #= Reversion and Dualities =#
 
+"""
+	graded_multiply(f, a::AbstractMultivector)
+
+Multiply the grade `k` part of `a` by `f(k)`.
+"""
 graded_multiply(f, a::Scalar) = f(0)*a
 graded_multiply(f, a::HomogeneousMultivector) = f(grade(a))*a
 function graded_multiply(f, a::Multivector{Sig}) where Sig
@@ -351,6 +356,15 @@ Reversion of a multivector.
 
 Reversion is an anti-automorphism defined by reversing
 the order of the geometric product: `~(a*b) == ~b * ~a`.
+For a `k`-vector, `~k == reversion_sign(k) == (-1)^(k*(k - 1)/2)`.
+
+| `mod(k, 4)` | [`reversion_sign(k)`](@ref) |
+|:-----------:|:-------------------:|
+| ``0`` | ``+1`` |
+| ``1`` | ``+1`` |
+| ``2`` | ``-1`` |
+| ``3`` | ``-1`` |
+
 """
 reversion(a) = graded_multiply(reversion_sign, a)
 

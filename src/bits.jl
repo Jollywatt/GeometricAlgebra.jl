@@ -110,7 +110,7 @@ Base.eltype(::Type{BitPermutations{T}}) where {T} = T
 	bits_of_grade(k[, dim])
 
 Generate basis blade bits of grade `k` in ascending order.
-Yields all basis blades in the dimension `dim`, if given, otherwise iterate indefinitely.
+Yields all basis blades in the dimension `dim`, if given, otherwise iterates indefinitely.
 
 # Examples
 ```jldoctest
@@ -289,5 +289,11 @@ function geometric_prod_bits(sig, a::Unsigned, b::Unsigned)
 	factor, bits
 end
 
+"""
+	reversion_sign(k) = mod(k, 4) <= 1 ? +1 : -1
+
+Sign from reversing a ``k``-vector.
+"""
 reversion_sign(k) = mod(k, 4) <= 1 ? +1 : -1
+
 geometric_square_factor(sig, a::Unsigned) = reversion_sign(count_ones(a))*factor_from_squares(sig, a)

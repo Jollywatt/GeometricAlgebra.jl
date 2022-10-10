@@ -220,6 +220,9 @@ end
 Populate namespace with basis blades of every grade in the geometric
 algebra with metric signature `sig`.
 
+!!! warning
+	This defines ``2^n`` variables for an ``n`` dimensional signature.
+
 See also [`@basisall`](@ref).
 
 # Examples
@@ -245,7 +248,8 @@ Similarly to [`@basis`](@ref), populate namespace with basis blades, but
 include all permutations of each blade.
 
 !!! warning
-	This defines ``2^n`` variables for an ``n`` dimensional signature!
+	This defines more than ``2^n`` variables for an ``n`` dimensional signature!
+
 
 # Examples
 

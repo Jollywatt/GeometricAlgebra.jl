@@ -14,6 +14,8 @@ end
 Construct multivectors by providing the metric signature and grade as type parameters:
 
 ```jldoctest
+julia> using GeometricAlgebra
+
 julia> u = KVector([1, -1, 0]) # 3D Euclidean vector
 3-component KVector{3, 1, Vector{Int64}}:
   1 v1

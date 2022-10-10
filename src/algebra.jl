@@ -101,6 +101,15 @@ Base.:-(a::Scalar, b::AbstractMultivector) = add_scalar(-b, a)
 # leaves eltype/storage type parameters variable
 result_type(f::Any, a::AbstractMultivector, b::AbstractMultivector) = result_type(f, typeof(a), typeof(b))
 
+geometric_prod(a::Scalar, b::Scalar) = a*b
+geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
+geometric_prod(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
+
+function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
+	factor, bits = geometric_prod_bits(Sig, bitsof(a), bitsof(b))
+	Blade{Sig}(bits => factor*(a.coeff*b.coeff))
+end
+
 # subspace of blades is closed under *
 result_type(::typeof(geometric_prod), ::Type{<:Blade{Sig}}, ::Type{<:Blade{Sig}}) where {Sig} = Blade{Sig}
 function result_type(::typeof(geometric_prod), ::Type{<:HomogeneousMultivector{Sig,P}}, ::Type{<:HomogeneousMultivector{Sig,Q}}) where {Sig,P,Q}
@@ -110,17 +119,6 @@ function result_type(::typeof(geometric_prod), ::Type{<:HomogeneousMultivector{S
 	Multivector{Sig} # product of homogeneous multivectors is in general inhomogeneous
 end
 result_type(::typeof(geometric_prod), ::Type{<:AbstractMultivector{Sig}}, ::Type{<:AbstractMultivector{Sig}}) where {Sig} = Multivector{Sig}
-
-
-
-geometric_prod(a::Scalar, b::Scalar) = a*b
-geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
-geometric_prod(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
-
-function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
-	factor, bits = geometric_prod_bits(Sig, bitsof(a), bitsof(b))
-	Blade{Sig}(bits => factor*(a.coeff*b.coeff))
-end
 
 function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(result_type(geometric_prod, a, b), a, b))

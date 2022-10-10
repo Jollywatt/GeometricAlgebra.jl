@@ -60,17 +60,13 @@ Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
 
 #= Addition =#
 
-add!(a::KVector, b::Blade) = (a.comps[mv_index(b)] += b.coeff; a)
-add!(a::Multivector, b::Blade) = (a.comps[mmv_index(b)] += b.coeff; a)
-
 add!(a::KVector, b::KVector) = (a.comps .+= b.comps; a)
 add!(a::Multivector, b::Multivector) = (a.comps .+= b.comps; a)
 
-function add!(a::Multivector, b::KVector)
-	offset = multivector_index_offset(grade(b), dimension(b))
-	a.comps[mmv_slice(b)] = b.comps
-	a
-end
+add!(a::KVector, b::Blade) = (a.comps[mv_index(b)] += b.coeff; a)
+add!(a::Multivector, b::Blade) = (a.comps[mmv_index(b)] += b.coeff; a)
+add!(a::Multivector, b::KVector) = (a.comps[mmv_slice(b)] = b.comps; a)
+
 
 # add alike types
 Base.:+(As::KVector{Sig,K}...) where {Sig,K} = KVector{Sig,K}(sum(a.comps for a ∈ As))
@@ -101,6 +97,22 @@ Base.:-(a::Scalar, b::AbstractMultivector) = add_scalar(-b, a)
 
 #= Geometric Multiplication =#
 
+# compute multivector type suitable to represent the result of f(a, b)
+# leaves eltype/storage type parameters variable
+result_type(f::Any, a::AbstractMultivector, b::AbstractMultivector) = result_type(f, typeof(a), typeof(b))
+
+# subspace of blades is closed under *
+result_type(::typeof(geometric_prod), ::Type{<:Blade{Sig}}, ::Type{<:Blade{Sig}}) where {Sig} = Blade{Sig}
+function result_type(::typeof(geometric_prod), ::Type{<:HomogeneousMultivector{Sig,P}}, ::Type{<:HomogeneousMultivector{Sig,Q}}) where {Sig,P,Q}
+	k, K = minmax(P, Q)
+	k == 0 && return KVector{Sig,K} # multiplication by scalar preserves grade
+	K == dimension(Sig) && return KVector{Sig,dimension(Sig) - k} # multiplication by pseudoscalar flips grade
+	Multivector{Sig} # product of homogeneous multivectors is in general inhomogeneous
+end
+result_type(::typeof(geometric_prod), ::Type{<:AbstractMultivector{Sig}}, ::Type{<:AbstractMultivector{Sig}}) where {Sig} = Multivector{Sig}
+
+
+
 geometric_prod(a::Scalar, b::Scalar) = a*b
 geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
 geometric_prod(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
@@ -111,17 +123,16 @@ function geometric_prod(a::Blade{Sig}, b::Blade{Sig}) where {Sig}
 end
 
 function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	c = zero(similar(Multivector{Sig}, a, b))
+	c = zero(similar(result_type(geometric_prod, a, b), a, b))
 	for (abits::UInt, acoeff) ∈ nonzero_components(a), (bbits::UInt, bcoeff) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-		i = bits_index(dimension(Sig), bits)
+		i = bits_index(c, bits)
 		c = setindex!!(c, c.comps[i] + factor*(acoeff*bcoeff), i)
 	end
 	c
 end
 
 @generated geometric_prod(a, b) = symbolic_optim(_geometric_prod, a, b)
-
 
 Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
@@ -186,22 +197,12 @@ function graded_prod(grade_selector::Function, a::Blade{Sig}, b::Blade{Sig}) whe
 	end
 end
 
-function _graded_prod(grade_selector::Function, a::HomogeneousMultivector{Sig,P}, b::HomogeneousMultivector{Sig,Q}) where {Sig,P,Q}
-	K = grade_selector(P, Q)
-	c = zero(similar(KVector{Sig,K}, a, b))
-	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
-		bits = abits ⊻ bbits
-		if count_ones(bits) == K
-			factor = geometric_prod_factor(Sig, abits, bbits)
-			i = bits_index(c, bits)
-			c = setindex!!(c, c.comps[i] + factor*(acoeff*bcoeff), i)
-		end
-	end
-	c
-end
+result_type(::Tuple{typeof(graded_prod),Any}, ::Type{<:Blade{Sig}}, ::Type{<:Blade{Sig}}) where {Sig} = Blade{Sig}
+result_type(::Tuple{typeof(graded_prod),GradeSelector}, ::Type{<:HomogeneousMultivector{Sig,P}}, ::Type{<:HomogeneousMultivector{Sig,Q}}) where {Sig,P,Q,GradeSelector} = KVector{Sig,GradeSelector.instance(P, Q)}
+result_type(::Tuple{typeof(graded_prod),GradeSelector}, ::Type{<:AbstractMultivector{Sig}}, ::Type{<:AbstractMultivector{Sig}}) where {Sig,GradeSelector} = Multivector{Sig}
 
 function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	c = zero(similar(Multivector{Sig}, a, b))
+	c = zero(similar(result_type((graded_prod, grade_selector), a, b), a, b))
 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))

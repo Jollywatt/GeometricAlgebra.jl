@@ -76,15 +76,20 @@ end
 shared_sig(::OrType{<:AbstractMultivector{Sig}}...) where {Sig} = true
 shared_sig(::OrType{<:AbstractMultivector}...) = false
 
+unwrap_type(::Type{Type{T}}) where T = T
+unwrap_type(T) = T
+
 function __init__()
 	if isdefined(Base.Experimental, :register_error_hint)
 		Base.Experimental.register_error_hint(MethodError) do io, err, argtypes, kwargs
 			# try to detect cases where the method error is due to mixing different metric signatures
-			if all(isa.(argtypes, Type{<:AbstractMultivector})) && !shared_sig(argtypes...)
-				println(io, """\n\n
-					The metric signatures of the multivectors are:
-					 $(join(sprint.(show_signature, signature.(argtypes)), ", "))
-					Perhaps these algebras are incompatible with $(err.f)?""")
+			mvargtypes = unwrap_type.(filter(a -> a <: OrType{<:AbstractMultivector}, collect(argtypes)))
+			if !isempty(mvargtypes) && !shared_sig(mvargtypes...)
+				used_sigs = join(sprint.(show_signature, signature.(mvargtypes)), ", ", " and ")
+				println(io, """
+					
+					Arguments have metric signatures $used_sigs.
+					Perhaps the operation is not defined between these algebras?""")
 			end 
 		end
 	end

@@ -170,16 +170,19 @@ a ⊙ b = scalar_prod(a, b)
 
 
 
-#= Graded Product =#
+#= Graded Products =#
 
 """
 	graded_prod(grade_selector::Function, a, b)
 
-A graded product of multivectors, generalising the wedge ``∧``, inner ``⋅`` and contraction products.
+A "graded" product of multivectors, generalising the wedge ``∧``, inner ``⋅`` and contraction products.
+For example, the wedge product is defined as:
+```julia
+wedge(a, b) = graded_prod(+, a, b)
+```
 
-If `grade(a) == p` and `grade(b) == q`, then `graded_prod(f, a, b)` is equivalent
-to the grade `f(p, q)` part of `a*b`.
-For multivectors ``A`` and ``B`` of mixed grade, this definition is extended by linearity:
+If `grade(a) == p` and `grade(b) == q`, then `graded_prod(f, a, b)` is the grade `f(p, q)` part of `a*b`.
+The definition extends linearly to general multivectors ``A`` and ``B`` as
 ```math
 	(A, B) ↦ \\sum_{p,q} ⟨⟨A⟩_p ⟨B⟩_q⟩_{f(p, q)}
 ```
@@ -228,10 +231,9 @@ end
 	a ∧ b
 	wedge(a, b)
 
-Wedge product of multivectors.
+Wedge product of multivectors, a.k.a. the _outer_, _exterior_ or _alternating_ product.
 
-This is a grade-raising operation, also known as the _outer_ or _alternating_ product,
-equivalent to [`graded_prod(+, a, b)`](@ref).
+This is a grade-raising operation, equivalent to [`graded_prod(+, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ∧ b` is the grade ``p + q`` part of `a*b`.
 """
 wedge(a, b) = graded_prod(+, a, b)
@@ -247,6 +249,12 @@ Inner product of multivectors.
 
 This is a grade lowering operation, equivalent to [`graded_prod(abs∘-, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⋅ b` is the grade ``|p - q|`` part of `a*b`.
+
+Note that for scalars `a` and `b`, the inner product reduces to scalar multiplication,
+in contrast to some authors (see [^D02] for discussion).
+
+[^D02]: Leo Dorst, "The Inner Products of Geometric Algebra", 2002.
+	[doi:10.1007/978-1-4612-0089-5_2](https://dx.doi.org/10.1007/978-1-4612-0089-5_2)
 """
 inner(a, b) = graded_prod(abs∘-, a, b)
 
@@ -381,16 +389,16 @@ var"'ᶜ"(a) = clifford_conj(a)
 """
 	flipdual(a::AbstractMultivector)
 
-A linear duality defined on homogeneous multivectors by
+A linear duality which for homogeneous multivectors satisfies
 ```math
 a ∧ flipdual(a) = λI
 ```
 where ``λI`` is a pseudoscalar.
 
-The `flipdual` is cheap to compute: the bits of a `Blade` are flipped, and the components vector
-of a `CompositeMultivector` are reversed.
-However, it does not satisfy as many nice properties as other dualities
-such as the Hodge dual, instead possibly differing by a scalar factor.
+The `flipdual` is cheap to compute: for a `Blade`, its bits are flipped,
+and for a `CompositeMultivector`, the components vector is simply reversed.
+However, `flipdual` does not satisfy as many nice properties as other dualities
+(such as the Hodge dual, which possibly differs by a scalar factor).
 Useful in projective geometry contexts, where scalar factors are largely arbitrary.
 """
 flipdual(a::Blade) = Blade{signature(a)}(bits_first_of_grade(dimension(a)) ⊻ bitsof(a) => a.coeff)

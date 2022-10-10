@@ -25,9 +25,9 @@ Blade{Sig,K,T}   KVector{Sig,K,S}
 
 !!! note
 	The mathematical definition of a ``k``-blade is the wedge product
-	of ``k`` _vectors_, not necessarily basis vectors. Thus, not all
-	``k``-blades are representable as a `Blade`, but are always representable
-	as a sum of `Blade`s, or as a `KVector`.
+	of ``k`` _vectors_, not necessarily basis vectors, as in `Blade`.
+	Thus, not all ``k``-blades are representable as a `Blade`, but as a
+	`KVector` (or `Multivector`).
 
 # Type Parameters
 

@@ -3,6 +3,7 @@ using GeometricAlgebra:
 	MetricWithStorage,
 	isscalar,
 	scalar,
+	unit_pseudoscalar,
 	isapproxzero
 
 using GeometricAlgebra.StaticArrays
@@ -194,5 +195,19 @@ end
 		@test 5.5Multivector(v[1]) + v[3] == v[3] + 5.5v[1]
 		@test 1 + v[1] == v[1] + 2.0 - v[2]^2
 		@test v[1]^2 + 8.81 == 9.81
+	end
+end
+
+@testset "duals" begin
+	@basis 4
+
+	for dual in [flipdual, hodgedual, poincaredual]
+		@test dual(v1 + 2v2) == dual(v1) + 2dual(v2)
+	end
+
+	for dim in 0:5, k in 0:dim
+		a, b = KVector{dim,k}.(eachcol(rand(-5:5, ncomponents(dim, k), 2)))
+		I = unit_pseudoscalar(dim)
+		@test a ∧ hodgedual(b) == a ⊙ ~b * I
 	end
 end

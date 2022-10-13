@@ -399,22 +399,123 @@ var"'ᶜ"(a) = clifford_conj(a)
 
 
 """
-	flipdual(a::AbstractMultivector)
+	flipdual(a)
 
-A linear duality which for homogeneous multivectors satisfies
-```math
-a ∧ flipdual(a) = λI
-```
-where ``λI`` is a pseudoscalar.
+A dual of a multivector, for when the overall sign isn’t important.
 
-The `flipdual` is cheap to compute: for a `Blade`, its bits are flipped,
+For a unit basis blade `a::Blade`, the flipdual satisfies
+`a*flipdual(a) == ±I`
+where `±I` is the unit pseudoscalar or its negative.
+
+Computing the `flipdual` is cheap: for a `Blade`, its bits are flipped,
 and for a `CompositeMultivector`, the components vector is simply reversed.
-However, `flipdual` does not satisfy as many nice properties as other dualities
-(such as the Hodge dual, which possibly differs by a scalar factor).
-Useful in projective geometry contexts, where scalar factors are largely arbitrary.
+
+The `flipdual` is _metric independent_, but depends on a _choice of basis_.
+It differs from the Hodge and Poincaré duals (which have nicer properties) by a scalar factor.
+This makes it useful in projective geometry, where scalar factors are largely arbitrary.
+
+See also [`hodgedual`](@ref) and [`poincaredual`](@ref).
 """
-flipdual(a::Blade) = Blade{signature(a)}(bits_first_of_grade(dimension(a)) ⊻ bitsof(a) => a.coeff)
-flipdual(a::Multivector) = constructor(a)(reverse(a.comps))
-flipdual(a::KVector{Sig,K}) where {Sig,K} = let K′ = dimension(Sig) - K
-	KVector{Sig,K′}(reverse(a.comps))
+function flipdual end
+
+"""
+	poincaredual(a)
+
+Poincaré dual of a multivector.
+
+For a unit basis blade `a::Blade`, the Poincaré dual satisfies
+`a*poincaredual(a) == I`
+where `I` is the unit pseudoscalar.
+
+The Poincaré dual is _metric independent_, but depends on a _choice of basis_.
+This makes is useful in degenerate algebras: non-zero multivectors have
+non-zero Poincaré duals, even if their Hodge dual is zero.
+
+See also [`hodgedual`](@ref) and [`flipdual`](@ref).
+
+# Examples
+```jldoctest
+julia> @basis Cl(2,0,1)
+[ Info: Defined basis blades v, v1, v2, v3, v12, v13, v23, v123
+
+julia> hodgedual(v3), v3*v123 # Hodge dual is zero because v3*v3 == 0
+(0, 0)
+
+julia> poincaredual(v3)
+Blade{Cl(2,0,1), 2, Int64}:
+ 1 v12
+```
+"""
+function poincaredual end
+
+
+"""
+	hodgedual(a) == ~a*I
+
+Hodge dual of a multivector.
+
+For ``k``-vectors ``a`` and ``b``, the Hodge dual ``⋆`` satisfies (and is defined by)
+```math
+a ∧ ⋆b = ⟨a, b⟩ I
+```
+where ``I`` is the unit pseudoscalar, and ``⟨a, b⟩ = a ⊙ b̃`` is the induced
+inner product on ``k``-vectors.
+
+The Hodge dual depends on the _metric_ and _orientation_ (the choice of pseudoscalar).
+
+See also [`poincaredual`](@ref).
+
+# Examples
+```jldoctest
+julia> u = KVector{3,1}(1:3)
+3-component KVector{3, 1, UnitRange{Int64}}:
+ 1 v1
+ 2 v2
+ 3 v3
+
+julia> hodgedual(u)
+3-component KVector{3, 2, Vector{Int64}}:
+  3 v12
+ -2 v13
+  1 v23
+
+julia> u ∧ hodgedual(u)
+1-component KVector{3, 3, Vector{Int64}}:
+ 14 v123
+
+julia> u ⊙ ~u
+14
+```
+"""
+function hodgedual end
+
+for (name, signrule) in [
+		:flipdual => (sig, bits) -> 1,
+		:poincaredual => (sig, bits) -> sign_from_swaps(bits, bits_first_of_grade(dimension(sig)) ⊻ bits),
+		:hodgedual => (sig, bits) -> reversion_sign(count_ones(bits))geometric_prod_factor(sig, bits, bits_first_of_grade(dimension(sig))),
+	]
+	@eval begin
+		$name(sig, bits) = $signrule(sig, bits)
+
+		function $name(a::Blade{Sig}) where {Sig}
+			flippedbits = bits_first_of_grade(dimension(a)) ⊻ bitsof(a)
+			Blade{signature(a)}(flippedbits => $signrule(Sig, bitsof(a))*a.coeff)
+		end
+
+		function $name(a::KVector{Sig,K}) where {Sig,K}
+			K′ = dimension(Sig) - K
+			KVector{Sig,K′}(reverse($signrule.(Ref(Sig), bitsof(a)) .* a.comps))
+		end
+
+		function $name(a::Multivector{Sig}) where {Sig}
+			Multivector{Sig}(reverse($signrule.(Ref(Sig), bitsof(a)) .* a.comps))
+		end
+	end
+end
+
+
+unit_pseudoscalar(sig) = Blade{sig,dimension(sig)}(bits_first_of_grade(dimension(sig)) => true)
+conjugate(f) = function(abc::AbstractMultivector{Sig}...) where {Sig}
+	I = unit_pseudoscalar(Sig)
+	f((a*I for a in abc)...)/I
 end

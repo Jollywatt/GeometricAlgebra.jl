@@ -277,6 +277,8 @@ Display a multivector multiplication table.
 The first argument may be a metric signature or any vector of objects
 which can be combined with the binary operator `op`.
 
+The keyword argument `title` sets the contents of the top-left cell.
+
 # Examples
 ```jldoctest
 julia> cayleytable(3)
@@ -306,22 +308,24 @@ julia> cayleytable(basis((t=-1, x=1, y=1, z=1); grade=2), ∧)
 
 ```
 """
-function cayleytable(sig, args...)
+function cayleytable(sig, args...; kwargs...)
 	dim = dimension(sig)
 	grade_slices = mmv_slice.(Val(dim), Val.(0:dim))
 	separators = first.(grade_slices) #∪ [0, dim + 1]
-	cayleytable(basis(sig, grade=:all), args...; separators)
+	cayleytable(basis(sig, grade=:all), args...; separators, kwargs...)
 end
 
-function cayleytable(mvs::AbstractVector, op=*; separators=[1])
-	table = [op(a, b) for a ∈ mvs, b ∈ mvs]
+function cayleytable(mvs::AbstractVector, op=*; separators=[1], title = :( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) ))
+	table = Any[op(a, b) for a ∈ mvs, b ∈ mvs]
+	table[iszero.(table)] .= 0
+	table[isone.(table)] .= 1
 	mvs_str = string.(mvs)
 	table
 	pretty_table(
 		string.(table),
 		header = mvs_str,
 		row_names = mvs_str,
-		row_name_column_title = string(:( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) )),
+		row_name_column_title = string(title),
 		vlines = separators,
 		hlines = separators,
 	)

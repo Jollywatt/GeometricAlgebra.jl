@@ -17,9 +17,13 @@ julia> GeometricAlgebra.show_blade(stdout, Blade{(x=1,)}(0b1 => 1 + im))
 """
 function show_blade(io::IO, @nospecialize(b::Blade); compact=false)
 	subio = IOContext(io, :compact => true)
-	if compact && isnumberzero(b.coeff) print(io, "0")
-	elseif compact && isnumberone(b.coeff) isscalar(b) && print(io, "1")
-	elseif compact && isnumberone(-b.coeff) print(io, isscalar(b) ? "-1" : "-")
+	if compact && isnumberzero(b.coeff)
+		print(io, "0")
+		return
+	elseif compact && isnumberone(b.coeff)
+		isscalar(b) && print(io, "1")
+	elseif compact && isnumberone(-b.coeff) 
+		print(io, isscalar(b) ? "-1" : "-")
 	else
 		Base.show_unquoted(subio, b.coeff, 0, Base.operator_precedence(:*))
 	end

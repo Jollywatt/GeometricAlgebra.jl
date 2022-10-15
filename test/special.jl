@@ -46,3 +46,14 @@ end
 
 	@test exp(log(a)/2) ≈ sqrt(a)
 end
+
+@testset "trig identities" begin
+	for sig in [3, (0, -1, 1), 4]
+		v = basis(sig)
+		for a in [5v[1]v[2], v[1]v[2] + v[2]v[3], rand(length(v))'v]
+			@test exp(a) ≈ cosh(a) + sinh(a)
+			@test tan(a) ≈ sin(a)/cos(a)
+			@test sin(a) ≈ sin(asin(sin(a)))
+		end
+	end
+end

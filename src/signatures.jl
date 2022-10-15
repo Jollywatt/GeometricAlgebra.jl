@@ -110,7 +110,6 @@ basis_vector_norm(::Integer, i) = 1
 dimension(sig::Union{Tuple,NamedTuple}) = length(sig)
 basis_vector_norm(sig::Union{Tuple,NamedTuple}, i) = sig[i]
 
-# Cl(p, q, r)
 """
 	Cl(p, q=0, r=0)
 

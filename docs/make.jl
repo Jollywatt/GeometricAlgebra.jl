@@ -2,7 +2,7 @@
 ... or with arguments `julia make.jl [test|fix|make|deploy]` =#
 
 cd(joinpath(".", dirname(@__FILE__)))
-using Pkg; Pkg.activate(".")
+using Pkg; Pkg.activate("."); Pkg.instantiate()
 
 using Documenter, Revise, GeometricAlgebra
 

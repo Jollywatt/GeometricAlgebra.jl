@@ -202,12 +202,19 @@ end
 	@basis 4
 
 	for dual in [flipdual, hodgedual, poincaredual]
+		@test dual(5v1) == 5dual(v1)
 		@test dual(v1 + 2v2) == dual(v1) + 2dual(v2)
+		@test dual(v1 + 10v123) == dual(v1) + 10dual(v123)
 	end
 
 	for dim in 0:5, k in 0:dim
 		a, b = KVector{dim,k}.(eachcol(rand(-5:5, ncomponents(dim, k), 2)))
 		I = unit_pseudoscalar(dim)
 		@test a ∧ hodgedual(b) == a ⊙ ~b * I
+
+		m = Multivector{dim}(rand(-5:5, ncomponents(dim)))
+
+		@test hodgedual(m) == ~m*I
+		@test flipdual(flipdual(m)) == m
 	end
 end

@@ -407,11 +407,12 @@ For a unit basis blade `a::Blade`, the flipdual satisfies
 `a*flipdual(a) == ±I`
 where `±I` is the unit pseudoscalar or its negative.
 
-Computing the `flipdual` is cheap: for a `Blade`, its bits are flipped,
-and for a `CompositeMultivector`, the components vector is simply reversed.
+Computing the `flipdual` is cheap, and is its own inverse: for a `Blade`,
+its bits are flipped, and for a `CompositeMultivector`, the components vector
+is simply reversed.
 
-The `flipdual` is _metric independent_, but depends on a _choice of basis_.
-It differs from the Hodge and Poincaré duals (which have nicer properties) by a scalar factor.
+The `flipdual` is _metric independent_, but depends on a choice of basis.
+It differs from the Hodge and Poincaré duals by a per-grade scalar factor.
 This makes it useful in projective geometry, where scalar factors are largely arbitrary.
 
 See also [`hodgedual`](@ref) and [`poincaredual`](@ref).
@@ -425,9 +426,9 @@ Poincaré dual of a multivector.
 
 For a unit basis blade `a::Blade`, the Poincaré dual satisfies
 `a*poincaredual(a) == I`
-where `I` is the unit pseudoscalar.
+where `I` is the unit pseudoscalar. I.e., `poincaredual(a)` is a “right complement” of `a`.
 
-The Poincaré dual is _metric independent_, but depends on a _choice of basis_.
+The Poincaré dual is _metric independent_, but depends on a choice of basis.
 This makes is useful in degenerate algebras: non-zero multivectors have
 non-zero Poincaré duals, even if their Hodge dual is zero.
 
@@ -450,18 +451,22 @@ function poincaredual end
 
 
 """
-	hodgedual(a) == ~a*I
+	hodgedual(a) = ~a*I
 
 Hodge dual of a multivector.
 
-For ``k``-vectors ``a`` and ``b``, the Hodge dual ``⋆`` satisfies (and is defined by)
+The Hodge dual is given by
+```math
+⋆a = ã I
+```
+where ``ã`` is the reversion of ``a`` and ``I`` is the unit pseudoscalar.
+For ``k``-vectors ``a`` and ``b``, it is alternatively defined by
 ```math
 a ∧ ⋆b = ⟨a, b⟩ I
 ```
-where ``I`` is the unit pseudoscalar, and ``⟨a, b⟩ = a ⊙ b̃`` is the induced
-inner product on ``k``-vectors.
+where ``⟨a, b⟩ = a ⊙ b̃`` is the induced inner product on ``k``-vectors.
 
-The Hodge dual depends on the _metric_ and _orientation_ (the choice of pseudoscalar).
+The Hodge dual depends on the _metric and orientation_ (choice of pseudoscalar).
 
 See also [`poincaredual`](@ref).
 
@@ -479,12 +484,9 @@ julia> hodgedual(u)
  -2 v13
   1 v23
 
-julia> u ∧ hodgedual(u)
-1-component KVector{3, 3, Vector{Int64}}:
- 14 v123
+julia> u ∧ hodgedual(u), u ⊙ ~u
+(14v123, 14)
 
-julia> u ⊙ ~u
-14
 ```
 """
 function hodgedual end
@@ -495,8 +497,6 @@ for (name, signrule) in [
 		:hodgedual => (sig, bits) -> reversion_sign(count_ones(bits))geometric_prod_factor(sig, bits, bits_first_of_grade(dimension(sig))),
 	]
 	@eval begin
-		$name(sig, bits) = $signrule(sig, bits)
-
 		function $name(a::Blade{Sig}) where {Sig}
 			flippedbits = bits_first_of_grade(dimension(a)) ⊻ bitsof(a)
 			Blade{signature(a)}(flippedbits => $signrule(Sig, bitsof(a))*a.coeff)
@@ -515,7 +515,18 @@ end
 
 
 unit_pseudoscalar(sig) = Blade{sig,dimension(sig)}(bits_first_of_grade(dimension(sig)) => true)
-conjugate(f) = function(abc::AbstractMultivector{Sig}...) where {Sig}
-	I = unit_pseudoscalar(Sig)
-	f((a*I for a in abc)...)/I
+conjugate(f) = (abc...) -> poincaredual(f(poincaredual.(abc)...))
+
+
+
+
+function outermorphism(mat::AbstractMatrix, a::AbstractMultivector{Sig}) where {Sig}
+	resulttype = a isa HomogeneousMultivector ? KVector{Sig,grade(a)} : Multivector{Sig}
+	a′ = zero(similar(resulttype, a))
+	for (bits, coeff) ∈ nonzero_components(a)
+		vs = KVector{Sig,1}.(eachcol(coeff*mat[:,bits_to_indices(bits)]))
+		v = reduce(∧, vs; init = one(a′))
+		add!(a′, v)
+	end
+	a′
 end

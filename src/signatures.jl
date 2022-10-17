@@ -323,8 +323,8 @@ function cayleytable(mvs::AbstractVector, op=*; separators=[1], title = :( $(nam
 	pretty_table(
 		string.(table),
 		header = mvs_str,
-		row_names = mvs_str,
-		row_name_column_title = string(title),
+		row_labels = mvs_str,
+		row_label_column_title = string(title),
 		vlines = separators,
 		hlines = separators,
 	)

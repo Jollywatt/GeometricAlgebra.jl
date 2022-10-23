@@ -2,11 +2,8 @@ using GeometricAlgebra:
 	bits_to_indices,
 	indices_to_bits,
 	bits_of_grade,
-	mv_bits,
-	mmv_bits,
-	bits_to_mv_index,
-	bits_index,
-	mmv_slice,
+	componentbits,
+	componentindex,
 	sign_from_swaps,
 	factor_from_squares,
 	geometric_prod_bits
@@ -26,7 +23,7 @@ end
 	@test Iterators.take(bits_of_grade(10), 10) |> collect |> last == 0b11111111101
 end
 
-@testset "bits <-> multivector index" begin
+@testset "bits <-> kvector index" begin
 	cases = [
 		(3, 0, 1) => 0b000,
 		(3, 1, 1) => 0b001,
@@ -40,20 +37,21 @@ end
 		(8, 7, 2) => 0b10_111_111,
 	]
 	@testset "no. $(i) of grade $k: $bits" for ((n, k, i), bits) ∈ cases
-		@test mv_bits(Val(n), Val(k))[i] == bits
-		@test bits_to_mv_index(bits) == i
+		@test componentbits(Val(n), Val(k))[i] == bits
+		@test componentindex(KVector{n,k}, bits) == i
 	end
 end
 
-@testset "bits <-> mixed multivector index" begin
+@testset "bits <-> multivector index" begin
 	for dim ∈ 1:2:8, i ∈ 1:2:2^dim
-		@test bits_index(dim, mmv_bits(Val(dim))[i]) == i
+		@test componentindex(Multivector{dim}, componentbits(Val(dim))[i]) == i
 	end
 end
 
-@testset "mmv slices" begin
+@testset "multivector slices" begin
 	for n ∈ 0:8, k ∈ 0:n
-		@test mmv_bits(Val(n))[mmv_slice(Val(n), Val(k))] == mv_bits(Val(n), Val(k))
+		slice = componentindex(Multivector{n}, KVector{n,k})
+		@test componentbits(Val(n))[slice] == componentbits(Val(n), Val(k))
 	end
 end
 

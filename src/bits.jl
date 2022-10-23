@@ -3,10 +3,6 @@ Operations on bits representing “unit blades”. E.g., the
 2-blade of unit norm `e₂∧e₃ ≡ e₂₃` is represented by `0b110`.
 """
 
-bits_scalar() = unsigned(0)
-bits_first_of_grade(k, T=UInt) = (one(T) << k) - one(T)
-bits_basis_vector(i) = unsigned(1) << (i - 1)
-
 #= Conversion from Indices to Bits =#
 
 
@@ -41,8 +37,9 @@ function bits_to_indices(bits::Unsigned)
 	indices
 end
 
+
 """
-	indices_to_bits(indices)
+	indices_to_bits(indices, T=UInt)
 
 Create unsigned integer with bits at the positions given in the vector `indices`.
 
@@ -50,20 +47,18 @@ Used to convert between representations of a unit blade.
 Inverse of [`bits_to_indices`](@ref).
 
 !!! warning
-	Produces incorrect results if elements of `indices` are greater than the number of
-	bits in `bits_scalar() <: Unsigned`.
+	Only correct if `maximum(indices)` does not exceed number of bits in `T`.
 
 # Examples
 ```jldoctest
-julia> GeometricAlgebra.indices_to_bits([1, 2, 5]) |> UInt16 |> bitstring
+julia> GeometricAlgebra.indices_to_bits([1, 2, 5], UInt8) |> bitstring
 "0000000000010011"
 ```
-
 """
-function indices_to_bits(indices)
-	bits = bits_scalar()
+function indices_to_bits(indices, T=UInt)
+	bits = zero(T)
 	for i ∈ indices
-		bits += bits_basis_vector(i)
+		bits += one(T) << (i - 1)
 	end
 	bits
 end
@@ -99,7 +94,7 @@ struct BitPermutations{T<:Unsigned}
 end
 BitPermutations(n) = BitPermutations{UInt}(n)
 
-function Base.iterate(fgb::BitPermutations{T}, bits=bits_first_of_grade(fgb.n, T)) where T
+function Base.iterate(fgb::BitPermutations{T}, bits=(one(T) << fgb.n) - one(T)) where T
 	(bits, next_bit_permutation(bits))
 end
 
@@ -127,16 +122,20 @@ julia> GeometricAlgebra.bits_of_grade(2, 4) .|> UInt8 .|> bitstring
 bits_of_grade(k) = BitPermutations(k)
 bits_of_grade(k, n) = Iterators.take(BitPermutations(k), binomial(n, k))
 
+bits_dual(n, bits) = first(bits_of_grade(n)) ⊻ bits
 
 """
-	mv_bits(::Val{N}, ::Val{K})
+	compomentbits(::Val{N})
+	compomentbits(::Val{N}, ::Val{K})
 
-Vector of unit blades corresponding to components of an `N`-dimensional `KVector` of grade `K`.
-KVector components are sorted by the numerical value of the unit blade.
+Vector of unit blades corresponding to components of an `N`-dimensional `Multivector`,
+if if a grade `K` is specified, of a `KVector`.
+`KVector` components are sorted by the numerical value of the unit blade.
+`Multivector` components are ordered first by grade then in `KVector` order.
 
 # Examples
 ```jldoctest
-julia> GeometricAlgebra.mv_bits(Val(4), Val(2)) .|> UInt8 .|> bitstring
+julia> GeometricAlgebra.compomentbits(Val(4), Val(2)) .|> UInt8 .|> bitstring
 6-element Vector{String}:
  "00000011"
  "00000101"
@@ -146,55 +145,44 @@ julia> GeometricAlgebra.mv_bits(Val(4), Val(2)) .|> UInt8 .|> bitstring
  "00001100"
 ```
 """
-@generated function mv_bits(::Val{N}, ::Val{K}) where {N,K}
+@generated function componentbits(::Val{N}) where {N}
+	vcat(collect.(bits_of_grade.(0:N, N))...)
+end
+@generated function componentbits(::Val{N}, ::Val{K}) where {N,K}
 	collect(bits_of_grade(K, N))
 end
 
-"""
-	mmv_bits(::Val{N})
+@generated bitindices(::Val{N}) where {N} = sortperm(componentbits(Val(N)))
 
-Vector of unit blades corresponding to components of an `N`-dimensional `Multivector`.
-Mixed multivector components are ordered first by grade then by numerical value of the unit blade,
-so that the grade `K` components are contiguous and given by `mv_bits(Val(N), Val(K))`
+
+
+
+"""
+	bits_to_kvector_index(bits::Unsigned)
+
+Convert a unit blade `bits` to a linear index for accessing components of a `KVector`. 
+An explicit formula from combinatorial number systems is
+```math
+1 + \\sum_k \\binom{c_k}{k}
+```
+where ``c_k`` is the position of the ``k``th one in `bits`, starting from zero.
 
 # Examples
 ```jldoctest
-julia> GeometricAlgebra.mmv_bits(Val(3)) .|> UInt8 .|> bitstring
-8-element Vector{String}:
- "00000000"
- "00000001"
- "00000010"
- "00000100"
- "00000011"
- "00000101"
- "00000110"
- "00000111"
-
+julia> GeometricAlgebra.bits_to_kvector_index(0b1011) == 1 + sum(binomial(c, k) for (k, c) ∈ enumerate([0, 1, 3]))
 ```
 """
-@generated function mmv_bits(::Val{N}) where {N}
-	vcat(collect.(bits_of_grade.(0:N, N))...)
-end
-
-
-"""
-	bits_to_mv_index(bits::Unsigned)
-
-Convert a unit blade `bits` to a linear index for accessing components of a `KVector`. 
-"""
-function bits_to_mv_index(bits::Unsigned)
-	# From combinatorial number systems, an explicit formula is:
-	# sum(binomial(i, c[i]) for i in 1:length(c)) where c = bits_to_indices(bits)
+function bits_to_kvector_index(bits::Unsigned)
 	ith = 1
-	c = 0
+	c_k = 0
 	k = 1
 	while bits > 0
 		if isone(bits & 1)
-			ith += binomial(c, k)
+			ith += binomial(c_k, k)
 			k += 1
 		end
 		bits >>= 1
-		c += 1
+		c_k += 1
 	end
 	ith
 end
@@ -209,26 +197,23 @@ function multivector_index_offset(n, k)
 end
 
 """
-	bits_to_mmv_index(bits::Unsigned)
+	bits_to_multivector_index(bits::Unsigned)
 
 Convert a unit blade `bits` to a linear index for accessing components of a `Multivector`. 
 """
-function bits_to_mmv_index(bits::Unsigned, dim)
-	multivector_index_offset(dim, count_ones(bits)) + bits_to_mv_index(bits)
+function bits_to_multivector_index(bits::Unsigned, dim)
+	multivector_index_offset(dim, count_ones(bits)) + bits_to_kvector_index(bits)
 end
 
-# range of Multivector components corresponding to the grade k part
-@generated mmv_slice(::Val{N}, ::Val{K}) where {N,K} = multivector_index_offset(N, K) .+ (1:binomial(N, K))
-
-
-@generated bits_indices(::Val{Dim}) where {Dim} = sortperm(mmv_bits(Val(Dim)))
-@inline bits_index(dim, bits) = bits_indices(Val(dim))[begin + bits]
+@generated multivector_slice(::Val{N}, ::Val{K}) where {N,K} = multivector_index_offset(N, K) .+ (1:binomial(N, K))
 
 
 
 #= Geometric Products of Bits =#
 
 """
+	sign_from_swaps(a::Unsigned, b::Unsigned)
+
 Compute sign flips of blade product due to transposing basis vectors into sorted order.
 (The full sign of the product will also depend on the basis norms.)
 """
@@ -283,11 +268,7 @@ end
 Compute the geometric product between unit blades. Returns a tuple
 of the overall scalar factor and the resulting unit blade.
 """
-function geometric_prod_bits(sig, a::Unsigned, b::Unsigned)
-	factor = geometric_prod_factor(sig, a, b)
-	bits = a ⊻ b
-	factor, bits
-end
+geometric_prod_bits(sig, a::Unsigned, b::Unsigned) = (geometric_prod_factor(sig, a, b), a ⊻ b)
 
 """
 	reversion_sign(k) = mod(k, 4) <= 1 ? +1 : -1
@@ -296,4 +277,4 @@ Sign from reversing a ``k``-vector.
 """
 reversion_sign(k) = mod(k, 4) <= 1 ? +1 : -1
 
-geometric_square_factor(sig, a::Unsigned) = reversion_sign(count_ones(a))*factor_from_squares(sig, a)
+geometric_square_factor(sig, a::Unsigned) = reversion_sign(count_ones(a))factor_from_squares(sig, a)

@@ -112,9 +112,6 @@ end
 
 bitsof(a::Blade) = a.bits
 
-mv_index(a::Blade) = bits_to_mv_index(bitsof(a))
-mmv_index(a::Blade) = bits_index(dimension(a), bitsof(a))
-
 
 
 """
@@ -148,7 +145,6 @@ julia> KVector{3,2}(1:3) # 3D bivector
 KVector{Sig,K}(comps::S) where {Sig,K,S} = KVector{Sig,K,S}(comps)
 KVector(comps::AbstractVector) = KVector{length(comps),1}(comps)
 
-mmv_slice(a::KVector) = mmv_slice(Val(dimension(a)), Val(grade(a)))
 
 
 
@@ -237,11 +233,26 @@ Base.eltype(::OrType{<:Blade{Sig,K,T} where {Sig,K}}) where T = T
 Base.eltype(::OrType{<:CompositeMultivector{Sig,S}}) where {Sig,S} = eltype(S)
 
 
-bitsof(::OrType{<:KVector{Sig,K}}) where {Sig,K} = mv_bits(Val(dimension(Sig)), Val(K))
-bitsof(::OrType{<:Multivector{Sig}}) where {Sig} = mmv_bits(Val(dimension(Sig)))
+bitsof(::OrType{<:KVector{Sig,K}}) where {Sig,K} = componentbits(Val(dimension(Sig)), Val(K))
+bitsof(::OrType{<:Multivector{Sig}}) where {Sig} = componentbits(Val(dimension(Sig)))
 
-bits_index(a::KVector, bits) = bits_to_mv_index(bits)
-bits_index(a::Multivector, bits) = bits_index(dimension(a), bits)
+bits_to_index(a::KVector, bits) = bits_to_kvector_index(bits)
+bits_to_index(a::Multivector, bits) = bits_to_multivector_index(dimension(a), bits)
+
+index_by_blade(a::KVector, b::Blade) = bits_to_kvector_index(bitsof(b))
+index_by_blade(a::Multivector{Sig}, b::Blade{Sig}) where {Sig} = bits_to_multivector_index(bitsof(b), dimension(Sig))
+
+"""
+	componentindex(a::CompositeMultivector, b)
+
+Index/indices of components vector of `a` corresponding to the `Blade`/`KVector` `b`.
+If `b` is a `Blade` or `Unsigned` bits, returns the single index of the same component in `a`;
+if `b` is a `KVector`, returns a `UnitRange` of the `grade(b)` components in `a`.
+"""
+componentindex(a, b::Blade) = componentindex(a, bitsof(b))
+componentindex(a::OrType{<:KVector}, bits::Unsigned) = bits_to_kvector_index(bits)
+componentindex(a::OrType{<:Multivector}, bits::Unsigned) = bits_to_multivector_index(bits, dimension(a))
+componentindex(a::OrType{<:Multivector{Sig}}, b::OrType{<:KVector{Sig}}) where {Sig} = multivector_slice(Val(dimension(Sig)), Val(grade(b)))
 
 
 largest_type(::Multivector, ::AbstractMultivector) = Multivector
@@ -278,7 +289,6 @@ Base.isone(a::KVector) = iszero(grade(a)) && isone(a.comps[1])
 Base.isone(a::Multivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comps[2:end])
 
 
-
 #= Conversion ==
 
 Elements of a geometric algebra can be converted into 'larger' types
@@ -300,12 +310,12 @@ KVector(a::Blade) = KVector(a, numberorany(eltype(a)))
 function KVector(a::Blade{Sig,K}, T) where {Sig,K}
 	n = ncomponents(Sig, K)
 	S = componentstype(Sig, n, T)
+	M = KVector{Sig,K,S}
 	if issetindexable(S)
-		add!(zero(KVector{Sig,K,S}), a)
+		add!(zero(M), a)
 	else
-		j = mv_index(a)
-		comps = ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)
-		KVector{Sig,K,S}(S(comps))
+		j = componentindex(M, a)
+		M(S(ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)))
 	end
 end
 
@@ -326,12 +336,12 @@ Multivector(a::Blade) = Multivector(a, numberorany(eltype(a)))
 function Multivector(a::Blade{Sig,K}, T) where {Sig,K}
 	n = ncomponents(Sig)
 	S = componentstype(Sig, n, T)
+	M = Multivector{Sig,S}
 	if issetindexable(S)
-		add!(zero(Multivector{Sig,S}), a)
+		add!(zero(M), a)
 	else
-		j = mmv_index(a)
-		comps = ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)
-		Multivector{Sig,S}(S(comps))
+		j = componentindex(M, a)
+		M(S(ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)))
 	end
 end
 
@@ -343,7 +353,7 @@ function Multivector(a::KVector{Sig,K}, T) where {Sig,K}
 	if issetindexable(S)
 		add!(zero(Multivector{Sig,S}), a) # ensure a copy is made
 	else
-		slice = mmv_slice(a)
+		slice = multivector_slice(Val(dimension(Sig)), Val(K))
 		nbefore = first(slice) - 1
 		nafter = n - last(slice)
 
@@ -382,7 +392,7 @@ end
 
 grade(a::Blade{Sig,K}, k) where {Sig,K} = K == k ? a : zero(a)
 grade(a::KVector{Sig,K,C}, k) where {Sig,K,C} = K == k ? a : zero(KVector{Sig,k,C})
-grade(a::Multivector, k) = KVector{signature(a),k}(view(a.comps, mmv_slice(Val(dimension(a)), Val(k))))
+grade(a::Multivector, k) = KVector{signature(a),k}(view(a.comps, multivector_slice(Val(dimension(a)), Val(k))))
 
 scalar(a::Blade{Sig,0}) where {Sig} = a.coeff
 scalar(a::Blade) = numberzero(eltype(a))

@@ -63,9 +63,8 @@ Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
 add!(a::KVector, b::KVector) = (a.comps .+= b.comps; a)
 add!(a::Multivector, b::Multivector) = (a.comps .+= b.comps; a)
 
-add!(a::KVector, b::Blade) = (a.comps[mv_index(b)] += b.coeff; a)
-add!(a::Multivector, b::Blade) = (a.comps[mmv_index(b)] += b.coeff; a)
-add!(a::Multivector, b::KVector) = (a.comps[mmv_slice(b)] = b.comps; a)
+add!(a::CompositeMultivector, b::Blade) = (a.comps[componentindex(a, b)] += b.coeff; a)
+add!(a::CompositeMultivector, b::CompositeMultivector) = (a.comps[componentindex(a, b)] += b.comps; a)
 
 
 # add alike types
@@ -82,7 +81,7 @@ Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 #= Scalar Addition =#
 
-add_scalar(a::AbstractMultivector{Sig}, b) where {Sig} = a + Blade{Sig}(0 => b)
+add_scalar(a::AbstractMultivector{Sig}, b) where {Sig} = a + Blade{Sig,0}(0 => b)
 function add_scalar(a::Multivector, b)
 	constructor(a)(copy_setindex(a.comps, a.comps[1] + b, 1))
 end
@@ -124,7 +123,7 @@ function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig
 	c = zero(similar(result_type(geometric_prod, a, b), a, b))
 	for (abits::UInt, acoeff) ∈ nonzero_components(a), (bbits::UInt, bcoeff) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-		i = bits_index(c, bits)
+		i = componentindex(c, bits)
 		c = setindex!!(c, c.comps[i] + factor*(acoeff*bcoeff), i)
 	end
 	c
@@ -158,8 +157,8 @@ scalar_prod(a::KVector{Sig}, b::KVector{Sig}) where {Sig} = numberzero(promote_t
 scalar_prod(a::Multivector{Sig}, b::KVector{Sig,K}) where {Sig,K} = scalar_prod(grade(a, K), b)
 scalar_prod(a::KVector{Sig,K}, b::Multivector{Sig}) where {Sig,K} = scalar_prod(a, grade(b, K))
 
-scalar_prod(a::CompositeMultivector{Sig}, b::Blade{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(b))*(a.comps[bits_index(a, bitsof(b))]*b.coeff)
-scalar_prod(a::Blade{Sig}, b::CompositeMultivector{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(a))*(a.coeff*b.comps[bits_index(b, bitsof(a))])
+scalar_prod(a::CompositeMultivector{Sig}, b::Blade{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(b))*(a.comps[componentindex(a, b)]*b.coeff)
+scalar_prod(a::Blade{Sig}, b::CompositeMultivector{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(a))*(a.coeff*b.comps[componentindex(b, a)])
 
 scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps))
 
@@ -208,7 +207,7 @@ function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::
 		bits = abits ⊻ bbits
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
 			factor = geometric_prod_factor(Sig, abits, bbits)
-			i = bits_index(c, bits)
+			i = componentindex(c, bits)
 			c = setindex!!(c, c.comps[i] + factor*(acoeff*bcoeff), i)
 		end
 	end
@@ -343,7 +342,7 @@ function graded_multiply(f, a::Multivector{Sig}) where Sig
 	comps = copy(a.comps)
 	dim = dimension(Sig)
 	for k ∈ 0:dim
-		comps[mmv_slice(Val(dim), Val(k))] *= f(k)
+		comps[multivector_slice(Val(dim), Val(k))] *= f(k)
 	end
 	Multivector{Sig}(comps)
 end
@@ -493,13 +492,12 @@ function hodgedual end
 
 for (name, signrule) in [
 		:flipdual => (sig, bits) -> 1,
-		:poincaredual => (sig, bits) -> sign_from_swaps(bits, bits_first_of_grade(dimension(sig)) ⊻ bits),
-		:hodgedual => (sig, bits) -> reversion_sign(count_ones(bits))geometric_prod_factor(sig, bits, bits_first_of_grade(dimension(sig))),
+		:poincaredual => (sig, bits) -> sign_from_swaps(bits, bits_dual(dimension(sig), bits)),
+		:hodgedual => (sig, bits) -> reversion_sign(count_ones(bits))geometric_prod_factor(sig, bits, first(bits_of_grade(dimension(sig)))),
 	]
 	@eval begin
 		function $name(a::Blade{Sig}) where {Sig}
-			flippedbits = bits_first_of_grade(dimension(a)) ⊻ bitsof(a)
-			Blade{signature(a)}(flippedbits => $signrule(Sig, bitsof(a))*a.coeff)
+			Blade{signature(a)}(bits_dual(dimension(a), bitsof(a)) => $signrule(Sig, bitsof(a))*a.coeff)
 		end
 
 		function $name(a::KVector{Sig,K}) where {Sig,K}
@@ -512,10 +510,6 @@ for (name, signrule) in [
 		end
 	end
 end
-
-
-unit_pseudoscalar(sig) = Blade{sig,dimension(sig)}(bits_first_of_grade(dimension(sig)) => true)
-conjugate(f) = (abc...) -> poincaredual(f(poincaredual.(abc)...))
 
 
 

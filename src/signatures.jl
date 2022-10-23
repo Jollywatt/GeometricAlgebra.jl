@@ -190,11 +190,9 @@ julia> basis(Cl(1,3); grade=2)
 ```
 """
 basis(sig; grade=1) = let sig = interpret_signature(sig)
-	if grade == :all
-		Blade{sig}.(mmv_bits(Val(dimension(sig))) .=> 1)
-	else
-		Blade{sig}.(bits_of_grade(grade, dimension(sig)) .=> 1)
-	end
+	dim = dimension(sig)
+	bits = grade == :all ? componentbits(Val(dim)) : componentbits(Val(dim), Val(grade))
+	Blade{sig}.(bits .=> 1)
 end
 
 # make expr assigning each of combos(basis(sig)) to a variable
@@ -309,7 +307,7 @@ julia> cayleytable(basis((t=-1, x=1, y=1, z=1); grade=2), ∧)
 """
 function cayleytable(sig, args...; kwargs...)
 	dim = dimension(sig)
-	grade_slices = mmv_slice.(Val(dim), Val.(0:dim))
+	grade_slices = multivector_slice.(Val(dim), Val.(0:dim))
 	separators = first.(grade_slices) #∪ [0, dim + 1]
 	cayleytable(basis(sig, grade=:all), args...; separators, kwargs...)
 end

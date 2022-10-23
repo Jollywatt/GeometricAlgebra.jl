@@ -3,7 +3,6 @@ using GeometricAlgebra:
 	MetricWithStorage,
 	isscalar,
 	scalar,
-	unit_pseudoscalar,
 	isapproxzero
 
 using GeometricAlgebra.StaticArrays
@@ -111,7 +110,7 @@ end
 	@test v[1]v[2]v[3] == v[2]v[3]v[1] == v[3]v[1]v[2]
 	@test 4 == 2*(v[2] + v[3])*(v[2] + v[3])
 
-	@test GeometricAlgebra.geometric_prod(v[1], 2) == 2v[1]
+	@test geometric_prod(v[1], 2) == 2v[1]
 
 	Ts = [Blade, KVector, Multivector]
 	for T1 in Ts, T2 in Ts
@@ -209,7 +208,7 @@ end
 
 	for dim in 0:5, k in 0:dim
 		a, b = KVector{dim,k}.(eachcol(rand(-5:5, ncomponents(dim, k), 2)))
-		I = unit_pseudoscalar(dim)
+		I = flipdual(one(a)) # unit pseudoscalar
 		@test a ∧ hodgedual(b) == a ⊙ ~b * I
 
 		m = Multivector{dim}(rand(-5:5, ncomponents(dim)))

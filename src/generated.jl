@@ -1,8 +1,8 @@
 """
 	use_symbolic_optim(sig) -> Bool
 
-Whether to use symbolic code generation to optimize some
-operations in the geometric algebra with metric signature `sig`.
+Whether to use symbolic code generation to optimize operations
+in algebras of metric signature `sig`.
 
 By default, this is enabled if `dimension(sig) ≤ 8` as a heuristic
 (in many dimensions, algebraic expressions may become too unwieldy).
@@ -13,12 +13,12 @@ use_symbolic_optim(sig) = dimension(sig) <= 8
 function symbolic_components(label, dims...)
 	var = SymbolicUtils.Sym{Array{length(dims),Real}}(label)
 	indices = Iterators.product(Base.OneTo.(dims)...)
-	[SymbolicUtils.Term{Real}(getindex, [var, I...]) for I in indices]
+	Any[SymbolicUtils.Term{Real}(getindex, [var, I...]) for I in indices]
 end
 
 
 symbolic_multivector(a::Type{<:Blade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(KVector{Sig,K}, label)
-function symbolic_multivector(A::Type{<:CompositeMultivector{Sig,C}}, label) where {Sig,C}
+function symbolic_multivector(A::Type{<:CompositeMultivector{Sig}}, label) where {Sig}
 	constructor(A)(symbolic_components(label, ncomponents(A)))
 end
 symbolic_multivector(A::Type{Blade{Sig,K,T}}, label) where {Sig,K,T} = symbolic_multivector(KVector{Sig,K,componentstype(Sig, ncomponents(Sig, K), T)}, label)
@@ -77,7 +77,7 @@ end
 # way to convert a Blade to a KVector without allocating a full components array
 # TODO: take this more seriously
 function components(a::Blade{Sig,K}) where {Sig,K}
-	i = bits_to_mv_index(bitsof(a))
+	i = bits_to_kvector_index(bitsof(a))
 	SingletonVector(a.coeff, i, ncomponents(Sig, K))
 end
 components(a::CompositeMultivector) = a.comps

@@ -21,24 +21,16 @@ Blade{Sig,K,T}   KVector{Sig,K,S}
 - `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
 - `KVector`: a homogeneous multivector; a sum of same-grade blades.
 - `Multivector`: an inhomogeneous multivector. All elements in a geometric
-   algebra can be represented as this type (though not most efficiently).
-
-!!! note
-	The mathematical definition of a ``k``-blade is the wedge product
-	of ``k`` _vectors_, not necessarily _basis_ vectors (as in `Blade`).
-	Thus, not all ``k``-blades are representable as a `Blade`, but as a
-	`KVector` (or `Multivector`) instead.
+   algebra can be represented as this type (though not always most efficiently).
 
 # Type Parameters
 
 - `Sig`: The metric signature which defines the geometric algebra. This can be any
    all-bits value which satisfies the metric signature interface.
-   For example, `(1, 1, 1)` or `EuclideanSignature(3)` both
-   define the standard geometric algebra of ``ℝ^3``.
+   For example, `3` or `(1, 1, 1)` both define the standard geometric algebra over ``ℝ^3``.
 - `T`: The numerical type of the coefficient of a `Blade`.
 - `K`: An `Int` specifying the grade of a `HomogeneousMultivector`.
-- `S`: The storage type of the components of a `CompositeMultivector`. This is
-   assumed to be mutable, and is usually a subtype of `Vector`, `MVector` or `SparseVector`.
+- `S`: The storage type of the components of a `CompositeMultivector`, usually an `AbstractVector` subtype.
 
 """
 abstract type AbstractMultivector{Sig} end
@@ -77,7 +69,12 @@ grade(::OrType{<:HomogeneousMultivector{Sig,K}}) where {Sig,K} = K
 """
 	Blade{Sig,K,T} <: HomogeneousMultivector{Sig,K}
 
-A blade of grade `K` with basis blade `bits` and scalar coefficient of type `T`.
+A basis blade of grade `K` and scalar coefficient of type `T`.
+
+!!! note
+	`Blade`s represent wedge products of _orthogonal basis vectors_. Hence, not all ``k``-blades (in the
+	mathematical sense of a wedge product of ``k`` linearly independent vectors) are representable
+	as a `Blade`. Instead, general ``k``-blades may be represented as ``k``-vectors (see [`KVector`](@ref)).
 
 # Parameters
 - `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
@@ -95,6 +92,8 @@ Blade{Sig}(bits, coeff::T) where {Sig,T} = Blade{Sig,count_ones(bits),T}(bits, c
 	Blade{Sig}(bits => coeff)
 
 Basis blade with indices encoded by `bits` and scalar coefficient `coeff`.
+
+Indices are encoded in binary (e.g., ``v₁∧v₃∧v₄`` has bits `0b1101`).
 
 # Examples
 ```jldoctest
@@ -133,6 +132,8 @@ end
 
 KVector of grade `K` with components vector `comps`.
 
+Components are ordered lexicographically by bits (see [`componentbits`](@ref)).
+
 # Examples
 ```jldoctest
 julia> KVector{3,2}(1:3) # 3D bivector
@@ -166,8 +167,9 @@ end
 """
 	Multivector{Sig}(comps)
 
-General multivector with components vector `comps`. The components are ordered
-first by grade, then lexicographically (see [`GeometricAlgebra.mmv_bits`](@ref)).
+General multivector with components vector `comps`.
+
+Components are ordered first by grade, then lexicographically by bits (see [`componentbits`](@ref)).
 
 # Examples
 ```jldoctest

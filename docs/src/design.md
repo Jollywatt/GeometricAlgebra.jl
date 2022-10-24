@@ -27,19 +27,13 @@ Blade{Sig,K,T}    KVector{Sig,K,S}
 - `Multivector`: a general multivector. All elements in a geometric
    algebra can be represented as this type (though not most efficiently).
 
-!!! note
-	The mathematical definition of a ``k``-blade is the wedge product
-	of ``k`` _vectors_, not necessarily _basis_ vectors (as in `Blade`).
-	Thus, not all ``k``-blades are representable as a `Blade`, but as a
-	`KVector` (or `Multivector`) instead.
-
 These types have up to three of type parameters:
 
 - `Sig`: The metric signature which defines the geometric algebra. This can be any
    all-bits value which satisfies the [metric signature interface](@ref sig-interface).
 - `T`: The numerical type of the coefficient of a `Blade`.
 - `K`: An `Int` specifying the grade of a `HomogeneousMultivector`.
-- `S`: The storage type of the components vector of a `CompositeMultivector`.
+- `S`: The storage type of the components of a `CompositeMultivector`, usually an `AbstractVector` subtype.
 
 
 ## Metric Signatures

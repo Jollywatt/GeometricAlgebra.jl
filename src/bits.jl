@@ -125,24 +125,36 @@ bits_of_grade(k, n) = Iterators.take(BitPermutations(k), binomial(n, k))
 bits_dual(n, bits) = first(bits_of_grade(n)) ⊻ bits
 
 """
-	compomentbits(::Val{N})
-	compomentbits(::Val{N}, ::Val{K})
+	componentbits(::Val{N})
+	componentbits(::Val{N}, ::Val{K})
 
-Vector of unit blades corresponding to components of an `N`-dimensional `Multivector`,
-if if a grade `K` is specified, of a `KVector`.
-`KVector` components are sorted by the numerical value of the unit blade.
-`Multivector` components are ordered first by grade then in `KVector` order.
+Vector of bits corresponding to components of an `N`-dimensional `Multivector`,
+or if a grade `K` is specified, a `KVector`.
+
+- `Multivector` components are ordered first by grade then in `KVector` order.
+- `KVector` components are sorted lexicographically (i.e., in ascending numerical
+   value of the bits).
 
 # Examples
 ```jldoctest
-julia> GeometricAlgebra.compomentbits(Val(4), Val(2)) .|> UInt8 .|> bitstring
-6-element Vector{String}:
+julia> using GeometricAlgebra: componentbits
+
+julia> componentbits(Val(3)) .|> UInt8 .|> bitstring
+8-element Vector{String}:
+ "00000000"
+ "00000001"
+ "00000010"
+ "00000100"
  "00000011"
  "00000101"
  "00000110"
- "00001001"
- "00001010"
- "00001100"
+ "00000111"
+
+julia> componentbits(Val(3), Val(2)) .|> UInt8 .|> bitstring
+3-element Vector{String}:
+ "00000011"
+ "00000101"
+ "00000110"
 ```
 """
 @generated function componentbits(::Val{N}) where {N}

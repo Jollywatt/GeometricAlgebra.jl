@@ -71,6 +71,7 @@ end
 	@test factor_from_squares((-1, +1, +1), 0b111) == -1
 	@test factor_from_squares((-1, -1, -1), 0b101) == +1
 	@test factor_from_squares((-1, -1, -1), 0b111) == -1
+	@test factor_from_squares((0, 1, 1), 0b101) == 0
 end
 
 @testset "geometric_prod_bits()" begin

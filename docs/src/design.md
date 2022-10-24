@@ -13,16 +13,16 @@ end
 There are three concrete types for representing elements in a geometric algebra, arranged in the following type hierarchy:
 
 ```
-                   AbstractMultivector{Sig}
-                     /                  \
-   HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
-       /                \                             
-Blade{Sig,K,T}    KVector{Sig,K,S}                
-                                                   
-                  ╰───── CompositeMultivector{Sig,S} ─────╯
+                        AbstractMultivector{Sig}
+                          /                  \
+        HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
+            /                \                             
+BasisBlade{Sig,K,T}    KVector{Sig,K,S}                
+                                                        
+                       ╰───── CompositeMultivector{Sig,S} ─────╯
 ```
 
-- `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
+- `BasisBlade`: a scalar multiple of a wedge product of orthogonal basis vectors.
 - `KVector`: a ``k``-vector or homogeneous multivector; a sum of same-grade blades.
 - `Multivector`: a general multivector. All elements in a geometric
    algebra can be represented as this type (though not most efficiently).
@@ -31,7 +31,7 @@ These types have up to three of type parameters:
 
 - `Sig`: The metric signature which defines the geometric algebra. This can be any
    all-bits value which satisfies the [metric signature interface](@ref sig-interface).
-- `T`: The numerical type of the coefficient of a `Blade`.
+- `T`: The numerical type of the coefficient of a `BasisBlade`.
 - `K`: An `Int` specifying the grade of a `HomogeneousMultivector`.
 - `S`: The storage type of the components of a `CompositeMultivector`, usually an `AbstractVector` subtype.
 
@@ -52,7 +52,7 @@ julia> @basis 2
 [ Info: Defined basis blades v, v1, v2, v12
 
 julia> basis((t=-1, x=1, y=1, z=1)) |> prod
-Blade{(t = -1, x = 1, y = 1, z = 1), 4, Int64}:
+BasisBlade{(t = -1, x = 1, y = 1, z = 1), 4, Int64}:
  1 txyz
 
 ```
@@ -96,7 +96,7 @@ end
 
 basis(DiracGamma())
 # output
-4-element Vector{Blade{DiracGamma(), 1, Int64}}:
+4-element Vector{BasisBlade{DiracGamma(), 1, Int64}}:
  γ⁰
  γ¹
  γ²

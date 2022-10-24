@@ -10,7 +10,7 @@ Implements multivector (or ``k``-vector) types from geometric algebra (a.k.a. Cl
                      /                  \\
    HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
        /               \\                             
-Blade{Sig,K,T}   KVector{Sig,K,S}                
+BasisBlade{Sig,K,T}   KVector{Sig,K,S}                
                                                    
                  ╰─── CompositeMultivector{Sig,S} ───╯
 ```
@@ -25,7 +25,7 @@ using Combinatorics: permutations, powerset
 using SymbolicUtils
 using PrettyTables: pretty_table
 
-export AbstractMultivector, HomogeneousMultivector, Blade, KVector, Multivector
+export AbstractMultivector, HomogeneousMultivector, BasisBlade, KVector, Multivector
 export basis, @basis, @basisall, cayleytable
 export signature, dimension, grade, scalar, ncomponents, blades
 export geometric_prod, scalar_prod, ⊙, wedge, ∧, inner, ⋅, lcontract, ⨼, rcontract, ⨽, clifford_conj, var"'ᶜ"

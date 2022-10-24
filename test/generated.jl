@@ -12,7 +12,7 @@ using GeometricAlgebra.SymbolicUtils
 	@test zeroslike(Vector{Union{Int,SymbolicUtils.Symbolic}}, 4) == [0, 0, 0, 0]
 
 
-	b = Blade{(1,1,1)}(0b101 => SymbolicUtils.Sym{Real}(:b))
+	b = BasisBlade{(1,1,1)}(0b101 => SymbolicUtils.Sym{Real}(:b))
 	m = symbolic_multivector(KVector{(1,1,1),1,Vector{Int}}, :m)
 	mm = symbolic_multivector(Multivector{(1,1,1),Vector{Int}}, :mm)
 

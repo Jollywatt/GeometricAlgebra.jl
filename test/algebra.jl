@@ -10,21 +10,21 @@ using GeometricAlgebra.SparseArrays
 
 @testset "==" begin
 	for sig in [(1,1), (-1,0,+1)], T in [Bool, Int, Float64], k in 1:3
-		@test zero(Blade{sig,k,T}) == Blade{sig}(0 => zero(T))
-		@test one(Blade{sig,k,T}) == Blade{sig}(0 => one(T))
+		@test zero(BasisBlade{sig,k,T}) == BasisBlade{sig}(0 => zero(T))
+		@test one(BasisBlade{sig,k,T}) == BasisBlade{sig}(0 => one(T))
 
 		@test zero(KVector{sig,k,Vector{T}}) == KVector{sig,k}(zeros(T, binomial(dimension(sig), k)))
 		@test zero(Multivector{sig,Vector{T}}) == Multivector{sig}(zeros(T, 2^dimension(sig)))
 	end
 
-	@test Blade{(1,1)}(0b00 => 0) == Blade{(1,1)}(0b11 => 0)
+	@test BasisBlade{(1,1)}(0b00 => 0) == BasisBlade{(1,1)}(0b11 => 0)
 	@test zero(KVector{(1,1,1),0,Vector{Int}}) == zero(KVector{(1,1,1),3,Vector{Int}})
 
-	o = Blade{(1,1)}.(1:3 .=> 0)
+	o = BasisBlade{(1,1)}.(1:3 .=> 0)
 	@test o[1] == o[2] == o[3]
 
-	v = Blade{(1,1,1)}(0b101 => 88.3)
-	Ts = [Blade, KVector, Multivector]
+	v = BasisBlade{(1,1,1)}(0b101 => 88.3)
+	Ts = [BasisBlade, KVector, Multivector]
 	for T1 ∈ Ts, T2 ∈ Ts
 		@test T1(v) == T2(v)
 	end
@@ -32,8 +32,8 @@ using GeometricAlgebra.SparseArrays
 end
 
 @testset "≈" begin
-	@test Blade{(1,1)}(0b10 => 1) ≈ Blade{(1,1)}(0b10 => 1 + eps())
-	@test Blade{(1,1)}(0b10 => eps()) ≈ 0 atol=eps()
+	@test BasisBlade{(1,1)}(0b10 => 1) ≈ BasisBlade{(1,1)}(0b10 => 1 + eps())
+	@test BasisBlade{(1,1)}(0b10 => eps()) ≈ 0 atol=eps()
 
 	# ≈ uses 2-norm on arrays, so atol ≥ √n*eps()
 	@test KVector{(1,1,1),1}(eps()rand(3)) ≈ 0 atol=√3*eps()
@@ -41,13 +41,13 @@ end
 
 	@test Multivector{(1,1,1)}(1 .+ eps()rand(2^3)) ≈ Multivector{(1,1,1)}(1 .+ eps()rand(2^3))
 
-	v = Blade{(1,1,1)}.(0b101 .=> 10 .+ 1e-6rand(2))
-	Ts = [Blade, KVector, Multivector]
+	v = BasisBlade{(1,1,1)}.(0b101 .=> 10 .+ 1e-6rand(2))
+	Ts = [BasisBlade, KVector, Multivector]
 	for T1 ∈ Ts, T2 ∈ Ts
 		@test T1(v[1]) ≈ T2(v[2]) atol=1e-6
 	end
 
-	v = Blade{(1,1,1)}(0b110 => 1)
+	v = BasisBlade{(1,1,1)}(0b110 => 1)
 	@test isapproxzero(eps()v; atol=eps())
 	@test isapproxzero(eps()v + 0; atol=eps())
 end
@@ -67,7 +67,7 @@ end
 end
 
 @testset "scalar *" begin
-	a = Blade{(1,1)}(0b01 => 10)
+	a = BasisBlade{(1,1)}(0b01 => 10)
 
 	for b in [a, KVector(a), Multivector(a)]
 		@test 3a == a*3.0
@@ -75,12 +75,12 @@ end
 		@test -a == a/(-1.0)
 	end
 
-	@test a//5 === Blade{(1,1)}(0b01 => 2//1)
+	@test a//5 === BasisBlade{(1,1)}(0b01 => 2//1)
 end
 
 @testset "+" begin
-	v = Blade{(0,0,0)}.(bits_of_grade(1, 3) .=> 1)
-	bi = Blade{(0,0,0)}.(bits_of_grade(2, 3) .=> 1)
+	v = BasisBlade{(0,0,0)}.(bits_of_grade(1, 3) .=> 1)
+	bi = BasisBlade{(0,0,0)}.(bits_of_grade(2, 3) .=> 1)
 
 	@test v[1] + v[2] isa KVector{(0,0,0),1}
 	@test bi[1] + 2.5bi[2] isa KVector{(0,0,0),2}
@@ -101,7 +101,7 @@ end
 end
 
 @testset "*" begin
-	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
 
 	@test v[1]v[2] == -v[2]v[1]
 	@test v[1]v[1] == -1
@@ -112,14 +112,14 @@ end
 
 	@test geometric_prod(v[1], 2) == 2v[1]
 
-	Ts = [Blade, KVector, Multivector]
+	Ts = [BasisBlade, KVector, Multivector]
 	for T1 in Ts, T2 in Ts
 		@test v[1]v[2] == T1(v[1])T2(v[2]) == T2(v[1])T1(v[2])
 	end
 end
 
 @testset "scalar product" begin
-	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
 
 	@test v[1] ⊙ v[1] == -1
 	@test v[1] ⊙ v[2] == 0
@@ -131,7 +131,7 @@ end
 end
 
 @testset "∧" begin
-	v = Blade{(1,1,1)}.(bits_of_grade(1, 3) .=> 1)
+	v = BasisBlade{(1,1,1)}.(bits_of_grade(1, 3) .=> 1)
 
 	@test v[1]∧v[2] == -v[2]∧v[1] == v[1]v[2]
 	@test (v[1] + v[2])∧v[2] == v[1]v[2]
@@ -161,7 +161,7 @@ end
 end
 
 @testset "^" begin
-	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
 	
 	@test v[1]^2 + 1 == 0
 	@test v[1]^4003 == -v[1]
@@ -176,7 +176,7 @@ end
 end
 
 @testset "reversion" begin
-	v = Blade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
 	
 	@test reversion(v[1]) == v[1]
 	@test reversion(v[1]v[2]) == v[2]v[1]

@@ -46,8 +46,8 @@ julia> sig = (+1,-1,-1,-1)
 julia> GeometricAlgebra.show_signature(stdout, sig)
 ⟨+---⟩
 
-julia> Blade{sig}
-Blade{⟨+---⟩} (pretty-printed Blade{(1, -1, -1, -1)})
+julia> BasisBlade{sig}
+BasisBlade{⟨+---⟩} (pretty-printed BasisBlade{(1, -1, -1, -1)})
 ```
 """
 show_signature(io, sig) = show(io, sig)
@@ -72,7 +72,7 @@ julia> using GeometricAlgebra: subscript
 julia> GeometricAlgebra.show_basis_blade(io, sig, indices) = print(io, join("𝒆".*subscript.(indices), "∧"))
 
 julia> prod(basis(4))
-Blade{⟨++++⟩, 4, Int64} of grade 4:
+BasisBlade{⟨++++⟩, 4, Int64} of grade 4:
  1 𝒆₁∧𝒆₂∧𝒆₃∧𝒆₄
 ```
 """
@@ -119,14 +119,14 @@ basis vectors of norm `+1`, `-1` and `0`, respectively.
 # Examples
 ```jldoctest
 julia> basis(Cl(1,3))
-4-element Vector{Blade{Cl(1,3), 1, Int64}}:
+4-element Vector{BasisBlade{Cl(1,3), 1, Int64}}:
  v1
  v2
  v3
  v4
 
 julia> ans .^ 2
-4-element Vector{Blade{Cl(1,3), 0, Int64}}:
+4-element Vector{BasisBlade{Cl(1,3), 0, Int64}}:
   1
  -1
  -1
@@ -170,17 +170,17 @@ See also [`@basis`](@ref) and [`@basisall`](@ref).
 # Examples
 ```jldoctest
 julia> basis(3)
-3-element Vector{Blade{3, 1, Int64}}:
+3-element Vector{BasisBlade{3, 1, Int64}}:
  v1
  v2
  v3
 
 julia> prod(basis("-+++"))
-Blade{⟨-+++⟩, 4, Int64}:
+BasisBlade{⟨-+++⟩, 4, Int64}:
  1 v1234
 
 julia> basis(Cl(1,3); grade=2)
-6-element Vector{Blade{Cl(1,3), 2, Int64}}:
+6-element Vector{BasisBlade{Cl(1,3), 2, Int64}}:
  v12
  v13
  v23
@@ -192,7 +192,7 @@ julia> basis(Cl(1,3); grade=2)
 basis(sig; grade=1) = let sig = interpret_signature(sig)
 	dim = dimension(sig)
 	bits = grade == :all ? componentbits(Val(dim)) : componentbits(Val(dim), Val(grade))
-	Blade{sig}.(bits .=> 1)
+	BasisBlade{sig}.(bits .=> 1)
 end
 
 # make expr assigning each of combos(basis(sig)) to a variable

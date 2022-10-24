@@ -2,7 +2,7 @@
 #= Blades =#
 
 # make things line up right when printing in arrays
-function Base.alignment(io::IO, @nospecialize(b::Blade))
+function Base.alignment(io::IO, @nospecialize(b::BasisBlade))
 	(l, r) = Base.alignment(io, b.coeff)
 	(l, length(sprint(show, b)) - l)
 end
@@ -11,11 +11,11 @@ end
 Display blade with parentheses surrounding coefficient if necessary.
 	
 ```jldoctest
-julia> GeometricAlgebra.show_blade(stdout, Blade{(x=1,)}(0b1 => 1 + im))
+julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(0b1 => 1 + im))
 (1+1im) x
 ```
 """
-function show_blade(io::IO, @nospecialize(b::Blade); compact=false)
+function show_blade(io::IO, @nospecialize(b::BasisBlade); compact=false)
 	subio = IOContext(io, :compact => true)
 	if compact && isnumberzero(b.coeff)
 		print(io, "0")
@@ -88,7 +88,7 @@ function show_multivector_inline(io::IO, @nospecialize(a::KVector); compact=fals
 	for (bits, coeff) in zip(bits_of_grade(grade(a), dimension(a)), a.comps)
 		!showzeros && isnumberzero(coeff) && continue
 		isfirst ? isfirst = false : print(io, " + ")
-		show_blade(io, Blade{signature(a)}(bits => coeff); compact)
+		show_blade(io, BasisBlade{signature(a)}(bits => coeff); compact)
 	end
 end
 
@@ -123,7 +123,7 @@ end
 
 
 
-function show_header(io::IO, @nospecialize(a::Blade))
+function show_header(io::IO, @nospecialize(a::BasisBlade))
 	show(io, typeof(a))
 	println(io, ":")
 end
@@ -133,8 +133,8 @@ function show_header(io::IO, @nospecialize(a::CompositeMultivector))
 	println(io, ":")
 end
 
-Base.show(io::IO, @nospecialize(a::Blade)) = show_blade(io, a; compact=true)
-function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Blade))
+Base.show(io::IO, @nospecialize(a::BasisBlade)) = show_blade(io, a; compact=true)
+function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::BasisBlade))
 	show_header(io, a)
 	print(io, " ")
 	show_blade(io, a)

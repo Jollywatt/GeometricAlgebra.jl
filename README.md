@@ -38,7 +38,7 @@ You may also obtain an orthonormal basis for a metric signature:
 
 ```julia
 julia> v = basis(3)
-3-element Vector{Blade{3, 1, Int64}}:
+3-element Vector{BasisBlade{3, 1, Int64}}:
  v1
  v2
  v3
@@ -66,16 +66,16 @@ julia> @basisall (t = +1, x = -1)
 There are three concrete types for representing elements in a geometric algebra, arranged in the following type hierarchy:
 
 ```
-                   AbstractMultivector{Sig}
-                     /                  \
-   HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
-       /               \                             
-Blade{Sig,K,T}   KVector{Sig,K,S}                
-                                                   
-                 ╰─── CompositeMultivector{Sig,S} ───╯
+                        AbstractMultivector{Sig}
+                          /                  \
+        HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
+            /                \                             
+BasisBlade{Sig,K,T}    KVector{Sig,K,S}                
+                                                        
+                       ╰───── CompositeMultivector{Sig,S} ─────╯
 ```
 
-- `Blade`: a scalar multiple of a wedge product of orthogonal basis vectors.
+- `BasisBlade`: a scalar multiple of a wedge product of orthogonal basis vectors.
 - `KVector`: a ``k``-vector or homogeneous multivector; a sum of same-grade blades.
 - `Multivector`: a general multivector. All elements in a geometric
    algebra can be represented as this type (though not most efficiently).

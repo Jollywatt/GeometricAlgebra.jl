@@ -5,9 +5,9 @@ using GeometricAlgebra:
 @testset "show methods" begin
 	io = IOBuffer()
 	for a in [
-		Blade{(1,1)}(0b00 => 42),
-		Blade{(1,)}(0b1 => 1.1),
-		Blade{(1,1,1)}(0b111 => true),
+		BasisBlade{(1,1)}(0b00 => 42),
+		BasisBlade{(1,)}(0b1 => 1.1),
+		BasisBlade{(1,1,1)}(0b111 => true),
 	], b in [a, KVector(a), Multivector(a)]
 		@test isnothing(show(io, b))
 		@test isnothing(show(io, MIME("text/plain"), b))
@@ -19,18 +19,18 @@ end
 	sig = (+1,-1,-1,-1)
 	prettysig = sprint(show_signature, sig)
 
-	for T in [Blade, KVector, Multivector, HomogeneousMultivector]
+	for T in [BasisBlade, KVector, Multivector, HomogeneousMultivector]
 		@test contains(sprint(show, T{sig}), prettysig)
 		@test contains(sprint(show, Val{T{sig}}), prettysig)
 		@test sprint(show, T) == string(nameof(T))
 	end
 
-	@test contains(sprint(show, Blade{sig,2}), prettysig)
-	@test contains(sprint(show, Blade{sig,2,Int}), prettysig)
-	@test contains(sprint(show, Blade{sig,K,Int} where {K}), prettysig)
+	@test contains(sprint(show, BasisBlade{sig,2}), prettysig)
+	@test contains(sprint(show, BasisBlade{sig,2,Int}), prettysig)
+	@test contains(sprint(show, BasisBlade{sig,K,Int} where {K}), prettysig)
 
-	@test startswith(sprint(show, MIME("text/plain"), Blade{3}), "Blade{3")
-	@test startswith(sprint(show, MIME("text/plain"), Blade{(1,1,1)}), "Blade{⟨+++⟩")
+	@test startswith(sprint(show, MIME("text/plain"), BasisBlade{3}), "BasisBlade{3")
+	@test startswith(sprint(show, MIME("text/plain"), BasisBlade{(1,1,1)}), "BasisBlade{⟨+++⟩")
 end
 
 @testset "multivector printing" begin

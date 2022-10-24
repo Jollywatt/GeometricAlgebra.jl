@@ -101,7 +101,7 @@ function inv_formula_method(a::CompositeMultivector)
 	end
 end
 
-Base.inv(a::Blade) = a/scalar(a^2)
+Base.inv(a::BasisBlade) = a/scalar(a^2)
 function Base.inv(a::CompositeMultivector)
 	if dimension(a) <= 5
 		inv_formula_method(a)
@@ -132,10 +132,10 @@ function exp_with_scalar_square(a, a²::Scalar)
 end
 
 
-infnorm(a::Blade) = abs(a.coeff)
+infnorm(a::BasisBlade) = abs(a.coeff)
 infnorm(a::CompositeMultivector) = maximum(abs.(a.comps))
 
-twonorm(a::Blade) = abs(a.coeff)
+twonorm(a::BasisBlade) = abs(a.coeff)
 twonorm(a::CompositeMultivector) = sqrt(sum(abs2.(a.comps)))
 
 exp_series(a::HomogeneousMultivector) = exp_series(Multivector(a))
@@ -179,7 +179,7 @@ end
 
 #= Roots and Logs =#
 
-Base.sqrt(a::Blade{Sig,0}) where {Sig} = Blade{Sig,0}(0 => sqrt(a.coeff))
+Base.sqrt(a::BasisBlade{Sig,0}) where {Sig} = BasisBlade{Sig,0}(0 => sqrt(a.coeff))
 Base.sqrt(a::CompositeMultivector) = isscalar(a) ? sqrt(scalar(a))one(a) : via_matrix_repr(sqrt, a)
 
 Base.log(a::AbstractMultivector) = via_matrix_repr(log, a)

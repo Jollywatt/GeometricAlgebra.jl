@@ -17,11 +17,11 @@ function symbolic_components(label, dims...)
 end
 
 
-symbolic_multivector(a::Type{<:Blade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(KVector{Sig,K}, label)
+symbolic_multivector(a::Type{<:BasisBlade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(KVector{Sig,K}, label)
 function symbolic_multivector(A::Type{<:CompositeMultivector{Sig}}, label) where {Sig}
 	constructor(A)(symbolic_components(label, ncomponents(A)))
 end
-symbolic_multivector(A::Type{Blade{Sig,K,T}}, label) where {Sig,K,T} = symbolic_multivector(KVector{Sig,K,componentstype(Sig, ncomponents(Sig, K), T)}, label)
+symbolic_multivector(A::Type{BasisBlade{Sig,K,T}}, label) where {Sig,K,T} = symbolic_multivector(KVector{Sig,K,componentstype(Sig, ncomponents(Sig, K), T)}, label)
 symbolic_multivector(a::AbstractMultivector, label) = symbolic_multivector(typeof(a), label)
 
 
@@ -74,9 +74,9 @@ function symbolic_optim(f, x::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	end
 end
 
-# way to convert a Blade to a KVector without allocating a full components array
+# way to convert a BasisBlade to a KVector without allocating a full components array
 # TODO: take this more seriously
-function components(a::Blade{Sig,K}) where {Sig,K}
+function components(a::BasisBlade{Sig,K}) where {Sig,K}
 	i = bits_to_kvector_index(bitsof(a))
 	SingletonVector(a.coeff, i, ncomponents(Sig, K))
 end

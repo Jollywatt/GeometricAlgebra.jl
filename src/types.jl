@@ -9,14 +9,12 @@ metric signature `Sig`.
 # Subtypes
 
 ```
-                        AbstractMultivector{Sig}
-                          /                  \\
-        HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
+         AbstractMultivector{Sig}
             /               \\                             
-BasisBlade{Sig,K,T}   KVector{Sig,K,S}                
-                                                        
-                      ╰─── CompositeMultivector{Sig,S} ───╯
+BasisBlade{Sig,K,T}   Multivector{Sig,K,S}                
 ```
+
+TODO
 
 - `BasisBlade`: a scalar multiple of a wedge product of orthogonal basis vectors.
 - `KVector`: a homogeneous multivector; a sum of same-grade blades.
@@ -114,41 +112,6 @@ bitsof(a::BasisBlade) = a.bits
 
 
 
-"""
-	KVector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
-
-A homogeneous multivector of grade `K` with storage type `S`.
-
-# Parameters
-- `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
-- `K`: Grade of the multivector, retrieved with [`grade()`](@ref).
-- `S`: Storage type of the multivector components, usually a subtype of `AbstractVector`.
-"""
-struct KVector{Sig,K,S} <: HomogeneousMultivector{Sig,K}
-	comps::S
-end
-
-"""
-	KVector{Sig,K}(comps)
-
-KVector of grade `K` with components vector `comps`.
-
-Components are ordered lexicographically by bits (see [`componentbits`](@ref)).
-
-# Examples
-```jldoctest
-julia> KVector{3,2}(1:3) # 3D bivector
-3-component KVector{3, 2, UnitRange{Int64}}:
- 1 v12
- 2 v13
- 3 v23
-```
-"""
-KVector{Sig,K}(comps::S) where {Sig,K,S} = KVector{Sig,K,S}(comps)
-KVector(comps::AbstractVector) = KVector{length(comps),1}(comps)
-
-
-
 
 """
 	Multivector{Sig,S} <: AbstractMultivector{Sig}
@@ -161,7 +124,7 @@ All elements of a geometric algebra are representable as a `Multivector`.
 - `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
 - `S`: Storage type of the multivector components, usually a subtype of `AbstractVector`.
 """
-struct Multivector{Sig,S} <: AbstractMultivector{Sig}
+struct Multivector{Sig,K,S} <: AbstractMultivector{Sig}
 	comps::S
 end
 
@@ -188,14 +151,9 @@ julia> grade(ans, 1)
  4 v3
 ```
 """
-Multivector{Sig}(comps::S) where {Sig,S} = Multivector{Sig,S}(comps)
+Multivector{Sig,K}(comps::S) where {Sig,K,S} = Multivector{Sig,K,S}(comps)
 
-
-
-const CompositeMultivector{Sig,S} = Union{KVector{Sig,K,S},Multivector{Sig,S}} where {K}
-
-CompositeMultivector(a::BasisBlade) = KVector(a)
-CompositeMultivector(a::CompositeMultivector) = a
+grade(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = K
 
 
 #= AbstractMultivector Interface =#
@@ -221,8 +179,8 @@ Number of independent components of a multivector instance (or type).
 In ``n`` dimensions, this is ``\\binom{n}{k}`` for a `KVector` and
 ``2^n`` for a `Multivector`.
 """
-ncomponents(::OrType{<:KVector{Sig,K}}) where {Sig,K} = ncomponents(Sig, K)
-ncomponents(::OrType{<:Multivector{Sig}}) where {Sig} = ncomponents(Sig)
+ncomponents(a::Multivector) = length(a.comps)
+ncomponents(a::Type{<:Multivector{Sig}}) where {Sig} = sum(ncomponents(dimension(a), k) for k in grade(a); init = 0)
 
 Base.length(::AbstractMultivector) = error(
 	"$length is not defined for multivectors. Do you mean $(repr(ncomponents))()?")
@@ -233,17 +191,19 @@ Base.length(::AbstractMultivector) = error(
 The numerical type of the components of a multivector instance (or type).
 """
 Base.eltype(::OrType{<:BasisBlade{Sig,K,T} where {Sig,K}}) where T = T
-Base.eltype(::OrType{<:CompositeMultivector{Sig,S}}) where {Sig,S} = eltype(S)
+Base.eltype(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = eltype(S)
 
 
-bitsof(::OrType{<:KVector{Sig,K}}) where {Sig,K} = componentbits(Val(dimension(Sig)), Val(K))
-bitsof(::OrType{<:Multivector{Sig}}) where {Sig} = componentbits(Val(dimension(Sig)))
+function bitsof(a::OrType{<:Multivector{Sig,K}}) where {Sig,K}
+	vcat([componentbits(Val(dimension(Sig)), Val(k)) for k in K]...)
+end
 
-bits_to_index(a::KVector, bits) = bits_to_kvector_index(bits)
-bits_to_index(a::Multivector, bits) = bits_to_multivector_index(dimension(a), bits)
 
-index_by_blade(a::KVector, b::BasisBlade) = bits_to_kvector_index(bitsof(b))
-index_by_blade(a::Multivector{Sig}, b::BasisBlade{Sig}) where {Sig} = bits_to_multivector_index(bitsof(b), dimension(Sig))
+# bits_to_index(a::KVector, bits) = bits_to_kvector_index(bits)
+# bits_to_index(a::Multivector, bits) = bits_to_multivector_index(dimension(a), bits)
+
+# index_by_blade(a::KVector, b::BasisBlade) = bits_to_kvector_index(bitsof(b))
+# index_by_blade(a::Multivector{Sig}, b::BasisBlade{Sig}) where {Sig} = bits_to_multivector_index(bitsof(b), dimension(Sig))
 
 """
 	componentindex(a::CompositeMultivector, b)
@@ -253,15 +213,17 @@ If `b` is a `BasisBlade` or `Unsigned` bits, returns the single index of the sam
 if `b` is a `KVector`, returns a `UnitRange` of the `grade(b)` components in `a`.
 """
 componentindex(a, b::BasisBlade) = componentindex(a, bitsof(b))
-componentindex(a::OrType{<:KVector}, bits::Unsigned) = bits_to_kvector_index(bits)
-componentindex(a::OrType{<:Multivector}, bits::Unsigned) = bits_to_multivector_index(bits, dimension(a))
-componentindex(a::OrType{<:Multivector{Sig}}, b::OrType{<:KVector{Sig}}) where {Sig} = multivector_slice(Val(dimension(Sig)), Val(grade(b)))
+# componentindex(a::OrType{<:KVector}, bits::Unsigned) = bits_to_kvector_index(bits)
+# componentindex(a::OrType{<:Multivector}, bits::Unsigned) = bits_to_multivector_index(bits, dimension(a))
+# componentindex(a::OrType{<:Multivector{Sig}}, b::OrType{<:KVector{Sig}}) where {Sig} = multivector_slice(Val(dimension(Sig)), Val(grade(b)))
+
+componentindex(a, bits) = findfirst(==(bits), bitsof(a))
 
 
-largest_type(::Multivector, ::AbstractMultivector) = Multivector
-largest_type(::KVector, ::HomogeneousMultivector) = KVector
+
+largest_type(::Multivector, ::BasisBlade) = Multivector
+largest_type(::BasisBlade, ::Multivector) = Multivector
 largest_type(::BasisBlade, ::BasisBlade) = BasisBlade
-largest_type(a, b) = largest_type(b, a)
 
 
 
@@ -271,24 +233,20 @@ largest_type(a, b) = largest_type(b, a)
 #= Constructors =#
 
 constructor(::OrType{<:BasisBlade{Sig,K}}) where {Sig,K} = BasisBlade{Sig,K}
-constructor(::OrType{<:KVector{Sig,K}}) where {Sig,K} = KVector{Sig,K}
-constructor(::OrType{<:Multivector{Sig}}) where {Sig} = Multivector{Sig}
+constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
 
-Base.copy(a::CompositeMultivector) = constructor(a)(copy(a.comps))
+Base.copy(a::Multivector) = constructor(a)(copy(a.comps))
 
 Base.zero(::OrType{<:BasisBlade{Sig,K,T}}) where {Sig,K,T} = BasisBlade{Sig}(0 => numberzero(T))
-Base.zero(a::OrType{<:KVector{Sig,K,S}}) where {Sig,K,S} = KVector{Sig,K}(zeroslike(S, ncomponents(a)))
-Base.zero(a::OrType{<:Multivector{Sig,S}}) where {Sig,S} = Multivector{Sig}(zeroslike(S, ncomponents(a)))
+Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
 
 Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)
-Base.iszero(a::CompositeMultivector) = all(isnumberzero, a.comps)
+Base.iszero(a::Multivector) = all(isnumberzero, a.comps)
 
 Base.one(::OrType{<:BasisBlade{Sig,K,T}}) where {Sig,K,T} = BasisBlade{Sig}(0 => numberone(T))
-Base.one(::OrType{<:KVector{Sig,K,S}}) where {Sig,K,S} = KVector{Sig,0}(oneslike(S, 1))
-Base.one(a::OrType{<:Multivector}) = zero(a) + numberone(eltype(a))
+Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,0}(oneslike(S, 1))
 
 Base.isone(a::BasisBlade) = iszero(grade(a)) && isone(a.coeff)
-Base.isone(a::KVector) = iszero(grade(a)) && isone(a.comps[1])
 Base.isone(a::Multivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comps[2:end])
 
 
@@ -308,117 +266,145 @@ but a copy is *always* made when the second eltype argument is given.
 BasisBlade(a::BasisBlade) = a
 
 
-# KVector <- BasisBlade
-KVector(a::BasisBlade) = KVector(a, numberorany(eltype(a)))
-function KVector(a::BasisBlade{Sig,K}, T) where {Sig,K}
-	n = ncomponents(Sig, K)
-	S = componentstype(Sig, n, T)
-	M = KVector{Sig,K,S}
-	if issetindexable(S)
-		add!(zero(M), a)
-	else
-		j = componentindex(M, a)
-		M(S(ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)))
-	end
-end
+# # KVector <- BasisBlade
+# KVector(a::BasisBlade) = KVector(a, numberorany(eltype(a)))
+# function KVector(a::BasisBlade{Sig,K}, T) where {Sig,K}
+# 	n = ncomponents(Sig, K)
+# 	S = componentstype(Sig, n, T)
+# 	M = KVector{Sig,K,S}
+# 	if issetindexable(S)
+# 		add!(zero(M), a)
+# 	else
+# 		j = componentindex(M, a)
+# 		M(S(ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)))
+# 	end
+# end
 
-# KVector <- KVector
-KVector(a::KVector) = a
-function KVector(a::KVector{Sig,K}, T) where {Sig,K}
-	S = componentstype(Sig, ncomponents(Sig, K), T)
-	if issetindexable(S)
-		add!(zero(KVector{Sig,K,S}), a) # ensure a copy is made
-	else
-		KVector{Sig,K,S}(convert(S, a.comps))
-	end
-end
-
-
-# Multivector <- BasisBlade
-Multivector(a::BasisBlade) = Multivector(a, numberorany(eltype(a)))
-function Multivector(a::BasisBlade{Sig,K}, T) where {Sig,K}
-	n = ncomponents(Sig)
-	S = componentstype(Sig, n, T)
-	M = Multivector{Sig,S}
-	if issetindexable(S)
-		add!(zero(M), a)
-	else
-		j = componentindex(M, a)
-		M(S(ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)))
-	end
-end
-
-# Multivector <- KVector
-Multivector(a::KVector) = Multivector(a, numberorany(eltype(a)))
-function Multivector(a::KVector{Sig,K}, T) where {Sig,K}
-	n = ncomponents(Sig)
-	S = componentstype(Sig, n, T)
-	if issetindexable(S)
-		add!(zero(Multivector{Sig,S}), a) # ensure a copy is made
-	else
-		slice = multivector_slice(Val(dimension(Sig)), Val(K))
-		nbefore = first(slice) - 1
-		nafter = n - last(slice)
-
-		comps = ntuple(i -> i ∈ slice ? a.comps[i - nbefore] : numberzero(T), Val(n))
-		Multivector{Sig,S}(S(comps))
-	end
-end
-
-# Multivector <- Multivector
-Multivector(a::Multivector) = a
-function Multivector(a::Multivector{Sig}, T) where {Sig}
-	S = componentstype(Sig, ncomponents(Sig), T)
-	if issetindexable(S)
-		add!(zero(Multivector{Sig,S}), a) # ensure a copy is made
-	else
-		Multivector{Sig,S}(convert(S, a.comps))
-	end
-end
+# # KVector <- KVector
+# KVector(a::KVector) = a
+# function KVector(a::KVector{Sig,K}, T) where {Sig,K}
+# 	S = componentstype(Sig, ncomponents(Sig, K), T)
+# 	if issetindexable(S)
+# 		add!(zero(KVector{Sig,K,S}), a) # ensure a copy is made
+# 	else
+# 		KVector{Sig,K,S}(convert(S, a.comps))
+# 	end
+# end
 
 
 
-function Base.similar(M::Type{KVector{Sig,K}}, aa::AbstractMultivector...) where {Sig,K}
+# # Multivector <- BasisBlade
+# Multivector(a::BasisBlade) = Multivector(a, numberorany(eltype(a)))
+# function Multivector(a::BasisBlade{Sig,K}, T) where {Sig,K}
+# 	n = ncomponents(Sig)
+# 	S = componentstype(Sig, n, T)
+# 	M = Multivector{Sig,S}
+# 	if issetindexable(S)
+# 		add!(zero(M), a)
+# 	else
+# 		j = componentindex(M, a)
+# 		M(S(ntuple(i -> i == j ? convert(T, a.coeff) : numberzero(T), n)))
+# 	end
+# end
+
+# # Multivector <- KVector
+# Multivector(a::KVector) = Multivector(a, numberorany(eltype(a)))
+# function Multivector(a::KVector{Sig,K}, T) where {Sig,K}
+# 	n = ncomponents(Sig)
+# 	S = componentstype(Sig, n, T)
+# 	if issetindexable(S)
+# 		add!(zero(Multivector{Sig,S}), a) # ensure a copy is made
+# 	else
+# 		slice = multivector_slice(Val(dimension(Sig)), Val(K))
+# 		nbefore = first(slice) - 1
+# 		nafter = n - last(slice)
+
+# 		comps = ntuple(i -> i ∈ slice ? a.comps[i - nbefore] : numberzero(T), Val(n))
+# 		Multivector{Sig,S}(S(comps))
+# 	end
+# end
+
+# # Multivector <- Multivector
+# Multivector(a::Multivector) = a
+# function Multivector(a::Multivector{Sig}, T) where {Sig}
+# 	S = componentstype(Sig, ncomponents(Sig), T)
+# 	if issetindexable(S)
+# 		add!(zero(Multivector{Sig,S}), a) # ensure a copy is made
+# 	else
+# 		Multivector{Sig,S}(convert(S, a.comps))
+# 	end
+# end
+
+
+function Base.similar(M::Type{Multivector{Sig,K}}, aa::AbstractMultivector...) where {Sig,K}
 	T = promote_type(eltype.(aa)...)
 	C = componentstype(Sig, ncomponents(M), T)
-	KVector{Sig,K,C}
-end
-
-function Base.similar(M::Type{Multivector{Sig}}, aa::AbstractMultivector...) where {Sig}
-	T = promote_type(eltype.(aa)...)
-	C = componentstype(Sig, ncomponents(M), T)
-	Multivector{Sig,C}
+	Multivector{Sig,K,C}
 end
 
 
 #= Indexing and Iteration =#
 
-grade(a::BasisBlade{Sig,K}, k) where {Sig,K} = K == k ? a : zero(a)
-grade(a::KVector{Sig,K,C}, k) where {Sig,K,C} = K == k ? a : zero(KVector{Sig,k,C})
-grade(a::Multivector, k) = KVector{signature(a),k}(view(a.comps, multivector_slice(Val(dimension(a)), Val(k))))
+function multivector_slice(a::OrType{<:Multivector}, k)
+	if grade(a) isa Integer
+		grade(a) == k || return
+		return 1:length(a.comps)
+	end
+
+	i = findfirst(==(k), grade(a))
+	isnothing(i) && return
+
+	before = grade(a)[1:i - 1]
+	istart = sum(ncomponents(dimension(a), b) for b in before; init = 1)
+	range(istart, length = ncomponents(dimension(a), k))
+end
+
+grade(a::BasisBlade{Sig,K}, k::Integer) where {Sig,K} = K == k ? a : zero(a)
+
+
+function grade(a::Multivector{Sig}, k::Integer) where {Sig}
+	if k ∈ grade(a)
+		Multivector{Sig,k}(view(a.comps, multivector_slice(a, k)))
+	else
+		comps = zeroslike(typeof(a.comps), ncomponents(dimension(a), k))
+		Multivector{Sig,k}(comps)
+	end
+end
+
+function grade(a::Multivector{Sig}, K) where {Sig}
+	Multivector{Sig,K}(vcat([grade(a, k).comps for k in K]...))
+end
+
+function grade(a::BasisBlade, K)
+	M = Multivector{signature(a),K}
+	n = ncomponents(M)
+	S = componentstype(signature(a), n, eltype(a))
+	comps = zeroslike(S, n)
+	add!(M(comps), a)
+end
+
+
 
 scalar(a::BasisBlade{Sig,0}) where {Sig} = a.coeff
 scalar(a::BasisBlade) = numberzero(eltype(a))
-scalar(a::Multivector) = a.comps[begin]
-scalar(a::KVector{Sig,0}) where {Sig} = a.comps[begin]
-scalar(a::KVector{Sig}) where {Sig} = zero(eltype(a))
+scalar(a::Multivector) = 0 ∈ grade(a) ? a.comps[begin] : numberzero(eltype(a))
 
 isscalar(a::Number) = true
 isscalar(a::BasisBlade{Sig,0}) where {Sig} = true
 isscalar(a::BasisBlade) = iszero(a)
 isscalar(a::HomogeneousMultivector{Sig,0}) where {Sig} = true
 isscalar(a::HomogeneousMultivector) = iszero(a)
-isscalar(a::Multivector) = all(isnumberzero, a.comps[2:end])
+isscalar(a::Multivector) = unimplemented
 
 blades(a::BasisBlade) = [a]
-blades(a::CompositeMultivector{Sig}) where {Sig} = [BasisBlade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.comps)]
+blades(a::Multivector{Sig}) where {Sig} = [BasisBlade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.comps)]
 
 nonzero_components(a::BasisBlade) = isnumberzero(a.coeff) ? () : (bitsof(a) => a.coeff,)
-nonzero_components(a::CompositeMultivector) = Iterators.filter(!isnumberzero∘last, zip(bitsof(a), a.comps))
+nonzero_components(a::Multivector) = Iterators.filter(!isnumberzero∘last, zip(bitsof(a), a.comps))
 
 
 
-function setindex!!(a::CompositeMultivector, val, i)
+function setindex!!(a::Multivector, val, i)
 	if issetindexable(a.comps)
 		setindex!(a.comps, val, i)
 		a

@@ -38,7 +38,7 @@ abstract type AbstractMultivector{Sig} end
 Base.broadcastable(a::AbstractMultivector) = Ref(a)
 
 """
-	signature(::AbstractMultivector{Sig}) -> Sig
+	signature(::AbstractMultivector{Sig}) = Sig
 
 The metric signature type parameter of the multivector instance (or type).
 """
@@ -58,7 +58,7 @@ Abstract supertype of [`BasisBlade`](@ref) and [`KVector`](@ref).
 abstract type HomogeneousMultivector{Sig,K} <: AbstractMultivector{Sig} end
 
 """
-	grade(::HomogeneousMultivector{Sig,K}) -> K
+	grade(::HomogeneousMultivector{Sig,K}) = K
 
 The grade of a homogeneous multivector (a `BasisBlade` or `KVector`) instance (or type).
 """

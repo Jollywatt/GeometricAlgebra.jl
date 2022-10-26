@@ -100,6 +100,13 @@ Base.:-(a::Scalar, b::AbstractMultivector) = add_scalar(-b, a)
 # leaves eltype/storage type parameters variable
 result_type(f::Any, a::AbstractMultivector, b::AbstractMultivector) = result_type(f, typeof(a), typeof(b))
 
+"""
+	a * b
+	geometric_prod(a, b)
+
+Geometric product of multivectors.
+
+"""
 geometric_prod(a::Scalar, b::Scalar) = a*b
 geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
 geometric_prod(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
@@ -249,12 +256,13 @@ If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⋅ b` is the
 
 Note that for scalars `a` and `b`, the inner product reduces to scalar multiplication,
 in contrast to some authors (see [^D02] for discussion).
+
+[^D02]: Leo Dorst, "The Inner Products of Geometric Algebra", 2002. [doi:10.1007/978-1-4612-0089-5_2](https://dx.doi.org/10.1007/978-1-4612-0089-5_2)
 """
 inner(a, b) = graded_prod(abs∘-, a, b)
 
 """
 $(@doc inner)
-[^D02]: Leo Dorst, "The Inner Products of Geometric Algebra", 2002. [doi:10.1007/978-1-4612-0089-5_2](https://dx.doi.org/10.1007/978-1-4612-0089-5_2)
 """
 ⋅(a, b) = inner(a, b)
 

@@ -4,7 +4,9 @@
 cd(joinpath(".", dirname(@__FILE__)))
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 
-using Documenter, Revise, GeometricAlgebra
+using Documenter
+using Revise
+using GeometricAlgebra
 
 const project_root = pathof(GeometricAlgebra) |> dirname |> dirname
 

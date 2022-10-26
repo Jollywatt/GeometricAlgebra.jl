@@ -242,7 +242,7 @@ end
 	@basisall sig
 
 Similarly to [`@basis`](@ref), populate namespace with basis blades, but
-include all permutations of each blade.
+include all permutations of each blade (e.g., `v21` as well as `v12`).
 
 !!! warning
 	This defines more than ``2^n`` variables for an ``n`` dimensional signature!

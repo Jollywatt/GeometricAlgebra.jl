@@ -85,11 +85,11 @@ struct DiracGamma end
 GeometricAlgebra.dimension(::DiracGamma) = 4
 GeometricAlgebra.basis_vector_norm(::DiracGamma, i) = i > 1 ? -1 : +1
 
-# set the preferred component storage type
+# set the preferred component storage type (optional)
 using StaticArrays
 GeometricAlgebra.componentstype(::DiracGamma, N, T) = MVector{N,T}
 
-# custom labels
+# custom labels (optional)
 function GeometricAlgebra.show_basis_blade(io, ::DiracGamma, indices)
 	print(io, join("γ".*GeometricAlgebra.superscript.(indices .- 1)))
 end
@@ -111,12 +111,12 @@ For example, we can compute the product of two vectors symbolically as follows:
 
 ```jldoctest
 julia> GeometricAlgebra.symbolic_components.([:x, :y], 3)
-2-element Vector{Vector{SymbolicUtils.Term{Real, Nothing}}}:
+2-element Vector{Vector{Any}}:
  [x[1], x[2], x[3]]
  [y[1], y[2], y[3]]
 
 julia> KVector{3,1}.(ans)
-2-element Vector{KVector{3, 1, Vector{SymbolicUtils.Term{Real, Nothing}}}}:
+2-element Vector{KVector{3, 1, Vector{Any}}}:
  x[1]v1 + x[2]v2 + x[3]v3
  y[1]v1 + y[2]v2 + y[3]v3
 
@@ -130,4 +130,4 @@ julia> prod(ans)
 This makes it easy to optimize multivector operations by first performing the general calculation symbolically, then converting the resulting expression into unrolled code.
  (See [`symbolic_optim()`](@ref) for details.)
 
-By default, symbolic code generation is used for most products in up to eight dimensions (above which general algebraic expressions become unwieldy). This can be changed a per-algebra basis by defining methods for [`use_symbolic_optim()`](@ref).
+By default, symbolic code generation is used for most products in up to eight dimensions (above which general algebraic expressions become unwieldy). This can be changed on a per-algebra basis by defining methods for [`use_symbolic_optim()`](@ref).

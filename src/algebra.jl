@@ -1,8 +1,7 @@
 #= Equality =#
 
 Base.:(==)(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where Sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : iszero(a) && iszero(b)
-Base.:(==)(a::KVector{Sig}, b::KVector{Sig}) where {Sig} = grade(a) == grade(b) ? a.comps == b.comps : iszero(a) && iszero(b)
-Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = a.comps == b.comps
+# Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = a.comps == b.comps
 
 Base.:(==)(a::AbstractMultivector, b::Number) = isscalar(a) && scalar(a) == b
 Base.:(==)(a::Number, b::AbstractMultivector) = isscalar(b) && a == scalar(b)
@@ -15,20 +14,20 @@ end
 
 
 
+
+
 #= Approximate Equality =#
 
 isapproxzero(a; kwargs...) = isapprox(a, zero(a); kwargs...)
 isapproxzero(a::BasisBlade; kwargs...) = isapproxzero(a.coeff; kwargs...)
-isapproxzero(a::CompositeMultivector; kwargs...) = isapproxzero(a.comps; kwargs...)
+isapproxzero(a::Multivector; kwargs...) = isapproxzero(a.comps; kwargs...)
 
 Base.isapprox(a::BasisBlade{Sig}, b::BasisBlade{Sig}; kwargs...) where Sig = bitsof(a) == bitsof(b) ? isapprox(a.coeff, b.coeff; kwargs...) : isapproxzero(a) && isapproxzero(b)
-Base.isapprox(a::KVector{Sig}, b::KVector{Sig}; kwargs...) where {Sig} = grade(a) == grade(b) ? isapprox(a.comps, b.comps; kwargs...) : isapproxzero(a) && isapproxzero(b)
 Base.isapprox(a::Multivector{Sig}, b::Multivector{Sig}; kwargs...) where {Sig} = isapprox(a.comps, b.comps; kwargs...)
 
 # promote scalar to target multivector type and compare component arrays
 Base.:isapprox(a::BasisBlade, b::Number; kwargs...) = isapprox(KVector(a), b; kwargs...)
-Base.:isapprox(a::CompositeMultivector, b::Number; kwargs...) = isapprox(a, zero(a) + b; kwargs...)
-Base.:isapprox(a::Number, b::AbstractMultivector; kwargs...) = isapprox(b, a; kwargs...)
+Base.:isapprox(a::Multivector, b::Number; kwargs...) = isapprox(a, zero(a) + b; kwargs...)
 
 Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}; kwargs...) where {Sig} = let T = largest_type(a, b)
 	isapprox(T(a), T(b); kwargs...)
@@ -43,8 +42,8 @@ const Scalar = Union{Number,SymbolicUtils.Symbolic}
 scalar_multiply(a::BasisBlade{Sig,K}, b) where {Sig,K} = BasisBlade{Sig,K}(bitsof(a) => a.coeff*b)
 scalar_multiply(a, b::BasisBlade{Sig,K}) where {Sig,K} = BasisBlade{Sig,K}(bitsof(b) => a*b.coeff)
 
-scalar_multiply(a::CompositeMultivector, b) = constructor(a)(a.comps*b)
-scalar_multiply(a, b::CompositeMultivector) = constructor(b)(a*b.comps)
+scalar_multiply(a::Multivector, b) = constructor(a)(a.comps*b)
+scalar_multiply(a, b::Multivector) = constructor(b)(a*b.comps)
 
 Base.:*(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
 Base.:*(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
@@ -60,22 +59,34 @@ Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
 
 #= Addition =#
 
-add!(a::KVector, b::KVector) = (a.comps .+= b.comps; a)
-add!(a::Multivector, b::Multivector) = (a.comps .+= b.comps; a)
+# add!(a::KVector, b::KVector) = (a.comps .+= b.comps; a)
+# add!(a::Multivector, b::Multivector) = (a.comps .+= b.comps; a)
 
-add!(a::CompositeMultivector, b::BasisBlade) = (a.comps[componentindex(a, b)] += b.coeff; a)
-add!(a::CompositeMultivector, b::CompositeMultivector) = (a.comps[componentindex(a, b)] += b.comps; a)
+# add!(a::CompositeMultivector, b::BasisBlade) = (a.comps[componentindex(a, b)] += b.coeff; a)
+# add!(a::CompositeMultivector, b::CompositeMultivector) = (a.comps[componentindex(a, b)] += b.comps; a)
 
+function add!(a::Multivector, b::BasisBlade)
+	a.comps[componentindex(a, b)] += b.coeff
+end
 
 # add alike types
-Base.:+(As::KVector{Sig,K}...) where {Sig,K} = KVector{Sig,K}(sum(a.comps for a ∈ As))
-Base.:+(As::Multivector{Sig}...) where {Sig} = Multivector{Sig}(sum(a.comps for a ∈ As))
+Base.:+(As::Multivector{Sig,K}...) where {Sig,K} = Multivector{Sig,K}(sum(a.comps for a ∈ As))
 
 # convert unalike to alike # TODO: reduce intermediate allocations
-Base.:+(As::HomogeneousMultivector{Sig,K}...) where {Sig,K} = +(KVector.(As)...)
-Base.:+(As::AbstractMultivector{Sig}...) where {Sig} = +(Multivector.(As)...)
+# Base.:+(As::AbstractMultivector{Sig}...) where {Sig} = +(Multivector.(As)...)
 
 Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
+
+unify_grades(sig, abc...) = 0:dimension(sig)
+
+function Base.:+(abc::AbstractMultivector{Sig}...) where {Sig}
+	k = unify_grades(Sig, grade.(abc)...)
+	Σ = zero(similar(Multivector{Sig,k}, abc...))
+	for a in abc
+		add!(Σ, a)
+	end
+	Σ
+end
 
 
 
@@ -91,6 +102,12 @@ Base.:+(a::Scalar, b::AbstractMultivector) = add_scalar(b, a)
 
 Base.:-(a::AbstractMultivector, b::Scalar) = add_scalar(a, -b)
 Base.:-(a::Scalar, b::AbstractMultivector) = add_scalar(-b, a)
+
+
+
+
+
+
 
 
 
@@ -118,13 +135,7 @@ end
 
 # subspace of blades is closed under *
 result_type(::typeof(geometric_prod), ::Type{<:BasisBlade{Sig}}, ::Type{<:BasisBlade{Sig}}) where {Sig} = BasisBlade{Sig}
-function result_type(::typeof(geometric_prod), ::Type{<:HomogeneousMultivector{Sig,P}}, ::Type{<:HomogeneousMultivector{Sig,Q}}) where {Sig,P,Q}
-	k, K = minmax(P, Q)
-	k == 0 && return KVector{Sig,K} # multiplication by scalar preserves grade
-	K == dimension(Sig) && return KVector{Sig,dimension(Sig) - k} # multiplication by pseudoscalar flips grade
-	Multivector{Sig} # product of homogeneous multivectors is in general inhomogeneous
-end
-result_type(::typeof(geometric_prod), ::Type{<:AbstractMultivector{Sig}}, ::Type{<:AbstractMultivector{Sig}}) where {Sig} = Multivector{Sig}
+result_type(::typeof(geometric_prod), abc::Type{<:AbstractMultivector{Sig}}...) where {Sig} = Multivector{Sig,unify_grades(Sig, abc...)}
 
 function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(result_type(geometric_prod, a, b), a, b))
@@ -136,9 +147,10 @@ function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig
 	c
 end
 
-@generated geometric_prod(a, b) = symbolic_optim(_geometric_prod, a, b)
+# @generated geometric_prod(a, b) = symbolic_optim(_geometric_prod, a, b)
+geometric_prod(a, b) = _geometric_prod(a, b)
 
-Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
+Base.:*(a::AbstractMultivector, b::AbstractMultivector) = _geometric_prod(a, b)
 
 
 
@@ -157,17 +169,10 @@ scalar_prod(a::Scalar, b::AbstractMultivector) = a*scalar(b)
 scalar_prod(a::BasisBlade{Sig,K}, b::BasisBlade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalar(a*b) : numberzero(promote_type(eltype(a), eltype(b)))
 scalar_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
-# these are 𝒪(n) while scalar(geom_prod(a, b)) is 𝒪(n^2)
-scalar_prod(a::KVector{Sig,K}, b::KVector{Sig,K}) where {Sig,K} = sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps))
-scalar_prod(a::KVector{Sig}, b::KVector{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
+scalar_prod(a::Multivector{Sig}, b::BasisBlade{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(b))*(a.comps[componentindex(a, b)]*b.coeff)
+scalar_prod(a::BasisBlade{Sig}, b::Multivector{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(a))*(a.coeff*b.comps[componentindex(b, a)])
 
-scalar_prod(a::Multivector{Sig}, b::KVector{Sig,K}) where {Sig,K} = scalar_prod(grade(a, K), b)
-scalar_prod(a::KVector{Sig,K}, b::Multivector{Sig}) where {Sig,K} = scalar_prod(a, grade(b, K))
-
-scalar_prod(a::CompositeMultivector{Sig}, b::BasisBlade{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(b))*(a.comps[componentindex(a, b)]*b.coeff)
-scalar_prod(a::BasisBlade{Sig}, b::CompositeMultivector{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(a))*(a.coeff*b.comps[componentindex(b, a)])
-
-scalar_prod(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps))
+scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K} = sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps))
 
 "$(@doc scalar_prod)"
 a ⊙ b = scalar_prod(a, b)
@@ -205,8 +210,8 @@ function graded_prod(grade_selector::Function, a::BasisBlade{Sig}, b::BasisBlade
 end
 
 result_type(::Tuple{typeof(graded_prod),Any}, ::Type{<:BasisBlade{Sig}}, ::Type{<:BasisBlade{Sig}}) where {Sig} = BasisBlade{Sig}
-result_type(::Tuple{typeof(graded_prod),GradeSelector}, ::Type{<:HomogeneousMultivector{Sig,P}}, ::Type{<:HomogeneousMultivector{Sig,Q}}) where {Sig,P,Q,GradeSelector} = KVector{Sig,GradeSelector.instance(P, Q)}
-result_type(::Tuple{typeof(graded_prod),GradeSelector}, ::Type{<:AbstractMultivector{Sig}}, ::Type{<:AbstractMultivector{Sig}}) where {Sig,GradeSelector} = Multivector{Sig}
+# result_type(::Tuple{typeof(graded_prod),GradeSelector}, ::Type{<:HomogeneousMultivector{Sig,P}}, ::Type{<:HomogeneousMultivector{Sig,Q}}) where {Sig,P,Q,GradeSelector} = KVector{Sig,GradeSelector.instance(P, Q)}
+result_type(::Tuple{typeof(graded_prod),GradeSelector}, abc::Type{<:AbstractMultivector{Sig}}...) where {Sig,GradeSelector} = Multivector{Sig,unify_grades(Sig, grade.(abc)...)}
 
 function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(result_type((graded_prod, grade_selector), a, b), a, b))
@@ -221,12 +226,12 @@ function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::
 	c
 end
 
-@generated function graded_prod(grade_selector, a, b)
-	symbolic_optim(a, b) do a, b
-		_graded_prod(grade_selector.instance, a, b)
-	end
-end
-
+# @generated function graded_prod(grade_selector, a, b)
+# 	symbolic_optim(a, b) do a, b
+# 		_graded_prod(grade_selector.instance, a, b)
+# 	end
+# end
+graded_prod(grade_selector, abc...) = _graded_prod(grade_selector, abc...)
 
 
 #= Derived Products =#
@@ -305,7 +310,7 @@ function power_with_scalar_square(a, a², p::Integer)
 	iseven(p) ? aⁿ*one(a) : aⁿ*a
 end
 
-function power_by_squaring(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
+function power_by_squaring(a::Multivector{Sig,S}, p::Integer) where {Sig,S}
 	Π = one(Multivector{Sig,S})
 	aⁿ = a
 	while p > 0
@@ -321,7 +326,7 @@ end
 Base.:^(a::BasisBlade, p::Integer) = power_with_scalar_square(a, scalar(a*a), p)
 Base.literal_pow(::typeof(^), a::BasisBlade{Sig}, ::Val{2}) where {Sig} = BasisBlade{Sig,0}(0 => geometric_square_factor(Sig, bitsof(a))*a.coeff^2)
 
-function Base.:^(a::CompositeMultivector{Sig,S}, p::Integer) where {Sig,S}
+function Base.:^(a::Multivector{Sig,S}, p::Integer) where {Sig,S}
 	# TODO: type stability?
 	p < 0 && return inv(a)^abs(p)
 	p == 0 && return one(a)
@@ -349,10 +354,10 @@ graded_multiply(f, a::HomogeneousMultivector) = f(grade(a))*a
 function graded_multiply(f, a::Multivector{Sig}) where Sig
 	comps = copy(a.comps)
 	dim = dimension(Sig)
-	for k ∈ 0:dim
-		comps[multivector_slice(Val(dim), Val(k))] *= f(k)
+	for k ∈ grade(a)
+		comps[multivector_slice(a, k)] *= f(k)
 	end
-	Multivector{Sig}(comps)
+	constructor(a)(comps)
 end
 
 """
@@ -498,6 +503,11 @@ julia> u ∧ hodgedual(u), u ⊙ ~u
 """
 function hodgedual end
 
+
+sortgrade(k::Integer) = k
+sortgrade(k) = sort(k)
+sortgrade(k::Tuple) = Tuple(sort!(collect(k)))
+
 for (name, signrule) in [
 		:flipdual => (sig, bits) -> 1,
 		:poincaredual => (sig, bits) -> sign_from_swaps(bits, bits_dual(dimension(sig), bits)),
@@ -508,27 +518,27 @@ for (name, signrule) in [
 			BasisBlade{signature(a)}(bits_dual(dimension(a), bitsof(a)) => $signrule(Sig, bitsof(a))*a.coeff)
 		end
 
-		function $name(a::KVector{Sig,K}) where {Sig,K}
-			K′ = dimension(Sig) - K
-			KVector{Sig,K′}(reverse($signrule.(Ref(Sig), bitsof(a)) .* a.comps))
-		end
-
-		function $name(a::Multivector{Sig}) where {Sig}
-			Multivector{Sig}(reverse($signrule.(Ref(Sig), bitsof(a)) .* a.comps))
+		function $name(a::Multivector{Sig,K}) where {Sig,K}
+			K′ = sortgrade(dimension(Sig) .- K)
+			Multivector{Sig,K′}(reverse($signrule.(Ref(Sig), bitsof(a)) .* a.comps))
 		end
 	end
 end
 
 
+Base.:!(a::AbstractMultivector) = poincaredual(a)
 
+#=
 
 function outermorphism(mat::AbstractMatrix, a::AbstractMultivector{Sig}) where {Sig}
-	resulttype = a isa HomogeneousMultivector ? KVector{Sig,grade(a)} : Multivector{Sig}
+	resulttype = Multivector{Sig,grade(a)}
 	a′ = zero(similar(resulttype, a))
 	for (bits, coeff) ∈ nonzero_components(a)
-		vs = KVector{Sig,1}.(eachcol(coeff*mat[:,bits_to_indices(bits)]))
+		vs = Multivector{Sig,1}.(eachcol(coeff*mat[:,bits_to_indices(bits)]))
 		v = reduce(∧, vs; init = one(a′))
 		add!(a′, v)
 	end
 	a′
 end
+
+=#

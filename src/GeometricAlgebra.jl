@@ -25,7 +25,7 @@ using Combinatorics: permutations, powerset
 using SymbolicUtils
 using PrettyTables: pretty_table
 
-export AbstractMultivector, HomogeneousMultivector, BasisBlade, KVector, Multivector
+export AbstractMultivector, BasisBlade, Multivector
 export basis, @basis, @basisall, cayleytable
 export signature, dimension, grade, scalar, ncomponents, blades
 export geometric_prod, scalar_prod, ⊙, wedge, ∧, inner, ⋅, lcontract, ⨼, rcontract, ⨽, clifford_conj, var"'ᶜ"
@@ -39,9 +39,12 @@ include("types.jl")
 include("utils.jl")
 include("signatures.jl")
 include("algebra.jl")
-include("special.jl")
-include("generated.jl")
+# include("special.jl")
+# include("generated.jl")
 include("show.jl")
+
+
+# include("experimental.jl")
 
 
 end # module GeometricAlgebra

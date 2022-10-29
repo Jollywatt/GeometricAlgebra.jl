@@ -17,11 +17,11 @@ function symbolic_components(label, dims...)
 end
 
 
-symbolic_multivector(a::Type{<:BasisBlade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(KVector{Sig,K}, label)
-function symbolic_multivector(A::Type{<:CompositeMultivector{Sig}}, label) where {Sig}
+symbolic_multivector(a::Type{<:BasisBlade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(Multivector{Sig,K}, label)
+function symbolic_multivector(A::Type{<:Multivector{Sig}}, label) where {Sig}
 	constructor(A)(symbolic_components(label, ncomponents(A)))
 end
-symbolic_multivector(A::Type{BasisBlade{Sig,K,T}}, label) where {Sig,K,T} = symbolic_multivector(KVector{Sig,K,componentstype(Sig, ncomponents(Sig, K), T)}, label)
+symbolic_multivector(A::Type{BasisBlade{Sig,K,T}}, label) where {Sig,K,T} = symbolic_multivector(Multivector{Sig,K,componentstype(Sig, ncomponents(Sig, K), T)}, label)
 symbolic_multivector(a::AbstractMultivector, label) = symbolic_multivector(typeof(a), label)
 
 
@@ -80,7 +80,7 @@ function components(a::BasisBlade{Sig,K}) where {Sig,K}
 	i = bits_to_kvector_index(bitsof(a))
 	SingletonVector(a.coeff, i, ncomponents(Sig, K))
 end
-components(a::CompositeMultivector) = a.comps
+components(a::Multivector) = a.comps
 
 struct SingletonVector{T} <: AbstractVector{T}
 	el::T

@@ -1,5 +1,5 @@
 
-#= Blades =#
+#= BasisBlade =#
 
 # make things line up right when printing in arrays
 function Base.alignment(io::IO, @nospecialize(b::BasisBlade))
@@ -37,26 +37,28 @@ end
 
 
 
-#= CompositeMultivectors =#
+#= Multivector =#
 
-"""
-Display homogeneous multivector components as a column of blades,
-with coefficients and blades aligned using the native alignment mechanism.
 
-```jldoctest
-julia> a = KVector{(1,1,1),1}([1e3, 1, 1e-3]);
+function show_multivector_row(io::IO, @nospecialize(a); indent=0, compact=false, showzeros=false)
+	print(io, " "^indent)
+	if (!showzeros || compact) && iszero(a)
+		print(io, numberzero(eltype(a)))
+		return
+	end
+	isfirst = true
+	for (bits, coeff) in zip(componentbits(a), a.comps)
+		!showzeros && isnumberzero(coeff) && continue
+		isfirst ? isfirst = false : print(io, " + ")
+		show_blade(io, BasisBlade{signature(a)}(bits => coeff); compact)
+	end
+end
 
-julia> GeometricAlgebra.show_multivector(stdout, a)
-1000.0   v1
-   1.0   v2
-   0.001 v3
-```
-"""
-function show_multivector(io::IO, @nospecialize(a); indent=0, showzeros=true)
+function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true)
 	# TODO: showzeros argument
 	iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
-	comps = zip(bitsof(a), a.comps)
+	comps = zip(componentbits(a), a.comps)
 	if !showzeros
 		comps = Iterators.filter(!iszero∘last, comps)
 	end
@@ -79,46 +81,65 @@ function show_multivector(io::IO, @nospecialize(a); indent=0, showzeros=true)
 end
 
 
-function show_multivector_inline(io::IO, @nospecialize(a); compact=false, showzeros=false)
-	if (!showzeros || compact) && iszero(a)
-		print(io, numberzero(eltype(a)))
-		return
-	end
-	isfirst = true
-	for (bits, coeff) in zip(bitsof(a), a.comps)
-		!showzeros && isnumberzero(coeff) && continue
-		isfirst ? isfirst = false : print(io, " + ")
-		show_blade(io, BasisBlade{signature(a)}(bits => coeff); compact)
-	end
-end
-
-
 """
-Display an inhomogeneous `Multivector` with each grade on a new line.
+Display multivector components in in a column or inline, optionally grouping by grade.
+
+Parameters:
+- `inline::Bool`: print on one line (default `true`)
+- `groupgrades::Bool`: visually group components by grade (default `true`).
+   If inline, draws parentheses around parts of each grade; if multiline, draw
+   each grade on its own line
+- `showzeros::Bool`: whether to omit zero components from display
+- `indent::Integer`: indent amount
+
+```jldoctest
+julia> a = Multivector{2,0:2}((1:4) .^ 2);
+
+julia> GeometricAlgebra.show_multivector(stdout, a; inline=false, groupgrades=false)
+ 1 v
+ 4 v1
+ 9 v2
+16 v12
+
+julia> GeometricAlgebra.show_multivector(stdout, a; inline=false, groupgrades=true)
+1
+4 v1 + 9 v2
+16 v12
+
+julia> GeometricAlgebra.show_multivector(stdout, a; inline=true, groupgrades=true)
+(1) + (4 v1 + 9 v2) + (16 v12)
+
+julia> GeometricAlgebra.show_multivector(stdout, a; inline=true, groupgrades=false)
+1 + 4 v1 + 9 v2 + 16 v12
+```
 """
-function show_mixedmultivector(io::IO, @nospecialize(a); inline, indent=0, showzeros=false)
-	if iszero(a)
-		print(io, " "^indent, numberzero(eltype(a)))
-		return
-	end
-	firstline = true
-	for k ∈ grade(a)
-		ak = grade(a, k)
+function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=true, indent=0, showzeros=false)
+	if groupgrades
+		firstgroup = true
+		for k in grade(a)
+			ak = grade(a, k)
 
-		!showzeros && iszero(ak) && continue
-		firstline || print(io, inline ? " + " : "\n")
+			showzeros || iszero(ak) && continue
 
-		if firstline || !inline
-			print(io, " "^indent)
+			firstgroup || print(io, inline ? " + " : "\n")
+			if firstgroup || !inline
+				print(io, " "^indent)
+			end
+
+			inline && print(io, "(")
+			show_multivector_row(io, ak; showzeros)
+			inline && print(io, ")")
+
+			firstgroup = false
 		end
-
-		showparens = inline && (0 < k < dimension(a))
-		showparens && print(io, "(")
-		show_multivector_inline(io, ak; compact=inline, showzeros)
-		showparens && print(io, ")")
-
-		firstline = false
+	else
+		if inline
+			show_multivector_row(io, a; indent, showzeros)
+		else
+			show_multivector_col(io, a; indent, showzeros)
+		end
 	end
+
 end
 
 
@@ -140,10 +161,10 @@ function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::BasisBlade))
 	show_blade(io, a)
 end
 
-Base.show(io::IO, @nospecialize(a::Multivector)) = show_mixedmultivector(io, a; inline=true)
+Base.show(io::IO, @nospecialize(a::Multivector)) = show_multivector(io, a; inline=true)
 function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Multivector))
 	show_header(io, a)
-	show_mixedmultivector(io, a; inline=false, indent=1)
+	show_multivector(io, a; indent=1)
 end
 
 

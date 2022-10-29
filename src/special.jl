@@ -15,7 +15,7 @@ julia> vector_repr(v1*v2) == matrix_repr(v1)vector_repr(v2)
 true
 ```
 """
-vector_repr(a::AbstractMultivector) = collect(Multivector(a).comps)
+vector_repr(a::AbstractMultivector) = collect(grade(a, 0:dimension(a)).comps)
 
 """
 	matrix_repr(a::AbstractMultivector)
@@ -43,13 +43,14 @@ julia> matrix_repr(v1*v2) == matrix_repr(v1)matrix_repr(v2)
 true
 ```
 """
-matrix_repr(a::HomogeneousMultivector) = matrix_repr(Multivector(a))
+matrix_repr(a::BasisBlade) = matrix_repr(Multivector(a))
 function matrix_repr(a::Multivector)
-	N, T = ncomponents(a), eltype(a)
+	a′ = grade(a, 0:dimension(a))
+	N, T = ncomponents(a′), eltype(a)
 	mat = Matrix{numberorany(T)}(undef, N, N)
 	fill!(mat, numberzero(T))
-	for (i, b) ∈ enumerate(basis(signature(a), grade=:all))
-		mat[:,i] = Multivector(a*b).comps
+	for (i, b) ∈ enumerate(basis(signature(a), grade=0:dimension(a)))
+		mat[:,i] = Multivector(a′*b).comps
 	end
 	mat
 end
@@ -62,14 +63,14 @@ end
 
 
 
-function inv_matrix_method(a::CompositeMultivector)
+function inv_matrix_method(a::Multivector)
 	A = matrix_repr(a)
 	id = Multivector(one(a)).comps
 	A⁻¹ = A\id
 	Multivector{signature(a)}(A⁻¹)
 end
 
-function inv_formula_method(a::CompositeMultivector)
+function inv_formula_method(a::Multivector)
 	# In low dimensions, explicit formulae exist.
 	# See https://doi.org/10.1016/j.amc.2017.05.027
 
@@ -102,7 +103,7 @@ function inv_formula_method(a::CompositeMultivector)
 end
 
 Base.inv(a::BasisBlade) = a/scalar(a^2)
-function Base.inv(a::CompositeMultivector)
+function Base.inv(a::Multivector)
 	if dimension(a) <= 5
 		inv_formula_method(a)
 	else
@@ -133,12 +134,11 @@ end
 
 
 infnorm(a::BasisBlade) = abs(a.coeff)
-infnorm(a::CompositeMultivector) = maximum(abs.(a.comps))
+infnorm(a::Multivector) = maximum(abs.(a.comps))
 
 twonorm(a::BasisBlade) = abs(a.coeff)
-twonorm(a::CompositeMultivector) = sqrt(sum(abs2.(a.comps)))
+twonorm(a::Multivector) = sqrt(sum(abs2.(a.comps)))
 
-exp_series(a::HomogeneousMultivector) = exp_series(Multivector(a))
 function exp_series(a::Multivector{Sig,C}) where {Sig,C}
 	# Series convergence is better when `a` is not too large.
 	# Use the fact that ``exp(λa) = exp(λ)exp(a/p)^p`` and choose `p`
@@ -180,7 +180,7 @@ end
 #= Roots and Logs =#
 
 Base.sqrt(a::BasisBlade{Sig,0}) where {Sig} = BasisBlade{Sig,0}(0 => sqrt(a.coeff))
-Base.sqrt(a::CompositeMultivector) = isscalar(a) ? sqrt(scalar(a))one(a) : via_matrix_repr(sqrt, a)
+Base.sqrt(a::Multivector) = isscalar(a) ? sqrt(scalar(a))one(a) : via_matrix_repr(sqrt, a)
 
 Base.log(a::AbstractMultivector) = via_matrix_repr(log, a)
 

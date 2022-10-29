@@ -1,23 +1,3 @@
-"""
-# GeometricAlgebra
-
-Implements multivector (or ``k``-vector) types from geometric algebra (a.k.a. Clifford algebra).
-
-## Exported Types
-
-```
-                   AbstractMultivector{Sig}
-                     /                  \\
-   HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
-       /               \\                             
-BasisBlade{Sig,K,T}   KVector{Sig,K,S}                
-                                                   
-                 ╰─── CompositeMultivector{Sig,S} ───╯
-```
-
-See [`basis`](@ref) and [`@basis`](@ref) to get started.
-
-"""
 module GeometricAlgebra
 
 using StaticArrays, SparseArrays
@@ -39,12 +19,8 @@ include("types.jl")
 include("utils.jl")
 include("signatures.jl")
 include("algebra.jl")
-# include("special.jl")
-# include("generated.jl")
+include("special.jl")
+include("generated.jl")
 include("show.jl")
-
-
-# include("experimental.jl")
-
 
 end # module GeometricAlgebra

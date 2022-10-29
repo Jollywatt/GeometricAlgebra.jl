@@ -90,11 +90,11 @@ Infinite iterator returning all unsigned integers of type `T`,
 in ascending order, for which `Base.count_ones` is `n`.
 """
 struct BitPermutations{T<:Unsigned}
-	n::T
+	n::Int
 end
 BitPermutations(n) = BitPermutations{UInt}(n)
 
-function Base.iterate(fgb::BitPermutations{T}, bits=(one(T) << fgb.n) - one(T)) where T
+function Base.iterate(itr::BitPermutations{T}, bits=(one(T) << itr.n) - one(T)) where T
 	(bits, next_bit_permutation(bits))
 end
 
@@ -124,22 +124,25 @@ bits_of_grade(k, n) = Iterators.take(BitPermutations(k), binomial(n, k))
 
 bits_dual(n, bits) = first(bits_of_grade(n)) ⊻ bits
 
+
+
 """
-	componentbits(::Val{N})
+	componentbits(n, k)
 	componentbits(::Val{N}, ::Val{K})
 
-Vector of bits corresponding to components of an `N`-dimensional `Multivector`,
-or if a grade `K` is specified, a `KVector`.
+Vector of bits corresponding to components of an `N`-dimensional
+`Multivector` of grade(s) `K`.
 
-- `Multivector` components are ordered first by grade then in `KVector` order.
-- `KVector` components are sorted lexicographically (i.e., in ascending numerical
-   value of the bits).
+Bits are ordered first by grade (`count_ones`),
+then lexicographically (in ascending numerical order).
+
+Passing `Val` arguments calls a faster, memoized method.
 
 # Examples
 ```jldoctest
 julia> using GeometricAlgebra: componentbits
 
-julia> componentbits(Val(3)) .|> UInt8 .|> bitstring
+julia> componentbits(4, 2) .|> UInt8 .|> bitstring
 8-element Vector{String}:
  "00000000"
  "00000001"
@@ -150,22 +153,15 @@ julia> componentbits(Val(3)) .|> UInt8 .|> bitstring
  "00000110"
  "00000111"
 
-julia> componentbits(Val(3), Val(2)) .|> UInt8 .|> bitstring
+julia> componentbits(3, 0:3) .|> UInt8 .|> bitstring
 3-element Vector{String}:
  "00000011"
  "00000101"
  "00000110"
 ```
 """
-@generated function componentbits(::Val{N}) where {N}
-	vcat(collect.(bits_of_grade.(0:N, N))...)
-end
-@generated function componentbits(::Val{N}, ::Val{K}) where {N,K}
-	collect(bits_of_grade(K, N))
-end
-
-@generated bitindices(::Val{N}) where {N} = sortperm(componentbits(Val(N)))
-
+componentbits(n, k) = vcat(collect.(bits_of_grade.(k, n))...)
+@generated componentbits(::Val{N}, ::Val{K}) where {N,K} = componentbits(N, K)
 
 
 

@@ -191,7 +191,7 @@ julia> basis(Cl(1,3); grade=2)
 """
 basis(sig; grade=1) = let sig = interpret_signature(sig)
 	dim = dimension(sig)
-	bits = grade == :all ? componentbits(Val(dim)) : componentbits(Val(dim), Val(grade))
+	bits = componentbits(Val(dim), Val(grade))
 	BasisBlade{sig}.(bits .=> 1)
 end
 

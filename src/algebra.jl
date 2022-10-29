@@ -37,7 +37,6 @@ end
 
 #= Scalar Multiplication =#
 
-const Scalar = Union{Number,SymbolicUtils.Symbolic}
 
 scalar_multiply(a::BasisBlade{Sig,K}, b) where {Sig,K} = BasisBlade{Sig,K}(bitsof(a) => a.coeff*b)
 scalar_multiply(a, b::BasisBlade{Sig,K}) where {Sig,K} = BasisBlade{Sig,K}(bitsof(b) => a*b.coeff)
@@ -59,43 +58,44 @@ Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
 
 #= Addition =#
 
-# add!(a::KVector, b::KVector) = (a.comps .+= b.comps; a)
-# add!(a::Multivector, b::Multivector) = (a.comps .+= b.comps; a)
-
-# add!(a::CompositeMultivector, b::BasisBlade) = (a.comps[componentindex(a, b)] += b.coeff; a)
-# add!(a::CompositeMultivector, b::CompositeMultivector) = (a.comps[componentindex(a, b)] += b.comps; a)
 
 function add!(a::Multivector, b::BasisBlade)
-	a.comps[componentindex(a, b)] += b.coeff
+	i = componentindex(a, b)
+	isnothing(i) || (a.comps[i] += b.coeff)
+	a
 end
 
-# add alike types
-Base.:+(As::Multivector{Sig,K}...) where {Sig,K} = Multivector{Sig,K}(sum(a.comps for a ∈ As))
+function add!(a::Multivector, b::Multivector)
+	a.comps .+= grade(b, grade(a)).comps
+end
 
-# convert unalike to alike # TODO: reduce intermediate allocations
-# Base.:+(As::AbstractMultivector{Sig}...) where {Sig} = +(Multivector.(As)...)
 
-Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
+unify_grades(dim, a, b, c...) = unify_grades(dim, unify_grades(dim, a, b), c...)
+function unify_grades(dim, a, b)
+	a ⊇ b && return a
+	a ⊆ b && return b
 
-unify_grades(sig, abc...) = 0:dimension(sig)
+	all(iseven, a) && all(iseven, b) && return 0:2:dim
+
+	0:dim
+end
 
 function Base.:+(abc::AbstractMultivector{Sig}...) where {Sig}
 	k = unify_grades(Sig, grade.(abc)...)
+	@show k
 	Σ = zero(similar(Multivector{Sig,k}, abc...))
 	for a in abc
 		add!(Σ, a)
 	end
 	Σ
 end
+Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 
 
 #= Scalar Addition =#
 
 add_scalar(a::AbstractMultivector{Sig}, b) where {Sig} = a + BasisBlade{Sig,0}(0 => b)
-function add_scalar(a::Multivector, b)
-	constructor(a)(copy_setindex(a.comps, a.comps[1] + b, 1))
-end
 
 Base.:+(a::AbstractMultivector, b::Scalar) = add_scalar(a, b)
 Base.:+(a::Scalar, b::AbstractMultivector) = add_scalar(b, a)
@@ -133,9 +133,12 @@ function geometric_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig}
 	BasisBlade{Sig}(bits => factor*(a.coeff*b.coeff))
 end
 
+
 # subspace of blades is closed under *
 result_type(::typeof(geometric_prod), ::Type{<:BasisBlade{Sig}}, ::Type{<:BasisBlade{Sig}}) where {Sig} = BasisBlade{Sig}
-result_type(::typeof(geometric_prod), abc::Type{<:AbstractMultivector{Sig}}...) where {Sig} = Multivector{Sig,unify_grades(Sig, abc...)}
+function result_type(::typeof(geometric_prod), abc::Type{<:AbstractMultivector{Sig}}...) where {Sig}
+	Multivector{Sig,0:dimension(Sig)}
+end
 
 function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(similar(result_type(geometric_prod, a, b), a, b))
@@ -150,7 +153,7 @@ end
 # @generated geometric_prod(a, b) = symbolic_optim(_geometric_prod, a, b)
 geometric_prod(a, b) = _geometric_prod(a, b)
 
-Base.:*(a::AbstractMultivector, b::AbstractMultivector) = _geometric_prod(a, b)
+Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
 
 
@@ -350,7 +353,6 @@ end
 Multiply the grade `k` part of `a` by `f(k)`.
 """
 graded_multiply(f, a::Scalar) = f(0)*a
-graded_multiply(f, a::HomogeneousMultivector) = f(grade(a))*a
 function graded_multiply(f, a::Multivector{Sig}) where Sig
 	comps = copy(a.comps)
 	dim = dimension(Sig)

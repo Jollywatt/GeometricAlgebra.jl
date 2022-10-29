@@ -2,6 +2,7 @@ const OrType{T} = Union{T,Type{T}}
 const Scalar = Union{Number,SymbolicUtils.Symbolic}
 
 
+
 """
 	AbstractMultivector{Sig}
 
@@ -74,8 +75,6 @@ end
 
 
 
-
-
 """
 	Multivector{Sig,K,S} <: AbstractMultivector{Sig}
 
@@ -121,9 +120,7 @@ Multivector{Sig,K}(comps::S) where {Sig,K,S} = Multivector{Sig,K,S}(comps)
 
 
 
-
 #= AbstractMultivector Interface =#
-
 
 Base.broadcastable(a::AbstractMultivector) = Ref(a)
 
@@ -151,9 +148,6 @@ dimension(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = dimension(Sig)
 	ncomponents(::CompositeMultivector)
 
 Number of independent components of a multivector instance (or type).
-
-In ``n`` dimensions, this is ``\\binom{n}{k}`` for a `KVector` and
-``2^n`` for a `Multivector`.
 """
 ncomponents(a::Multivector) = length(a.comps)
 ncomponents(a::Type{<:Multivector{Sig}}) where {Sig} = sum(ncomponents(dimension(a), k) for k in grade(a); init = 0)
@@ -208,33 +202,66 @@ largest_type(::BasisBlade, ::BasisBlade) = BasisBlade
 
 
 
+#= Grade inference =#
+
+"""
+	unify_grades(dim, p, q)
+
+Return grade(s) containing both `p` and `q`.
+
+In order to reduce the number of possible `Multivector` grade parameters
+(which will be compiled separately) the result may be larger than the union `p ∪ q`.
+
+# Examples
+```jldoctest; setup = :(using GeometricAlgebra: unify_grades)
+julia> unify_grades(4, 0:4, 2)
+
+julia> unify_grades(4, 0, 2) # even multivectors are worth representing specifically
+0:2:4
+
+julia> unify_grades(4, (0, 4), 3) # not worth having a special type for grades (0, 3, 4)
+0:4
+```
+"""
+function unify_grades(dim, p, q)
+	p = trunc_grades(dim, p)
+	q = trunc_grades(dim, q)
+
+	p ⊆ q && return q
+	p ⊇ q && return p
+	
+	all(iseven, p) && all(iseven, q) && return 0:2:dim
+	
+	0:dim
+end
+unify_grades(dim, p, q, c...) = unify_grades(dim, unify_grades(dim, p, q), c...)
+
+
+function trunc_grades(dim, k)
+	k = (0:dim) ∩ k
+	length(k) == 1 ? first(k) : k
+end
+
+
+"""
+	resulting_grades(combine, dim, p, q)
+
+Grade(s) resulting from applying `combine` to `dim`-dimensional multivectors of grade `p` and `q`.
+"""
+resulting_grades(combine, dim, P, Q) = unify_grades(dim, (resulting_grades(combine, dim, p, q) for p in P, q in Q)...)
+
+
+
+
+
+
+
 
 #= Constructors =#
 
 constructor(::OrType{<:BasisBlade{Sig,K}}) where {Sig,K} = BasisBlade{Sig,K}
 constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
-
 Base.copy(a::Multivector) = constructor(a)(copy(a.comps))
-
-Base.zero(::OrType{<:BasisBlade{Sig,K,T}}) where {Sig,K,T} = BasisBlade{Sig}(0 => numberzero(T))
-Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
-
-Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)
-Base.iszero(a::Multivector) = all(isnumberzero, a.comps)
-
-Base.one(::OrType{<:BasisBlade{Sig,K,T}}) where {Sig,K,T} = BasisBlade{Sig}(0 => numberone(T))
-Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,0}(oneslike(S, 1))
-
-Base.isone(a::BasisBlade) = iszero(grade(a)) && isone(a.coeff)
-Base.isone(a::Multivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comps[2:end])
-
-
-#= Conversion =#
-
-BasisBlade(a::BasisBlade) = a
-
-Multivector(a::Multivector) = a
-Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = add!(zero(similar(Multivector{Sig,K}, a)), a)
 
 
 function Base.similar(M::Type{Multivector{Sig,K}}, aa::AbstractMultivector...) where {Sig,K}
@@ -242,6 +269,38 @@ function Base.similar(M::Type{Multivector{Sig,K}}, aa::AbstractMultivector...) w
 	C = componentstype(Sig, ncomponents(M), T)
 	Multivector{Sig,K,C}
 end
+
+"""
+	resulting_multivector_type(f, a, b, ...)
+
+Multivector type with grade(s) and storage type appropriate for representing `f(a, b)`.
+"""
+function resulting_multivector_type(f, abc::AbstractMultivector{Sig}...) where {Sig}
+	dim = dimension(Sig)
+	k = trunc_grades(dim, resulting_grades(f, dim, grade.(abc)...))
+	similar(Multivector{Sig,k}, abc...)
+end
+
+
+BasisBlade(a::BasisBlade) = a
+Multivector(a::Multivector) = a
+Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = add!(zero(similar(Multivector{Sig,K}, a)), a)
+
+
+Base.zero(::OrType{<:BasisBlade{Sig,K,T}}) where {Sig,K,T} = BasisBlade{Sig}(0 => numberzero(T))
+Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
+Base.one(::OrType{<:BasisBlade{Sig,K,T}}) where {Sig,K,T} = BasisBlade{Sig}(0 => numberone(T))
+Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,0}(oneslike(S, 1))
+
+Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)
+Base.iszero(a::Multivector) = all(isnumberzero, a.comps)
+Base.isone(a::BasisBlade) = iszero(grade(a)) && isone(a.coeff)
+Base.isone(a::Multivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comps[2:end])
+
+
+
+
+
 
 
 #= Indexing and Iteration =#
@@ -268,8 +327,7 @@ scalar(a::BasisBlade) = numberzero(eltype(a))
 scalar(a::Multivector) = first(grade(a, 0).comps)
 
 isscalar(a::Number) = true
-isscalar(a::BasisBlade{Sig,0}) where {Sig} = true
-isscalar(a::BasisBlade) = iszero(a)
+isscalar(a::BasisBlade) = iszero(grade(a)) || iszero(a)
 isscalar(a::Multivector) = unimplemented
 
 blades(a::BasisBlade) = [a]

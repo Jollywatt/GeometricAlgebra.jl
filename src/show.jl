@@ -113,8 +113,13 @@ julia> GeometricAlgebra.show_multivector(stdout, a; inline=true, groupgrades=fal
 1 + 4 v1 + 9 v2 + 16 v12
 ```
 """
-function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=true, indent=0, showzeros=false)
+function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!ishomogeneous(a), indent=0, showzeros=false)
 	if groupgrades
+		if iszero(a)
+			print(io, " "^indent, numberzero(eltype(a)))
+			return
+		end
+
 		firstgroup = true
 		for k in grade(a)
 			ak = grade(a, k)

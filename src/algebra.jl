@@ -14,8 +14,6 @@ end
 
 
 
-
-
 #= Approximate Equality =#
 
 isapproxzero(a; kwargs...) = isapprox(a, zero(a); kwargs...)
@@ -70,19 +68,8 @@ function add!(a::Multivector, b::Multivector)
 end
 
 
-unify_grades(dim, a, b, c...) = unify_grades(dim, unify_grades(dim, a, b), c...)
-function unify_grades(dim, a, b)
-	a ⊇ b && return a
-	a ⊆ b && return b
-
-	all(iseven, a) && all(iseven, b) && return 0:2:dim
-
-	0:dim
-end
-
 function Base.:+(abc::AbstractMultivector{Sig}...) where {Sig}
 	k = unify_grades(Sig, grade.(abc)...)
-	@show k
 	Σ = zero(similar(Multivector{Sig,k}, abc...))
 	for a in abc
 		add!(Σ, a)
@@ -106,16 +93,10 @@ Base.:-(a::Scalar, b::AbstractMultivector) = add_scalar(-b, a)
 
 
 
-
-
-
-
-
 #= Geometric Multiplication =#
 
 # compute multivector type suitable to represent the result of f(a, b)
 # leaves eltype/storage type parameters variable
-result_type(f::Any, a::AbstractMultivector, b::AbstractMultivector) = result_type(f, typeof(a), typeof(b))
 
 """
 	a * b
@@ -133,15 +114,10 @@ function geometric_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig}
 	BasisBlade{Sig}(bits => factor*(a.coeff*b.coeff))
 end
 
-
-# subspace of blades is closed under *
-result_type(::typeof(geometric_prod), ::Type{<:BasisBlade{Sig}}, ::Type{<:BasisBlade{Sig}}) where {Sig} = BasisBlade{Sig}
-function result_type(::typeof(geometric_prod), abc::Type{<:AbstractMultivector{Sig}}...) where {Sig}
-	Multivector{Sig,0:dimension(Sig)}
-end
+resulting_grades(::typeof(geometric_prod), dim, p::Integer, q::Integer) = abs(p - q):2:min(p + q, dim)
 
 function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	c = zero(similar(result_type(geometric_prod, a, b), a, b))
+	c = zero(resulting_multivector_type(geometric_prod, a, b))
 	for (abits::UInt, acoeff) ∈ nonzero_components(a), (bbits::UInt, bcoeff) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
 		i = componentindex(c, bits)
@@ -212,12 +188,10 @@ function graded_prod(grade_selector::Function, a::BasisBlade{Sig}, b::BasisBlade
 	end
 end
 
-result_type(::Tuple{typeof(graded_prod),Any}, ::Type{<:BasisBlade{Sig}}, ::Type{<:BasisBlade{Sig}}) where {Sig} = BasisBlade{Sig}
-# result_type(::Tuple{typeof(graded_prod),GradeSelector}, ::Type{<:HomogeneousMultivector{Sig,P}}, ::Type{<:HomogeneousMultivector{Sig,Q}}) where {Sig,P,Q,GradeSelector} = KVector{Sig,GradeSelector.instance(P, Q)}
-result_type(::Tuple{typeof(graded_prod),GradeSelector}, abc::Type{<:AbstractMultivector{Sig}}...) where {Sig,GradeSelector} = Multivector{Sig,unify_grades(Sig, grade.(abc)...)}
+resulting_grades(::Tuple{typeof(graded_prod),GradeSelector}, dim, p::Integer, q::Integer) where {GradeSelector} = GradeSelector.instance(p, q)
 
 function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	c = zero(similar(result_type((graded_prod, grade_selector), a, b), a, b))
+	c = zero(resulting_multivector_type((graded_prod, grade_selector), a, b))
 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))

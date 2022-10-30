@@ -1,75 +1,10 @@
 using GeometricAlgebra:
-	bits_of_grade,
-	MetricWithStorage,
-	isscalar,
-	scalar,
-	isapproxzero
-
-using GeometricAlgebra.StaticArrays
-using GeometricAlgebra.SparseArrays
-
-@testset "==" begin
-	for sig in [(1,1), (-1,0,+1)], T in [Bool, Int, Float64], k in 1:3
-		@test zero(BasisBlade{sig,k,T}) == BasisBlade{sig}(0 => zero(T))
-		@test one(BasisBlade{sig,k,T}) == BasisBlade{sig}(0 => one(T))
-
-		@test zero(KVector{sig,k,Vector{T}}) == KVector{sig,k}(zeros(T, binomial(dimension(sig), k)))
-		@test zero(Multivector{sig,Vector{T}}) == Multivector{sig}(zeros(T, 2^dimension(sig)))
-	end
-
-	@test BasisBlade{(1,1)}(0b00 => 0) == BasisBlade{(1,1)}(0b11 => 0)
-	@test zero(KVector{(1,1,1),0,Vector{Int}}) == zero(KVector{(1,1,1),3,Vector{Int}})
-
-	o = BasisBlade{(1,1)}.(1:3 .=> 0)
-	@test o[1] == o[2] == o[3]
-
-	v = BasisBlade{(1,1,1)}(0b101 => 88.3)
-	Ts = [BasisBlade, KVector, Multivector]
-	for T1 ∈ Ts, T2 ∈ Ts
-		@test T1(v) == T2(v)
-	end
-
-end
-
-@testset "≈" begin
-	@test BasisBlade{(1,1)}(0b10 => 1) ≈ BasisBlade{(1,1)}(0b10 => 1 + eps())
-	@test BasisBlade{(1,1)}(0b10 => eps()) ≈ 0 atol=eps()
-
-	# ≈ uses 2-norm on arrays, so atol ≥ √n*eps()
-	@test KVector{(1,1,1),1}(eps()rand(3)) ≈ 0 atol=√3*eps()
-	@test KVector{(1,1,1),0}([1]) ≈ 1 + eps() atol=eps()
-
-	@test Multivector{(1,1,1)}(1 .+ eps()rand(2^3)) ≈ Multivector{(1,1,1)}(1 .+ eps()rand(2^3))
-
-	v = BasisBlade{(1,1,1)}.(0b101 .=> 10 .+ 1e-6rand(2))
-	Ts = [BasisBlade, KVector, Multivector]
-	for T1 ∈ Ts, T2 ∈ Ts
-		@test T1(v[1]) ≈ T2(v[2]) atol=1e-6
-	end
-
-	v = BasisBlade{(1,1,1)}(0b110 => 1)
-	@test isapproxzero(eps()v; atol=eps())
-	@test isapproxzero(eps()v + 0; atol=eps())
-end
-
-@testset "grade projections" begin
-	@basis 3
-
-	@test isscalar(scalar(v1))
-	@test scalar(v1 + v2) == 0
-	@test scalar(v1 + 42) == 42
-
-	@test grade(v1 + v12 + v2, 1) == v1 + v2
-	@test grade(v1 + v2, 0) == 0
-
-	u = v1 + 2v2 + 3v3
-	@test grade(u, grade(u)) === u
-end
+	bits_of_grade
 
 @testset "scalar *" begin
 	a = BasisBlade{(1,1)}(0b01 => 10)
 
-	for b in [a, KVector(a), Multivector(a)]
+	for b in [a, Multivector(a)]
 		@test 3a == a*3.0
 		@test a/10 == 10\a
 		@test -a == a/(-1.0)
@@ -79,14 +14,13 @@ end
 end
 
 @testset "+" begin
-	v = BasisBlade{(0,0,0)}.(bits_of_grade(1, 3) .=> 1)
-	bi = BasisBlade{(0,0,0)}.(bits_of_grade(2, 3) .=> 1)
+	v = basis(3)
+	bi = basis(3, grade=2)
 
-	@test v[1] + v[2] isa KVector{(0,0,0),1}
-	@test bi[1] + 2.5bi[2] isa KVector{(0,0,0),2}
-	@test v[1] + bi[2] isa Multivector
-	@test sum(KVector.(v)) isa KVector
-	@test sum(Multivector.(bi)) isa Multivector
+	@test v[1] + v[2] isa Multivector{3,1}
+	@test bi[1] + 2.5bi[2] isa Multivector{3,2}
+	@test v[1] + bi[2] isa Multivector{3,0:3}
+	@test sum(Multivector.(bi)) isa Multivector{3,2}
 	@test v[1] - v[2] == -v[2] + v[1]
 
 	@testset "with scalars" begin
@@ -94,14 +28,14 @@ end
 		@test (v[1] + v[2]) + 7 == v[1] + (v[2] + 7)
 		@test (bi[1] + 8) - 8 == bi[1]
 		@test 1 - v[1] == -(v[1] - 1)
-		@test KVector(v[1]) + 0.5 == v[1] + 1//2
+		@test Multivector(v[1]) + 0.5 == v[1] + 1//2
 	end
 
 	@test (1:3)'v == 1v[1] + 2v[2] + 3v[3]
 end
 
 @testset "*" begin
-	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	v = basis((-1,+1,+1,+1))
 
 	@test v[1]v[2] == -v[2]v[1]
 	@test v[1]v[1] == -1
@@ -112,14 +46,14 @@ end
 
 	@test geometric_prod(v[1], 2) == 2v[1]
 
-	Ts = [BasisBlade, KVector, Multivector]
+	Ts = [BasisBlade, Multivector]
 	for T1 in Ts, T2 in Ts
 		@test v[1]v[2] == T1(v[1])T2(v[2]) == T2(v[1])T1(v[2])
 	end
 end
 
 @testset "scalar product" begin
-	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	v = basis((-1,+1,+1,+1))
 
 	@test v[1] ⊙ v[1] == -1
 	@test v[1] ⊙ v[2] == 0
@@ -131,7 +65,7 @@ end
 end
 
 @testset "∧" begin
-	v = BasisBlade{(1,1,1)}.(bits_of_grade(1, 3) .=> 1)
+	v = basis(3)
 
 	@test v[1]∧v[2] == -v[2]∧v[1] == v[1]v[2]
 	@test (v[1] + v[2])∧v[2] == v[1]v[2]
@@ -161,7 +95,7 @@ end
 end
 
 @testset "^" begin
-	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	v = basis((-1,+1,+1,+1))
 	
 	@test v[1]^2 + 1 == 0
 	@test v[1]^4003 == -v[1]
@@ -176,7 +110,7 @@ end
 end
 
 @testset "reversion" begin
-	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	v = basis((+1,-1,-1,0))
 	
 	@test reversion(v[1]) == v[1]
 	@test reversion(v[1]v[2]) == v[2]v[1]
@@ -185,34 +119,21 @@ end
 
 end
 
-@testset "different storage types" begin
-	for S in [SVector, MVector, SparseVector]
-		sig = MetricWithStorage{(1,1,1),S}()
-		v = basis(sig)
-
-		@test v[1]v[2] == ~(v[2]v[1])
-		@test 5.5Multivector(v[1]) + v[3] == v[3] + 5.5v[1]
-		@test 1 + v[1] == v[1] + 2.0 - v[2]^2
-		@test v[1]^2 + 8.81 == 9.81
-	end
-end
-
 @testset "duals" begin
-	@basis 4
+	v = basis(4)
 
 	for dual in [flipdual, hodgedual, poincaredual]
-		@test dual(5v1) == 5dual(v1)
-		@test dual(v1 + 2v2) == dual(v1) + 2dual(v2)
-		@test dual(v1 + 10v123) == dual(v1) + 10dual(v123)
+		@test dual(5v[1]) == 5dual(v[1])
+		@test dual(v[1] + 2v[2]) == dual(v[1]) + 2dual(v[2])
+		@test dual(v[1] + 10v[1]v[2]v[3]) == dual(v[1]) + 10dual(v[1]v[2]v[3])
 	end
 
 	for dim in 0:5, k in 0:dim
-		a, b = KVector{dim,k}.(eachcol(rand(-5:5, ncomponents(dim, k), 2)))
+		a, b = Multivector{dim,k}.(eachcol(rand(-5:5, ncomponents(dim, k), 2)))
 		I = flipdual(one(a)) # unit pseudoscalar
 		@test a ∧ hodgedual(b) == a ⊙ ~b * I
 
-		m = Multivector{dim}(rand(-5:5, ncomponents(dim)))
-
+		m = Multivector{dim,0:dim}(rand(-5:5, ncomponents(dim)))
 		@test hodgedual(m) == ~m*I
 		@test flipdual(flipdual(m)) == m
 	end

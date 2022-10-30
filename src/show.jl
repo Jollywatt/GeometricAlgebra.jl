@@ -54,7 +54,7 @@ function show_multivector_row(io::IO, @nospecialize(a); indent=0, compact=false,
 	end
 end
 
-function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true)
+function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true, compact=false)
 	# TODO: showzeros argument
 	iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
@@ -74,7 +74,7 @@ function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true
 		firstline || println(io)
 		print(io, " "^(L - l + indent))
 		Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
-		print(io, " "^(R - r), " ")
+		print(io, " "^(R - r), compact ? "" : " ")
 		show_basis_blade(io, signature(a), bits_to_indices(bits))
 		firstline = false
 	end
@@ -113,7 +113,7 @@ julia> GeometricAlgebra.show_multivector(stdout, a; inline=true, groupgrades=fal
 1 + 4 v1 + 9 v2 + 16 v12
 ```
 """
-function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!ishomogeneous(a), indent=0, showzeros=false)
+function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!ishomogeneous(a), indent=0, showzeros=false, compact=false)
 	if groupgrades
 		if iszero(a)
 			print(io, " "^indent, numberzero(eltype(a)))
@@ -132,16 +132,16 @@ function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!i
 			end
 
 			inline && print(io, "(")
-			show_multivector_row(io, ak; showzeros)
+			show_multivector_row(io, ak; showzeros, compact)
 			inline && print(io, ")")
 
 			firstgroup = false
 		end
 	else
 		if inline
-			show_multivector_row(io, a; indent, showzeros)
+			show_multivector_row(io, a; indent, showzeros, compact)
 		else
-			show_multivector_col(io, a; indent, showzeros)
+			show_multivector_col(io, a; indent, showzeros, compact)
 		end
 	end
 
@@ -166,7 +166,7 @@ function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::BasisBlade))
 	show_blade(io, a)
 end
 
-Base.show(io::IO, @nospecialize(a::Multivector)) = show_multivector(io, a; inline=true)
+Base.show(io::IO, @nospecialize(a::Multivector)) = show_multivector(io, a; inline=true, compact=true)
 function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Multivector))
 	show_header(io, a)
 	show_multivector(io, a; indent=1)

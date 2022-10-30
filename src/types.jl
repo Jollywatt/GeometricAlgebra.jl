@@ -221,9 +221,14 @@ julia> unify_grades(4, (0, 4), 3) # not worth having a special type for grades (
 0:4
 ```
 """
+function unify_grades(dim, k)
+	k = (0:dim) ∩ k
+	length(k) == 1 && return first(k)
+	isbits(k) ? k : Tuple(k)
+end
 function unify_grades(dim, p, q)
-	p = trunc_grades(dim, p)
-	q = trunc_grades(dim, q)
+	p = unify_grades(dim, p)
+	q = unify_grades(dim, q)
 
 	p ⊆ q && return q
 	p ⊇ q && return p
@@ -235,22 +240,13 @@ end
 unify_grades(dim, p, q, c...) = unify_grades(dim, unify_grades(dim, p, q), c...)
 
 
-function trunc_grades(dim, k)
-	k = (0:dim) ∩ k
-	length(k) == 1 && return first(k)
-	isbits(k) ? k : Tuple(k)
-end
-
-
 """
 	resulting_grades(combine, dim, p, q)
 
 Grade(s) resulting from applying `combine` to `dim`-dimensional multivectors of grade `p` and `q`.
 """
-resulting_grades(combine, dim, P, Q) = unify_grades(dim, (resulting_grades(combine, dim, p, q) for p in P, q in Q)...)
-
-
-
+resulting_grades(combine, dim, P, Q) = unify_grades(dim, (resulting_grades(combine, dim, p::Integer, q::Integer) for p in P, q in Q)...)
+# resulting_grades(combine, dim, P, Q) = [resulting_grades(combine, dim, p::Integer, q::Integer) for p in P, q in Q]
 
 
 
@@ -263,8 +259,8 @@ constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
 Base.copy(a::Multivector) = constructor(a)(copy(a.comps))
 
 
-function Base.similar(M::Type{Multivector{Sig,K}}, aa::OrType{<:AbstractMultivector}...) where {Sig,K}
-	T = promote_type(eltype.(aa)...)
+function Base.similar(M::Type{Multivector{Sig,K}}, abc::OrType{<:AbstractMultivector}...) where {Sig,K}
+	T = promote_type(eltype.(abc)...)
 	C = componentstype(Sig, ncomponents(M), T)
 	Multivector{Sig,K,C}
 end
@@ -276,7 +272,7 @@ Multivector type with grade(s) and storage type appropriate for representing `f(
 """
 function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	dim = dimension(Sig)
-	k = trunc_grades(dim, resulting_grades(f, dim, grade.(abc)...))
+	k = unify_grades(dim, resulting_grades(f, dim, grade.(abc)...))
 	similar(Multivector{Sig,k}, abc...)
 end
 

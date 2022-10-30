@@ -1,16 +1,12 @@
 #= Equality =#
 
 Base.:(==)(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where Sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : iszero(a) && iszero(b)
-# Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig} = a.comps == b.comps
+function Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+	all(grade(a, k).comps == grade(b, k).comps for k in unify_grades(dimension(Sig), grade(a), grade(b)))
+end
 
 Base.:(==)(a::AbstractMultivector, b::Number) = isscalar(a) && scalar(a) == b
 Base.:(==)(a::Number, b::AbstractMultivector) = isscalar(b) && a == scalar(b)
-
-# equality between different multivector types
-# TODO: implement without conversions?
-Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig} = let T = largest_type(a, b)
-	T(a) == T(b)
-end
 
 
 
@@ -21,20 +17,16 @@ isapproxzero(a::BasisBlade; kwargs...) = isapproxzero(a.coeff; kwargs...)
 isapproxzero(a::Multivector; kwargs...) = isapproxzero(a.comps; kwargs...)
 
 Base.isapprox(a::BasisBlade{Sig}, b::BasisBlade{Sig}; kwargs...) where Sig = bitsof(a) == bitsof(b) ? isapprox(a.coeff, b.coeff; kwargs...) : isapproxzero(a) && isapproxzero(b)
-Base.isapprox(a::Multivector{Sig}, b::Multivector{Sig}; kwargs...) where {Sig} = isapprox(a.comps, b.comps; kwargs...)
-
-# promote scalar to target multivector type and compare component arrays
-Base.:isapprox(a::BasisBlade, b::Number; kwargs...) = isapprox(KVector(a), b; kwargs...)
-Base.:isapprox(a::Multivector, b::Number; kwargs...) = isapprox(a, zero(a) + b; kwargs...)
-
-Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}; kwargs...) where {Sig} = let T = largest_type(a, b)
-	isapprox(T(a), T(b); kwargs...)
+function Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}; kwargs...) where {Sig}
+	all(isapprox(grade(a, k).comps, grade(b, k).comps; kwargs...) for k in unify_grades(dimension(Sig), grade(a), grade(b)))
 end
+
+Base.:isapprox(a::AbstractMultivector, b::Number; kwargs...) = isapprox(a, zero(a) + b; kwargs...)
+Base.:isapprox(a::Number, b::AbstractMultivector; kwargs...) = isapprox(zero(b) + a, b; kwargs...)
 
 
 
 #= Scalar Multiplication =#
-
 
 scalar_multiply(a::BasisBlade{Sig,K}, b) where {Sig,K} = BasisBlade{Sig,K}(bitsof(a) => a.coeff*b)
 scalar_multiply(a, b::BasisBlade{Sig,K}) where {Sig,K} = BasisBlade{Sig,K}(bitsof(b) => a*b.coeff)
@@ -127,8 +119,7 @@ function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig
 	c
 end
 
-# @generated geometric_prod(a, b) = symbolic_optim(_geometric_prod, a, b)
-geometric_prod(a, b) = _geometric_prod(a, b)
+@generated geometric_prod(a, b) = symbolic_optim(_geometric_prod, a, b)
 
 Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
@@ -149,10 +140,8 @@ scalar_prod(a::Scalar, b::AbstractMultivector) = a*scalar(b)
 scalar_prod(a::BasisBlade{Sig,K}, b::BasisBlade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalar(a*b) : numberzero(promote_type(eltype(a), eltype(b)))
 scalar_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
-scalar_prod(a::Multivector{Sig}, b::BasisBlade{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(b))*(a.comps[componentindex(a, b)]*b.coeff)
-scalar_prod(a::BasisBlade{Sig}, b::Multivector{Sig}) where {Sig} = geometric_square_factor(Sig, bitsof(a))*(a.coeff*b.comps[componentindex(b, a)])
-
-scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K} = sum(geometric_square_factor.(Ref(Sig), bitsof(a)) .* (a.comps .* b.comps))
+# TODO: this is a silly implementation
+scalar_prod(abc::AbstractMultivector{Sig}...) where {Sig} = scalar(*(abc...))
 
 "$(@doc scalar_prod)"
 a ⊙ b = scalar_prod(a, b)
@@ -204,12 +193,11 @@ function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::
 	c
 end
 
-# @generated function graded_prod(grade_selector, a, b)
-# 	symbolic_optim(a, b) do a, b
-# 		_graded_prod(grade_selector.instance, a, b)
-# 	end
-# end
-graded_prod(grade_selector, abc...) = _graded_prod(grade_selector, abc...)
+@generated function graded_prod(grade_selector, a, b)
+	symbolic_optim(a, b) do a, b
+		_graded_prod(grade_selector.instance, a, b)
+	end
+end
 
 
 #= Derived Products =#
@@ -289,7 +277,7 @@ function power_with_scalar_square(a, a², p::Integer)
 end
 
 function power_by_squaring(a::Multivector{Sig,S}, p::Integer) where {Sig,S}
-	Π = one(Multivector{Sig,S})
+	Π = one(a)
 	aⁿ = a
 	while p > 0
 		if isone(p & 1)
@@ -328,11 +316,12 @@ end
 Multiply the grade `k` part of `a` by `f(k)`.
 """
 graded_multiply(f, a::Scalar) = f(0)*a
+graded_multiply(f, a::BasisBlade) = f(grade(a))*a
 function graded_multiply(f, a::Multivector{Sig}) where Sig
 	comps = copy(a.comps)
 	dim = dimension(Sig)
 	for k ∈ grade(a)
-		comps[multivector_slice(a, k)] *= f(k)
+		comps[componentslice(a, k)] *= f(k)
 	end
 	constructor(a)(comps)
 end
@@ -497,7 +486,7 @@ for (name, signrule) in [
 
 		function $name(a::Multivector{Sig,K}) where {Sig,K}
 			K′ = sortgrade(dimension(Sig) .- K)
-			Multivector{Sig,K′}(reverse($signrule.(Ref(Sig), bitsof(a)) .* a.comps))
+			Multivector{Sig,K′}(reverse($signrule.(Ref(Sig), componentbits(a)) .* a.comps))
 		end
 	end
 end

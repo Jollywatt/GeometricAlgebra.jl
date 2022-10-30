@@ -77,7 +77,7 @@ end
 # way to convert a BasisBlade to a KVector without allocating a full components array
 # TODO: take this more seriously
 function components(a::BasisBlade{Sig,K}) where {Sig,K}
-	i = bits_to_kvector_index(bitsof(a))
+	i = findfirst(==(bitsof(a)), componentbits(Val(dimension(Sig)), Val(K)))
 	SingletonVector(a.coeff, i, ncomponents(Sig, K))
 end
 components(a::Multivector) = a.comps

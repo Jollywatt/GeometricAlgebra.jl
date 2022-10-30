@@ -48,7 +48,6 @@ Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
 
 #= Addition =#
 
-
 function add!(a::Multivector, b::BasisBlade)
 	i = componentindex(a, b)
 	isnothing(i) || (a.comps[i] += b.coeff)

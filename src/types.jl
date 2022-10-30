@@ -172,20 +172,18 @@ ishomogeneous(a::AbstractMultivector) = isone(length(grade(a)))
 
 
 bitsof(a::BasisBlade) = a.bits
-componentbits(a::Multivector) = componentbits(Val(dimension(a)), Val(grade(a)))
+componentbits(a::OrType{<:Multivector}) = componentbits(Val(dimension(a)), Val(grade(a)))
 
 """
-	componentindex(a::CompositeMultivector, b)
+	componentindex(a::Multivector, b)
 
-Index/indices of components vector of `a` corresponding to the `BasisBlade`/`KVector` `b`.
-If `b` is a `BasisBlade` or `Unsigned` bits, returns the single index of the same component in `a`;
-if `b` is a `KVector`, returns a `UnitRange` of the `grade(b)` components in `a`.
+Index of components vector of `a` corresponding to the `BasisBlade` or bits` `b`.
 """
 componentindex(a, b::BasisBlade) = componentindex(a, bitsof(b))
 componentindex(a, bits) = findfirst(==(bits), componentbits(a))
 
 
-function componentslice(a::Multivector, k)
+function componentslice(a::OrType{<:Multivector}, k::Integer)
 	i = findfirst(componentbits(a)) do bits
 		count_ones(bits) == k
 	end
@@ -239,7 +237,8 @@ unify_grades(dim, p, q, c...) = unify_grades(dim, unify_grades(dim, p, q), c...)
 
 function trunc_grades(dim, k)
 	k = (0:dim) ∩ k
-	length(k) == 1 ? first(k) : k
+	length(k) == 1 && return first(k)
+	isbits(k) ? k : Tuple(k)
 end
 
 
@@ -264,7 +263,7 @@ constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
 Base.copy(a::Multivector) = constructor(a)(copy(a.comps))
 
 
-function Base.similar(M::Type{Multivector{Sig,K}}, aa::AbstractMultivector...) where {Sig,K}
+function Base.similar(M::Type{Multivector{Sig,K}}, aa::OrType{<:AbstractMultivector}...) where {Sig,K}
 	T = promote_type(eltype.(aa)...)
 	C = componentstype(Sig, ncomponents(M), T)
 	Multivector{Sig,K,C}
@@ -275,7 +274,7 @@ end
 
 Multivector type with grade(s) and storage type appropriate for representing `f(a, b)`.
 """
-function resulting_multivector_type(f, abc::AbstractMultivector{Sig}...) where {Sig}
+function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	dim = dimension(Sig)
 	k = trunc_grades(dim, resulting_grades(f, dim, grade.(abc)...))
 	similar(Multivector{Sig,k}, abc...)
@@ -320,6 +319,7 @@ function grade(a::Multivector{Sig}, K) where {Sig}
 end
 
 
+Base.getindex(a::AbstractMultivector, k) = grade(a, k)
 
 
 scalar(a::BasisBlade{Sig,0}) where {Sig} = a.coeff
@@ -327,8 +327,18 @@ scalar(a::BasisBlade) = numberzero(eltype(a))
 scalar(a::Multivector) = first(grade(a, 0).comps)
 
 isscalar(a::Number) = true
-isscalar(a::BasisBlade) = iszero(grade(a)) || iszero(a)
-isscalar(a::Multivector) = unimplemented
+isscalar(a::BasisBlade) = iszero(grade(a)) || isnumberzero(a)
+function isscalar(a::Multivector)
+	if 0 ∈ grade(a)
+		if first(grade(a)) == 0
+			all(isnumberzero, a.comps[2:end])
+		else
+			error("not implemented")
+		end
+	else
+		iszero(a)
+	end
+end
 
 blades(a::BasisBlade) = [a]
 blades(a::Multivector{Sig}) where {Sig} = [BasisBlade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.comps)]

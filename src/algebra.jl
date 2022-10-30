@@ -68,9 +68,10 @@ function add!(a::Multivector, b::Multivector)
 end
 
 
+resulting_grades(::typeof(+), dim, pq...) = unify_grades(dim, pq...)
+
 function Base.:+(abc::AbstractMultivector{Sig}...) where {Sig}
-	k = unify_grades(Sig, grade.(abc)...)
-	Σ = zero(similar(Multivector{Sig,k}, abc...))
+	Σ = zero(resulting_multivector_type(+, abc...))
 	for a in abc
 		add!(Σ, a)
 	end

@@ -130,8 +130,8 @@ bits_dual(n, bits) = first(bits_of_grade(n)) ⊻ bits
 	componentbits(n, k)
 	componentbits(::Val{N}, ::Val{K})
 
-Vector of bits corresponding to components of an `N`-dimensional
-`Multivector` of grade(s) `K`.
+Vector of bits corresponding to components of an `n`-dimensional
+`Multivector` of grade(s) `k`.
 
 Bits are ordered first by grade (`count_ones`),
 then lexicographically (in ascending numerical order).
@@ -139,10 +139,17 @@ then lexicographically (in ascending numerical order).
 Passing `Val` arguments calls a faster, memoized method.
 
 # Examples
-```jldoctest
-julia> using GeometricAlgebra: componentbits
-
+```jldoctest; setup = :(using GeometricAlgebra: componentbits)
 julia> componentbits(4, 2) .|> UInt8 .|> bitstring
+6-element Vector{String}:
+ "00000011"
+ "00000101"
+ "00000110"
+ "00001001"
+ "00001010"
+ "00001100"
+
+julia> componentbits(3, 0:3) .|> UInt8 .|> bitstring
 8-element Vector{String}:
  "00000000"
  "00000001"
@@ -152,68 +159,11 @@ julia> componentbits(4, 2) .|> UInt8 .|> bitstring
  "00000101"
  "00000110"
  "00000111"
-
-julia> componentbits(3, 0:3) .|> UInt8 .|> bitstring
-3-element Vector{String}:
- "00000011"
- "00000101"
- "00000110"
 ```
 """
 componentbits(n, k) = vcat(collect.(bits_of_grade.(k, n))...)
 @generated componentbits(::Val{N}, ::Val{K}) where {N,K} = componentbits(N, K)
 
-
-
-"""
-	bits_to_kvector_index(bits::Unsigned)
-
-Convert a unit blade `bits` to a linear index for accessing components of a `KVector`. 
-An explicit formula from combinatorial number systems is
-```math
-1 + \\sum_k \\binom{c_k}{k}
-```
-where ``c_k`` is the position of the ``k``th one in `bits`, starting from zero.
-
-# Examples
-```jldoctest
-julia> GeometricAlgebra.bits_to_kvector_index(0b1011) == 1 + sum(binomial(c, k) for (k, c) ∈ enumerate([0, 1, 3]))
-```
-"""
-function bits_to_kvector_index(bits::Unsigned)
-	ith = 1
-	c_k = 0
-	k = 1
-	while bits > 0
-		if isone(bits & 1)
-			ith += binomial(c_k, k)
-			k += 1
-		end
-		bits >>= 1
-		c_k += 1
-	end
-	ith
-end
-
-
-function multivector_index_offset(n, k)
-	ith = 0
-	for i in 0:k - 1
-		ith += binomial(n, i)
-	end
-	ith
-end
-
-"""
-	bits_to_multivector_index(bits::Unsigned)
-
-Convert a unit blade `bits` to a linear index for accessing components of a `Multivector`. 
-"""
-function bits_to_multivector_index(bits::Unsigned, dim)
-	multivector_index_offset(dim, count_ones(bits)) + bits_to_kvector_index(bits)
-end
-
-@generated multivector_slice(::Val{N}, ::Val{K}) where {N,K} = multivector_index_offset(N, K) .+ (1:binomial(N, K))
 
 
 

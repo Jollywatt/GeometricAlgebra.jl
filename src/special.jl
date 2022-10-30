@@ -76,9 +76,10 @@ function inv_formula_method(a::Multivector)
 
 	dim = dimension(a)
 	ā = clifford_conj(a)
+	aā = a*ā
 
-	if dim <= 2
-		return ā/scalar(a*ā)
+	if dim <= 2 || isscalar(aā)
+		return ā/scalar(aā)
 
 	elseif dim == 3
 		āâã = ā*involution(a)*reversion(a)
@@ -98,17 +99,13 @@ function inv_formula_method(a::Multivector)
 		return c/scalar(a*c)
 
 	else	
-		throw("only implemented for dimensions 0:5")
+		inv_matrix_method(a) # ?? replace with via_matrix_repr(inv, a)
 	end
 end
 
 Base.inv(a::BasisBlade) = a/scalar(a^2)
 function Base.inv(a::Multivector)
-	if dimension(a) <= 5
-		inv_formula_method(a)
-	else
-		inv_matrix_method(a) # ?? replace with via_matrix_repr(inv, a)
-	end
+	inv_formula_method(a)
 end
 
 Base.:/(a::AbstractMultivector, b::AbstractMultivector) = a*inv(b)

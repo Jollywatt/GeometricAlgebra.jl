@@ -307,9 +307,9 @@ julia> cayleytable(basis((t=-1, x=1, y=1, z=1); grade=2), ∧)
 """
 function cayleytable(sig, args...; kwargs...)
 	dim = dimension(sig)
-	grade_slices = multivector_slice.(Val(dim), Val.(0:dim))
-	separators = first.(grade_slices) #∪ [0, dim + 1]
-	cayleytable(basis(sig, grade=:all), args...; separators, kwargs...)
+	grade_slices = 1 .+ cumsum(binomial.(dim, 0:dim - 1))
+	separators = [1; grade_slices]
+	cayleytable(basis(sig, grade=0:dim), args...; separators, kwargs...)
 end
 
 function cayleytable(mvs::AbstractVector, op=*; separators=[1], title = :( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) ))

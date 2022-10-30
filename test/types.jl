@@ -1,10 +1,10 @@
 using GeometricAlgebra:
-	grade,
-	bits_of_grade,
 	isscalar,
-	signature,
-	largest_type,
-	MetricWithStorage
+	componentbits,
+	componentindex,
+	componentslice,
+	unify_grades,
+	resulting_multivector_type
 using GeometricAlgebra.StaticArrays
 using GeometricAlgebra.SparseArrays
 
@@ -14,11 +14,10 @@ using GeometricAlgebra.SparseArrays
 
 	for T in [
 		Int,
-		BasisBlade{(1,1),0,Bool},
-		KVector{(1,1,1),2,Vector{Int}},
-		KVector{(),0,Vector{Bool}},
-		KVector{(0,1),2,Vector{Float64}},
-		Multivector{(-1,+1,+1,+1),Vector{Float64}},
+		BasisBlade{2,0,Bool},
+		Multivector{3,1,Vector{Int}},
+		Multivector{3,0:3,Vector{Float64}},
+		Multivector{(-1,+1,+1,+1),0:2:4,Vector{Float64}},
 	]
 		@test zero(T) isa T
 		@test zero(zero(T)) isa T
@@ -28,71 +27,29 @@ using GeometricAlgebra.SparseArrays
 	end
 end
 
-@testset "BasisBlade -> KVector -> Multivector" begin
-	for a in [
-		BasisBlade{(1,1)}(0b00 => 42),
-		BasisBlade{(1,0,1)}(0b001 => 42.0),
-		BasisBlade{3}(0b111 => big(42)),
-	]
-		@test KVector(a) isa KVector{signature(a),grade(a),<:AbstractVector{eltype(a)}}
-		@test Multivector(a) isa Multivector{signature(a),<:AbstractVector{eltype(a)}}
-		@test Multivector(KVector(a)) isa Multivector{signature(a),<:AbstractVector{eltype(a)}}
-	end
+@testset "components" begin
+	for n in 0:6, k in [0:n..., 0:n, 0:2:n, n > 0 ? (0, n) : 0]
+		a = Multivector{n,k}
+		@test componentindex.(a, componentbits(a)) == 1:ncomponents(a)
 
-	x = BasisBlade{(1,1)}(0b01 => 5)
-
-	Ts = [BasisBlade, KVector, Multivector]
-	for T1 in Ts, T2 in Ts
-		a, b = T1(x), T2(x)
-		@test largest_type(a, b) == largest_type(b, a)
-		@test largest_type(a, b)(a) isa largest_type(a, b)
-	end
-
-	for (M1, M2) in [
-		BasisBlade => KVector,
-		KVector => KVector,
-		BasisBlade => Multivector,
-		KVector => Multivector,
-		Multivector => Multivector,
-	], T in [Int, Float64, ComplexF32]
-		@test eltype(M2(M1(x), T)) === T
-	end
-
-	@test_throws ErrorException length(x)
-	@test ncomponents(KVector(x)) == 2
-	@test ncomponents(Multivector(x)) == 4
-end
-
-@testset "eltype" begin
-	for T in [Int, Float64, Complex{Float16}, Rational{Int128}, Bool]
-		a = BasisBlade{(1,1)}(0b11 => one(T))
-
-		@test eltype(a) === T
-		@test eltype(KVector(a)) === T
-		@test eltype(Multivector(a)) === T
+		if k isa Integer
+			bits = componentbits(a)[componentslice(a, k)]
+			@test length(bits) == binomial(n, k)
+			@test all(count_ones.(bits) .== k)
+		end
 	end
 end
 
-@testset "different storage types" begin
-	@testset "$S" for S in [SVector, MVector, SparseVector]
-		sig = MetricWithStorage{(1,1,1),S}()
-		v = basis(sig)
+@testset "grade inference" begin
+	for n in 0:4,
+		p in [0:n..., 0:n, 0:2:n, n > 0 ? (0, n) : 0],
+		q in [0:n..., 0:n, 0:2:n, n > 0 ? (0, n) : 0]
 
-		@test KVector(v[1]) isa KVector{sig,1,<:S}
-		@test Multivector(v[1]) isa Multivector{sig,<:S}
+		pq = unify_grades(n, p, q)
+		@test p ⊆ pq ⊇ q
+		@test length(pq) != 1 || pq isa Integer
 
-		for T in [BasisBlade, KVector, Multivector]
-			@test isone(one(T(v[1])))
-		end
-
-		for (M1, M2) in [
-			BasisBlade => KVector,
-			KVector => KVector,
-			BasisBlade => Multivector,
-			KVector => Multivector,
-			Multivector => Multivector,
-		], T in [Int, Float64, ComplexF32]
-			@test eltype(M2(M1(v[1]), T)) === T
-		end
+		a = resulting_multivector_type(+, Multivector{n,p}, Multivector{n,q})
+		@test p ⊆ grade(a) ⊇ q
 	end
 end

@@ -23,35 +23,18 @@ end
 	@test Iterators.take(bits_of_grade(10), 10) |> collect |> last == 0b11111111101
 end
 
-@testset "bits <-> kvector index" begin
-	cases = [
-		(3, 0, 1) => 0b000,
-		(3, 1, 1) => 0b001,
-		(3, 1, 2) => 0b010,
-		(3, 2, 1) => 0b011,
-		(3, 1, 3) => 0b100,
-		(3, 2, 2) => 0b101,
-		(3, 2, 3) => 0b110,
-		(3, 3, 1) => 0b111,
-		(8, 7, 1) => 0b01_111_111,
-		(8, 7, 2) => 0b10_111_111,
-	]
-	@testset "no. $(i) of grade $k: $bits" for ((n, k, i), bits) ∈ cases
-		@test componentbits(Val(n), Val(k))[i] == bits
-		@test componentindex(KVector{n,k}, bits) == i
-	end
-end
-
-@testset "bits <-> multivector index" begin
-	for dim ∈ 1:2:8, i ∈ 1:2:2^dim
-		@test componentindex(Multivector{dim}, componentbits(Val(dim))[i]) == i
-	end
-end
-
-@testset "multivector slices" begin
+@testset "componentbits" begin
 	for n ∈ 0:8, k ∈ 0:n
-		slice = componentindex(Multivector{n}, KVector{n,k})
-		@test componentbits(Val(n))[slice] == componentbits(Val(n), Val(k))
+		bits = componentbits(n, k)
+		@test length(bits) == binomial(n, k)
+		@test all(count_ones.(bits) .== k)
+
+		@test length(componentbits(n, 0:n)) == 2^n
+
+		if n > 1
+			@test length(componentbits(n, 0:2:n)) == 2^(n - 1)
+			@test length(componentbits(n, (0, n))) == 2
+		end
 	end
 end
 

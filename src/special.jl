@@ -49,7 +49,7 @@ function matrix_repr(a::Multivector)
 	N, T = ncomponents(a′), eltype(a)
 	mat = Matrix{numberorany(T)}(undef, N, N)
 	fill!(mat, numberzero(T))
-	for (i, b) ∈ enumerate(basis(signature(a), grade=0:dimension(a)))
+	for (i, b) ∈ enumerate(basis(signature(a), 0:dimension(a)))
 		mat[:,i] = Multivector(a′*b).comps
 	end
 	mat

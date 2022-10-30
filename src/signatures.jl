@@ -161,9 +161,9 @@ interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i]
 interpret_signature(sig) = sig
 
 """
-	basis(sig; grade=1)
+	basis(sig, grade=1)
 
-Return basis blades for the geometric algebra defined by the metric signature `sig`.
+Vector of basis blades of specified grade(s) for the geometric algebra defined by the metric signature `sig`.
 
 See also [`@basis`](@ref) and [`@basisall`](@ref).
 
@@ -175,11 +175,18 @@ julia> basis(3)
  v2
  v3
 
-julia> prod(basis("-+++"))
-BasisBlade{⟨-+++⟩, 4, Int64}:
- 1 v1234
+julia> basis("-+++", 0:2:4)
+8-element Vector{BasisBlade{⟨-+++⟩, _A, Int64} where _A}:
+ 1
+ v12
+ v13
+ v23
+ v14
+ v24
+ v34
+ v1234
 
-julia> basis(Cl(1,3); grade=2)
+julia> basis(Cl(1,3), 2)
 6-element Vector{BasisBlade{Cl(1,3), 2, Int64}}:
  v12
  v13
@@ -189,7 +196,8 @@ julia> basis(Cl(1,3); grade=2)
  v34
 ```
 """
-basis(sig; grade=1) = let sig = interpret_signature(sig)
+function basis(sig, grade=1)
+	sig = interpret_signature(sig)
 	dim = dimension(sig)
 	bits = componentbits(Val(dim), Val(grade))
 	BasisBlade{sig}.(bits .=> 1)
@@ -293,7 +301,7 @@ julia> cayleytable(3)
 ───────────┼──────┼───────────────────┼───────────────────┼──────
       v123 │ v123 │  v23   -v13   v12 │  -v3     v2   -v1 │   -1
 
-julia> cayleytable(basis((t=-1, x=1, y=1, z=1); grade=2), ∧)
+julia> cayleytable(basis((t=-1, x=1, y=1, z=1), 2), ∧)
  (↓) ∧ (→) │   tx     ty    xy    tz     xz    yz
 ───────────┼──────────────────────────────────────
         tx │    0      0     0     0      0  txyz
@@ -305,20 +313,24 @@ julia> cayleytable(basis((t=-1, x=1, y=1, z=1); grade=2), ∧)
 
 ```
 """
-function cayleytable(sig, args...; kwargs...)
-	dim = dimension(sig)
-	grade_slices = 1 .+ cumsum(binomial.(dim, 0:dim - 1))
-	separators = [1; grade_slices]
-	cayleytable(basis(sig, grade=0:dim), args...; separators, kwargs...)
+cayleytable(args...; kwargs...) = cayleytable(stdout, args...; kwargs...)
+function cayleytable(io::IO, sig, args...; kwargs...)
+	sig = interpret_signature(sig)
+	cayleytable(basis(sig, 0:dimension(sig)), args...; kwargs...)
 end
 
-function cayleytable(mvs::AbstractVector, op=*; separators=[1], title = :( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) ))
+function cayleytable(io::IO, mvs::AbstractVector, op=*; separators=:auto, title=:( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) ))
 	table = Any[op(a, b) for a ∈ mvs, b ∈ mvs]
-	table[iszero.(table)] .= 0
-	table[isone.(table)] .= 1
 	mvs_str = string.(mvs)
-	table
+
+	if separators == :auto
+		types = typeof.(mvs)
+		diffs = types[begin + 1:end] .!= types[begin:end - 1]
+		separators = [1; 1 .+ findall(diffs)]
+	end
+
 	pretty_table(
+		io,
 		string.(table),
 		header = mvs_str,
 		row_labels = mvs_str,

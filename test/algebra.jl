@@ -15,7 +15,7 @@ end
 
 @testset "+" begin
 	v = basis(3)
-	bi = basis(3, grade=2)
+	bi = basis(3, 2)
 
 	@test v[1] + v[2] isa Multivector{3,1}
 	@test bi[1] + 2.5bi[2] isa Multivector{3,2}

@@ -213,6 +213,7 @@ In order to reduce the number of possible `Multivector` grade parameters
 # Examples
 ```jldoctest; setup = :(using GeometricAlgebra: unify_grades)
 julia> unify_grades(4, 0:4, 2)
+0:4
 
 julia> unify_grades(4, 0, 2) # even multivectors are worth representing specifically
 0:2:4

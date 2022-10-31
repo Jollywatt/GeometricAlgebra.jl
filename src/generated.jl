@@ -46,8 +46,8 @@ ex = GeometricAlgebra.symbolic_optim(*, u, v) |> prettify
 
 # output
 :(let a = components(a), b = components(b)
-      comps = create_array(Vector{Any}, Int64, Val{1}(), Val{(4,)}(), a[1] * b[1] + a[2] * b[2], 0, 0, a[1] * b[2] + (-1 * a[2]) * b[1])
-      (Multivector{2})(comps)
+      comps = create_array(Vector{Any}, Int64, Val{1}(), Val{(2,)}(), a[1] * b[1] + a[2] * b[2], a[1] * b[2] + (-1 * a[2]) * b[1])
+      (Multivector{2, 0:2:2})(comps)
   end)
 ```
 """

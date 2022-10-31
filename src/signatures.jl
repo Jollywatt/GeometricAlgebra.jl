@@ -316,7 +316,7 @@ julia> cayleytable(basis((t=-1, x=1, y=1, z=1), 2), ∧)
 cayleytable(args...; kwargs...) = cayleytable(stdout, args...; kwargs...)
 function cayleytable(io::IO, sig, args...; kwargs...)
 	sig = interpret_signature(sig)
-	cayleytable(basis(sig, 0:dimension(sig)), args...; kwargs...)
+	cayleytable(io, basis(sig, 0:dimension(sig)), args...; kwargs...)
 end
 
 function cayleytable(io::IO, mvs::AbstractVector, op=*; separators=:auto, title=:( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) ))

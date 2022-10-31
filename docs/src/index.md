@@ -24,8 +24,8 @@ julia> u = Multivector{3,1}([1, -1, 0]) # 3D Euclidean vector
 ```
 
 Non-euclidean metric signatures may be specified:
-```jldoctest
 
+```jldoctest
 julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
 6-component Multivector{⟨-+++⟩, 2, UnitRange{Int64}}:
  1 v12
@@ -36,12 +36,12 @@ julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
  6 v34
 
 julia> exp(v)
-8-component Multivector{⟨-+++⟩, 0:2:4, Vector{Int64}}:
- -48
- 2 v12 + 4 v13 + 6 v23 + 8 v14 + 10 v24 + 12 v34
- 16 v1234
-
+8-component Multivector{⟨-+++⟩, 0:2:4, Vector{Float64}}:
+ 1.18046
+ 0.818185 v12 + -0.141944 v13 + 0.153208 v23 + 1.076 v14 + 1.16194 v24 + 1.03866 v34
+ 0.999268 v1234
 ```
+
 Notice that this bivector exponential has grades `0:2:4`.
 The grade parameter `K` of a `Multivector{Sig,K}` can be a single integer
 (for homogeneous multivectors) or a collection of grades.

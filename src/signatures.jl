@@ -237,7 +237,7 @@ julia> @basis 3
 [ Info: Defined basis blades v, v1, v2, v3, v12, v13, v23, v123
 
 julia> 1v2 + 3v12
-8-component Multivector{3, Vector{Int64}}:
+8-component Multivector{3, 0:3, Vector{Int64}}:
  1 v2
  3 v12
 ```

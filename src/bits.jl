@@ -52,7 +52,7 @@ Inverse of [`bits_to_indices`](@ref).
 # Examples
 ```jldoctest
 julia> GeometricAlgebra.indices_to_bits([1, 2, 5], UInt8) |> bitstring
-"0000000000010011"
+"00010011"
 ```
 """
 function indices_to_bits(indices, T=UInt)

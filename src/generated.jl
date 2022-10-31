@@ -41,7 +41,7 @@ If `use_symbolic_optim(sig)` returns `false`, the function body simply calls `f(
 # Examples
 ```jldoctest
 using MacroTools: prettify
-u, v = KVector.(basis(2))
+u, v = Multivector.(basis(2))
 ex = GeometricAlgebra.symbolic_optim(*, u, v) |> prettify
 
 # output
@@ -74,7 +74,7 @@ function symbolic_optim(f, x::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	end
 end
 
-# way to convert a BasisBlade to a KVector without allocating a full components array
+# way to convert a BasisBlade to a Multivector without allocating a full components array
 # TODO: take this more seriously
 function components(a::BasisBlade{Sig,K}) where {Sig,K}
 	i = findfirst(==(bitsof(a)), componentbits(Val(dimension(Sig)), Val(K)))

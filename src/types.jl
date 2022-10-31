@@ -17,8 +17,8 @@ metric signature `Sig`.
 BasisBlade{Sig,K,T}   Multivector{Sig,K,S}                
 ```
 
-- [`Multivector`](@ref): a homogeneous or inhomogeneous multivector; a sum of basis blades.
 - [`BasisBlade`](@ref): a scalar multiple of a wedge product of orthogonal basis vectors.
+- [`Multivector`](@ref): a homogeneous or inhomogeneous multivector; a sum of basis blades.
 
 """
 abstract type AbstractMultivector{Sig} end
@@ -177,7 +177,7 @@ componentbits(a::OrType{<:Multivector}) = componentbits(Val(dimension(a)), Val(g
 """
 	componentindex(a::Multivector, b)
 
-Index of components vector of `a` corresponding to the `BasisBlade` or bits` `b`.
+Index of components vector of `a` corresponding to the `BasisBlade` or bits `b`.
 """
 componentindex(a, b::BasisBlade) = componentindex(a, bitsof(b))
 componentindex(a, bits) = findfirst(==(bits), componentbits(a))
@@ -243,10 +243,9 @@ unify_grades(dim, p, q, c...) = unify_grades(dim, unify_grades(dim, p, q), c...)
 """
 	resulting_grades(combine, dim, p, q)
 
-Grade(s) resulting from applying `combine` to `dim`-dimensional multivectors of grade `p` and `q`.
+Non-zero grade(s) resulting from the application of `combine` on `dim`-dimensional multivectors of grade(s) `p` and `q`.
 """
 resulting_grades(combine, dim, P, Q) = unify_grades(dim, (resulting_grades(combine, dim, p::Integer, q::Integer) for p in P, q in Q)...)
-# resulting_grades(combine, dim, P, Q) = [resulting_grades(combine, dim, p::Integer, q::Integer) for p in P, q in Q]
 
 
 

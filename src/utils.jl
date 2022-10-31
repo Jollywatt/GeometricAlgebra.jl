@@ -1,10 +1,12 @@
 #= Tools to handle symbolic eltypes =#
 
-# Multivectors with purely symbolic components have SymbolicUtils.Symbolic eltype.
-# For sym::SymbolicUtils.Sym, iszero(sym) is a symbolic expression “sym == 0”,
-# but we generally want `iszero(sym) == false` because it *could* be non-zero.
-# Furthermore, If a symbolic BasisBlade is promoted to a KVector, its eltype will
-# be Union{Int,Sym} or Any, so we want to handle Any eltypes gracefully.
+#=
+Multivectors with purely symbolic components have SymbolicUtils.Symbolic eltype.
+For sym::SymbolicUtils.Sym, iszero(sym) is a symbolic expression “sym == 0”,
+but we generally want `iszero(sym) == false` because it *could* be non-zero.
+Furthermore, we want to support eltypes of `Any` (e.g., when combining a symbolic
+multivector with eltype `Int`).
+=#
 
 
 isnumberzero(a::Number) = iszero(a)

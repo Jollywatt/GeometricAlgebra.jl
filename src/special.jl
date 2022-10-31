@@ -58,7 +58,7 @@ end
 function via_matrix_repr(f::Function, a::AbstractMultivector)
 	m = matrix_repr(a)
 	m′ = f(m)
-	Multivector{signature(a)}(m′[:,1])
+	Multivector{signature(a),0:dimension(a)}(m′[:,1])
 end
 
 

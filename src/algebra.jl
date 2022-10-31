@@ -5,8 +5,8 @@ function Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) wh
 	all(grade(a, k).comps == grade(b, k).comps for k in unify_grades(dimension(Sig), grade(a), grade(b)))
 end
 
-Base.:(==)(a::AbstractMultivector, b::Number) = isscalar(a) && scalar(a) == b
-Base.:(==)(a::Number, b::AbstractMultivector) = isscalar(b) && a == scalar(b)
+Base.:(==)(a::AbstractMultivector, b::Number) = iszero(b) ? iszero(a) : isscalar(a) && scalar(a) == b
+Base.:(==)(a::Number, b::AbstractMultivector) = iszero(a) ? iszero(b) : isscalar(b) && a == scalar(b)
 
 
 
@@ -18,7 +18,8 @@ isapproxzero(a::Multivector; kwargs...) = isapproxzero(a.comps; kwargs...)
 
 Base.isapprox(a::BasisBlade{Sig}, b::BasisBlade{Sig}; kwargs...) where Sig = bitsof(a) == bitsof(b) ? isapprox(a.coeff, b.coeff; kwargs...) : isapproxzero(a) && isapproxzero(b)
 function Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}; kwargs...) where {Sig}
-	all(isapprox(grade(a, k).comps, grade(b, k).comps; kwargs...) for k in unify_grades(dimension(Sig), grade(a), grade(b)))
+	k = unify_grades(dimension(Sig), grade(a), grade(b))
+	isapprox(grade(a, k).comps, grade(b, k).comps; kwargs...)
 end
 
 Base.:isapprox(a::AbstractMultivector, b::Number; kwargs...) = isapprox(a, zero(a) + b; kwargs...)

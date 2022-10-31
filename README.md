@@ -8,17 +8,23 @@ Yet another Julia package for working with geometric (or Clifford) algebras.
 
 ## Quick Start
 
-Construct multivectors by providing the metric signature and grade as type parameters:
+Construct multivectors by providing a metric signature and grade as type parameters:
 
 ```julia
-julia> u = KVector([1, -1, 0]) # 3D Euclidean vector
-3-component KVector{3, 1, Vector{Int64}}:
+julia> using GeometricAlgebra
+
+julia> u = Multivector{3,1}([1, -1, 0]) # 3D Euclidean vector
+3-component Multivector{3, 1, Vector{Int64}}:
   1 v1
  -1 v2
   0 v3
+```
 
-julia> v = KVector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
-6-component KVector{⟨-+++⟩, 2, UnitRange{Int64}}:
+Non-euclidean metric signatures may be specified:
+
+```julia
+julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
+6-component Multivector{⟨-+++⟩, 2, UnitRange{Int64}}:
  1 v12
  2 v13
  3 v23
@@ -26,13 +32,18 @@ julia> v = KVector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
  5 v24
  6 v34
 
-julia> (v + 1)^2
-16-component Multivector{⟨-+++⟩, Vector{Int64}}:
- -48
- 2 v12 + 4 v13 + 6 v23 + 8 v14 + 10 v24 + 12 v34
- 16 v1234
-
+julia> exp(v)
+8-component Multivector{⟨-+++⟩, 0:2:4, Vector{Float64}}:
+ 1.18046
+ 0.818185 v12 + -0.141944 v13 + 0.153208 v23 + 1.076 v14 + 1.16194 v24 + 1.03866 v34
+ 0.999268 v1234
 ```
+
+Notice that this bivector exponential has grades `0:2:4`.
+The grade parameter `K` of a `Multivector{Sig,K}` can be a single integer
+(for homogeneous multivectors) or a collection of grades.
+A general 4D multivector has grades `0:4`, but an even multivector
+may be more efficiently represented with grades `0:2:4`.
 
 You may also obtain an orthonormal basis for a metric signature:
 
@@ -44,7 +55,7 @@ julia> v = basis(3)
  v3
 
 julia> exp(10000*2π*v[2]v[3])
-8-component Multivector{3, Vector{Float64}}:
+4-component Multivector{3, 0:2:2, Vector{Float64}}:
  1.0
  -9.71365e-13 v23
 ```
@@ -62,23 +73,23 @@ julia> @basisall (t = +1, x = -1)
 
 ## Design
 
-
-There are three concrete types for representing elements in a geometric algebra, arranged in the following type hierarchy:
+There are two concrete types for representing elements in a geometric algebra:
 
 ```
-                        AbstractMultivector{Sig}
-                          /                  \
-        HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
-            /                \                             
-BasisBlade{Sig,K,T}    KVector{Sig,K,S}                
-                                                        
-                       ╰───── CompositeMultivector{Sig,S} ─────╯
+         AbstractMultivector{Sig}
+            /               \                             
+BasisBlade{Sig,K,T}    Multivector{Sig,K,S}
 ```
 
 - `BasisBlade`: a scalar multiple of a wedge product of orthogonal basis vectors.
-- `KVector`: a ``k``-vector or homogeneous multivector; a sum of same-grade blades.
-- `Multivector`: a general multivector. All elements in a geometric
-   algebra can be represented as this type (though not most efficiently).
+- `Multivector`: a homogeneous or inhomogeneous multivector; a sum of basis blades.
+
+Type parameters:
+
+- `Sig`: The metric signature which defines the geometric algebra. This can be any all-bits value which satisfies the metric signature interface.
+- `K`: The grade(s) of a multivector. For `BasisBlade`s, this is an integer, but for `Multivector`s, it may be a collection (e.g., `0:3` for a general 3D multivector).
+- `T`: The numerical type of the coefficient of a `BasisBlade`.
+- `S`: The storage type of the components of a `Multivector`, usually an `AbstractVector` subtype.
 
 
 ## Symbolic Algebra and Code Generation
@@ -88,17 +99,17 @@ For example, we can compute the product of two vectors symbolically as follows:
 
 ```julia
 julia> GeometricAlgebra.symbolic_components.([:x, :y], 3)
-2-element Vector{Vector{SymbolicUtils.Term{Real, Nothing}}}:
+2-element Vector{Vector{Any}}:
  [x[1], x[2], x[3]]
  [y[1], y[2], y[3]]
 
-julia> KVector{3,1}.(ans)
-2-element Vector{KVector{3, 1, Vector{SymbolicUtils.Term{Real, Nothing}}}}:
+julia> Multivector{3,1}.(ans)
+2-element Vector{Multivector{3, 1, Vector{Any}}}:
  x[1]v1 + x[2]v2 + x[3]v3
  y[1]v1 + y[2]v2 + y[3]v3
 
 julia> prod(ans)
-8-component Multivector{3, Vector{Any}}:
+4-component Multivector{3, 0:2:2, Vector{Any}}:
  x[1]*y[1] + x[2]*y[2] + x[3]*y[3]
  x[1]*y[2] - x[2]*y[1] v12 + x[1]*y[3] - x[3]*y[1] v13 + x[2]*y[3] - x[3]*y[2] v23
 

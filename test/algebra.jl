@@ -1,6 +1,21 @@
 using GeometricAlgebra:
 	bits_of_grade
 
+@testset "==" begin
+	v = basis(2)
+	@test v[1] + 0v[2] == v[1]
+	@test 0v[1] == 0
+	@test 0v[1] + 0 == 0
+	@test iszero(1 + v[2] - v[2] - 1)
+	@test isone(v[1] + -v[1] + 1)
+end
+
+@testset "≈" begin
+	v = basis(3)
+	@test v[1] + √eps(1.0) ≈ v[1] rtol=1e-6
+	@test 1e-10 + v[1] ≈ v[1] rtol=1e-10
+end
+
 @testset "scalar *" begin
 	a = BasisBlade{(1,1)}(0b01 => 10)
 

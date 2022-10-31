@@ -318,7 +318,7 @@ Multiply the grade `k` part of `a` by `f(k)`.
 graded_multiply(f, a::Scalar) = f(0)*a
 graded_multiply(f, a::BasisBlade) = f(grade(a))*a
 function graded_multiply(f, a::Multivector{Sig}) where Sig
-	comps = copy(a.comps)
+	comps = collect(a.comps)
 	dim = dimension(Sig)
 	for k ∈ grade(a)
 		comps[componentslice(a, k)] *= f(k)
@@ -450,14 +450,14 @@ See also [`poincaredual`](@ref).
 
 # Examples
 ```jldoctest
-julia> u = KVector{3,1}(1:3)
-3-component KVector{3, 1, UnitRange{Int64}}:
+julia> u = Multivector{3,1}(1:3)
+3-component Multivector{3, 1, UnitRange{Int64}}:
  1 v1
  2 v2
  3 v3
 
 julia> hodgedual(u)
-3-component KVector{3, 2, Vector{Int64}}:
+3-component Multivector{3, 2, Vector{Int64}}:
   3 v12
  -2 v13
   1 v23

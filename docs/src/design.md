@@ -10,30 +10,24 @@ end
 ## Multivector Types
 
 
-There are three concrete types for representing elements in a geometric algebra, arranged in the following type hierarchy:
+There are two concrete types for representing elements in a geometric algebra:
 
 ```
-                        AbstractMultivector{Sig}
-                          /                  \
-        HomogeneousMultivector{Sig,K}    Multivector{Sig,S}
-            /                \                             
-BasisBlade{Sig,K,T}    KVector{Sig,K,S}                
-                                                        
-                       ╰───── CompositeMultivector{Sig,S} ─────╯
+         AbstractMultivector{Sig}
+            /               \                             
+BasisBlade{Sig,K,T}    Multivector{Sig,K,S}
 ```
 
-- `BasisBlade`: a scalar multiple of a wedge product of orthogonal basis vectors.
-- `KVector`: a ``k``-vector or homogeneous multivector; a sum of same-grade blades.
-- `Multivector`: a general multivector. All elements in a geometric
-   algebra can be represented as this type (though not most efficiently).
+- [`BasisBlade`](@ref): a scalar multiple of a wedge product of orthogonal basis vectors.
+- [`Multivector`](@ref): a homogeneous or inhomogeneous multivector; a sum of basis blades.
 
-These types have up to three of type parameters:
+Type parameters:
 
 - `Sig`: The metric signature which defines the geometric algebra. This can be any
    all-bits value which satisfies the [metric signature interface](@ref sig-interface).
+- `K`: The grade(s) of a multivector. For `BasisBlade`s, this is an integer, but for `Multivector`s, it may be a collection (e.g., `0:3` for a general 3D multivector).
 - `T`: The numerical type of the coefficient of a `BasisBlade`.
-- `K`: An `Int` specifying the grade of a `HomogeneousMultivector`.
-- `S`: The storage type of the components of a `CompositeMultivector`, usually an `AbstractVector` subtype.
+- `S`: The storage type of the components of a `Multivector`, usually an `AbstractVector` subtype.
 
 
 ## Metric Signatures
@@ -115,13 +109,13 @@ julia> GeometricAlgebra.symbolic_components.([:x, :y], 3)
  [x[1], x[2], x[3]]
  [y[1], y[2], y[3]]
 
-julia> KVector{3,1}.(ans)
-2-element Vector{KVector{3, 1, Vector{Any}}}:
+julia> Multivector{3,1}.(ans)
+2-element Vector{Multivector{3, 1, Vector{Any}}}:
  x[1]v1 + x[2]v2 + x[3]v3
  y[1]v1 + y[2]v2 + y[3]v3
 
 julia> prod(ans)
-8-component Multivector{3, Vector{Any}}:
+4-component Multivector{3, 0:2:2, Vector{Any}}:
  x[1]*y[1] + x[2]*y[2] + x[3]*y[3]
  x[1]*y[2] - x[2]*y[1] v12 + x[1]*y[3] - x[3]*y[1] v13 + x[2]*y[3] - x[3]*y[2] v23
 

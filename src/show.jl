@@ -55,12 +55,11 @@ function show_multivector_row(io::IO, @nospecialize(a); indent=0, compact=false,
 end
 
 function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true, compact=false)
-	# TODO: showzeros argument
 	iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
 	comps = zip(componentbits(a), a.comps)
 	if !showzeros
-		comps = Iterators.filter(!iszero∘last, comps)
+		comps = Iterators.filter(!isnumberzero∘last, comps)
 	end
 
 	comps = collect(comps)
@@ -113,7 +112,7 @@ julia> GeometricAlgebra.show_multivector(stdout, a; inline=true, groupgrades=fal
 1 + 4 v1 + 9 v2 + 16 v12
 ```
 """
-function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!ishomogeneous(a), indent=0, showzeros=false, compact=false)
+function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!ishomogeneous(a), indent=0, showzeros=ishomogeneous(a), compact=false)
 	if groupgrades
 		if iszero(a)
 			print(io, " "^indent, numberzero(eltype(a)))

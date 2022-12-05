@@ -18,10 +18,7 @@ end
 
 
 symbolic_multivector(a::Type{<:BasisBlade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(Multivector{Sig,K}, label)
-function symbolic_multivector(A::Type{<:Multivector{Sig}}, label) where {Sig}
-	constructor(A)(symbolic_components(label, ncomponents(A)))
-end
-symbolic_multivector(A::Type{BasisBlade{Sig,K,T}}, label) where {Sig,K,T} = symbolic_multivector(Multivector{Sig,K,componentstype(Sig, ncomponents(Sig, K), T)}, label)
+symbolic_multivector(A::Type{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(A)))
 symbolic_multivector(a::AbstractMultivector, label) = symbolic_multivector(typeof(a), label)
 
 
@@ -63,7 +60,8 @@ function symbolic_optim(f, x::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	comps = y_symb.comps
 
 	T = numberorany(promote_type(eltype.(x)...))
-	comps_expr = SymbolicUtils.Code.MakeArray(comps, typeof(comps), T)
+	compstype = componentstype(Sig, length(comps), T)
+	comps_expr = SymbolicUtils.Code.MakeArray(comps, compstype, T)
 
 	assignments = [:( $a = components($a) ) for a in abc]
 	quote

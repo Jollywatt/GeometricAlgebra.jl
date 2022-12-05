@@ -68,7 +68,7 @@ BasisBlade{Sig}(pair::Pair) where {Sig} = BasisBlade{Sig}(pair...)
 # from scalar
 BasisBlade{Sig}(coeff::T) where {Sig,T<:Scalar} = BasisBlade{Sig,0,T}(0, coeff)
 
-# warning: does’t check that K == count_ones(bits)
+# warning: doesn’t check that K == count_ones(bits)
 BasisBlade{Sig,K}(pair::Pair) where {Sig,K} = let (bits, coeff) = pair
 	BasisBlade{Sig,K,typeof(coeff)}(bits, coeff)
 end
@@ -207,8 +207,8 @@ largest_type(::BasisBlade, ::BasisBlade) = BasisBlade
 
 Return grade(s) containing both `p` and `q`.
 
-In order to reduce the number of possible `Multivector` grade parameters
-(which will be compiled separately) the result may be larger than the union `p ∪ q`.
+In order to reduce the number of possible `Multivector` grade parameters each triggering
+separate compilations, the result may be larger than the union `p ∪ q`.
 
 # Examples
 ```jldoctest; setup = :(using GeometricAlgebra: unify_grades)

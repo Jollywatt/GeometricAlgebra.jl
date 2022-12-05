@@ -2,8 +2,8 @@
 
 ## v0.2.0
 
-* Remove `KVector{Sig,K}` and `Multivector{Sig}` in favour of `Multivector{Sig,K}`, where `K` may now be a collection (e.g., range, tuple) in order to represent inhomogeneous multivectors.
-This simplifies and generalises the type system: only one parametric type is needed, and arbitrary grade combinations (e.g., `0:2:dim` for even multivectors) have efficient representations.
+* Remove `KVector{Sig,K}` and `Multivector{Sig}` in favour of `Multivector{Sig,K}`, where the grade `K` may now be a collection (e.g., range, tuple) in order to represent inhomogeneous multivectors.
+This simplifies and generalises the types: only one parametric type is needed, and arbitrary grade combinations (e.g., `0:2:dim` for even multivectors) have efficient representations.
 
 ## v0.1.2
 

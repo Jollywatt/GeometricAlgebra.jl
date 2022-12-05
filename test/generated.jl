@@ -13,10 +13,10 @@ using GeometricAlgebra.SymbolicUtils
 
 
 	b = BasisBlade{3}(0b101 => SymbolicUtils.Sym{Real}(:b))
-	m = symbolic_multivector(Multivector{3,1,Vector{Int}}, :m)
-	mm = symbolic_multivector(Multivector{3,0:3,Vector{Int}}, :mm)
+	kv = symbolic_multivector(Multivector{3,1,Vector{Int}}, :kv)
+	mv = symbolic_multivector(Multivector{3,0:3,Vector{Int}}, :mv)
 
-	for a in [b, m, mm]
+	for a in [b, kv, mv]
 		@test !iszero(a)
 		@test !isone(a)
 
@@ -27,15 +27,15 @@ using GeometricAlgebra.SymbolicUtils
 	end
 
 	@testset "symbolic algebra" begin
-		@test b + 2m + π*mm isa Multivector
+		@test b + 2kv + π*mv isa Multivector
 		@test grade(b^2) == 0
-		@test m*5mm isa Multivector
-		@test 1 + m isa Multivector
+		@test kv*5mv isa Multivector
+		@test 1 + kv isa Multivector
 
-		@test m.^(0:3) isa Vector{<:AbstractMultivector}
+		@test kv.^(0:3) isa Vector{<:AbstractMultivector}
 
-		@test iszero(m∧m)
-		@test b∧m∧mm isa Multivector
+		@test iszero(kv∧kv)
+		@test b∧kv∧mv isa Multivector
 	end
 
 end

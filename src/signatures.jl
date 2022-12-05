@@ -146,7 +146,8 @@ Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature,
 struct MetricWithStorage{Sig,S} end
 dimension(::MetricWithStorage{Sig}) where {Sig} = dimension(Sig)
 basis_vector_norm(::MetricWithStorage{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
-componentstype(::MetricWithStorage{Sig,S}, N, T) where {Sig,S<:StaticVector} = S{N,T}
+componentstype(::MetricWithStorage{Sig,S}, N, T) where {Sig,S<:StaticVector} = T <: Number ? S{N,T} : Vector{T}
+componentstype(::MetricWithStorage{Sig,<:MVector}, N, T) where {Sig} = isbitstype(T) ? MVector{N,T} : Vector{T} # MVectors only support setindex! for isbits types
 componentstype(::MetricWithStorage{Sig,SparseVector}, N, T) where {Sig} = SparseVector{T}
 function show_signature(io, ::MetricWithStorage{Sig,S}) where {Sig,S}
 	show_signature(io, Sig)

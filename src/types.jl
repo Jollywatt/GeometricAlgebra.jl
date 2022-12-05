@@ -227,6 +227,11 @@ function unify_grades(dim, k)
 	length(k) == 1 && return first(k)
 	isbits(k) ? k : Tuple(k)
 end
+function unify_grades(dim, k::OrdinalRange)
+	lo, hi = max(0, minimum(k)), min(dim, maximum(k))
+	step(k) == 1 && return lo:hi
+	lo:step(k):hi
+end
 function unify_grades(dim, p, q)
 	p = unify_grades(dim, p)
 	q = unify_grades(dim, q)
@@ -311,6 +316,7 @@ function grade(a::Multivector{Sig}, k::Integer) where {Sig}
 end
 
 function grade(a::Multivector{Sig}, K) where {Sig}
+	K = unify_grades(dimension(Sig), K)
 	Multivector{Sig,K}(vcat([grade(a, k).comps for k in K]...))
 end
 

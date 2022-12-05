@@ -49,11 +49,13 @@ Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
 
 #= Addition =#
 
-function add!(a::Multivector, b::BasisBlade)
-	i = componentindex(a, b)
-	isnothing(i) || (a.comps[i] += b.coeff)
+function add!(a::Multivector, bits::Unsigned, coeff)
+	i = componentindex(a, bits)
+	isnothing(i) || (a.comps[i] += coeff)
 	a
 end
+
+add!(a::Multivector, b::BasisBlade) = add!(a, bitsof(b), b.coeff)
 
 function add!(a::Multivector, b::Multivector)
 	a.comps .+= grade(b, grade(a)).comps
@@ -88,15 +90,11 @@ Base.:-(a::Scalar, b::AbstractMultivector) = add_scalar(-b, a)
 
 #= Geometric Multiplication =#
 
-# compute multivector type suitable to represent the result of f(a, b)
-# leaves eltype/storage type parameters variable
-
 """
 	a * b
 	geometric_prod(a, b)
 
 Geometric product of multivectors.
-
 """
 geometric_prod(a::Scalar, b::Scalar) = a*b
 geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
@@ -113,8 +111,7 @@ function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig
 	c = zero(resulting_multivector_type(geometric_prod, a, b))
 	for (abits::UInt, acoeff) ∈ nonzero_components(a), (bbits::UInt, bcoeff) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-		i = componentindex(c, bits)
-		c = setindex!!(c, c.comps[i] + factor*(acoeff*bcoeff), i)
+		add!(c, bits, factor*(acoeff*bcoeff))
 	end
 	c
 end

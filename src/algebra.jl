@@ -44,6 +44,8 @@ Base.:/(a::AbstractMultivector, b::Scalar) = a*inv(promote_to(eltype(a), b))
 Base.:\(a::Scalar, b::AbstractMultivector) = inv(promote_to(eltype(b), a))*b
 
 Base.://(a::AbstractMultivector, b::Scalar) = a*(one(b)//b)
+Base.://(a::Scalar, b::AbstractMultivector) = inv(b//a)
+Base.://(a::AbstractMultivector, b::AbstractMultivector) = a*(numberone(eltype(b))//b)
 
 
 
@@ -137,8 +139,23 @@ scalar_prod(a::Scalar, b::AbstractMultivector) = a*scalar(b)
 scalar_prod(a::BasisBlade{Sig,K}, b::BasisBlade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalar(a*b) : numberzero(promote_type(eltype(a), eltype(b)))
 scalar_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
-# TODO: this is a silly implementation
-scalar_prod(abc::AbstractMultivector{Sig}...) where {Sig} = scalar(*(abc...))
+function scalar_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+	s = zero(promote_type(eltype(a), eltype(b)))
+	for k in grade(a) ∩ grade(b)
+		s += scalar_prod(grade(a, k), grade(b, k))
+	end
+	s
+end
+
+function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
+	s = zero(promote_type(eltype(a), eltype(b)))
+	for (bits, a, b) in zip(componentbits(Multivector{Sig,K}), a.comps, b.comps)
+		s += geometric_square_factor(Sig, bits)*(a*b)
+	end
+	s
+end
+
+
 
 "$(@doc scalar_prod)"
 a ⊙ b = scalar_prod(a, b)

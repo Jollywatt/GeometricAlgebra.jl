@@ -161,7 +161,7 @@ julia> componentbits(3, 0:3) .|> UInt8 .|> bitstring
  "00000111"
 ```
 """
-componentbits(n, k) = vcat(collect.(bits_of_grade.(k, n))...)
+componentbits(n, k) = collect(Iterators.flatten(bits_of_grade.(k, n)))
 @generated componentbits(::Val{N}, ::Val{K}) where {N,K} = componentbits(N, K)
 
 

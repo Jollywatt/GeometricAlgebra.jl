@@ -242,6 +242,8 @@ If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⋅ b` is the
 Note that for scalars `a` and `b`, the inner product reduces to scalar multiplication,
 in contrast to some authors (see [^D02] for discussion).
 
+See also [`lcontract`](@ref) and [`rcontract`](@ref).
+
 [^D02]: Leo Dorst, "The Inner Products of Geometric Algebra", 2002. [doi:10.1007/978-1-4612-0089-5_2](https://dx.doi.org/10.1007/978-1-4612-0089-5_2)
 """
 inner(a, b) = graded_prod(abs∘-, a, b)
@@ -255,7 +257,7 @@ $(@doc inner)
 	a ⨼ b
 	lcontract(a, b)
 
-Left contraction of multivectors. See also [`rcontract`](@ref).
+Left contraction of multivectors. See also [`rcontract`](@ref) and [`inner`](@ref).
 
 Equivalent to [`graded_prod((p, q) -> q - p, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨼ b` is the grade ``q - p`` part of `a*b`.
@@ -269,7 +271,7 @@ lcontract(a, b) = graded_prod((-)∘-, a, b)
 	a ⨽ b
 	rcontract(a, b)
 
-Left contraction of multivectors. See also [`lcontract`](@ref).
+Left contraction of multivectors. See also [`lcontract`](@ref) and [`inner`](@ref).
 
 Equivalent to [`graded_prod(-, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨽ b` is the grade ``p - q`` part of `a*b`.
@@ -348,15 +350,10 @@ Reversion of a multivector.
 
 Reversion is an anti-automorphism defined by reversing
 the order of the geometric product: `~(a*b) == ~b * ~a`.
-For a `k`-vector, `~k == reversion_sign(k) == (-1)^(k*(k - 1)/2)`.
+For a `k`-vector `a`, the reversion is `reversion_sign(k)*a`
+where the sign is given by ``(-1)^{k(k - 1)/2}``.
 
-| `mod(k, 4)` | [`reversion_sign(k)`](@ref) |
-|:-----------:|:-------------------:|
-| ``0`` | ``+1`` |
-| ``1`` | ``+1`` |
-| ``2`` | ``-1`` |
-| ``3`` | ``-1`` |
-
+See also [`involution`](@ref) and [`clifford_conj`](@ref).
 """
 reversion(a) = graded_multiply(reversion_sign, a)
 
@@ -371,6 +368,8 @@ Involute of a multivector.
 
 Involution is an automorphism defined by reflecting through the origin:
 for homogeneous multivectors, `involution(a) == (-1)^grade(a)*a`.
+
+See also [`reversion`](@ref) and [`clifford_conj`](@ref).
 """
 involution(a) = graded_multiply(k -> (-1)^k, a)
 

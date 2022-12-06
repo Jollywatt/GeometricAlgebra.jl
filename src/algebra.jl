@@ -292,19 +292,6 @@ function power_with_scalar_square(a, a², p::Integer)
 	iseven(p) ? aⁿ*one(a) : aⁿ*a
 end
 
-function power_by_squaring(a::Multivector{Sig,S}, p::Integer) where {Sig,S}
-	Π = one(a)
-	aⁿ = a
-	while p > 0
-		if isone(p & 1)
-			Π *= aⁿ
-		end
-		aⁿ *= aⁿ
-		p >>= 1
-	end
-	Π
-end
-
 Base.:^(a::BasisBlade, p::Integer) = power_with_scalar_square(a, scalar(a*a), p)
 Base.literal_pow(::typeof(^), a::BasisBlade{Sig}, ::Val{2}) where {Sig} = BasisBlade{Sig,0}(0 => geometric_square_factor(Sig, bitsof(a))*a.coeff^2)
 
@@ -318,7 +305,7 @@ function Base.:^(a::Multivector{Sig,S}, p::Integer) where {Sig,S}
 	if isscalar(a²)
 		power_with_scalar_square(a, scalar(a²), p)
 	else
-		power_by_squaring(a, p)
+		Base.power_by_squaring(a, p)
 	end
 end
 

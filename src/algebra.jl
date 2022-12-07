@@ -322,7 +322,6 @@ graded_multiply(f, a::Scalar) = f(0)*a
 graded_multiply(f, a::BasisBlade) = f(grade(a))*a
 function graded_multiply(f, a::Multivector{Sig}) where Sig
 	comps = collect(a.comps)
-	dim = dimension(Sig)
 	for k ∈ grade(a)
 		comps[componentslice(a, k)] *= f(k)
 	end

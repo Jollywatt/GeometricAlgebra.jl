@@ -36,6 +36,7 @@ julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
  6 v34
 
 julia> exp(v)
+typeof(result) = Multivector{⟨-+++⟩, 0:2:4, Vector{Float64}}
 8-component Multivector{⟨-+++⟩, 0:2:4, Vector{Float64}}:
  1.18046
  0.818185 v12 + -0.141944 v13 + 0.153208 v23 + 1.076 v14 + 1.16194 v24 + 1.03866 v34

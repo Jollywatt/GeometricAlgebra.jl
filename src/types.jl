@@ -165,10 +165,20 @@ Base.eltype(::OrType{<:BasisBlade{Sig,K,T} where {Sig,K}}) where T = T
 Base.eltype(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = eltype(S)
 
 
+"""
+	grade(a)
+
+Grade(s) of a multivector `a`.
+
+The grade of a `BasisBlade{Sig,K}` or `Multivector{Sig,K}` is the second type parameter, `K`,
+which may be an integer (if `a` is homogeneous) or a collection (a range or tuple of grades).
+
+See also [`ishomogeneous`](@ref).
+"""
 grade(::OrType{<:BasisBlade{Sig,K}}) where {Sig,K} = K
 grade(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = K
 
-ishomogeneous(a::AbstractMultivector) = isone(length(grade(a)))
+ishomogeneous(a) = isone(length(grade(a)))
 
 
 bitsof(a::BasisBlade) = a.bits
@@ -298,13 +308,49 @@ Base.isone(a::BasisBlade) = iszero(grade(a)) && isone(a.coeff)
 Base.isone(a::Multivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comps[2:end])
 
 
-
-
+Base.iseven(a::AbstractMultivector) = all(iseven, grade(a))
+Base.isodd(a::AbstractMultivector) = all(isodd, grade(a))
 
 
 
 #= Indexing and Iteration =#
 
+"""
+	a[k]
+	grade(a::Multivector{Sig}, k) -> Multivector{Sig,k}
+
+Grade `k` part of a multivetor `a`. Returns a zero `k`-vector if `k ∉ grade(a)`.
+
+Multiple grades may be given with a range or tuple. The "grades" `+` and `-`
+may be used as shortcuts for the even and odd parts, respectively.
+
+# Examples
+```jldoctest
+julia> mv = Multivector{Cl(2,1), 0:4}(1:8)
+8-component Multivector{Cl(2,1), 0:4, UnitRange{Int64}}:
+ 1
+ 2 v1 + 3 v2 + 4 v3
+ 5 v12 + 6 v13 + 7 v23
+ 8 v123
+
+julia> grade(mv, 2)
+3-component Multivector{Cl(2,1), 2, UnitRange{Int64}}:
+ 5 v12
+ 6 v13
+ 7 v23
+
+julia> grade(mv, (0, 3))
+2-component Multivector{Cl(2,1), (0, 3), Vector{Int64}}:
+ 1
+ 8 v123
+
+julia> mv[+] # even part
+4-component Multivector{Cl(2,1), 0:2:2, Vector{Int64}}:
+ 1
+ 5 v12 + 6 v13 + 7 v23
+```
+
+"""
 grade(a::BasisBlade, k) = add!(zero(similar(Multivector{signature(a),k}, a)), a)
 
 function grade(a::Multivector{Sig}, k::Integer) where {Sig}
@@ -320,9 +366,12 @@ function grade(a::Multivector{Sig}, K) where {Sig}
 	Multivector{Sig,K}(vcat([grade(a, k).comps for k in K]...))
 end
 
+grade(a::Multivector, ::typeof(+)) = grade(a, 0:2:dimension(a))
+grade(a::Multivector, ::typeof(-)) = grade(a, 1:2:dimension(a))
 
 Base.getindex(a::AbstractMultivector, k) = grade(a, k)
 
+eachgrade(a::Multivector) = (Multivector{signature(a),k}(view(a.comps, componentslice(a, k))) for k in grade(a))
 
 scalar(a::BasisBlade{Sig,0}) where {Sig} = a.coeff
 scalar(a::BasisBlade) = numberzero(eltype(a))

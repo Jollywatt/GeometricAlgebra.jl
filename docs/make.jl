@@ -67,3 +67,7 @@ if "deploy" in ARGS
 elseif "make" in ARGS
     make()
 end
+
+function cleardocs!(mod, name)
+    Docs.meta(mod)[Docs.Binding(mod, name)] = Docs.MultiDoc()
+end

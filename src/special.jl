@@ -136,7 +136,13 @@ infnorm(a::Multivector) = maximum(abs.(a.comps))
 twonorm(a::BasisBlade) = abs(a.coeff)
 twonorm(a::Multivector) = sqrt(sum(abs2.(a.comps)))
 
-function exp_series(a::Multivector{Sig,C}) where {Sig,C}
+function resulting_grades(::typeof(exp), dim, k)
+	# both the scalar+pseudoscalar and even subalgebras are closed under +, *, exp
+	k ⊆ (0, dim) && return (0, dim)
+	all(iseven, k) ? (0:2:dim) : 0:dim
+end
+
+function exp_series(a::Multivector)
 	# Series convergence is better when `a` is not too large.
 	# Use the fact that ``exp(λa) = exp(λ)exp(a/p)^p`` and choose `p`
 	# so that the 2-norm of `a` is of order one.
@@ -149,14 +155,13 @@ function exp_series(a::Multivector{Sig,C}) where {Sig,C}
 	a /= p
 
 	term = one(a)
-	result = copy(term)
+	result = grade(term, resulting_grades(exp, dimension(a), grade(a)))
 
 	max_iters = 200
 	for i in 1:max_iters
 		term *= a/i
 		infnorm(term) < eps(real(eltype(term))) && break
-		# add!(result, term)
-		result += term
+		add!(result, term)
 	end
 
 	exp(λ)result^p

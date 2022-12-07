@@ -107,7 +107,10 @@ function geometric_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig}
 	BasisBlade{Sig}(bits => factor*(a.coeff*b.coeff))
 end
 
-resulting_grades(::typeof(geometric_prod), dim, p::Integer, q::Integer) = abs(p - q):2:min(p + q, dim)
+function resulting_grades(::typeof(geometric_prod), dim, p::Integer, q::Integer)
+	dim ∈ (p, q) && return dim - min(p, q)
+	abs(p - q):2:min(p + q, dim)
+end
 
 function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(resulting_multivector_type(geometric_prod, a, b))

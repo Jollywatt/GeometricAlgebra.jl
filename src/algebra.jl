@@ -469,10 +469,6 @@ julia> u ∧ hodgedual(u), u ⊙ ~u
 function hodgedual end
 
 
-sortgrade(k::Integer) = k
-sortgrade(k) = sort(k)
-sortgrade(k::Tuple) = Tuple(sort!(collect(k)))
-
 for (name, signrule) in [
 		:flipdual => (sig, bits) -> 1,
 		:poincaredual => (sig, bits) -> sign_from_swaps(bits, bits_dual(dimension(sig), bits)),
@@ -484,7 +480,7 @@ for (name, signrule) in [
 		end
 
 		function $name(a::Multivector{Sig,K}) where {Sig,K}
-			K′ = sortgrade(dimension(Sig) .- K)
+			K′ = unify_grades(dimension(Sig), dimension(Sig) .- K)
 			Multivector{Sig,K′}(reverse($signrule.(Ref(Sig), componentbits(a)) .* a.comps))
 		end
 	end

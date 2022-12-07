@@ -234,13 +234,13 @@ julia> unify_grades(4, (0, 4), 3) # not worth having a special type for grades (
 """
 function unify_grades(dim, k)
 	k = (0:dim) ∩ k
-	length(k) == 1 && return first(k)
-	isbits(k) ? k : Tuple(k)
+	length(k) == 1 ? first(k) : Tuple(k)
 end
 function unify_grades(dim, k::OrdinalRange)
 	lo, hi = max(0, minimum(k)), min(dim, maximum(k))
-	step(k) == 1 && return lo:hi
-	lo:step(k):hi
+	lo == hi && return lo
+	Δ = abs(step(k))
+	Δ == 1 ? (lo:hi) : (lo:Δ:hi)
 end
 function unify_grades(dim, p, q)
 	p = unify_grades(dim, p)
@@ -249,6 +249,7 @@ function unify_grades(dim, p, q)
 	p ⊆ q && return q
 	p ⊇ q && return p
 	
+	p isa Integer && q isa Integer && minmax(p, q) == (0, dim) && return (0, dim)
 	all(iseven, p) && all(iseven, q) && return 0:2:dim
 	
 	0:dim

@@ -213,24 +213,12 @@ largest_type(::BasisBlade, ::BasisBlade) = BasisBlade
 #= Grade inference =#
 
 """
-	unify_grades(dim, p, q)
+	unify_grades(dim, k)
 
-Return grade(s) containing both `p` and `q`.
+Canonicalize the grade type parameter `k`.
 
-In order to reduce the number of possible `Multivector` grade parameters each triggering
-separate compilations, the result may be larger than the union `p ∪ q`.
-
-# Examples
-```jldoctest; setup = :(using GeometricAlgebra: unify_grades)
-julia> unify_grades(4, 0:4, 2)
-0:4
-
-julia> unify_grades(4, 0, 2) # even multivectors are worth representing specifically
-0:2:4
-
-julia> unify_grades(4, (0, 4), 3) # not worth having a special type for grades (0, 3, 4)
-0:4
-```
+Returns a subset of `0:dim`, while attempting to normalize equivalent
+representations, such as `0:1:3 => 0:3` or `(3, 0) => (0, 3)`.
 """
 function unify_grades(dim, k)
 	k = (0:dim) ∩ k
@@ -242,14 +230,41 @@ function unify_grades(dim, k::OrdinalRange)
 	Δ = abs(step(k))
 	Δ == 1 ? (lo:hi) : (lo:Δ:hi)
 end
+"""
+	unify_grades(dim, p, q, ...)
+
+Return a suitable grade type parameter which contains the grades `p ∪ q ∪ ...`.
+
+In order to reduce the number of possible type parameters,
+the result may be larger than the exact union.
+Specifically, when combining different grades, `unify_grades` will try to return
+the narrowest grade(s) out of:
+ - an integer `k ∈ 0:dim` for homogeneous elements (fewest components)
+ - `(0, dim)`, for elements in the scalar-pseudoscalar subalgebra
+ - `0:2:dim`, for elements in the even subalgebra
+ - `0:dim`, for general inhomogeneous elements (most components)
+
+# Examples
+```jldoctest ; setup = :(using GeometricAlgebra: unify_grades)
+julia> unify_grades(4, 0:4, 2, 7)
+0:4
+
+julia> unify_grades(4, 0, 2) # even multivectors are worth representing specifically
+0:2:4
+
+julia> unify_grades(4, 0, 3) # not worth having a specific type for grades (0, 3) in 4 dims
+0:4
+```
+"""
 function unify_grades(dim, p, q)
 	p = unify_grades(dim, p)
 	q = unify_grades(dim, q)
 
 	p ⊆ q && return q
 	p ⊇ q && return p
+
+	p ⊆ (0, dim) ⊇ q && return (0, dim)
 	
-	p isa Integer && q isa Integer && minmax(p, q) == (0, dim) && return (0, dim)
 	all(iseven, p) && all(iseven, q) && return 0:2:dim
 	
 	0:dim
@@ -284,7 +299,8 @@ end
 """
 	resulting_multivector_type(f, a, b, ...)
 
-Multivector type with grade(s) and storage type appropriate for representing `f(a, b)`.
+Return a `Multivector{Sig,K,S}` type with parameters (signature `S`, grade(s) `K` and storage type `S`)
+appropriate for representing the result of `f(a, b)`.
 """
 function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	dim = dimension(Sig)

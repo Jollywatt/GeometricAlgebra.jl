@@ -4,8 +4,9 @@
 Multivectors with purely symbolic components have SymbolicUtils.Symbolic eltype.
 For sym::SymbolicUtils.Sym, iszero(sym) is a symbolic expression “sym == 0”,
 but we generally want `iszero(sym) == false` because it *could* be non-zero.
+For this purpose, we have `isnumberzero` and friends.
 Furthermore, we want to support eltypes of `Any` (e.g., when combining a symbolic
-multivector with eltype `Int`).
+multivector with eltype `Int`), so need `numberzero(::Any)` to work.
 =#
 
 

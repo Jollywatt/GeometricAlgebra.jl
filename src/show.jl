@@ -9,7 +9,8 @@ end
 
 """
 Display blade with parentheses surrounding coefficient if necessary.
-	
+
+# Example
 ```jldoctest
 julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(0b1 => 1 + im))
 (1+1im) x
@@ -81,7 +82,7 @@ end
 
 
 """
-Display multivector components in in a column or inline, optionally grouping by grade.
+Display multivector components in a column or inline, optionally grouping by grade.
 
 Parameters:
 - `inline::Bool`: print on one line (default `true`)
@@ -91,6 +92,7 @@ Parameters:
 - `showzeros::Bool`: whether to omit zero components from display
 - `indent::Integer`: indent amount
 
+# Examples
 ```jldoctest
 julia> a = Multivector{2,0:2}((1:4) .^ 2);
 

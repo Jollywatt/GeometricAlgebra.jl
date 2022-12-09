@@ -1,6 +1,6 @@
 using GeometricAlgebra:
 	bits_of_grade,
-	scalar
+	via_matrix_repr
 
 @testset "inverses" begin
 	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
@@ -56,4 +56,29 @@ end
 			@test sin(a) ≈ sin(asin(sin(a)))
 		end
 	end
+end
+
+@testset "compact representations" begin
+	# if grades fit in a smaller subalgebra,
+	# the restrict to that subalgebra
+
+	for a in [
+		Multivector{4,0}([7])
+		Multivector{4,(0, 4)}([4, 5])
+		Multivector{4,0:2:4}(fill(1, 8))
+		Multivector{4,0:4}(fill(1, 16))
+	]
+
+		@test grade(sqrt(a)) === grade(a)
+		@test grade(exp(a)) === grade(a)
+		@test grade(log(a)) === grade(a)
+		@test grade(sin(a)) === grade(a)
+	end
+
+	m02 = Multivector{4,(0,2)}(1:7)
+
+	@test sqrt(m02) |> grade === 0:2:4
+	@test exp(m02) |> grade === 0:2:4
+
+	@test via_matrix_repr(sin, Multivector{3,3}([1])) |> grade === (0, 3)
 end

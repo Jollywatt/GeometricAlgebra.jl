@@ -14,9 +14,10 @@ export flipdual, hodgedual, poincaredual
 export vector_repr, matrix_repr
 export Cl
 
+include("utils.jl")
 include("bits.jl")
 include("types.jl")
-include("utils.jl")
+include("grades.jl")
 include("signatures.jl")
 include("algebra.jl")
 include("special.jl")

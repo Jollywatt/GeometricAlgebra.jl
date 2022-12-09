@@ -228,7 +228,7 @@ appropriate for representing the result of `f(a, b)`.
 """
 function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	dim = dimension(Sig)
-	k = unify_grades(dim, resulting_grades(f, dim, grade.(abc)...))
+	k = promote_grades(dim, resulting_grades(f, dim, grade.(abc)...))
 	similar(Multivector{Sig,k}, abc...)
 end
 

@@ -2,7 +2,7 @@
 
 Base.:(==)(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where Sig = bitsof(a) == bitsof(b) ? a.coeff == b.coeff : iszero(a) && iszero(b)
 function Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	all(grade(a, k).comps == grade(b, k).comps for k in unify_grades(dimension(Sig), grade(a), grade(b)))
+	all(grade(a, k).comps == grade(b, k).comps for k in promote_grades(a, b))
 end
 
 Base.:(==)(a::AbstractMultivector, b::Number) = iszero(b) ? iszero(a) : isscalar(a) && scalar(a) == b
@@ -18,7 +18,7 @@ isapproxzero(a::Multivector; kwargs...) = isapproxzero(a.comps; kwargs...)
 
 Base.isapprox(a::BasisBlade{Sig}, b::BasisBlade{Sig}; kwargs...) where Sig = bitsof(a) == bitsof(b) ? isapprox(a.coeff, b.coeff; kwargs...) : isapproxzero(a) && isapproxzero(b)
 function Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}; kwargs...) where {Sig}
-	k = unify_grades(dimension(Sig), grade(a), grade(b))
+	k = promote_grades(a, b)
 	isapprox(grade(a, k).comps, grade(b, k).comps; kwargs...)
 end
 
@@ -64,7 +64,7 @@ function add!(a::Multivector, b::Multivector)
 end
 
 
-resulting_grades(::typeof(+), dim, pq...) = unify_grades(dim, pq...)
+resulting_grades(::typeof(+), dim, pq...) = promote_grades(dim, pq...)
 
 function Base.:+(abc::AbstractMultivector{Sig}...) where {Sig}
 	Σ = zero(resulting_multivector_type(+, abc...))
@@ -483,7 +483,7 @@ for (name, signrule) in [
 		end
 
 		function $name(a::Multivector{Sig,K}) where {Sig,K}
-			K′ = unify_grades(dimension(Sig), dimension(Sig) .- K)
+			K′ = promote_grades(dimension(Sig), dimension(Sig) .- K)
 			Multivector{Sig,K′}(reverse($signrule.(Ref(Sig), componentbits(a)) .* a.comps))
 		end
 	end

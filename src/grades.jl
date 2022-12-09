@@ -107,8 +107,6 @@ function Base.getindex(a::Multivector, k)
 	"""))
 	Multivector{signature(a),k}(view(a.comps, componentslice(a, k)))
 end
-Base.getindex(a::AbstractMultivector, k) = grade(a, k)
-
 
 
 

@@ -208,6 +208,12 @@ constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
 Base.copy(a::Multivector) = constructor(a)(copy(a.comps))
 
 
+BasisBlade(a::BasisBlade) = a
+Multivector(a::Multivector) = a
+Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = add!(zero(similar(Multivector{Sig,K}, a)), a)
+
+
+
 function Base.similar(M::Type{Multivector{Sig,K}}, abc::OrType{<:AbstractMultivector}...) where {Sig,K}
 	T = promote_type(eltype.(abc)...)
 	C = componentstype(Sig, ncomponents(M), T)
@@ -227,9 +233,7 @@ function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}..
 end
 
 
-BasisBlade(a::BasisBlade) = a
-Multivector(a::Multivector) = a
-Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = add!(zero(similar(Multivector{Sig,K}, a)), a)
+
 
 
 Base.zero(::OrType{<:BasisBlade{Sig,K,T}}) where {Sig,K,T} = BasisBlade{Sig}(0 => numberzero(T))
@@ -242,13 +246,8 @@ Base.iszero(a::Multivector) = all(isnumberzero, a.comps)
 Base.isone(a::BasisBlade) = iszero(grade(a)) && isone(a.coeff)
 Base.isone(a::Multivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comps[2:end])
 
-
 Base.iseven(a::AbstractMultivector) = all(iseven, grade(a))
 Base.isodd(a::AbstractMultivector) = all(isodd, grade(a))
-
-
-
-#= Indexing and Iteration =#
 
 scalar(a::BasisBlade{Sig,0}) where {Sig} = a.coeff
 scalar(a::BasisBlade) = numberzero(eltype(a))
@@ -258,15 +257,17 @@ isscalar(a::Number) = true
 isscalar(a::BasisBlade) = iszero(grade(a)) || isnumberzero(a)
 function isscalar(a::Multivector)
 	if 0 ∈ grade(a)
-		if first(grade(a)) == 0
-			all(isnumberzero, a.comps[2:end])
-		else
-			error("not implemented")
-		end
+		iszero(a[setdiff(grade(a), 0)])
 	else
 		iszero(a)
 	end
 end
+
+
+
+
+#= Indexing and Iteration =#
+
 
 blades(a::BasisBlade) = [a]
 blades(a::Multivector{Sig}) where {Sig} = [BasisBlade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.comps)]

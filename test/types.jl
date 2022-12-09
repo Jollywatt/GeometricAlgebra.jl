@@ -2,9 +2,7 @@ using GeometricAlgebra:
 	isscalar,
 	componentbits,
 	componentindex,
-	componentslice,
-	unify_grades,
-	resulting_multivector_type
+	componentslice
 using GeometricAlgebra.StaticArrays
 using GeometricAlgebra.SparseArrays
 
@@ -24,6 +22,7 @@ using GeometricAlgebra.SparseArrays
 		@test iszero(zero(T))
 		@test isone(one(T))
 		@test isscalar(zero(T))
+		@test isscalar(one(T))
 	end
 end
 
@@ -37,19 +36,5 @@ end
 			@test length(bits) == binomial(n, k)
 			@test all(count_ones.(bits) .== k)
 		end
-	end
-end
-
-@testset "grade inference" begin
-	for n in 0:4,
-		p in [0:n..., 0:n, 0:2:n, n > 0 ? (0, n) : 0],
-		q in [0:n..., 0:n, 0:2:n, n > 0 ? (0, n) : 0]
-
-		pq = unify_grades(n, p, q)
-		@test p ⊆ pq ⊇ q
-		@test length(pq) != 1 || pq isa Integer
-
-		a = resulting_multivector_type(+, Multivector{n,p}, Multivector{n,q})
-		@test p ⊆ grade(a) ⊇ q
 	end
 end

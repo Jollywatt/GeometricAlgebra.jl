@@ -69,6 +69,13 @@ Non-zero grade(s) resulting from the application of `combine` on `dim`-dimension
 resulting_grades(combine, dim, P, Q) = unify_grades(dim, (resulting_grades(combine, dim, p::Integer, q::Integer) for p in P, q in Q)...)
 
 
+# widen grades k to the next narrowest subalgebra:
+# scalars ⊂ scalar-pseudoscalar ⊂ even subalgebra ⊂ full algebra
+function resulting_grades(::Val{:subalgebra}, dim, k)
+	k == 0 && return 0
+	k ⊆ (0, dim) && return (0, dim)
+	all(iseven, k) ? (0:2:dim) : 0:dim
+end
 
 
 
@@ -146,7 +153,7 @@ julia> grade(mv, +) # only even grades
 
 """
 function grade(a::BasisBlade, k)
-	k = unify_grades(dimension(Sig), k)
+	k = unify_grades(dimension(a), k)
 	T = similar(Multivector{signature(a),k}, a)
 	add!(zero(T), a)
 end

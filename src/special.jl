@@ -43,24 +43,23 @@ julia> matrix_repr(v1*v2) == matrix_repr(v1)matrix_repr(v2)
 true
 ```
 """
-matrix_repr(a::BasisBlade) = matrix_repr(Multivector(a))
-function matrix_repr(a::Multivector)
-	a′ = grade(a, 0:dimension(a))
-	N, T = ncomponents(a′), eltype(a)
+function matrix_repr(a, k=0:dimension(a))
+	a = grade(a, k)
+	N, T = ncomponents(a), eltype(a)
 	mat = Matrix{numberorany(T)}(undef, N, N)
 	fill!(mat, numberzero(T))
-	for (i, b) ∈ enumerate(basis(signature(a), 0:dimension(a)))
-		mat[:,i] = Multivector(a′*b).comps
+	for (i, b) ∈ enumerate(basis(signature(a), grade(a)))
+		mat[:,i] = Multivector(a*b).comps
 	end
 	mat
 end
 
 function via_matrix_repr(f::Function, a::AbstractMultivector)
-	m = matrix_repr(a)
+	k = resulting_grades(Val(:subalgebra), dimension(a), grade(a))
+	m = matrix_repr(a, k)
 	m′ = f(m)
-	Multivector{signature(a),0:dimension(a)}(m′[:,1])
+	Multivector{signature(a),k}(m′[:,1])
 end
-
 
 
 function inv_matrix_method(a::Multivector)
@@ -136,11 +135,6 @@ infnorm(a::Multivector) = maximum(abs.(a.comps))
 twonorm(a::BasisBlade) = abs(a.coeff)
 twonorm(a::Multivector) = sqrt(sum(abs2.(a.comps)))
 
-function resulting_grades(::typeof(exp), dim, k)
-	# both the scalar+pseudoscalar and even subalgebras are closed under +, *, exp
-	k ⊆ (0, dim) && return (0, dim)
-	all(iseven, k) ? (0:2:dim) : 0:dim
-end
 
 function exp_series(a::Multivector)
 	# Series convergence is better when `a` is not too large.
@@ -155,7 +149,7 @@ function exp_series(a::Multivector)
 	a /= p
 
 	term = one(a)
-	result = grade(term, resulting_grades(exp, dimension(a), grade(a)))
+	result = grade(term, resulting_grades(Val(:subalgebra), dimension(a), grade(a)))
 
 	max_iters = 200
 	for i in 1:max_iters

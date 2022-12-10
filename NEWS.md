@@ -13,6 +13,8 @@ This simplifies and generalises the types: only one parametric type is needed, a
 
 	for more efficient representations.
 
+* Remove `vector_repr` and make `matrix_repr` allow subspace representations.
+
 ## v0.1.2
 
 * Use `Symbolics.jl` to optimise geometric and derived products by performing computations algebraically and reusing the results.

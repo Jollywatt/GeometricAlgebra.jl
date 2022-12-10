@@ -1,43 +1,34 @@
 #= Multiplicative Inverses =#
 
 """
-	vector_repr(a::AbstractMultivector)
+	matrix_repr(a::AbstractMultivector, k=0:dim)
 
-Vector representation of a multivector.
-See also [`matrix_repr`](@ref).
+Matrix representation of the grade `k` parts of a multivector.
 
-# Examples
-```jldoctest
-julia> @basis 2
-[ Info: Defined basis blades v, v1, v2, v12
+By default, the full ``2^d × 2^d`` linear representation is used in ``d`` dimensions.
+Smaller representations can be used for elements in
 
-julia> vector_repr(v1*v2) == matrix_repr(v1)vector_repr(v2)
-true
-```
-"""
-vector_repr(a::AbstractMultivector) = collect(grade(a, 0:dimension(a)).comps)
+- the even subalgebra, `k=0:2:dim`
+- the scalar-pseudoscalar subalgebra, `k=(0, dim)`
 
-"""
-	matrix_repr(a::AbstractMultivector)
-
-Matrix representation of a multivector.
-
-This is an injective homomorphism from the geometric algebra
-to a matrix subalgebra (i.e., it is linear, and preserves algebraic products).
-
-See also [`vector_repr`](@ref).
+by restricting `k` to those grades.
 
 # Examples
 ```jldoctest
 julia> @basis 2
 [ Info: Defined basis blades v, v1, v2, v12
 
-julia> matrix_repr(v1)
+julia> matrix_repr(v + 7v12)
 4×4 Matrix{Int64}:
- 0  1  0  0
- 1  0  0  0
- 0  0  0  1
- 0  0  1  0
+ 1   0  0  -7
+ 0   1  7   0
+ 0  -7  1   0
+ 7   0  0   1
+
+julia> matrix_repr(v + 7v12, (0, 2))
+2×2 Matrix{Int64}:
+ 1  -7
+ 7   1
 
 julia> matrix_repr(v1*v2) == matrix_repr(v1)matrix_repr(v2)
 true
@@ -46,8 +37,7 @@ true
 function matrix_repr(a, k=0:dimension(a))
 	a = grade(a, k)
 	N, T = ncomponents(a), eltype(a)
-	mat = Matrix{numberorany(T)}(undef, N, N)
-	fill!(mat, numberzero(T))
+	mat = fill(numberzero(T), N, N)
 	for (i, b) ∈ enumerate(basis(signature(a), grade(a)))
 		mat[:,i] = Multivector(a*b).comps
 	end

@@ -49,7 +49,7 @@ end
 	m = zero(Multivector{4,0:2:4,Vector{Int}})
 
 	m[2].comps .= 1:6
-	@testset m.comps == [0; 1:6; 0]
+	@test m.comps == [0; 1:6; 0]
 end
 
 @testset "grades()" begin
@@ -62,7 +62,6 @@ end
 
 	m = Multivector{4, 0:4}(ones(16))
 
-	@test grade(m, +) + grade(m
-		, -) == m
+	@test grade(m, +) + grade(m, -) == m
 	@test iszero(grade(m, 100))
 end

@@ -143,12 +143,12 @@ julia> grade(mv, 2)
  7 v23
 
 julia> grade(mv, (0, 3))
-2-component Multivector{Cl(2,1), (0, 3), Vector{Int64}}:
+2-component Multivector{Cl(2,1), (0, 3), SubArray{Int64, 1, UnitRange{Int64}, Tuple{Vector{Int64}}, false}}:
  1
  8 v123
 
 julia> grade(mv, +) # only even grades
-4-component Multivector{Cl(2,1), 0:2:2, Vector{Int64}}:
+4-component Multivector{Cl(2,1), 0:2:2, SubArray{Int64, 1, UnitRange{Int64}, Tuple{Vector{Int64}}, false}}:
  1
  5 v12 + 6 v13 + 7 v23
 ```

@@ -1,6 +1,7 @@
 using GeometricAlgebra:
 	bits_of_grade,
-	via_matrix_repr
+	via_matrix_repr,
+	inv_matrix_method
 
 @testset "inverses" begin
 	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
@@ -16,9 +17,10 @@ using GeometricAlgebra:
 			dim,
 			mixed_sig[1:dim],
 		], trials in 1:5
-			a = Multivector{sig,1}(rand(2^dim))
-			@test inv(a)*a ≈ 1 rtol=1e-6
-			@test 1 ≈ inv(a)*a rtol=1e-6
+			a = Multivector{sig,0:dim}(rand(2^dim))
+			@test a/a ≈ 1 rtol=1e-6
+			@test 1 ≈ a\a rtol=1e-6
+			@test inv_matrix_method(inv(a)) ≈ a rtol=1e-6
 		end
 	end
 end

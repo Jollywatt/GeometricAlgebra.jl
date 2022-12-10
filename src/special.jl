@@ -53,10 +53,12 @@ end
 
 
 function inv_matrix_method(a::Multivector)
-	A = matrix_repr(a)
-	id = Multivector(one(a)).comps
+	k = resulting_grades(Val(:subalgebra), dimension(a), grade(a))
+	A = matrix_repr(a, k)
+	id = zeros(size(A, 1))
+	id[1] = 1
 	A⁻¹ = A\id
-	Multivector{signature(a)}(A⁻¹)
+	Multivector{signature(a),k}(A⁻¹)
 end
 
 function inv_formula_method(a::Multivector)

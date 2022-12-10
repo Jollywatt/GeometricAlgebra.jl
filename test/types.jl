@@ -38,3 +38,20 @@ end
 		end
 	end
 end
+
+@testset "iseven/isodd" begin
+	@test iseven(BasisBlade{3}(0b11 => 42))
+	@test isodd(BasisBlade{3}(0b111 => 42))
+	@test iseven(Multivector{4,0:2:4}(ones(8)))
+	@test isodd(Multivector{4,1:2:4}(ones(8)))
+
+	m = Multivector{3,0:3}(ones(8))
+	@test !iseven(m) && !isodd(m)
+end
+
+@testset "scalar" begin
+	@test scalar(BasisBlade{3}(0 => 42)) == 42
+	@test scalar(BasisBlade{3}(0b111 => 42)) == 0
+	@test scalar(Multivector{3,0:3}(1:8)) == 1
+	@test scalar(Multivector{3,3}([42])) == 0
+end

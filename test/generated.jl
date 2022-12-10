@@ -1,7 +1,8 @@
 using GeometricAlgebra:
 	zeroslike,
 	oneslike,
-	symbolic_multivector
+	symbolic_multivector,
+	SingletonVector
 using GeometricAlgebra.SymbolicUtils
 
 
@@ -38,4 +39,9 @@ using GeometricAlgebra.SymbolicUtils
 		@test b∧kv∧mv isa Multivector
 	end
 
+end
+
+@testset "SingletonVector" begin
+	@test collect(SingletonVector(42, 5, 2)) == [0, 42, 0, 0, 0]
+	@test size(SingletonVector(42, 5, 10_000)) == (10_000,)
 end

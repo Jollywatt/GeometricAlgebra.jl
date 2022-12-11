@@ -56,7 +56,7 @@ function show_multivector_row(io::IO, @nospecialize(a); indent=0, compact=false,
 end
 
 function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true, compact=false)
-	iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
+	!showzeros && iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
 	comps = zip(componentbits(a), a.comps)
 	if !showzeros
@@ -64,6 +64,8 @@ function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true
 	end
 
 	comps = collect(comps)
+
+	isempty(comps) && return print(io, " "^indent, a.comps)
 
 	alignments = Base.alignment.(Ref(io), last.(comps))
 	L = maximum(first.(alignments))

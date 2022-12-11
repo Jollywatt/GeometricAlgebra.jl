@@ -338,5 +338,6 @@ function cayleytable(io::IO, mvs::AbstractVector, op=*; separators=:auto, title=
 		row_label_column_title = string(title),
 		vlines = separators,
 		hlines = separators,
+		crop = :horizontal,
 	)
 end

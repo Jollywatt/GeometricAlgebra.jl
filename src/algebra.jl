@@ -112,7 +112,7 @@ function resulting_grades(::typeof(geometric_prod), dim, p::Integer, q::Integer)
 	abs(p - q):2:min(p + q, dim)
 end
 
-function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+@symbolic_optim function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(resulting_multivector_type(geometric_prod, a, b))
 	for (abits::UInt, acoeff) ∈ nonzero_components(a), (bbits::UInt, bcoeff) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
@@ -120,8 +120,6 @@ function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig
 	end
 	c
 end
-
-geometric_prod(a, b) = multivector_eval(_geometric_prod, a, b)
 
 Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
@@ -142,18 +140,18 @@ scalar_prod(a::Scalar, b::AbstractMultivector) = a*scalar(b)
 scalar_prod(a::BasisBlade{Sig,K}, b::BasisBlade{Sig,K}) where {Sig,K} = bitsof(a) == bitsof(b) ? scalar(a*b) : numberzero(promote_type(eltype(a), eltype(b)))
 scalar_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
-function scalar_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	s = zero(promote_type(eltype(a), eltype(b)))
-	for k in grade(a) ∩ grade(b)
-		s += scalar_prod(grade(a, k), grade(b, k))
+function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
+	s = numberzero(promote_type(eltype(a), eltype(b)))
+	for (bits, a, b) in zip(componentbits(Multivector{Sig,K}), a.comps, b.comps)
+		s += geometric_square_factor(Sig, bits)*(a*b)
 	end
 	s
 end
 
-function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
-	s = zero(promote_type(eltype(a), eltype(b)))
-	for (bits, a, b) in zip(componentbits(Multivector{Sig,K}), a.comps, b.comps)
-		s += geometric_square_factor(Sig, bits)*(a*b)
+@symbolic_optim function scalar_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+	s = numberzero(promote_type(eltype(a), eltype(b)))
+	for k in grade(a) ∩ grade(b)
+		s += scalar_prod(grade(a, k), grade(b, k))
 	end
 	s
 end
@@ -197,7 +195,7 @@ end
 
 resulting_grades(::Tuple{typeof(graded_prod),GradeSelector}, dim, p::Integer, q::Integer) where {GradeSelector} = GradeSelector.instance(p, q)
 
-function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+@symbolic_optim function graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(resulting_multivector_type((graded_prod, grade_selector), a, b))
 	for (abits, acoeff) ∈ nonzero_components(a), (bbits, bcoeff) ∈ nonzero_components(b)
 		bits = abits ⊻ bbits
@@ -208,12 +206,6 @@ function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::
 		end
 	end
 	c
-end
-
-function graded_prod(grade_selector, a, b)
-	multivector_eval(a, b) do a, b
-		_graded_prod(grade_selector, a, b)
-	end
 end
 
 

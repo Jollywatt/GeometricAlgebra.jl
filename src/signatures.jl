@@ -113,7 +113,7 @@ basis_vector_norm(sig::Union{Tuple,NamedTuple}, i) = sig[i]
 """
 	Cl(p, q=0, r=0)
 
-Metric signature where `p`, `q` and `r` is the number of
+Metric signature where `p`, `q` and `r` are the number of
 basis vectors of norm `+1`, `-1` and `0`, respectively.
 
 # Examples
@@ -162,9 +162,10 @@ interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i]
 interpret_signature(sig) = sig
 
 """
-	basis(sig, grade=1)
+	basis(sig; grade=1)
 
 Vector of basis blades of specified grade(s) for the geometric algebra defined by the metric signature `sig`.
+The value `grade=:all` is a shortcut for `grade=0:dimension(sig)`.
 
 See also [`@basis`](@ref) and [`@basisall`](@ref).
 
@@ -176,7 +177,7 @@ julia> basis(3)
  v2
  v3
 
-julia> basis("-+++", 0:2:4)
+julia> basis("-+++", grade=0:2:4)
 8-element Vector{BasisBlade{⟨-+++⟩, _A, Int64} where _A}:
  1
  v12
@@ -187,19 +188,19 @@ julia> basis("-+++", 0:2:4)
  v34
  v1234
 
-julia> basis(Cl(1,3), 2)
-6-element Vector{BasisBlade{Cl(1,3), 2, Int64}}:
- v12
- v13
- v23
- v14
- v24
- v34
+julia> basis(Cl(1,3), grade=:all) |> sum
+16-component Multivector{Cl(1,3), 0:4, Vector{Int64}}:
+ 1
+ 1 v1 + 1 v2 + 1 v3 + 1 v4
+ 1 v12 + 1 v13 + 1 v23 + 1 v14 + 1 v24 + 1 v34
+ 1 v123 + 1 v124 + 1 v134 + 1 v234
+ 1 v1234
 ```
 """
-function basis(sig, grade=1)
+function basis(sig; grade=1)
 	sig = interpret_signature(sig)
 	dim = dimension(sig)
+	grade == :all && (grade = 0:dimension(sig))
 	bits = componentbits(Val(dim), Val(grade))
 	BasisBlade{sig}.(bits .=> 1)
 end
@@ -317,7 +318,7 @@ julia> cayleytable(basis((t=-1, x=1, y=1, z=1), 2), ∧)
 cayleytable(args...; kwargs...) = cayleytable(stdout, args...; kwargs...)
 function cayleytable(io::IO, sig, args...; kwargs...)
 	sig = interpret_signature(sig)
-	cayleytable(io, basis(sig, 0:dimension(sig)), args...; kwargs...)
+	cayleytable(io, basis(sig, grade=:all), args...; kwargs...)
 end
 
 function cayleytable(io::IO, mvs::AbstractVector, op=*; separators=:auto, title=:( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) ))

@@ -70,7 +70,7 @@ Convert a single method definition `f(x...)` into two methods:
 - the original method `f(Val(:nosym), x...)`, called with `Val(:nosym)` as the first argument as
   a way to opt-out of the symbolic optimization.
 - an optimized method `f(x...)` which uses [`symbolic_multivector_eval`](@ref) to generate code by
-  calling `f(Val(:nosym), x...)` on symbolic `Multivector` arguments `x`.
+  calling `f(Val(:nosym), x...)` on symbolic versions of the `Multivector` arguments `x`.
 
 This is to reduce boilerplate when writing functions with `Multivectors` that would benefit from
 using this optimization by default.

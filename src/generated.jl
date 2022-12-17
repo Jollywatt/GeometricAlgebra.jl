@@ -64,13 +64,16 @@ end
 
 
 """
-	@symbolic_optim
+	GeometricAlgebra.@symbolic_optim
 
-Applied to a method definition accepting `AbstractMultivector` arguments,
-define an optimized method which calls `symbolic_multivector_eval`
-in addition to the original method.
+Convert a single method definition `f(x...)` into two methods:
+- the original method `f(Val(:nosym), x...)`, called with `Val(:nosym)` as the first argument as
+  a way to opt-out of the symbolic optimization.
+- an optimized method `f(x...)` which uses [`symbolic_multivector_eval`](@ref) to generate code by
+  calling `f(Val(:nosym), x...)` on symbolic `Multivector` arguments `x`.
 
-The original, unoptimized method is called with `Val(:nosym)` as the first argument.
+This is to reduce boilerplate when writing functions with `Multivectors` that would benefit from
+using this optimization by default.
 
 # Example
 

@@ -157,8 +157,7 @@ end
 end
 
 
-
-"$(@doc scalar_prod)"
+@doc (@doc scalar_prod)
 a ⊙ b = scalar_prod(a, b)
 
 
@@ -218,12 +217,13 @@ end
 Wedge product of multivectors, a.k.a. the _outer_, _exterior_ or _alternating_ product.
 
 This is a grade-raising operation, equivalent to [`graded_prod(+, a, b)`](@ref).
-If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ∧ b` is the grade ``p + q`` part of `a*b`.
+If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ∧ b` is defined as
+the grade ``p + q`` part of `a*b`.
 """
 wedge(a, b) = graded_prod(+, a, b)
-
-"$(@doc wedge)"
+@doc (@doc wedge)
 a ∧ b = wedge(a, b)
+
 
 """
 	a ⋅ b
@@ -232,7 +232,8 @@ a ∧ b = wedge(a, b)
 Inner product of multivectors.
 
 This is a grade lowering operation, equivalent to [`graded_prod(abs∘-, a, b)`](@ref).
-If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⋅ b` is the grade ``|p - q|`` part of `a*b`.
+If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⋅ b` is defined as
+the grade ``|p - q|`` part of `a*b`.
 
 Note that for scalars `a` and `b`, the inner product reduces to scalar multiplication,
 in contrast to some authors (see [^D02] for discussion).
@@ -242,38 +243,39 @@ See also [`lcontract`](@ref) and [`rcontract`](@ref).
 [^D02]: Leo Dorst, "The Inner Products of Geometric Algebra", 2002. [doi:10.1007/978-1-4612-0089-5_2](https://dx.doi.org/10.1007/978-1-4612-0089-5_2)
 """
 inner(a, b) = graded_prod(abs∘-, a, b)
-
-"""
-$(@doc inner)
-"""
+@doc (@doc inner)
 ⋅(a, b) = inner(a, b)
 
 """
 	a ⨼ b
 	lcontract(a, b)
 
-Left contraction of multivectors. See also [`rcontract`](@ref) and [`inner`](@ref).
+Left contraction of multivectors.
 
 Equivalent to [`graded_prod((p, q) -> q - p, a, b)`](@ref).
-If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨼ b` is the grade ``q - p`` part of `a*b`.
+If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨼ b` is defined as
+the grade ``q - p`` part of `a*b`.
+
+See also [`rcontract`](@ref) and [`inner`](@ref).
 """
 lcontract(a, b) = graded_prod((-)∘-, a, b)
-
-"$(@doc lcontract)"
+@doc (@doc lcontract)
 ⨼(a, b) = lcontract(a, b)
 
 """
 	a ⨽ b
 	rcontract(a, b)
 
-Left contraction of multivectors. See also [`lcontract`](@ref) and [`inner`](@ref).
+Right contraction of multivectors.
 
 Equivalent to [`graded_prod(-, a, b)`](@ref).
-If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨽ b` is the grade ``p - q`` part of `a*b`.
+If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨽ b` is defined as
+the grade ``p - q`` part of `a*b`.
+
+See also [`lcontract`](@ref) and [`inner`](@ref).
 """
 rcontract(a, b) = graded_prod(-, a, b)
-
-"$(@doc rcontract)"
+@doc (@doc rcontract)
 ⨽(a, b) = rcontract(a, b)
 
 
@@ -337,8 +339,7 @@ where the sign is given by ``(-1)^{k(k - 1)/2}``.
 See also [`involution`](@ref) and [`clifford_conj`](@ref).
 """
 reversion(a) = graded_multiply(reversion_sign, a)
-
-"$(@doc reversion)"
+@doc (@doc reversion)
 Base.:~(a::AbstractMultivector) = reversion(a)
 
 
@@ -365,8 +366,7 @@ Equivalent to `reversion(involution(a))`.
 clifford_conj(a) = graded_multiply(a) do k
 	(-1)^k*reversion_sign(k)
 end
-
-"$(@doc clifford_conj)"
+@doc (@doc clifford_conj)
 var"'ᶜ"(a) = clifford_conj(a)
 
 

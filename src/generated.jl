@@ -16,61 +16,52 @@ function symbolic_components(label, dims...)
 	Any[SymbolicUtils.Term{Real}(getindex, [var, I...]) for I in indices]
 end
 
+symbolic_multivector(a::OrType{<:BasisBlade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(Multivector{Sig,K}, label)
+symbolic_multivector(A::OrType{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(A)))
 
-symbolic_multivector(a::Type{<:BasisBlade{Sig,K}}, label) where {Sig,K} = symbolic_multivector(Multivector{Sig,K}, label)
-symbolic_multivector(A::Type{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(A)))
-symbolic_multivector(a::AbstractMultivector, label) = symbolic_multivector(typeof(a), label)
+toexpr(a, T) = SymbolicUtils.Code.toexpr(a)
+function toexpr(a::AbstractMultivector, T)
+	compstype = componentstype(signature(a), ncomponents(a), T)
+	comps_expr = SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(a.comps, compstype, T))
+
+	:( $(constructor(a))($comps_expr) )
+end
 
 
 """
-	symbolic_optim(f, a, b, ...)
+	symbolic_multivector_eval(f, x::AbstractMultivector...)
 
-Trace evaluation of `f(a, b, ...)::CompositeMultivector` on symbolic versions of each
-`AbstractMultivector` instance or type `a`, `b`, ..., returning an expression suitable
-as the body of a `@generated` function.
-
-!!! important
-	The names of the generated function arguments must be `"a"`, `"b"`, `"c"`, etc, as these are
-	the names used in the expression retuned by `symbolic_optim`.
-
-If `use_symbolic_optim(sig)` returns `false`, the function body simply calls `f(a, b, ...)`.
-
-# Examples
-```jldoctest
-using MacroTools: prettify
-u, v = Multivector.(basis(2))
-ex = GeometricAlgebra.symbolic_optim(*, u, v) |> prettify
-
-# output
-:(let a = components(a), b = components(b)
-      comps = create_array(Vector{Int64}, Int64, Val{1}(), Val{(2,)}(), a[1] * b[1] + a[2] * b[2], a[1] * b[2] + (-1 * a[2]) * b[1])
-      (Multivector{2, 0:2:2})(comps)
-  end)
-```
+Return `f(x...)` using symbolic optimisation.
+This is a generated function which first evaluates `f` on symbolic versions of
+the multivector arguments `x` and converts the result to unrolled code.
 """
-function symbolic_optim(f, x::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
+function _symbolic_multivector_eval(f, x...)
 	abc = Symbol.('a' .+ (0:length(x) - 1))
+	assignments = [:( $a = components(x[$i]) ) for (i, a) in enumerate(abc)]
 
-	if !use_symbolic_optim(Sig)
-		return :( $f($(abc...)) )
-	end
-	
 	x_symb = symbolic_multivector.(x, abc)
 	y_symb = f(x_symb...)
-	comps = y_symb.comps
 
 	T = numberorany(promote_type(eltype.(x)...))
-	compstype = componentstype(Sig, length(comps), T)
-	comps_expr = SymbolicUtils.Code.MakeArray(comps, compstype, T)
+	result = toexpr(y_symb, T)
 
-	assignments = [:( $a = components($a) ) for a in abc]
 	quote
 		let $(assignments...)
-			comps = $(SymbolicUtils.Code.toexpr(comps_expr))
-			$(constructor(y_symb))(comps)
+			$result
 		end
 	end
 end
+
+@generated symbolic_multivector_eval(f, x...) = _symbolic_multivector_eval(f.instance, x...)
+
+function multivector_eval(f, x::AbstractMultivector{Sig}...) where {Sig}
+	if use_symbolic_optim(Sig)
+		symbolic_multivector_eval(f, x...)
+	else
+		f(x...)
+	end
+end
+
 
 # way to convert a BasisBlade to a Multivector without allocating a full components array
 # TODO: take this more seriously

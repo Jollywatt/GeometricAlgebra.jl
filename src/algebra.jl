@@ -121,7 +121,7 @@ function _geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig
 	c
 end
 
-@generated geometric_prod(a, b) = symbolic_optim(_geometric_prod, a, b)
+geometric_prod(a, b) = multivector_eval(_geometric_prod, a, b)
 
 Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 
@@ -210,9 +210,9 @@ function _graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::
 	c
 end
 
-@generated function graded_prod(grade_selector, a, b)
-	symbolic_optim(a, b) do a, b
-		_graded_prod(grade_selector.instance, a, b)
+function graded_prod(grade_selector, a, b)
+	multivector_eval(a, b) do a, b
+		_graded_prod(grade_selector, a, b)
 	end
 end
 
@@ -326,7 +326,7 @@ graded_multiply(f, a::BasisBlade) = f(grade(a))*a
 function graded_multiply(f, a::Multivector{Sig}) where Sig
 	comps = collect(a.comps)
 	for k ∈ grade(a)
-		comps[componentslice(a, k)] *= f(k)
+		comps[componentslice(a, k)] *= f(k) # TODO: what if this changes the eltype!?
 	end
 	constructor(a)(comps)
 end

@@ -1,7 +1,7 @@
 using GeometricAlgebra:
 	zeroslike,
 	oneslike,
-	symbolic_multivector,
+	symbolic_argument,
 	SingletonVector
 using GeometricAlgebra.SymbolicUtils
 
@@ -14,8 +14,8 @@ using GeometricAlgebra.SymbolicUtils
 
 
 	b = BasisBlade{3}(0b101 => SymbolicUtils.Sym{Real}(:b))
-	kv = symbolic_multivector(Multivector{3,1,Vector{Int}}, :kv)
-	mv = symbolic_multivector(Multivector{3,0:3,Vector{Int}}, :mv)
+	kv = symbolic_argument(Multivector{3,1,Vector{Int}}, :kv)
+	mv = symbolic_argument(Multivector{3,0:3,Vector{Int}}, :mv)
 
 	for a in [b, kv, mv]
 		@test !iszero(a)
@@ -42,6 +42,6 @@ using GeometricAlgebra.SymbolicUtils
 end
 
 @testset "SingletonVector" begin
-	@test collect(SingletonVector(42, 5, 2)) == [0, 42, 0, 0, 0]
+	@test collect(SingletonVector(42, 2, 5)) == [0, 42, 0, 0, 0]
 	@test size(SingletonVector(42, 5, 10_000)) == (10_000,)
 end

@@ -42,6 +42,9 @@ zeroslike(::Type{<:SArray{N,T}}, dims...) where {N,T} = zeros(SArray{Tuple{dims.
 zeroslike(::Type{<:SparseVector{Tv}}, dims...) where {Tv} = spzeros(Tv, dims...)
  oneslike(::Type{<:SparseVector{Tv}}, dims...) where {Tv} = sparse(ones(Tv, dims...))
 
+zeroslike(::Type{<:SubArray{T,N,P}}, dims...) where {T,N,P} = zeroslike(P, dims...)
+ oneslike(::Type{<:SubArray{T,N,P}}, dims...) where {T,N,P} = oneslike(P, dims...)
+
 # TODO: ones/zeroslike for SubArray?
 
 @static if VERSION < v"1.7"

@@ -217,6 +217,11 @@ Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = add!(zero(similar(Multivector{
 function Base.similar(M::Type{Multivector{Sig,K}}, abc::OrType{<:AbstractMultivector}...) where {Sig,K}
 	T = promote_type(eltype.(abc)...)
 	C = componentstype(Sig, ncomponents(M), T)
+
+	if !issetindexable(C) # at the moment, mutability of components vector is assumed
+		C = Vector{T}
+	end
+
 	Multivector{Sig,K,C}
 end
 

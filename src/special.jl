@@ -48,7 +48,8 @@ function via_matrix_repr(f::Function, a::AbstractMultivector)
 	k = resulting_grades(Val(:subalgebra), dimension(a), grade(a))
 	m = matrix_repr(a, k)
 	m′ = f(m)
-	Multivector{signature(a),k}(m′[:,1])
+	T = componentstype(signature(a), size(m′, 1), eltype(m′))
+	Multivector{signature(a),k}(convert(T, m′[:,1]))
 end
 
 

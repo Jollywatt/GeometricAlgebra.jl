@@ -4,7 +4,7 @@
 cd(joinpath(".", dirname(@__FILE__)))
 using Pkg; Pkg.activate("."); Pkg.instantiate()
 
-using Documenter
+using Documenter, DocumenterCitations
 using Revise
 using GeometricAlgebra
 
@@ -16,6 +16,7 @@ DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
 end; recursive=true)
 
 make() = makedocs(
+    CitationBibliography("src/references.bib"),
     sitename="GeometricAlgebra.jl",
     root=joinpath(project_root, "docs"),
     modules=[GeometricAlgebra],

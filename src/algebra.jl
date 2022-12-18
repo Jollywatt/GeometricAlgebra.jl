@@ -236,11 +236,9 @@ If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⋅ b` is def
 the grade ``|p - q|`` part of `a*b`.
 
 Note that for scalars `a` and `b`, the inner product reduces to scalar multiplication,
-in contrast to some authors (see [^D02] for discussion).
+in contrast to some authors (see [Dorst2002](@cite) for discussion).
 
 See also [`lcontract`](@ref) and [`rcontract`](@ref).
-
-[^D02]: Leo Dorst, "The Inner Products of Geometric Algebra", 2002. [doi:10.1007/978-1-4612-0089-5_2](https://dx.doi.org/10.1007/978-1-4612-0089-5_2)
 """
 inner(a, b) = graded_prod(abs∘-, a, b)
 @doc (@doc inner)

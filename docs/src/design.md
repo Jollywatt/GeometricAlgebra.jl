@@ -68,7 +68,7 @@ As well as defining the geometric algebra, the signature is used to specify basi
 | `show_signature(io, sig)` | Show the metric signature in a compact human-readable form.
 | `show_basis_blade(io, sig, indices)` | Print a basis blade with the given indices (e.g., `v12` or `𝒆₁∧𝒆₂`).
 | `componentstype(sig, N, T)` | Preferred array type for `CompositeMultivector` components. (Default is `Vector{T}` in low dimensions and `SparseVector{T}` otherwise.)
-| `symbolic_optim(sig)` | Whether to use symbolic code generation to optimise multivector products. (Default is true for low dimensions.)
+| `use_symbolic_optim(sig)` | Whether to use symbolic code generation to optimise multivector products. (Default is true for low dimensions.)
 
 
 Below is an example of how one might define a geometric algebra with specific behaviours:
@@ -122,6 +122,6 @@ julia> prod(ans)
 ```
 
 This makes it easy to optimize multivector operations by first performing the general calculation symbolically, then converting the resulting expression into unrolled code.
- (See [`symbolic_optim()`](@ref) for details.)
+ (See [`symbolic_multivector_eval()`](@ref) for details.)
 
 By default, symbolic code generation is used for most products in up to eight dimensions (above which general algebraic expressions become unwieldy). This can be changed on a per-algebra basis by defining methods for [`use_symbolic_optim()`](@ref).

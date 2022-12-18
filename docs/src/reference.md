@@ -24,6 +24,6 @@ Modules = [GeometricAlgebra]
 ## Internals
 
 ```@autodocs
-Pages = ["bits.jl", "show.jl", "generated.jl"]
+Pages = ["bits.jl", "grades.jl", "show.jl", "generated.jl"]
 Modules = [GeometricAlgebra]
 ```

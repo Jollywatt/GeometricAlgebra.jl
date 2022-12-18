@@ -21,6 +21,7 @@ make() = makedocs(
     modules=[GeometricAlgebra],
     pages=[
         "index.md",
+        "theory.md",
         "design.md",
         "reference.md",
     ],

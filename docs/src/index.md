@@ -45,8 +45,9 @@ julia> exp(v)
 Notice that this bivector exponential has grades `0:2:4`.
 The grade parameter `K` of a `Multivector{Sig,K}` can be a single integer
 (for homogeneous multivectors) or a collection of grades.
-A general 4D multivector has grades `0:4`, but an even multivector
-may be more efficiently represented with grades `0:2:4`.
+Storing the even part of `exp(v)` (8 components) is more efficient than the full 4D multivector (16 components).
+
+### Working with an orthonormal basis
 
 You may also obtain an orthonormal basis for a metric signature:
 
@@ -56,11 +57,6 @@ julia> v = basis(3)
  v1
  v2
  v3
-
-julia> exp(10000*2π*v[2]v[3])
-4-component Multivector{3, 0:2:2, Vector{Float64}}:
- 1.0
- -9.71365e-13 v23
 ```
 
 Macros are provided for interactive use:

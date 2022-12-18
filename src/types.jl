@@ -156,11 +156,6 @@ Base.length(::AbstractMultivector) = error(
 	"$length is not defined for multivectors. Do you mean $(repr(ncomponents))?")
 
 
-"""
-	eltype(::AbstractMultivector)
-
-The numerical type of the components of a multivector instance (or type).
-"""
 Base.eltype(::OrType{<:BasisBlade{Sig,K,T} where {Sig,K}}) where T = T
 Base.eltype(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = eltype(S)
 
@@ -178,6 +173,11 @@ See also [`ishomogeneous`](@ref).
 grade(::OrType{<:BasisBlade{Sig,K}}) where {Sig,K} = K
 grade(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = K
 
+"""
+	ishomogeneous(a)
+
+Whether `a` is homogeneous, i.e., consists of nonzero parts of the same grade.
+"""
 ishomogeneous(a) = isone(length(grade(a)))
 
 

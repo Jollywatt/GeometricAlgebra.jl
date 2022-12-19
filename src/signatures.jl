@@ -303,7 +303,7 @@ julia> cayleytable(3)
 ───────────┼──────┼───────────────────┼───────────────────┼──────
       v123 │ v123 │  v23   -v13   v12 │  -v3     v2   -v1 │   -1
 
-julia> cayleytable(basis((t=-1, x=1, y=1, z=1), 2), ∧)
+julia> cayleytable(basis((t=-1, x=1, y=1, z=1), grade=2), ∧)
  (↓) ∧ (→) │   tx     ty    xy    tz     xz    yz
 ───────────┼──────────────────────────────────────
         tx │    0      0     0     0      0  txyz

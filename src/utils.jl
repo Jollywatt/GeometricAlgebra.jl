@@ -100,6 +100,8 @@ function __init__()
 			end 
 		end
 	end
+
+	init_symbolic_optim()
 end
 
 const SUBSCRIPT_DIGITS   = collect("₀₁₂₃₄₅₆₇₈₉")

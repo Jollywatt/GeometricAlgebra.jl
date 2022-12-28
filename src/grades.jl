@@ -112,7 +112,7 @@ function Base.getindex(a::Multivector, k)
 	k = promote_grades(dimension(a), k)
 	k ⊆ grade(a) || throw(ArgumentError("""
 	attempt to access grade $k part of grade $(grade(a)) Multivector.
-	Use `grade(a, k)` to access grades which may not occur in `a`.
+	Use `grade(a, k)` to project onto grades which may not exist in `a`.
 	"""))
 	Multivector{signature(a),k}(view(a.comps, componentslice(a, k)))
 end

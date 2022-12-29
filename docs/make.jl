@@ -19,6 +19,7 @@ end; recursive=true)
 
 function make(; kwargs...)
     macros = Dict(
+        "\\e" => "𝒆",
         "\\lcontr" => "\\rfloor",
         "\\rcontr" => "\\lfloor",
     )
@@ -30,7 +31,13 @@ function make(; kwargs...)
         modules=[GeometricAlgebra],
         pages=[
             "index.md",
-            "theory.md",
+            "Background Theory" => [
+                "theory/basics.md",
+                "theory/products.md",
+                "theory/dualities.md",
+                "theory/rotors.md",
+                "theory/references.md",
+            ],
             "design.md",
             "reference.md",
         ],

@@ -15,18 +15,34 @@ DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
     using Revise, GeometricAlgebra
 end; recursive=true)
 
-make() = makedocs(
-    CitationBibliography("src/references.bib"),
-    sitename="GeometricAlgebra.jl",
-    root=joinpath(project_root, "docs"),
-    modules=[GeometricAlgebra],
-    pages=[
-        "index.md",
-        "theory.md",
-        "design.md",
-        "reference.md",
-    ],
-)
+
+
+function make(; kwargs...)
+    macros = Dict(
+        "\\lcontr" => "\\rfloor",
+        "\\rcontr" => "\\lfloor",
+    )
+
+    makedocs(
+        CitationBibliography("src/references.bib"),
+        sitename="GeometricAlgebra.jl",
+        root=joinpath(project_root, "docs"),
+        modules=[GeometricAlgebra],
+        pages=[
+            "index.md",
+            "theory.md",
+            "design.md",
+            "reference.md",
+        ],
+        format=Documenter.HTML(
+            mathengine=KaTeX(Dict(
+                :macros => macros
+            )),
+        );
+        kwargs...
+    )
+end
+draft() = make(; draft = true)
 
 deploy() = deploydocs(
     repo = "github.com/Jollywatt/GeometricAlgebra.jl.git",

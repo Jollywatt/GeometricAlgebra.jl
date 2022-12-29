@@ -57,8 +57,7 @@ show_signature(io, sig::Tuple) = print(io, "⟨$(join(map(s -> get(Dict(+1=>"+",
 """
 	show_basis_blade(io, sig, indices::Vector{Int})
 
-Show the basis blade with unit vectors in `indices` for the geometric algebra
-defined by `sig`.
+Show the basis blade ``𝒗_{i₁}⋯𝒗_{iₖ}`` with each ``iⱼ`` in `indices` in the geometric algebra defined by `sig`.
 Methods dispatching on `sig` should be added to customise basis blade labels
 for particular algebras.
 
@@ -90,7 +89,7 @@ show_basis_blade(io, sig::NamedTuple, indices) = printstyled(io, join(keys(sig)[
 """
 	componentstype(sig, N, T)
 
-Default array type used to store components of multivectors of signature `sig`.
+Array type to use to store components of multivectors of signature `sig`.
 The resulting type should be able to store `N` components (in the case
 of a fixed-size array) of type `T`.
 
@@ -143,15 +142,15 @@ Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature,
 
 
 # experimental
-struct MetricWithStorage{Sig,S} end
-dimension(::MetricWithStorage{Sig}) where {Sig} = dimension(Sig)
-basis_vector_norm(::MetricWithStorage{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
-componentstype(::MetricWithStorage{Sig,S}, N, T) where {Sig,S<:StaticVector} = T <: Number ? S{N,T} : Vector{T}
-componentstype(::MetricWithStorage{Sig,<:MVector}, N, T) where {Sig} = isbitstype(T) ? MVector{N,T} : Vector{T} # MVectors only support setindex! for isbits types
-componentstype(::MetricWithStorage{Sig,SparseVector}, N, T) where {Sig} = SparseVector{T}
-function show_signature(io, ::MetricWithStorage{Sig,S}) where {Sig,S}
+struct SigWithStorageType{Sig,S} end
+dimension(::SigWithStorageType{Sig}) where {Sig} = dimension(Sig)
+basis_vector_norm(::SigWithStorageType{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
+componentstype(::SigWithStorageType{Sig,S}, N, T) where {Sig,S<:StaticVector} = T <: Number ? S{N,T} : Vector{T}
+componentstype(::SigWithStorageType{Sig,<:MVector}, N, T) where {Sig} = isbitstype(T) ? MVector{N,T} : Vector{T} # MVectors only support setindex! for isbits types
+componentstype(::SigWithStorageType{Sig,SparseVector}, N, T) where {Sig} = SparseVector{T}
+function show_signature(io, ::SigWithStorageType{Sig,S}) where {Sig,S}
 	show_signature(io, Sig)
-	print(io, " with $(nameof(S))")
+	print(io, " with ", nameof(S))
 end
 
 

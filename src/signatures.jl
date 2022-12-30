@@ -244,7 +244,7 @@ julia> 1v2 + 3v12
 ```
 """
 macro basis(sig)
-	generate_blades(powerset, interpret_signature(eval(sig)))
+	generate_blades(powerset, interpret_signature(Main.eval(sig)))
 end
 
 """
@@ -268,7 +268,7 @@ true
 ```
 """
 macro basisall(sig)
-	generate_blades(interpret_signature(eval(sig))) do bvs
+	generate_blades(interpret_signature(Main.eval(sig))) do bvs
 		Iterators.flatten(permutations.(powerset(bvs)))
 	end
 end

@@ -84,7 +84,7 @@ Strictly, this should not be confused with the vector inner product, although th
 [`A ⨼ B`](@ref), [`A ⨽ B`](@ref) or [`lcontract(A, B)`](@ref), [`rcontract(A, B)`](@ref)
 
 
-The left and right contractions are similar to the generalised inner product, except that they do not involve an absolute value, which arguably makes them more ‘uniform’.
+The left and right contractions are similar to the generalised inner product, except that they do not involve an absolute value (which arguably makes them more ‘uniform’).
 
 ```math
 \begin{align*}
@@ -110,7 +110,7 @@ A_p ⋅ B_q = \begin{cases} A_p \lcontr B_q & p < q \\ A_p \rcontr B_q & p > q \
 ```
 and indeed ``A ⋅ B = A \lcontr B = A \rcontr B = A ⊙ B`` if ``p = q``.
 
-Despite their similarities, the contractions are arguably better behaved than the inner product, since identities with the inner product tend to involve grade-based exceptions while identities with contractions tend to hold in full generally (see [Dorst2002](@cite) for discussion).
+Despite their similarities, the contractions are arguably better behaved than the inner product, since identities with the inner product tend to involve grade-based exceptions while identities with contractions tend to hold in full generally. (See [Dorst2002](@cite) for discussion).
 
 For instance, the contractions obey an associativity relation
 ```math

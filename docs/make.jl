@@ -33,8 +33,8 @@ function make(; kwargs...)
             "index.md",
             "Background Theory" => [
                 "theory/basics.md",
-                "theory/products.md",
                 "theory/dualities.md",
+                "theory/products.md",
                 "theory/rotors.md",
                 "theory/references.md",
             ],
@@ -43,7 +43,8 @@ function make(; kwargs...)
         ],
         format=Documenter.HTML(
             mathengine=KaTeX(Dict(
-                :macros => macros
+                :macros => macros,
+                :minRuleThickness => 0.06,
             )),
         );
         kwargs...

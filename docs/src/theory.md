@@ -118,7 +118,7 @@ julia> dimension(v1*v2), grade(v1*v2)
 In fact, there are ``2^3 = 8`` different linearly independent objects in the geometric algebra ``𝒢(3)``:
 ```jldoctest 3d
 julia> basis(3, grade=:all)
-8-element Vector{BasisBlade{3, _A, Int64} where _A}:
+8-element Vector{BasisBlade{3, K, Int64} where K}:
  1
  v1
  v2

@@ -1,5 +1,6 @@
-@testset "basis, @basis, @basisall" begin
+@testset "basis, @basis" begin
 	@test length(basis(10)) == 10
+	@test length(basis(4, grade=0:2:4)) == 8
 	@test grade(prod(basis(5))) == 5
 
 	@test basis((1,1,1)) == basis("+++")
@@ -10,12 +11,12 @@
 	end
 
 	let
-		@basisall "-+++"
+		@basis "-+++" allperms=true
 		@test v123 == v231 == v312
 	end
 
 	let
-		@basisall (x=1, t=-1)
+		@basis (x=1, t=-1) allperms=true
 		@test x^2 == xt^2 == tx^2 == -t^2 == 1
 	end
 

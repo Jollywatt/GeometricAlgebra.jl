@@ -407,7 +407,7 @@ See also [`hodgedual`](@ref) and [`flipdual`](@ref).
 # Examples
 ```jldoctest
 julia> @basis Cl(2,0,1)
-[ Info: Defined basis blades v, v1, v2, v3, v12, v13, v23, v123
+[ Info: Defined basis blades v1, v2, v3, v12, v13, v23, v123, I
 
 julia> hodgedual(v3), v3*v123 # Hodge dual is zero because v3*v3 == 0
 (0, 0)

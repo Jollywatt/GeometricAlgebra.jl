@@ -16,16 +16,16 @@ by restricting `k` to those grades.
 # Examples
 ```jldoctest
 julia> @basis 2
-[ Info: Defined basis blades v, v1, v2, v12
+[ Info: Defined basis blades v1, v2, v12, I
 
-julia> matrix_repr(v + 7v12)
+julia> matrix_repr(1 + 7v12)
 4×4 Matrix{Int64}:
  1   0  0  -7
  0   1  7   0
  0  -7  1   0
  7   0  0   1
 
-julia> matrix_repr(v + 7v12, (0, 2))
+julia> matrix_repr(1 + 7v12, (0, 2))
 2×2 Matrix{Int64}:
  1  -7
  7   1

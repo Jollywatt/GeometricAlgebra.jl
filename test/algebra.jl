@@ -101,7 +101,7 @@ end
 end
 
 @testset "⨼, ⨽" begin
-	@basisall 3
+	@basis 3 allperms=true
 
 	@test v123⨽v32 == v1 == ~(v23⨼v321)
 	@test iszero(7⨽(v1 + v2))

@@ -150,7 +150,7 @@ dimension(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = dimension(Sig)
 Number of independent components of a multivector instance (or type).
 """
 ncomponents(a::Multivector) = length(a.comps)
-ncomponents(a::Type{<:Multivector{Sig}}) where {Sig} = sum(ncomponents(dimension(a), k) for k in grade(a); init = 0)
+ncomponents(a::Type{<:Multivector}) = sum(ncomponents(dimension(a), k) for k in grade(a); init = 0)
 
 Base.length(::AbstractMultivector) = error(
 	"$length is not defined for multivectors. Do you mean $(repr(ncomponents))?")
@@ -241,10 +241,10 @@ end
 
 
 
-Base.zero(::OrType{<:BasisBlade{Sig,K,T}}) where {Sig,K,T} = BasisBlade{Sig}(0 => numberzero(T))
+Base.zero(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(0 => numberzero(T))
 Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
-Base.one(::OrType{<:BasisBlade{Sig,K,T}}) where {Sig,K,T} = BasisBlade{Sig}(0 => numberone(T))
-Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,0}(oneslike(S, 1))
+Base.one(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(0 => numberone(T))
+Base.one(::OrType{<:Multivector{Sig,K,S} where K}) where {Sig,S} = Multivector{Sig,0}(oneslike(S, 1))
 
 Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)
 Base.iszero(a::Multivector) = all(isnumberzero, a.comps)

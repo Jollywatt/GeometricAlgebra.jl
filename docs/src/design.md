@@ -43,7 +43,7 @@ By default, the following metric signature types are implemented:
 
 ```jldoctest
 julia> @basis 2
-[ Info: Defined basis blades v, v1, v2, v12
+[ Info: Defined basis blades v1, v2, v12, I
 
 julia> basis((t=-1, x=1, y=1, z=1)) |> prod
 BasisBlade{(t = -1, x = 1, y = 1, z = 1), 4, Int64}:
@@ -84,7 +84,7 @@ using StaticArrays
 GeometricAlgebra.componentstype(::DiracGamma, N, T) = MVector{N,T}
 
 # custom labels (optional)
-function GeometricAlgebra.show_basis_blade(io, ::DiracGamma, indices)
+function GeometricAlgebra.show_basis_blade(io::IO, ::DiracGamma, indices::Vector{<:Integer})
 	print(io, join("γ".*GeometricAlgebra.superscript.(indices .- 1)))
 end
 

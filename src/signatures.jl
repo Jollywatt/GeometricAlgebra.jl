@@ -75,14 +75,14 @@ BasisBlade{⟨++++⟩, 4, Int64} of grade 4:
  1 𝒆₁∧𝒆₂∧𝒆₃∧𝒆₄
 ```
 """
-function show_basis_blade(io, sig, indices)
+function show_basis_blade(io::IO, sig, indices::Vector{<:Integer})
 	if dimension(sig) < 10
 		printstyled(io, "v"*join(string.(indices)); bold=true)
 	else
 		printstyled(io, join(string.("v", indices)); bold=true)
 	end
 end
-show_basis_blade(io, sig::NamedTuple, indices) = printstyled(io, join(keys(sig)[indices]), bold=true)
+show_basis_blade(io::IO, sig::NamedTuple, indices::Vector{<:Integer}) = printstyled(io, join(keys(sig)[indices]), bold=true)
 
 
 
@@ -177,7 +177,7 @@ julia> basis(3)
  v3
 
 julia> basis("-+++", grade=0:2:4)
-8-element Vector{BasisBlade{⟨-+++⟩, _A, Int64} where _A}:
+8-element Vector{BasisBlade{⟨-+++⟩, K, Int64} where K}:
  1
  v12
  v13
@@ -204,73 +204,80 @@ function basis(sig; grade=1)
 	BasisBlade{sig}.(bits .=> 1)
 end
 
-# make expr assigning each of combos(basis(sig)) to a variable
-function generate_blades(combos, sig)
-	bvs = basis(sig)
-	defs = Pair{Symbol}[]
-	for (ordered_bvs, indices) ∈ zip(combos(bvs), combos(1:dimension(sig)))
-		varname = sprint(show_basis_blade, sig, indices)
-		isempty(varname) && continue
-		push!(defs, Symbol(varname) => prod(ordered_bvs))
+function generate_blades(sig; grades=:all, allperms=false, pseudoscalar=:I, scalar=false)
+	
+	grades = grades == :all ? (0:dimension(sig)) : grades
+	grades = scalar ? grades : grades ∩ (1:dimension(sig))
+
+	indices = componentbits(dimension(sig), grades) .|> bits_to_indices
+
+	if allperms
+		indices = map(permutations, indices) |> Iterators.flatten |> collect
 	end
-	quote
-		@info "Defined basis blades $($(join(first.(defs), ", ")))"
-		$([ :($(esc(k)) = $v) for (k, v) ∈ defs ]...)
-		nothing
+
+	basisvectors = basis(sig; grade=1)
+	labels = Symbol.(sprint.(show_basis_blade, Ref(sig), indices))
+	basisblades = labels .=> prod.(getindex.(Ref(basisvectors), indices))
+	filter!(basisblades) do (label, _)
+		label != Symbol("")
 	end
+
+	if dimension(sig) ∈ grades && !isnothing(pseudoscalar)
+		push!(basisblades, Symbol(pseudoscalar) => prod(basisvectors))
+	end
+
+	basisblades
 end
 
 """
-	@basis sig
+	@basis sig grades=:all scalar=false pseudoscalar=:I allperms=false
 
-Populate namespace with basis blades of every grade in the geometric
-algebra with metric signature `sig`.
+Populate namespace with basis blades for the geometric
+algebra defined by metric signature `sig`.
+
+Variable names are generated with [`show_basis_blade()`](@ref).
+
+# Keyword arguments
+
+- `grades`: which grades to define basis blades for (default `:all`).
+- `scalar`: whether to include the unit scalar blade (e.g., `v`).
+- `pseudoscalar`: alias for unit pseudoscalar (default `:I`).
+  `pseudoscalar=nothing` defines no alias.
+- `allperms`: include all permutations of each basis blade (e.g., define `v21` as well as `v12`).
 
 !!! warning
-	This defines ``2^n`` variables for an ``n`` dimensional signature.
-
-See also [`@basisall`](@ref).
+	This defines `2^dimension(sig)` variables with `grades=:all`, and more with `allperms=true`!
 
 # Examples
 
 ```jldoctest
 julia> @basis 3
-[ Info: Defined basis blades v, v1, v2, v3, v12, v13, v23, v123
+[ Info: Defined basis blades v1, v2, v3, v12, v13, v23, v123, I
 
 julia> 1v2 + 3v12
 8-component Multivector{3, 0:3, Vector{Int64}}:
  1 v2
  3 v12
-```
-"""
-macro basis(sig)
-	generate_blades(powerset, interpret_signature(Main.eval(sig)))
-end
 
-"""
-	@basisall sig
-
-Similarly to [`@basis`](@ref), populate namespace with basis blades, but
-include all permutations of each blade (e.g., `v21` as well as `v12`).
-
-!!! warning
-	This defines more than ``2^n`` variables for an ``n`` dimensional signature!
-
-
-# Examples
-
-```jldoctest
-julia> @basisall (+1,-1)
+julia> @basis 2 allperms=true scalar=true pseudoscalar=nothing
 [ Info: Defined basis blades v, v1, v2, v12, v21
 
-julia> v12 == -v21
-true
+julia> @basis (t=1,x=-1,y=-1,z=-1) grades=2 allperms=true
+[ Info: Defined basis blades tx, xt, ty, yt, xy, yx, tz, zt, xz, zx, yz, zy
 ```
 """
-macro basisall(sig)
-	generate_blades(interpret_signature(Main.eval(sig))) do bvs
-		Iterators.flatten(permutations.(powerset(bvs)))
+macro basis(sig, args...)
+	sig = interpret_signature(Main.eval(sig))
+	pairs = @eval generate_blades($sig; $(args...))
+	assignments = map(pairs) do (label, blade)
+		:($(esc(label)) = $blade)
 	end
+	if isempty(pairs)
+		@info "No basis blades defined"
+	else
+		@info "Defined basis blades $(join(string.(first.(pairs)), ", "))"
+	end
+	Expr(:block, assignments..., nothing)
 end
 
 

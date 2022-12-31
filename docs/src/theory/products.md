@@ -127,6 +127,7 @@ for all multivectors ``A, B`` and ``C``, and interact nicely with the wedge prod
 ,&	(A \rcontr B) \odot C &= A \odot (B ∧ C)
 \end{align*}
 ```
-where ``I`` is the unit pseudoscalar
-(see e.g., section 3.3 of [Wilson2022](@cite) for proofs).
+where ``I`` is the unit pseudoscalar.[^1]
+
+[^1]: Section 3.3, [Wilson2022](@cite)
 

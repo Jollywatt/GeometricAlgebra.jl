@@ -101,7 +101,7 @@ function __init__()
 		end
 	end
 
-	init_symbolic_optim()
+	# init_symbolic_optim()
 end
 
 const SUBSCRIPT_DIGITS   = collect("₀₁₂₃₄₅₆₇₈₉")

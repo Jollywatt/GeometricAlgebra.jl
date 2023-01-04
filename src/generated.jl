@@ -1,8 +1,7 @@
 """
 	use_symbolic_optim(sig) -> Bool
 
-Whether to use symbolic code generation to optimize operations
-in algebras of metric signature `sig`.
+Whether to use symbolic optimization generation in algebras of metric signature `sig`.
 
 By default, this is enabled if `dimension(sig) ≤ 8` as a heuristic
 (in many dimensions, algebraic expressions may become too unwieldy).
@@ -58,25 +57,28 @@ function symbolic_multivector_eval(::Type{Expr}, f::Function, args...)
 	end
 end
 
-"""
-	GeometricAlgebra.init_symbolic_optim()
-
-Initialize symbolic optimization cache.
-
-This clears the `@generated` instances of [`symbolic_multivector_eval()`](@ref),
-which may be necessary if methods are changed which affect the result of
-symbolically optimized multivector functions.
-
-For example, if you add a method to [`componentstype()`](@ref) for your new metric
-signature, you must then call `init_symbolic_optim()` before you see any effect.
-"""
-function init_symbolic_optim()
-	@eval @generated function symbolic_multivector_eval(f::Function, args...)
-		symbolic_multivector_eval(Expr, f.instance, args...)
-	end
+@generated function symbolic_multivector_eval_gen(f::Function, args...)
+	symbolic_multivector_eval(Expr, f.instance, args...)
 end
 
+#=
+Because of the rules of generated functions, you can’t depend on user-defined
+methods such as those for a user-defined signature type. (E.g., `dimension(sig)`
+would lead to world-age problems if `sig` was a later-defined struct.)
 
+To work around this, the metric signature interface must be ‘extracted’: the signature
+is normalised to a tuple, and replaced after the call to the generated function.
+=#
+
+canonical_signature(sig) = ntuple(i -> basis_vector_norm(sig, i), dimension(sig))
+canonicalize_signature(a::Multivector{Sig,K,S}) where {Sig,K,S} = Multivector{canonical_signature(Sig),K,S}(a.comps)
+canonicalize_signature(a::BasisBlade{Sig,K,T}) where {Sig,K,T} = BasisBlade{canonical_signature(Sig),K,T}(a.bits, a.coeff)
+canonicalize_signature(a) = a
+
+function symbolic_multivector_eval(f::Function, args::Union{<:Val,AbstractMultivector{Sig}}...) where {Sig}
+	result = symbolic_multivector_eval_gen(f, canonicalize_signature.(args)...)
+	result isa Multivector ? Multivector{Sig,grade(result)}(result.comps) : result
+end
 
 """
 	GeometricAlgebra.@symbolic_optim
@@ -119,15 +121,15 @@ macro symbolic_optim(fndef::Expr)
 	fnargs_orig = copy(fnargs)
 	insert!(fnargs.args, 2, :(::Val{:nosym}))
 
-	fnname, mvargs... = fnargs_orig.args
+	fnname, args... = fnargs_orig.args
 	quote
 		$(Expr(:function, fnhead, fnbody))
 
 		Base.@__doc__ $(Expr(:function, fnhead_orig, quote
-			if use_symbolic_optim($fnname, $(mvargs...))
-				symbolic_multivector_eval($fnname, Val(:nosym), $(mvargs...))
+			if use_symbolic_optim($fnname, $(args...))
+				symbolic_multivector_eval_gen($fnname, Val(:nosym), $(args...))
 			else
-				$fnname(Val(:nosym), $(mvargs...))
+				$fnname(Val(:nosym), $(args...))
 			end
 		end))
 	end |> esc

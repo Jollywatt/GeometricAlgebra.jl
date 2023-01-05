@@ -153,3 +153,16 @@ end
 		@test flipdual(flipdual(m)) == m
 	end
 end
+
+@testset "∨" begin
+	for sig in ["+++", "++-", "+--", "---", "-+++", "+---"]
+		v = basis(sig, grade=:all)
+		I = v[end]
+		for a ∈ v, b ∈ v
+			@test a∨b == ((a*I)∧(b*I))I == ((a/I)∧(b/I))I == flipdual(flipdual(a)∧flipdual(b))
+		end
+	end
+
+	v = basis((1,1,0))
+	@test (v[1]v[3])∨(v[1]v[2]) == v[1]
+end

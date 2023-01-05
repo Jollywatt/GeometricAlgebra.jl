@@ -214,7 +214,7 @@ end
 	a ∧ b
 	wedge(a, b)
 
-Wedge product of multivectors, a.k.a. the _outer_, _exterior_ or _alternating_ product.
+Wedge product of multivectors (a.k.a. the _outer_, _exterior_, _progressive_ or _alternating_ product).
 
 This is a grade-raising operation, equivalent to [`graded_prod(+, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ∧ b` is defined as
@@ -373,17 +373,15 @@ var"'ᶜ"(a) = clifford_conj(a)
 
 A dual of a multivector, for when the overall sign isn’t important.
 
-For a unit basis blade `a::BasisBlade`, the flipdual satisfies
+For a unit `a::BasisBlade`, the flipdual satisfies
 `a*flipdual(a) == ±I`
 where `±I` is the unit pseudoscalar or its negative.
 
-Computing the `flipdual` is cheap, and is its own inverse: for a `BasisBlade`,
-its bits are flipped, and for a `CompositeMultivector`, the components vector
-is simply reversed.
+The `flipdual` is cheap to compute and is its own inverse.
+It simply flips the bits of a `BasisBlade`, or reverses the components
+vector of a `Multivector`.
 
-The `flipdual` is _metric independent_, but depends on a choice of basis.
-It differs from the Hodge and Poincaré duals by a per-grade scalar factor.
-This makes it useful in projective geometry, where scalar factors are largely arbitrary.
+The `flipdual` is _metric independent_, but depends on a choice of _orientation_ (the ordering of basis vectors).
 
 See also [`hodgedual`](@ref) and [`poincaredual`](@ref).
 """
@@ -394,13 +392,13 @@ function flipdual end
 
 Poincaré dual of a multivector.
 
-For a unit basis blade `a::BasisBlade`, the Poincaré dual satisfies
+For a unit `a::BasisBlade`, the Poincaré dual satisfies
 `a*poincaredual(a) == I`
 where `I` is the unit pseudoscalar. I.e., `poincaredual(a)` is a “right complement” of `a`.
 
-The Poincaré dual is _metric independent_, but depends on a choice of basis.
-This makes is useful in degenerate algebras: non-zero multivectors have
-non-zero Poincaré duals, even if their Hodge dual is zero.
+The Poincaré dual is _metric independent_, but depends on a choice of _orientation_ (the ordering of basis vectors).
+This makes is useful in degenerate algebras: a non-zero multivector has
+a non-zero Poincaré dual, even when its Hodge dual is zero.
 
 See also [`hodgedual`](@ref) and [`flipdual`](@ref).
 
@@ -436,9 +434,9 @@ a ∧ ⋆b = ⟨a, b⟩ I
 ```
 where ``⟨a, b⟩ = a ⊙ b̃`` is the induced inner product on ``k``-vectors.
 
-The Hodge dual depends on the _metric and orientation_ (choice of pseudoscalar).
+The Hodge dual is _metric dependent_, since it involves multiplication by `I`.
 
-See also [`poincaredual`](@ref).
+See also [`poincaredual`](@ref), a metric independent duality.
 
 # Examples
 ```jldoctest
@@ -479,8 +477,28 @@ for (name, signrule) in [
 	end
 end
 
+"""
+	a ∨ b
+	antiwedge(a, b)
 
-Base.:!(a::AbstractMultivector) = poincaredual(a)
+Antiwedge product of multivectors (a.k.a. the _regressive_ product).
+
+In non-degenerate algebras, the antiwedge product is the same as
+`((a/I)∧(b/I))I`, where `I` is the unit pseudoscalar.
+
+The anti-wedge product is _metric independent_ like the wedge product,
+but depends on a choice of _orientation_ (the ordering of basis vectors).
+"""
+function antiwedge end
+
+antiwedge(a::BasisBlade, b::BasisBlade) = flipdual(flipdual(a)∧flipdual(b))
+
+@symbolic_optim function antiwedge(a::AbstractMultivector, b::AbstractMultivector)
+	flipdual(flipdual(a)∧flipdual(b))
+end
+
+@doc (@doc antiwedge)
+∨(a, b) = antiwedge(a, b)
 
 #=
 

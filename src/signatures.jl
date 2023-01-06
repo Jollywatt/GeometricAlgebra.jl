@@ -93,10 +93,10 @@ Array type to use to store components of multivectors of signature `sig`.
 The resulting type should be able to store `N` components (in the case
 of a fixed-size array) of type `T`.
 
-The fallback method returns `Vector{T}` for `dimension(sig) <= 8`, and
-`SparseVector{T}` otherwise.
+The fallback method returns `MVector{N,T}` for `dimension(sig) <= 8`, and
+`Vector{T}` otherwise.
 """
-componentstype(sig, N, T) = dimension(sig) <= 8 ? Vector{T} : SparseVector{T}
+componentstype(sig, N, T) = dimension(sig) <= 8 ? MVector{N,T} : Vector{T}
 
 
 #= Built-in Metric Signatures =#

@@ -1,9 +1,11 @@
 module GeometricAlgebra
 
 using StaticArrays, SparseArrays
-using Combinatorics: permutations, powerset
+using Combinatorics: permutations
 using SymbolicUtils
 using PrettyTables: pretty_table
+
+export MVector
 
 export AbstractMultivector, BasisBlade, Multivector
 export basis, @basis, @basisall, cayleytable

@@ -214,7 +214,7 @@ end
 	a ∧ b
 	wedge(a, b)
 
-Wedge product of multivectors (a.k.a. the _outer_, _exterior_, _progressive_ or _alternating_ product).
+Wedge product of multivectors (a.k.a. the _outer_, _exterior_, _progressive_ or _alternating_ product, or _join_).
 
 This is a grade-raising operation, equivalent to [`graded_prod(+, a, b)`](@ref).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ∧ b` is defined as
@@ -381,41 +381,34 @@ The `flipdual` is cheap to compute and is its own inverse.
 It simply flips the bits of a `BasisBlade`, or reverses the components
 vector of a `Multivector`.
 
-The `flipdual` is _metric independent_, but depends on a choice of _orientation_ (the ordering of basis vectors).
+The `flipdual` is _metric independent_ (but depends on a choice of _orientation_, or the order of basis vectors).
 
-See also [`hodgedual`](@ref) and [`poincaredual`](@ref).
+See also [`hodgedual`](@ref).
 """
 function flipdual end
 
+
 """
-	poincaredual(a)
+	ldual(a)
+	rdual(a)
 
-Poincaré dual of a multivector.
+Left and right multivector duals (a.k.a., _complements_).
+The right dual is also called the _Poincaré dual_.
 
-For a unit `a::BasisBlade`, the Poincaré dual satisfies
-`a*poincaredual(a) == I`
-where `I` is the unit pseudoscalar. I.e., `poincaredual(a)` is a “right complement” of `a`.
+For a unit basis blade `a`, the duals satisfy `a*rdual(a) == I == ldual(a)*a` where `I` is the unit pseudoscalar.
+If `dimension(a)` is odd, `rdual` and `ldual` are identical and self-inverse; in general, they are inverses of each other.
 
-The Poincaré dual is _metric independent_, but depends on a choice of _orientation_ (the ordering of basis vectors).
-This makes is useful in degenerate algebras: a non-zero multivector has
-a non-zero Poincaré dual, even when its Hodge dual is zero.
+The left and right duals are _metric independent_ (but depend on a choice of _orientation_, or the order of basis vectors).
+This makes them useful in degenerate algebras where `I^2 == 0`, since a non-zero multivector always
+has a non-zero dual, even if its Hodge dual is zero.
 
-See also [`hodgedual`](@ref) and [`flipdual`](@ref).
-
-# Examples
-```jldoctest
-julia> @basis Cl(2,0,1)
-[ Info: Defined basis blades v1, v2, v3, v12, v13, v23, v123, I
-
-julia> hodgedual(v3), v3*v123 # Hodge dual is zero because v3*v3 == 0
-(0, 0)
-
-julia> poincaredual(v3)
-BasisBlade{Cl(2,0,1), 2, Int64}:
- 1 v12
-```
+See also [`hodgedual`](@ref).
 """
-function poincaredual end
+function ldual end
+
+@doc (@doc ldual)
+function rdual end
+
 
 
 """
@@ -423,7 +416,7 @@ function poincaredual end
 
 Hodge dual of a multivector.
 
-The Hodge dual is given by
+The Hodge dual is defined by
 ```math
 ⋆a = ã I
 ```
@@ -436,7 +429,7 @@ where ``⟨a, b⟩ = a ⊙ b̃`` is the induced inner product on ``k``-vectors.
 
 The Hodge dual is _metric dependent_, since it involves multiplication by `I`.
 
-See also [`poincaredual`](@ref), a metric independent duality.
+See also [`invhodgedual`](@ref) and [`ldual`](@ref), [`rdual`](@ref).
 
 # Examples
 ```jldoctest
@@ -459,43 +452,62 @@ julia> u ∧ hodgedual(u), u ⊙ ~u
 """
 function hodgedual end
 
+"""
+	invhodgedual(a)
+
+Inverse of the multivector Hodge dual.
+
+In degenerate algebras (for which ``I^2 = 0``), the Hodge dual is not invertible.
+However, if `a` is a basis blade with a non-zero Hodge dual, then `invhodgedual(hodgedual(a)) == a` holds.
+
+See also [`hodgedual`](@ref).
+"""
+function invhodgedual end
 
 for (name, signrule) in [
 		:flipdual => (sig, bits) -> 1,
-		:poincaredual => (sig, bits) -> sign_from_swaps(bits, bits_dual(dimension(sig), bits)),
-		:hodgedual => (sig, bits) -> reversion_sign(count_ones(bits))geometric_prod_factor(sig, bits, first(bits_of_grade(dimension(sig)))),
+		:rdual => (sig, bits) -> sign_from_swaps(bits, bits_dual(dimension(sig), bits)),
+		:ldual => (sig, bits) -> sign_from_swaps(bits_dual(dimension(sig), bits), bits),
+		:hodgedual => function(sig, bits)
+			I = first(bits_of_grade(dimension(sig)))
+			reversion_sign(count_ones(bits))geometric_prod_factor(sig, bits, I)
+		end,
+		:invhodgedual => function(sig, bits)
+			I = first(bits_of_grade(dimension(sig)))
+			reversion_sign(count_ones(I ⊻ bits))geometric_prod_factor(sig, I ⊻ bits, I)
+		end,
 	]
 	@eval begin
 		function $name(a::BasisBlade{Sig}) where {Sig}
 			BasisBlade{signature(a)}(bits_dual(dimension(a), bitsof(a)) => $signrule(Sig, bitsof(a))*a.coeff)
 		end
 
-		function $name(a::Multivector{Sig,K}) where {Sig,K}
+		@symbolic_optim function $name(a::Multivector{Sig,K}) where {Sig,K}
 			K′ = promote_grades(dimension(Sig), dimension(Sig) .- K)
 			Multivector{Sig,K′}(reverse($signrule.(Ref(Sig), componentbits(a)) .* a.comps))
 		end
 	end
 end
 
+
 """
 	a ∨ b
 	antiwedge(a, b)
 
-Antiwedge product of multivectors (a.k.a. the _regressive_ product).
+Anti-wedge product of multivectors (a.k.a. the _regressive_ product or _meet_).
 
-In non-degenerate algebras, the antiwedge product is the same as
-`((a/I)∧(b/I))I`, where `I` is the unit pseudoscalar.
+The anti-wedge product satisfies
+```math
+⋆(a ∨ b) = (⋆a) ∧ (⋆b)
+```
+where ``⋆`` is a duality operation (`ldual` or `rdual` or if ``I^2 ≠ 0``, `hodgedual`).
 
 The anti-wedge product is _metric independent_ like the wedge product,
-but depends on a choice of _orientation_ (the ordering of basis vectors).
+but does depend on the choice of _orientation_ (the ordering of basis vectors).
 """
 function antiwedge end
 
-antiwedge(a::BasisBlade, b::BasisBlade) = flipdual(flipdual(a)∧flipdual(b))
-
-@symbolic_optim function antiwedge(a::AbstractMultivector, b::AbstractMultivector)
-	flipdual(flipdual(a)∧flipdual(b))
-end
+antiwedge(a, b) = rdual(ldual(a)∧ldual(b))
 
 @doc (@doc antiwedge)
 ∨(a, b) = antiwedge(a, b)

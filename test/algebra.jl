@@ -137,7 +137,7 @@ end
 @testset "duals" begin
 	v = basis(4)
 
-	for dual in [flipdual, hodgedual, poincaredual]
+	for dual in [flipdual, rdual, ldual, hodgedual, invhodgedual]
 		@test dual(5v[1]) == 5dual(v[1])
 		@test dual(v[1] + 2v[2]) == dual(v[1]) + 2dual(v[2])
 		@test dual(v[1] + 10v[1]v[2]v[3]) == dual(v[1]) + 10dual(v[1]v[2]v[3])
@@ -152,17 +152,28 @@ end
 		@test hodgedual(m) == ~m*I
 		@test flipdual(flipdual(m)) == m
 	end
+
+end
+
+@testset "hodgedual, invhodgedual" begin
+	for sig in [2, 3, "++++", "-+++", "--++", 5]
+		V = basis(sig; grade=:all)
+		@test hodgedual.(invhodgedual.(V)) == V
+		@test invhodgedual.(hodgedual.(V)) == V
+	end
+
+	for sig in ["+++0", "++0-"]
+		V = basis(sig; grade=:all)
+		@test all(@. ifelse(iszero(hodgedual(V)), hodgedual(invhodgedual(V)) == V, invhodgedual(hodgedual(V)) == V))
+	end
 end
 
 @testset "∨" begin
-	for sig in ["+++", "++-", "+--", "---", "-+++", "+---"]
-		v = basis(sig, grade=:all)
-		I = v[end]
-		for a ∈ v, b ∈ v
-			@test a∨b == ((a*I)∧(b*I))I == ((a/I)∧(b/I))I == flipdual(flipdual(a)∧flipdual(b))
+	for sig in ["+++", "++-", "+00", "---", "-+++", "+--0"]
+		V = basis(sig, grade=:all)
+		for dual ∈ [ldual, rdual]
+			@test all(dual(a∨b) == dual(a)∧dual(b) for a in V, b in V)
+			@test all(dual(a)∨dual(b) == dual(a∧b) for a in V, b in V)
 		end
 	end
-
-	v = basis((1,1,0))
-	@test (v[1]v[3])∨(v[1]v[2]) == v[1]
 end

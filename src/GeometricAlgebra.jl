@@ -11,7 +11,7 @@ export signature, dimension, ncomponents, grade, eachgrade, blades
 export scalar, isscalar, ishomogeneous
 export geometric_prod, scalar_prod, ⊙, wedge, ∧, antiwedge, ∨, inner, ⋅, lcontract, ⨼, rcontract, ⨽, clifford_conj, var"'ᶜ"
 export reversion, involution
-export flipdual, hodgedual, poincaredual
+export flipdual, hodgedual, invhodgedual, poincaredual, ldual, rdual
 export matrix_repr
 export Cl
 

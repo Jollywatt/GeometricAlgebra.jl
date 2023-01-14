@@ -91,10 +91,10 @@ end
 basis(DiracGamma())
 # output
 4-element Vector{BasisBlade{DiracGamma(), 1, Int64}}:
- γ⁰
- γ¹
- γ²
- γ³
+ 1 γ⁰
+ 1 γ¹
+ 1 γ²
+ 1 γ³
 ```
 
 

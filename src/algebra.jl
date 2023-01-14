@@ -445,9 +445,6 @@ julia> hodgedual(u)
  -2 v13
   1 v23
 
-julia> u ∧ hodgedual(u), u ⊙ ~u
-(14v123, 14)
-
 ```
 """
 function hodgedual end

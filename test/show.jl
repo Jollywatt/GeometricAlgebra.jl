@@ -1,7 +1,7 @@
 using GeometricAlgebra:
 	show_signature,
 	show_multivector
-
+using StaticArrays
 
 @testset "pretty-printed metric signatures" begin
 	sig = (+1,-1,-1,-1)
@@ -22,31 +22,31 @@ using GeometricAlgebra:
 end
 
 @testset "multivector printing" begin
-	@basis 3
+	v = basis(3)
 
-	@test sprint(1000v1 + v2 + 0.001v3) do io, a
+	@test sprint(1000v[1] + v[2] + 0.001v[3]) do io, a
 		show_multivector(io, a, inline=false)
 	end == """
 		1000.0   v1
 		   1.0   v2
 		   0.001 v3"""
 
-	@test sprint(1000v1 + v2 + 0.001v3) do io, a
+	@test sprint(1000v[1] + v[2] + 0.001v[3]) do io, a
 		show_multivector(io, a, inline=true, compact=false)
 	end == "1000.0 v1 + 1.0 v2 + 0.001 v3"
 
-	@test sprint(1000v1 + v2 + 0.001v3) do io, a
+	@test sprint(1000v[1] + v[2] + 0.001v[3]) do io, a
 		show_multivector(io, a, inline=true, compact=true)
 	end == "1000.0v1 + v2 + 0.001v3"
 
-	@test sprint(1 + 1v1 + 2v2 + v123) do io, a
+	@test sprint(1 + 1v[1] + 2v[2] + v[1]v[2]v[3]) do io, a
 		show_multivector(io, a, inline=false, groupgrades=true)
 	end == """
 		1
 		1 v1 + 2 v2
 		1 v123"""
 
-	@test sprint(1 + 1v1 + 2v2 + v123) do io, a
+	@test sprint(1 + 1v[1] + 2v[2] + v[1]v[2]v[3]) do io, a
 		show_multivector(io, a, inline=false, groupgrades=false)
 	end == """
 		1 v
@@ -54,12 +54,21 @@ end
 		2 v2
 		1 v123"""
 
-	@test sprint(1 + 1v1 + 2v2 + v123) do io, a
+	@test sprint(1 + 1v[1] + 2v[2] + v[1]v[2]v[3]) do io, a
 		show_multivector(io, a, inline=true, groupgrades=false)
 	end == "1 + 1 v1 + 2 v2 + 1 v123"
 
-	@test repr(zero(v1 + v2)) == "0"
-	@test repr(zero(v1 + v12)) == "0"
+end
 
-	@test repr(1 + v1 + v2 + 3v12) == "(1) + (v1 + v2) + (3v12)"
+@testset "repr parseability" begin
+	v = basis(3)
+	reflect(eq, x) = eq(eval(Meta.parse(repr(x))), x)
+
+	@test reflect(===, v[1])
+	@test reflect(===, 5.5v[1])
+	@test reflect(===, 4//v[1])
+
+	@test reflect(==, Multivector{3,1}([1,2,3]))
+	@test reflect(==, Multivector{3,2}(SVector(1,2,3)))
+	@test reflect(==, Multivector{3,3}(MVector(42)))
 end

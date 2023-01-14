@@ -16,24 +16,29 @@ julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(0b1 => 1 + im))
 (1+1im) x
 ```
 """
-function show_blade(io::IO, @nospecialize(b::BasisBlade); compact=false)
-	subio = IOContext(io, :compact => true)
-	if compact && isnumberzero(b.coeff)
-		print(io, "0")
-		return
-	elseif compact && isnumberone(b.coeff)
-		isscalar(b) && print(io, "1")
-	elseif compact && isnumberone(-b.coeff) 
-		print(io, isscalar(b) ? "-1" : "-")
+function show_blade(io::IO, @nospecialize(a::BasisBlade); compact=get(io, :compact, false), parseable=false)
+	if parseable
+		bits = "0b"*bitstring(bitsof(a))[end - dimension(a) + 1:end]
+		type = Base.typeinfo_implicit(typeof(a.coeff)) ? constructor(a) : typeof(a)
+		print(io, type, "($bits, $(a.coeff))")
 	else
-		Base.show_unquoted(subio, b.coeff, 0, Base.operator_precedence(:*))
+		subio = IOContext(io, :compact => true)
+		if compact && isnumberzero(a.coeff)
+			print(io, "0")
+			return
+		elseif compact && isnumberone(a.coeff)
+			isscalar(a) && print(io, "1")
+		elseif compact && isnumberone(-a.coeff) 
+			print(io, isscalar(a) ? "-1" : "-")
+		else
+			Base.show_unquoted(subio, a.coeff, 0, Base.operator_precedence(:*))
+		end
+		# blades with higher grade than dimension are always zero,
+		#  and should not have basis blade printed
+		0 < grade(a) <= dimension(a) || return
+		compact || print(io, " ") # coefficient–basis separator
+		show_basis_blade(io, signature(a), bits_to_indices(bitsof(a)))
 	end
-	grade(b) == 0 && return
-	# blades with higher grade than dimension are always zero,
-	#  and should not have basis blade printed
-	0 < grade(b) <= dimension(b) || return
-	compact || print(io, " ") # coefficient–basis separator
-	show_basis_blade(io, signature(b), bits_to_indices(bitsof(b)))
 end
 
 
@@ -93,6 +98,7 @@ Parameters:
    each grade on its own line
 - `showzeros::Bool`: whether to omit zero components from display
 - `indent::Integer`: indent amount
+- `parseable::Bool`: use parseable style (used by `repr`) instead of human-readable style
 
 # Examples
 ```jldoctest
@@ -114,42 +120,49 @@ julia> GeometricAlgebra.show_multivector(stdout, a; inline=true, groupgrades=tru
 
 julia> GeometricAlgebra.show_multivector(stdout, a; inline=true, groupgrades=false)
 1 + 4 v1 + 9 v2 + 16 v12
+
+julia> GeometricAlgebra.show_multivector(stdout, a; parseable=true)
+Multivector{2, 0:2}([1, 4, 9, 16])
+
 ```
 """
-function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!ishomogeneous(a), indent=0, showzeros=ishomogeneous(a), compact=false)
-	if groupgrades
-		if iszero(a)
-			print(io, " "^indent, numberzero(eltype(a)))
-			return
-		end
-
-		firstgroup = true
-		for k in grade(a)
-			ak = grade(a, k)
-
-			showzeros || iszero(ak) && continue
-
-			firstgroup || print(io, inline ? " + " : "\n")
-			if firstgroup || !inline
-				print(io, " "^indent)
+function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!ishomogeneous(a), indent=0, showzeros=ishomogeneous(a), compact=false, parseable=false)
+	if parseable
+		type = Base.typeinfo_implicit(typeof(a.comps)) ? constructor(a) : typeof(a)
+		print(io, type, "(", a.comps, ")")
+	else
+		if groupgrades
+			if iszero(a)
+				print(io, " "^indent, numberzero(eltype(a)))
+				return
 			end
 
-			inline && print(io, "(")
-			show_multivector_row(io, ak; showzeros, compact)
-			inline && print(io, ")")
+			firstgroup = true
+			for k in grade(a)
+				ak = grade(a, k)
 
-			firstgroup = false
-		end
-	else
-		if inline
-			show_multivector_row(io, a; indent, showzeros, compact)
+				showzeros || iszero(ak) && continue
+
+				firstgroup || print(io, inline ? " + " : "\n")
+				if firstgroup || !inline
+					print(io, " "^indent)
+				end
+
+				inline && print(io, "(")
+				show_multivector_row(io, ak; showzeros, compact)
+				inline && print(io, ")")
+
+				firstgroup = false
+			end
 		else
-			show_multivector_col(io, a; indent, showzeros, compact)
+			if inline
+				show_multivector_row(io, a; indent, showzeros, compact)
+			else
+				show_multivector_col(io, a; indent, showzeros, compact)
+			end
 		end
 	end
-
 end
-
 
 
 function show_header(io::IO, @nospecialize(a::BasisBlade))
@@ -162,17 +175,40 @@ function show_header(io::IO, @nospecialize(a::Multivector))
 	println(io, ":")
 end
 
-Base.show(io::IO, @nospecialize(a::BasisBlade)) = show_blade(io, a; compact=true)
+
+function Base.show(io::IO, @nospecialize(a::BasisBlade))
+	if :__PRETTY_TABLES_DATA__ ∈ keys(io)
+		# printing within human-readable table
+		show_blade(IOContext(io, :color=>false, :compact=>true), a)
+	else
+		show_blade(io, a, parseable=true)
+	end
+end
 function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::BasisBlade))
-	show_header(io, a)
-	print(io, " ")
-	show_blade(io, a)
+	if :typeinfo ∈ keys(io) 
+		show_blade(io, a)
+	else
+		show_header(io, a)
+		print(io, " ")
+		show_blade(io, a)
+	end
 end
 
-Base.show(io::IO, @nospecialize(a::Multivector)) = show_multivector(io, a; inline=true, compact=true)
+function Base.show(io::IO, @nospecialize(a::Multivector))
+	if :__PRETTY_TABLES_DATA__ ∈ keys(io)
+		# printing within human-readable table
+		show_multivector(IOContext(io, :color=>false), a; inline=true, compact=true, showzeros=false)
+	else
+		show_multivector(io, a, parseable=true)
+	end
+end
 function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Multivector))
-	show_header(io, a)
-	show_multivector(io, a; indent=1)
+	if :typeinfo ∈ keys(io)
+		show_multivector(io, a; inline=true, compact=true, showzeros=false)
+	else
+		show_header(io, a)
+		show_multivector(io, a; indent=1)
+	end
 end
 
 

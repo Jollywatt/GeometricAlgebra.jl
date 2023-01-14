@@ -54,9 +54,9 @@ You may also obtain an orthonormal basis for a metric signature:
 ```jldoctest
 julia> v = basis(3)
 3-element Vector{BasisBlade{3, 1, Int64}}:
- v1
- v2
- v3
+ 1 v1
+ 1 v2
+ 1 v3
 ```
 
 Macros are provided for interactive use:

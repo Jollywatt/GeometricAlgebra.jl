@@ -47,6 +47,7 @@ struct BasisBlade{Sig,K,T} <: AbstractMultivector{Sig}
 	coeff::T
 end
 BasisBlade{Sig}(bits, coeff::T) where {Sig,T} = BasisBlade{Sig,count_ones(bits),T}(bits, coeff)
+BasisBlade{Sig,K}(bits, coeff::T) where {Sig,K,T} = BasisBlade{Sig,K,T}(bits, coeff)
 
 """
 	BasisBlade{Sig}(bits, coeff)
@@ -64,15 +65,11 @@ BasisBlade{3, 2, Int64}:
 ```
 """
 BasisBlade{Sig}(pair::Pair) where {Sig} = BasisBlade{Sig}(pair...)
+BasisBlade{Sig,K}(pair::Pair) where {Sig,K} = BasisBlade{Sig,K}(pair...)
+# warning: doesn’t check that K == count_ones(bits)
 
 # from scalar
 BasisBlade{Sig}(coeff::T) where {Sig,T<:Scalar} = BasisBlade{Sig,0,T}(0, coeff)
-
-# warning: doesn’t check that K == count_ones(bits)
-BasisBlade{Sig,K}(pair::Pair) where {Sig,K} = let (bits, coeff) = pair
-	BasisBlade{Sig,K,typeof(coeff)}(bits, coeff)
-end
-
 
 
 """

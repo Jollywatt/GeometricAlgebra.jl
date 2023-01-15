@@ -19,7 +19,6 @@ end; recursive=true)
 
 function make(; kwargs...)
     macros = Dict(
-        "\\e" => "𝒆",
         "\\lcontr" => "\\rfloor",
         "\\rcontr" => "\\lfloor",
     )

@@ -57,7 +57,12 @@ $(document).ready(function() {
       "right": "\\]",
       "display": true
     }
-  ]
+  ],
+  "macros": {
+    "\\rcontr": "\\lfloor",
+    "\\lcontr": "\\rfloor"
+  },
+  "minRuleThickness": 0.06
 }
 
   );

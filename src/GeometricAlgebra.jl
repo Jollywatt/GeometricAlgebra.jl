@@ -8,7 +8,7 @@ using PrettyTables: pretty_table
 export MVector
 
 export AbstractMultivector, BasisBlade, Multivector
-export basis, @basis, @basisall, cayleytable
+export basis, @basis, cayleytable
 export signature, dimension, ncomponents, grade, eachgrade, blades
 export scalar, isscalar, ishomogeneous
 export geometric_prod, scalar_prod, ⊙, wedge, ∧, antiwedge, ∨, inner, ⋅, lcontract, ⨼, rcontract, ⨽, clifford_conj, var"'ᶜ"

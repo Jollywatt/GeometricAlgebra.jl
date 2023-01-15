@@ -19,7 +19,11 @@ julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(0b1 => 1 + im))
 function show_blade(io::IO, @nospecialize(a::BasisBlade); compact=get(io, :compact, false), parseable=false)
 	if parseable
 		bits = "0b"*bitstring(bitsof(a))[end - dimension(a) + 1:end]
-		type = Base.typeinfo_implicit(typeof(a.coeff)) ? constructor(a) : typeof(a)
+		@static if VERSION ≥ v"1.7"
+			type = Base.typeinfo_implicit(typeof(a.coeff)) ? constructor(a) : typeof(a)
+		else
+			type = typeof(a)
+		end
 		print(io, type, "($bits, $(a.coeff))")
 	else
 		subio = IOContext(io, :compact => true)
@@ -128,7 +132,11 @@ Multivector{2, 0:2}([1, 4, 9, 16])
 """
 function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!ishomogeneous(a), indent=0, showzeros=ishomogeneous(a), compact=false, parseable=false)
 	if parseable
-		type = Base.typeinfo_implicit(typeof(a.comps)) ? constructor(a) : typeof(a)
+		@static if VERSION ≥ v"1.7"
+			type = Base.typeinfo_implicit(typeof(a.comps)) ? constructor(a) : typeof(a)
+		else
+			type = typeof(a)
+		end
 		print(io, type, "(", a.comps, ")")
 	else
 		if groupgrades

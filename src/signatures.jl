@@ -142,16 +142,16 @@ Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature,
 
 
 # experimental
-struct SigWithStorageType{Sig,S} end
-dimension(::SigWithStorageType{Sig}) where {Sig} = dimension(Sig)
-basis_vector_norm(::SigWithStorageType{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
-componentstype(::SigWithStorageType{Sig,S}, N, T) where {Sig,S<:StaticVector} = T <: Number ? S{N,T} : Vector{T}
-componentstype(::SigWithStorageType{Sig,<:MVector}, N, T) where {Sig} = isbitstype(T) ? MVector{N,T} : Vector{T} # MVectors only support setindex! for isbits types
-componentstype(::SigWithStorageType{Sig,SparseVector}, N, T) where {Sig} = SparseVector{T}
-function show_signature(io, ::SigWithStorageType{Sig,S}) where {Sig,S}
-	show_signature(io, Sig)
-	print(io, " with ", nameof(S))
-end
+# struct SigWithStorageType{Sig,S} end
+# dimension(::SigWithStorageType{Sig}) where {Sig} = dimension(Sig)
+# basis_vector_norm(::SigWithStorageType{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
+# componentstype(::SigWithStorageType{Sig,S}, N, T) where {Sig,S<:StaticVector} = T <: Number ? S{N,T} : Vector{T}
+# componentstype(::SigWithStorageType{Sig,<:MVector}, N, T) where {Sig} = isbitstype(T) ? MVector{N,T} : Vector{T} # MVectors only support setindex! for isbits types
+# componentstype(::SigWithStorageType{Sig,SparseVector}, N, T) where {Sig} = SparseVector{T}
+# function show_signature(io, ::SigWithStorageType{Sig,S}) where {Sig,S}
+# 	show_signature(io, Sig)
+# 	print(io, " with ", nameof(S))
+# end
 
 
 
@@ -177,7 +177,7 @@ julia> basis(3)
  v3
 
 julia> basis("-+++", grade=0:2:4)
-8-element Vector{BasisBlade{⟨-+++⟩, K, Int64} where K}:
+8-element Vector{BasisBlade{⟨-+++⟩, _A, Int64} where _A}:
  1
  v12
  v13
@@ -188,7 +188,7 @@ julia> basis("-+++", grade=0:2:4)
  v1234
 
 julia> basis(Cl(1,3), grade=:all) |> sum
-16-component Multivector{Cl(1,3), 0:4, Vector{Int64}}:
+16-component Multivector{Cl(1,3), 0:4, MVector{16, Int64}}:
  1
  1 v1 + 1 v2 + 1 v3 + 1 v4
  1 v12 + 1 v13 + 1 v23 + 1 v14 + 1 v24 + 1 v34
@@ -255,7 +255,7 @@ julia> @basis 3
 [ Info: Defined basis blades v1, v2, v3, v12, v13, v23, v123, I
 
 julia> 1v2 + 3v12
-8-component Multivector{3, 0:3, Vector{Int64}}:
+8-component Multivector{3, 0:3, MVector{8, Int64}}:
  1 v2
  3 v12
 

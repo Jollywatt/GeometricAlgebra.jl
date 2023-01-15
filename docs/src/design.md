@@ -43,7 +43,7 @@ By default, the following metric signature types are implemented:
 
 ```jldoctest
 julia> @basis 2
-[ Info: Defined basis blades v1, v2, v12, I
+[ Info: Defined basis blades v1, v2, v12, I in Main
 
 julia> basis((t=-1, x=1, y=1, z=1)) |> prod
 BasisBlade{(t = -1, x = 1, y = 1, z = 1), 4, Int64}:

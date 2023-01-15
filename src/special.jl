@@ -16,7 +16,7 @@ by restricting `k` to those grades.
 # Examples
 ```jldoctest
 julia> @basis 2
-[ Info: Defined basis blades v1, v2, v12, I
+[ Info: Defined basis blades v1, v2, v12, I in Main
 
 julia> matrix_repr(1 + 7v12)
 4×4 Matrix{Int64}:

@@ -40,7 +40,7 @@ Basis blades are scalar multiples of wedge products of orthogonal _basis_ vector
 # Parameters
 - `Sig`: Metric signature defining the geometric algebra, retrieved with [`signature()`](@ref).
 - `K::Int`: Grade of the blade, equal to `count_ones(bits)`, retrieved with [`grade()`](@ref).
-- `T`: Numerical type of the scalar coefficient, retrieved with [`eltype()`](@ref).
+- `T`: Numerical type of the scalar coefficient, retrieved with `eltype()`.
 """
 struct BasisBlade{Sig,K,T} <: AbstractMultivector{Sig}
 	bits::UInt

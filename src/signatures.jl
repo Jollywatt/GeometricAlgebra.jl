@@ -252,7 +252,7 @@ Variable names are generated with [`show_basis_blade()`](@ref).
 
 ```jldoctest
 julia> @basis 3
-[ Info: Defined basis blades v1, v2, v3, v12, v13, v23, v123, I
+[ Info: Defined basis blades v1, v2, v3, v12, v13, v23, v123, I in Main
 
 julia> 1v2 + 3v12
 8-component Multivector{3, 0:3, MVector{8, Int64}}:
@@ -260,10 +260,10 @@ julia> 1v2 + 3v12
  3 v12
 
 julia> @basis 2 allperms=true scalar=true pseudoscalar=nothing
-[ Info: Defined basis blades v, v1, v2, v12, v21
+[ Info: Defined basis blades v, v1, v2, v12, v21 in Main
 
 julia> @basis (t=1,x=-1,y=-1,z=-1) grades=2 allperms=true
-[ Info: Defined basis blades tx, xt, ty, yt, xy, yx, tz, zt, xz, zx, yz, zy
+[ Info: Defined basis blades tx, xt, ty, yt, xy, yx, tz, zt, xz, zx, yz, zy in Main
 ```
 """
 macro basis(sig, args...)
@@ -272,12 +272,20 @@ macro basis(sig, args...)
 	assignments = map(pairs) do (label, blade)
 		:($(esc(label)) = $blade)
 	end
-	if isempty(pairs)
-		@info "No basis blades defined"
-	else
-		@info "Defined basis blades $(join(string.(first.(pairs)), ", "))"
+	message = isempty(pairs) ?
+		"No basis blades defined!" :
+		"Defined basis blades $(join(string.(first.(pairs)), ", ")) in $__module__"
+
+	# detect evaluation in top-level
+	# see https://discourse.julialang.org/t/is-there-a-way-to-determine-whether-code-is-toplevel/39939/3
+	canary = gensym("canary")
+	quote
+		$(assignments...)
+		$(esc(canary)) = true
+		if Base.isdefined($__module__, $(QuoteNode(canary)))
+			@info $message
+		end
 	end
-	Expr(:block, assignments..., nothing)
 end
 
 

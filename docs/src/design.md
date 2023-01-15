@@ -115,7 +115,7 @@ julia> Multivector{3,1}.(ans)
  y[1]v1 + y[2]v2 + y[3]v3
 
 julia> prod(ans)
-4-component Multivector{3, 0:2:2, Vector{Any}}:
+4-component Multivector{3, 0:2:2, MVector{4, Any}}:
  x[1]*y[1] + x[2]*y[2] + x[3]*y[3]
  x[1]*y[2] - x[2]*y[1] v12 + x[1]*y[3] - x[3]*y[1] v13 + x[2]*y[3] - x[3]*y[2] v23
 

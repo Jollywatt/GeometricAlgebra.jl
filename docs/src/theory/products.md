@@ -131,3 +131,12 @@ where ``I`` is the unit pseudoscalar.[^1]
 
 [^1]: Section 3.3, [Wilson2022](@cite)
 
+
+## Other Products
+
+### Commutator product
+
+The commutator product is defined as
+```math
+A × B ≔ \frac12(AB - BA)
+```

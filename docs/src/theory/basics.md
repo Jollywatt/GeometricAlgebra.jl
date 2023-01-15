@@ -130,9 +130,9 @@ where ``I ∩ J`` are the shared indices and ``I ⊻ J``, the symmetric differen
 While a basis blade is a product of orthogonal basis vectors, a **``k``-blade** is a product of ``k`` distinct, mutually orthogonal vectors.
 Equivalently, a ``k``-blade is a ``∧``-product of ``k`` many vectors.
 
-Not all blades are representable as basis blades in the current choice of basis. For example, in ``𝔾^3`` the product ``𝐯_1(𝐯_2 + 𝐯_3)`` is a blade (since ``𝐯_1`` and ``𝐯_2 + 𝐯_3`` are orthogonal vectors), but it is a sum of two basis blades.
+Not all blades are representable as basis blades in the current choice of basis. For example, in ``𝔾^3`` the product ``𝐯_1(𝐯_2 + 𝐯_3)`` is a blade (since ``𝐯_1`` and ``𝐯_2 + 𝐯_3`` are orthogonal vectors), but it is a sum of two basis blades, ``𝐯_1𝐯_2 + 𝐯_1𝐯_3``.
 
-General blades must therefore be represented with the more general `Multivector` type.
+General blades must therefore be represented with the more general `Multivector` type instead of `BasisBlade`:
 ```@repl ga
 @basis 3
 v1*(v2 + v3)

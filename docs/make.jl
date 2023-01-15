@@ -30,6 +30,7 @@ function make(; kwargs...)
         modules=[GeometricAlgebra],
         pages=[
             "index.md",
+            "design.md",
             "Background Theory" => [
                 "theory/basics.md",
                 "theory/dualities.md",
@@ -37,7 +38,6 @@ function make(; kwargs...)
                 "theory/rotors.md",
                 "theory/references.md",
             ],
-            "design.md",
             "reference.md",
         ],
         format=Documenter.HTML(

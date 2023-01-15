@@ -26,7 +26,7 @@ Computing the reversion looks like reversing the order of the geometric product:
 ~(v1*v2*v3) == v3*v2*v1
 ```
 
-Swapping orthogonal basis vectors ``\e_i\e_j ↦ \e_j\e_i = -\e_i\e_j`` introduces an overall factor of ``-1``, and it takes ``\binom{k}{2} = \frac{k(k - 1)}{2}`` swaps to reverse ``k`` many basis vectors.
+Swapping orthogonal basis vectors ``𝐯_i𝐯_j ↦ 𝐯_j𝐯_i = -𝐯_i𝐯_j`` introduces an overall factor of ``-1``, and it takes ``\binom{k}{2} = \frac{k(k - 1)}{2}`` swaps to reverse ``k`` many basis vectors.
 Thus, the reversion of a homogeneous ``k``-vector ``A_k`` is given by
 ```math
 \tilde{A_k} = (-1)^{k(k - 1)/2} A_k
@@ -55,7 +55,7 @@ Grade involution, sometimes denoted ``A^\star``, is the operation of reflecting 
 ```math
 \mathsf{involution}(AB) = \mathsf{involution}(A)\mathsf{involution}(B)
 ```
-which means a ``k``-blade of the form ``B = \e_1 ∧ \cdots ∧ \e_k`` gets sent to ``(-\e_1) ∧ \cdots ∧ (-\e_k) = (-1)^k B``.
+which means a ``k``-blade of the form ``B = 𝐯_1 ∧ \cdots ∧ 𝐯_k`` gets sent to ``(-𝐯_1) ∧ \cdots ∧ (-𝐯_k) = (-1)^k B``.
 By linearity, for any ``k``-vector ``A`` we have
 ```math
 \mathsf{involution}(A_k) = (-1)^k A_k
@@ -77,7 +77,7 @@ The composition of reversion and involution ``\tilde{A}^\star`` is also called t
 
 The highest-grade elements, pseudoscalars, play a special role in geometric algebra. The **unit pseudoscalar**
 ```math
-I ≔ \e_1\e_2⋯\e_n
+I ≔ 𝐯_1𝐯_2⋯𝐯_n
 ```
 is interpreted as an oriented unit volume.
 

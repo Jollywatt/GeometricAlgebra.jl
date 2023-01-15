@@ -70,8 +70,6 @@ The composition of reversion and involution ``\tilde{A}^\star`` is also called t
 
 
 
-# Dualities
-
 
 ## Pseudoscalar duality
 

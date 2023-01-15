@@ -66,7 +66,7 @@ Macros are provided for interactive use:
 julia> @basis "+---"
 [ Info: Defined basis blades v, v1, v2, v3, v4, v12, v13, v14, v23, v24, v34, v123, v124, v134, v234, v1234
 
-julia> @basisall (t = +1, x = -1)
+julia> @basis (t = +1, x = -1) allperms=true
 [ Info: Defined basis blades t, x, tx, xt
 ```
 

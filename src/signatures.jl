@@ -166,7 +166,7 @@ interpret_signature(sig) = sig
 Vector of basis blades of specified grade(s) for the geometric algebra defined by the metric signature `sig`.
 The value `grade=:all` is a shortcut for `grade=0:dimension(sig)`.
 
-See also [`@basis`](@ref) and [`@basisall`](@ref).
+See also [`@basis`](@ref).
 
 # Examples
 ```jldoctest

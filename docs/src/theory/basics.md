@@ -43,7 +43,7 @@ Geometric algebras have a _graded structure_. As a vector space, ``𝔾(V, ⋅)`
 ```math
 𝔾(V, ⋅) = ⨁_{k=0}^n ∧^n V = ℝ ⊕ V ⊕ ∧^2 V ⊕ ⋯ ⊕ ∧^n V
 ```
-where ``n`` is the dimension of the base vector space, ``V``.
+where ``∧^k V`` is the ``k``th exterior power of the ``n``-dimensional base space ``V``.
 
 Grade zero elements (``∧^0V = ℝ``) are scalars; grade one elements (``∧^1V = V``) are vectors; and grade-``k`` elements (``∧^k V``) are called **``k``-vectors** or **homogeneous multivectors**.
 Elements of ``𝔾(V, ⋅)`` may consist of parts of differing grade, and when they do they are called **(inhomogeneous) multivectors**.

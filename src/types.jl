@@ -46,8 +46,6 @@ struct BasisBlade{Sig,K,T} <: AbstractMultivector{Sig}
 	bits::UInt
 	coeff::T
 end
-BasisBlade{Sig}(bits, coeff::T) where {Sig,T} = BasisBlade{Sig,count_ones(bits),T}(bits, coeff)
-BasisBlade{Sig,K}(bits, coeff::T) where {Sig,K,T} = BasisBlade{Sig,K,T}(bits, coeff)
 
 """
 	BasisBlade{Sig}(bits, coeff)
@@ -64,9 +62,12 @@ BasisBlade{3, 2, Int64}:
  42 v23
 ```
 """
+BasisBlade{Sig}(bits, coeff::T) where {Sig,T} = BasisBlade{Sig,count_ones(bits),T}(bits, coeff)
 BasisBlade{Sig}(pair::Pair) where {Sig} = BasisBlade{Sig}(pair...)
-BasisBlade{Sig,K}(pair::Pair) where {Sig,K} = BasisBlade{Sig,K}(pair...)
+
 # warning: doesn’t check that K == count_ones(bits)
+BasisBlade{Sig,K}(bits, coeff::T) where {Sig,K,T} = BasisBlade{Sig,K,T}(bits, coeff)
+BasisBlade{Sig,K}(pair::Pair) where {Sig,K} = BasisBlade{Sig,K}(pair...)
 
 # from scalar
 BasisBlade{Sig}(coeff::T) where {Sig,T<:Scalar} = BasisBlade{Sig,0,T}(0, coeff)
@@ -177,25 +178,15 @@ Whether `a` is homogeneous, i.e., consists of nonzero parts of the same grade.
 """
 ishomogeneous(a) = isone(length(grade(a)))
 
-
-bitsof(a::BasisBlade) = a.bits
 componentbits(a::OrType{<:Multivector}) = componentbits(Val(dimension(a)), Val(grade(a)))
 
 """
-	componentindex(a::Multivector, b)
+	componentindex(a::Multivector, b::Union{Unsigned,BasisBlade})
 
-Index of components vector of `a` corresponding to the `BasisBlade` or bits `b`.
+Index `i` of the element `a.comps[i]` which corresponds to the basis blade `b`.
 """
-componentindex(a, b::BasisBlade) = componentindex(a, bitsof(b))
-componentindex(a, bits) = findfirst(==(bits), componentbits(a))
-
-
-largest_type(::Multivector, ::BasisBlade) = Multivector
-largest_type(::BasisBlade, ::Multivector) = Multivector
-largest_type(::BasisBlade, ::BasisBlade) = BasisBlade
-
-
-
+componentindex(a::Multivector, b::BasisBlade) = componentindex(a, b.bits)
+componentindex(a::Multivector, bits::Unsigned) = findfirst(==(bits), componentbits(a))
 
 
 #= Constructors =#
@@ -272,9 +263,9 @@ end
 
 
 blades(a::BasisBlade) = [a]
-blades(a::Multivector{Sig}) where {Sig} = [BasisBlade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(bitsof(a), a.comps)]
+blades(a::Multivector{Sig}) where {Sig} = [BasisBlade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(a.bits, a.comps)]
 
-nonzero_components(a::BasisBlade) = isnumberzero(a.coeff) ? () : (bitsof(a) => a.coeff,)
+nonzero_components(a::BasisBlade) = isnumberzero(a.coeff) ? () : (a.bits => a.coeff,)
 nonzero_components(a::Multivector) = Iterators.filter(!isnumberzero∘last, zip(componentbits(a), a.comps))
 
 

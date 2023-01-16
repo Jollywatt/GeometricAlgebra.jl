@@ -18,7 +18,7 @@ julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(0b1 => 1 + im))
 """
 function show_blade(io::IO, @nospecialize(a::BasisBlade); compact=get(io, :compact, false), parseable=false)
 	if parseable
-		bits = "0b"*bitstring(bitsof(a))[end - dimension(a) + 1:end]
+		bits = "0b"*bitstring(a.bits)[end - dimension(a) + 1:end]
 		@static if VERSION ≥ v"1.7"
 			type = Base.typeinfo_implicit(typeof(a.coeff)) ? constructor(a) : typeof(a)
 		else
@@ -41,7 +41,7 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade); compact=get(io, :compa
 		#  and should not have basis blade printed
 		0 < grade(a) <= dimension(a) || return
 		compact || print(io, " ") # coefficient–basis separator
-		show_basis_blade(io, signature(a), bits_to_indices(bitsof(a)))
+		show_basis_blade(io, signature(a), bits_to_indices(a.bits))
 	end
 end
 

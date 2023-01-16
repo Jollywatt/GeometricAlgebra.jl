@@ -158,7 +158,7 @@ end
 # way to convert a BasisBlade to a Multivector without allocating a full components array
 # TODO: take this more seriously
 function components(a::BasisBlade{Sig,K}) where {Sig,K}
-	i = findfirst(==(bitsof(a)), componentbits(Val(dimension(Sig)), Val(K)))
+	i = findfirst(==(a.bits), componentbits(Val(dimension(Sig)), Val(K)))
 	SingletonVector(a.coeff, i, ncomponents(Sig, K))
 end
 components(a::Multivector) = a.comps

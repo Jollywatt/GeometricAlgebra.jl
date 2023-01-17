@@ -51,6 +51,19 @@ Base.://(a::AbstractMultivector, b::AbstractMultivector) = a*(numberone(eltype(b
 
 #= Addition =#
 
+"""
+	add!(a::Multivector, b::Blade)
+	add!(a::Multivector, bits, coeff)
+
+Return the multivector with the blade coefficient added to the corresponding
+multivector component, if it exists.
+
+The blade coefficient must be convertible to the multivector’s eltype.
+
+!!! warning
+	If the multivector cannot represent components of the required grade, it is not modified.
+
+"""
 function add!(a::Multivector, bits::Unsigned, coeff)
 	i = componentindex(a, bits)
 	isnothing(i) || (a.comps[i] += coeff)
@@ -59,9 +72,11 @@ end
 
 add!(a::Multivector, b::BasisBlade) = add!(a, b.bits, b.coeff)
 
-function add!(a::Multivector, b::Multivector)
-	a.comps .+= grade(b, grade(a)).comps
+function add!(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig, K}
+	a.comps .+= b.comps
+	a
 end
+add!(a::Multivector, b::Multivector) = add!(a, grade(b, grade(a)))
 
 
 resulting_grades(::typeof(+), dim, pq...) = promote_grades(dim, pq...)

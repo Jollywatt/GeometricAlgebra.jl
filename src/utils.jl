@@ -90,7 +90,7 @@ function __init__()
 	if isdefined(Base.Experimental, :register_error_hint)
 		Base.Experimental.register_error_hint(MethodError) do io, err, argtypes, kwargs
 			# try to detect cases where the method error is due to mixing different metric signatures
-			mvargtypes = unwrap_type.(filter(a -> a <: OrType{<:AbstractMultivector}, collect(argtypes)))
+			mvargtypes = filter(a -> a <: AbstractMultivector, collect(argtypes))
 			if !isempty(mvargtypes) && !shared_sig(mvargtypes...)
 				used_sigs = join(sprint.(show_signature, signature.(mvargtypes)), ", ", " and ")
 				println(io, """

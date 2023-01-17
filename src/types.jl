@@ -183,7 +183,7 @@ componentbits(a::OrType{<:Multivector}) = componentbits(Val(dimension(a)), Val(g
 """
 	componentindex(a::Multivector, b::Union{Unsigned,BasisBlade})
 
-Index `i` of the element `a.comps[i]` which corresponds to the basis blade `b`.
+Index of the component of `a` which corresponds to the basis blade `b`.
 """
 componentindex(a::Multivector, b::BasisBlade) = componentindex(a, b.bits)
 componentindex(a::Multivector, bits::Unsigned) = findfirst(==(bits), componentbits(a))
@@ -216,7 +216,7 @@ end
 """
 	resulting_multivector_type(f, a, b, ...)
 
-Return a `Multivector{Sig,K,S}` type with parameters (signature `S`, grade(s) `K` and storage type `S`)
+Return a `Multivector{Sig,K,S}` type with parameters (signature `Sig`, grade(s) `K` and storage type `S`)
 appropriate for representing the result of `f(a, b)`.
 """
 function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
@@ -262,8 +262,8 @@ end
 #= Indexing and Iteration =#
 
 
-blades(a::BasisBlade) = [a]
-blades(a::Multivector{Sig}) where {Sig} = [BasisBlade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(a.bits, a.comps)]
+blades(a::BasisBlade) = Ref(a)
+blades(a::Multivector{Sig}) where {Sig} = (BasisBlade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(componentbits(a), a.comps))
 
 nonzero_components(a::BasisBlade) = isnumberzero(a.coeff) ? () : (a.bits => a.coeff,)
 nonzero_components(a::Multivector) = Iterators.filter(!isnumberzero∘last, zip(componentbits(a), a.comps))

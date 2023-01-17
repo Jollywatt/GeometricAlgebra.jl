@@ -11,7 +11,7 @@ Operations on bits representing “unit blades”. E.g., the
 
 Return the positions of the ones in the unsigned integer `bits`.
 
-Used to convert between representations of a unit blade.
+Used to convert between representations of a unit basis blade.
 Inverse of [`indices_to_bits`](@ref).
 
 # Examples
@@ -43,7 +43,7 @@ end
 
 Create unsigned integer with bits at the positions given in the vector `indices`.
 
-Used to convert between representations of a unit blade.
+Used to convert between representations of a unit basis blade.
 Inverse of [`bits_to_indices`](@ref).
 
 !!! warning
@@ -224,7 +224,7 @@ end
 	geometric_prod_bits(sig, a::Unsigned, b::Unsigned)
 
 Compute the geometric product between unit blades. Returns a tuple
-of the overall scalar factor and the resulting unit blade.
+of the overall scalar factor and the resulting unit basis blade.
 """
 geometric_prod_bits(sig, a::Unsigned, b::Unsigned) = (geometric_prod_factor(sig, a, b), a ⊻ b)
 

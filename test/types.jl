@@ -55,3 +55,8 @@ end
 	@test scalar(Multivector{3,0:3}(1:8)) == 1
 	@test scalar(Multivector{3,3}([42])) == 0
 end
+
+@testset "similar" begin
+	M = similar(Multivector{4,1}, BasisBlade{1,0}(0b0 => one(Float32)))
+	@test signature(M) == 4 && grade(M) == 1 && eltype(M) == Float32
+end

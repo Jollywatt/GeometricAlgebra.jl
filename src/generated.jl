@@ -37,7 +37,8 @@ symbolic_argument(::OrType{F}, label) where {F<:Function} = F.instance
 symbolic_argument(::OrType{Val{V}}, label) where {V} = Val(V)
 
 function toexpr(a::AbstractMultivector, compstype, T)
-	comps_expr = SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(a.comps, compstype, T))
+	comps = SymbolicUtils.expand.(a.comps)
+	comps_expr = SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(comps, compstype, T))
 	:( $(constructor(a))($comps_expr) )
 end
 toexpr(a, compstype, T) = SymbolicUtils.Code.toexpr(a)
@@ -96,6 +97,7 @@ canonicalize_signature(a) = a
 function symbolic_optim(f::Function, args::Union{Val,Function,AbstractMultivector{Sig}}...) where {Sig}
 	compstype = componentstype(Sig, 0, Any)
 	result = symbolic_multivector_eval(compstype, f, canonicalize_signature.(args)...)
+	# restore original signature
 	result isa Multivector ? Multivector{Sig,grade(result)}(result.comps) : result
 end
 

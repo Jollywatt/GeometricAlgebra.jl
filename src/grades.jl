@@ -162,6 +162,7 @@ end
 
 function grade(a::Multivector{Sig}, k) where {Sig}
 	k = promote_grades(dimension(a), k)
+	k == grade(a) && return a
 	k ⊆ grade(a) && return a[k]
 
 	b = zero(similar(Multivector{Sig,k}, a))

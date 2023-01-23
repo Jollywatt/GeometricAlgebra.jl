@@ -148,7 +148,7 @@ dimension(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = dimension(Sig)
 Number of independent components of a multivector instance (or type).
 """
 ncomponents(a::Multivector) = length(a.comps)
-ncomponents(a::Type{<:Multivector}) = sum(ncomponents(dimension(a), k) for k in grade(a); init = 0)
+Base.@assume_effects :foldable ncomponents(::Type{<:Multivector{Sig,K}}) where {Sig,K} = sum(ncomponents.(Ref(dimension(Sig)), K); init = 0)
 
 Base.length(::AbstractMultivector) = error(
 	"$length is not defined for multivectors. Do you mean $(repr(ncomponents))?")
@@ -202,9 +202,9 @@ Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = add!(zero(similar(Multivector{
 
 
 
-function Base.similar(M::Type{Multivector{Sig,K}}, abc::OrType{<:AbstractMultivector}...) where {Sig,K}
+function Base.similar(::Type{Multivector{Sig,K}}, abc::OrType{<:AbstractMultivector}...) where {Sig,K}
 	T = promote_type(eltype.(abc)...)
-	C = componentstype(Sig, ncomponents(M), T)
+	C = componentstype(Sig, ncomponents(Multivector{Sig,K}), T) # careful to make this fold at compile time
 
 	if !issetindexable(C) # at the moment, mutability of components vector is assumed
 		C = Vector{T}

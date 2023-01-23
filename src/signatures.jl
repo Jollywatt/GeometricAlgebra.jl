@@ -13,17 +13,15 @@ algebra’s defining signature.
 
 
 """
-	ncomponents(sig)
-	ncomponents(sig, k)
+	ncomponents(sig, k::Integer)
 
-Dimension of (the grade-`k` subspace of) the geometric algebra of metric
+Dimension of the grade-`k` subspace of the geometric algebra of metric
 signature `sig`, viewed as a vector space.
 
 If the dimension of the _underlying_ vector space (see [`dimension`](@ref)) in ``n``, then the algebra
 is ``2^n``-dimensional, and its grade-``k`` subspace ``\\binom{n}{k}``-dimensional.
 """
-ncomponents(sig) = 1 << dimension(sig)  # << constant folds whereas 2^dim doesn't
-ncomponents(sig, k) = binomial(dimension(sig), k)
+ncomponents(sig, k::Integer) = binomial(dimension(sig), k)
 
 
 

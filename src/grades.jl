@@ -1,5 +1,7 @@
 #= Grade promotion =#
 
+GradeParameter = Union{Integer,OrdinalRange{<:Integer,<:Integer},Tuple{Vararg{Integer}},Vector{<:Integer}}
+
 """
 	promote_grades(dim, k)
 
@@ -8,16 +10,16 @@ Canonicalize the grade type parameter `k`.
 Returns a subset of `0:dim`, while attempting to normalize equivalent
 representations, such as `0:1:3 => 0:3` or `(3, 0) => (0, 3)`.
 """
-promote_grades(dim::Integer, k::Integer) = k # its more helpful to have
-function promote_grades(dim::Integer, k)
-	k = (0:dim) ∩ k
-	length(k) == 1 ? first(k) : Tuple(k)
-end
-function promote_grades(dim::Integer, k::OrdinalRange)
+promote_grades(dim::Integer, k::Integer) = k # technically should be ø (e.g. empty tuple) if k ∉ 0:dim, but that’s confusing 
+function promote_grades(dim::Integer, k::OrdinalRange{<:Integer,<:Integer})
 	lo, hi = max(0, minimum(k)), min(dim, maximum(k))
 	lo == hi && return lo
 	Δ = abs(step(k))
 	Δ == 1 ? (lo:hi) : (lo:Δ:hi)
+end
+Base.@assume_effects :foldable function promote_grades(dim::Integer, k::GradeParameter)
+	k = (0:dim) ∩ k
+	length(k) == 1 ? first(k) : Tuple(k)
 end
 
 """
@@ -46,7 +48,7 @@ julia> promote_grades(4, 0, 3) # not worth having a specific type for grades (0,
 0:4
 ```
 """
-function promote_grades(dim::Integer, p, q)
+Base.@assume_effects :foldable function promote_grades(dim::Integer, p::GradeParameter, q::GradeParameter)
 	p = promote_grades(dim, p)
 	q = promote_grades(dim, q)
 

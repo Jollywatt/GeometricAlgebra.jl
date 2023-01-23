@@ -30,7 +30,7 @@ end
 		@test p ⊆ pq ⊇ q
 		@test length(pq) != 1 || pq isa Integer
 
-		a = resulting_multivector_type(+, Multivector{n,p}, Multivector{n,q})
+		a = @inferred resulting_multivector_type(+, BasisBlade{n,p,Int}, BasisBlade{n,q,Int})
 		@test p ⊆ grade(a) ⊇ q
 	end
 end

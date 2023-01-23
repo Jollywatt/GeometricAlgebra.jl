@@ -1,7 +1,7 @@
 name = "GeometricAlgebra"
 uuid = "11bbe1ca-eae6-48c2-942c-9f17e43de0f0"
 authors = ["jollywatt <jo.alex.w@gmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"

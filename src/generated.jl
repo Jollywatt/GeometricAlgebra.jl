@@ -173,6 +173,7 @@ struct SingletonVector{T} <: AbstractVector{T}
 end
 Base.length(a::SingletonVector) = a.length
 Base.size(a::SingletonVector) = (length(a),)
+Base.eltype(::SingletonVector{T}) where {T} = numberorany(T)
 Base.getindex(a::SingletonVector{T}, i) where {T} = a.index == i ? a.el : numberzero(T)
 function Base.iterate(a::SingletonVector, i = 1)
 	i > a.length && return

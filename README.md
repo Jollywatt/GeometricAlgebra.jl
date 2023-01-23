@@ -1,3 +1,5 @@
+<img src="./docs/src/assets/logo.svg" alt="logo" width="100"/>
+
 # GeometricAlgebra.jl
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jollywatt.github.io/GeometricAlgebra.jl/dev/)

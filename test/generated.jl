@@ -44,4 +44,9 @@ end
 @testset "SingletonVector" begin
 	@test collect(SingletonVector(42, 2, 5)) == [0, 42, 0, 0, 0]
 	@test size(SingletonVector(42, 5, 10_000)) == (10_000,)
+
+	nan = SingletonVector("nan", 2, 5)
+	@test nan[1] === 0 && nan[2] === "nan"
+	@test eltype(nan) === Any
+	@test collect(nan) == [0, "nan", 0, 0, 0]
 end

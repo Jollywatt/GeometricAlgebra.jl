@@ -45,14 +45,15 @@ toexpr(a, compstype, T) = SymbolicUtils.Code.toexpr(a)
 
 
 """
-	symbolic_multivector_eval(f, x::AbstractMultivector...)
+	symbolic_multivector_eval(compstype, f, x::AbstractMultivector...)
 
-Evaluate `f(x...)` using symbolically generated code.
+Evaluate `f(x...)` using symbolically generated code, returning a `Multivector`
+with components array of type `compstype`.
 
 This is a generated function which first evaluates `f` on symbolic versions of
 the multivector arguments `x` and then converts the symbolic result into unrolled code.
 
-Calling `symbolic_multivector_eval(Expr, f, x...)` with `Expr` as the first argument
+Calling `symbolic_multivector_eval(Expr, compstype, f, x...)` with `Expr` as the first argument
 returns the unevaluated code as an expression (for introspection).
 """
 function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, args...)

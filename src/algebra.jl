@@ -215,8 +215,7 @@ resulting_grades(::Tuple{typeof(graded_prod),GradeSelector}, dim, p::Integer, q:
 		bits = abits ⊻ bbits
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
 			factor = geometric_prod_factor(Sig, abits, bbits)
-			i = componentindex(c, bits)
-			c = setindex!!(c, c.comps[i] + factor*(acoeff*bcoeff), i)
+			add!(c, bits, factor*(acoeff*bcoeff))
 		end
 	end
 	c

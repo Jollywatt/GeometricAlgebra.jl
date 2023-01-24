@@ -432,12 +432,12 @@ Hodge dual of a multivector.
 
 The Hodge dual is defined by
 ```math
-⋆a = ã I
+H(a) = ã I
 ```
 where ``ã`` is the reversion of ``a`` and ``I`` is the unit pseudoscalar.
 For ``k``-vectors ``a`` and ``b``, it is alternatively defined by
 ```math
-a ∧ ⋆b = ⟨a, b⟩ I
+a ∧ H(b) = ⟨a, b⟩ I
 ```
 where ``⟨a, b⟩ = a ⊙ b̃`` is the induced inner product on ``k``-vectors.
 
@@ -509,9 +509,9 @@ Anti-wedge product of multivectors (a.k.a. the _regressive_ product or _meet_).
 
 The anti-wedge product satisfies
 ```math
-⋆(a ∨ b) = (⋆a) ∧ (⋆b)
+D(a ∨ b) = (D a) ∧ (D b)
 ```
-where ``⋆`` is a duality operation (such as `ldual`, `rdual` or `hodgedual` if ``I^2 ≠ 0``).
+where ``D`` is a duality operation such as `ldual`, `rdual` or, if ``I^2 ≠ 0``, `hodgedual`.
 
 The anti-wedge product is _metric independent_ like the wedge product,
 but does depend on the choice of _orientation_ (the ordering of basis vectors).

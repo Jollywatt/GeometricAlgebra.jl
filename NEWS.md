@@ -8,12 +8,14 @@ This simplifies and generalises the types: only one parametric type is needed, a
 * Grade promotion between different grades returns the next smallest subalgebra out of
    - `0` for scalars,
    - `(0, dim)` for scalar-pseudoscalars,
-   - `0:2:dim` for even multivector,
+   - `0:2:dim` for even multivectors,
    - `0:dim` for general multivectors,
 
 	for more efficient representations.
 
 * Remove `vector_repr` and make `matrix_repr` allow subspace representations.
+
+* Rename `poincaredual` to `rdual` and add `ldual`. These are also known as the right and left complements.
 
 * Add sandwich product and ‘antiwedge’ product `∨`.
 

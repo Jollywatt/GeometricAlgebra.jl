@@ -22,7 +22,7 @@ export geometric_prod,
 	clifford_conj, var"'ᶜ",
 	sandwich_prod
 export reversion, involution
-export flipdual, hodgedual, invhodgedual, poincaredual, ldual, rdual
+export flipdual, hodgedual, invhodgedual, ldual, rdual
 export matrix_repr
 
 include("bits.jl")

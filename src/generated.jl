@@ -74,6 +74,7 @@ function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, a
 end
 
 @generated function symbolic_multivector_eval(compstype::Type{S}, f::Function, args...) where S
+	6
 	symbolic_multivector_eval(Expr, S, f.instance, args...)
 end
 

@@ -531,8 +531,8 @@ Sandwich product `R*a*~R` of multivector `a` by a rotor `R`.
 """
 function sandwich_prod end
 
-sandwich_prod(R, a::Scalar) = grade(R*~R, 0).comps[]*a
-@symbolic_optim sandwich_prod(R, a::AbstractMultivector) = grade(R*a*~R, grade(a))
+sandwich_prod(R, a::Scalar) = scalar(R*reversion(R))*a
+@symbolic_optim sandwich_prod(R, a::AbstractMultivector) = grade(R*a*reversion(R), grade(a))
 
 #=
 

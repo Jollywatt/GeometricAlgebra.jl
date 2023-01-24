@@ -174,4 +174,6 @@ end
 grade(a::Multivector, ::typeof(+)) = grade(a, 0:2:dimension(a))
 grade(a::Multivector, ::typeof(-)) = grade(a, 1:2:dimension(a))
 
+grade(a::Scalar, k) = 0 ∈ k ? a : zero(a)
+
 eachgrade(a::Multivector) = (Multivector{signature(a),k}(view(a.comps, componentslice(a, k))) for k in grade(a))

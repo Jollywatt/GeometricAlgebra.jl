@@ -177,3 +177,13 @@ end
 		end
 	end
 end
+
+@testset "sandwich_prod" begin
+	@basis 3
+
+	R = exp(π/4*v12)
+	@test sandwich_prod(R, v2) ≈ v1
+	@test grade(sandwich_prod(R, v2)) == 1
+	@test sandwich_prod(R, 7) ≈ 7
+	@test sandwich_prod(4, 2) == 4*2*4
+end

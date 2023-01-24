@@ -15,7 +15,7 @@ This simplifies and generalises the types: only one parametric type is needed, a
 
 * Remove `vector_repr` and make `matrix_repr` allow subspace representations.
 
-* Add ‘antiwedge’ product `∨`.
+* Add sandwich product and ‘antiwedge’ product `∨`.
 
 ## v0.1.2
 

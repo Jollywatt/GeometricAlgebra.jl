@@ -511,7 +511,7 @@ The anti-wedge product satisfies
 ```math
 ⋆(a ∨ b) = (⋆a) ∧ (⋆b)
 ```
-where ``⋆`` is a duality operation (`ldual` or `rdual` or if ``I^2 ≠ 0``, `hodgedual`).
+where ``⋆`` is a duality operation (such as `ldual`, `rdual` or `hodgedual` if ``I^2 ≠ 0``).
 
 The anti-wedge product is _metric independent_ like the wedge product,
 but does depend on the choice of _orientation_ (the ordering of basis vectors).
@@ -522,6 +522,17 @@ antiwedge(a, b) = rdual(ldual(a)∧ldual(b))
 
 @doc (@doc antiwedge)
 ∨(a, b) = antiwedge(a, b)
+
+
+"""
+	sandwich_prod(R, a)
+
+Sandwich product `R*a*~R` of multivector `a` by a rotor `R`.
+"""
+function sandwich_prod end
+
+sandwich_prod(R, a::Scalar) = grade(R*~R, 0).comps[]*a
+@symbolic_optim sandwich_prod(R, a::AbstractMultivector) = grade(R*a*~R, grade(a))
 
 #=
 

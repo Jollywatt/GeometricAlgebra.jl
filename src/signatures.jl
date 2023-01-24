@@ -141,18 +141,6 @@ show_signature(io, ::Cl{P,Q,0}) where {P,Q} = print(io, "Cl($P,$Q)")
 Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature, sig)
 
 
-# experimental
-# struct SigWithStorageType{Sig,S} end
-# dimension(::SigWithStorageType{Sig}) where {Sig} = dimension(Sig)
-# basis_vector_norm(::SigWithStorageType{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
-# componentstype(::SigWithStorageType{Sig,S}, N, T) where {Sig,S<:StaticVector} = T <: Number ? S{N,T} : Vector{T}
-# componentstype(::SigWithStorageType{Sig,<:MVector}, N, T) where {Sig} = isbitstype(T) ? MVector{N,T} : Vector{T} # MVectors only support setindex! for isbits types
-# componentstype(::SigWithStorageType{Sig,SparseVector}, N, T) where {Sig} = SparseVector{T}
-# function show_signature(io, ::SigWithStorageType{Sig,S}) where {Sig,S}
-# 	show_signature(io, Sig)
-# 	print(io, " with ", nameof(S))
-# end
-
 
 
 #= Convenience =#

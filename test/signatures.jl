@@ -1,3 +1,6 @@
+using SparseArrays: SparseVector
+using StaticArrays: StaticVector
+
 @testset "basis, @basis" begin
 	@test length(basis(10)) == 10
 	@test length(basis(4, grade=0:2:4)) == 8
@@ -48,4 +51,27 @@ end
 	───────────┼──────┼───────────────────┼───────────────────┼──────
 	      v123 │ v123 │    0      0     0 │    0      0     0 │    0
 	"""
+end
+
+struct SigWithStorageType{Sig,S} end
+GeometricAlgebra.dimension(::SigWithStorageType{Sig}) where {Sig} = dimension(Sig)
+GeometricAlgebra.basis_vector_norm(::SigWithStorageType{Sig}, i) where {Sig} = GeometricAlgebra.basis_vector_norm(Sig, i)
+GeometricAlgebra.componentstype(::SigWithStorageType{Sig,<:Vector}, N, T) where {Sig} = Vector{T}
+GeometricAlgebra.componentstype(::SigWithStorageType{Sig,<:MVector}, N, T) where {Sig} = isbitstype(T) ? MVector{N,T} : Vector{T} # MVectors only support setindex! for isbits types
+GeometricAlgebra.componentstype(::SigWithStorageType{Sig,<:SparseVector}, N, T) where {Sig} = SparseVector{T}
+
+
+@testset "other storage types" begin
+	for C in [Vector, SparseVector, MVector]
+
+		sig = SigWithStorageType{3,C}()
+		b = basis(sig)
+
+		@test b[1] + b[2] isa Multivector{sig,1,<:C}
+		@test exp(b[1]b[2]) isa Multivector{sig,0:2:2,<:C}
+
+		m = 1 + b[1]
+		@test m isa Multivector{sig,K,<:C} where K
+		@test grade(m, 1) + b[2] isa Multivector{sig,1,<:C}
+	end
 end

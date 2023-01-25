@@ -8,7 +8,7 @@ Canonicalize the grade type parameter `k`.
 Returns a subset of `0:dim`, while attempting to normalize equivalent
 representations, such as `0:1:3 => 0:3` or `(3, 0) => (0, 3)`.
 """
-promote_grades(dim::Integer, k::Integer) = k # its more helpful to have
+promote_grades(dim::Integer, k::Integer) = k # technically should be ∅ if k ∉ 0:dim but more informative to preserve
 function promote_grades(dim::Integer, k)
 	k = (0:dim) ∩ k
 	length(k) == 1 ? first(k) : Tuple(k)

@@ -1,5 +1,7 @@
 # News
 
+## v0.2.1
+
 ## v0.2.0
 
 * Remove `KVector{Sig,K}` and `Multivector{Sig}` types in favour of `Multivector{Sig,K}`, where the grade `K` may now be a collection (e.g., range, tuple) in order to represent inhomogeneous multivectors.

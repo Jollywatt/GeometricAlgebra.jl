@@ -59,7 +59,8 @@ end
 	@test v[1]v[2]v[3] == v[2]v[3]v[1] == v[3]v[1]v[2]
 	@test 4 == 2*(v[2] + v[3])*(v[2] + v[3])
 
-	@test geometric_prod(v[1], 2) == 2v[1]
+	@test geometric_prod(v[1], 2) === 2v[1] === geometric_prod(2, v[1])
+	@test geometric_prod(6, 7) === 42
 
 	Ts = [BasisBlade, Multivector]
 	for T1 in Ts, T2 in Ts
@@ -70,13 +71,17 @@ end
 @testset "scalar product" begin
 	v = basis((-1,+1,+1,+1))
 
-	@test v[1] ⊙ v[1] == -1
-	@test v[1] ⊙ v[2] == 0
+	@test v[1] ⊙ v[1] === -1
+	@test v[1] ⊙ v[2] === 0
+	@test v[1] ⊙ (v[1]v[2]) === 0
 	@test v[1] ⊙ (1 + v[1]v[2]) isa Real
 
-	@test scalar_prod(v[2] + v[3], v[2] + v[3]) == 2
-	@test scalar_prod(v[1] + v[2], v[3]) == 0
-	@test scalar_prod(10 + 2v[3], 20 + v[3]) == 202
+	@test v[1] ⊙ 7 === 0
+	@test 6⊙7 === 42
+
+	@test scalar_prod(v[2] + v[3], v[2] + v[3]) === 2
+	@test scalar_prod(v[1] + v[2], v[3]) === 0
+	@test scalar_prod(10 + 2v[3], 20 + v[3]) === 202
 end
 
 @testset "∧" begin

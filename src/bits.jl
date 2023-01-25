@@ -205,20 +205,7 @@ function factor_from_squares(sig, bits::Unsigned)
 	factor
 end
 
-geometric_prod_matrix(sig) = let bits = 0:bits_first_of_grade(dimension(sig))
-	Int[sign_from_swaps(a, b)factor_from_squares(sig, a & b) for a ∈ bits, b ∈ bits]
-end
-@generated geometric_prod_matrix(::Val{Sig}) where {Sig} = geometric_prod_matrix(Sig)
-
-@inline function geometric_prod_factor(sig, a, b)::Int
-	if false # dimension(sig) <= 10 # limit geometric_prod_matrix cache to 8MB
-		# doesn’t seem worth it...
-		# TODO: proper benchmark test
-		geometric_prod_matrix(Val(sig))[begin + a, begin + b]
-	else
-		sign_from_swaps(a, b)factor_from_squares(sig, a & b)
-	end
-end
+geometric_prod_factor(sig, a, b) = sign_from_swaps(a, b)factor_from_squares(sig, a & b)
 
 """
 	geometric_prod_bits(sig, a::Unsigned, b::Unsigned)

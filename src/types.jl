@@ -268,14 +268,3 @@ blades(a::Multivector{Sig}) where {Sig} = (BasisBlade{Sig}(bits => coeff) for (b
 
 nonzero_components(a::BasisBlade) = isnumberzero(a.coeff) ? () : (a.bits => a.coeff,)
 nonzero_components(a::Multivector) = Iterators.filter(!isnumberzero∘last, zip(componentbits(a), a.comps))
-
-
-
-function setindex!!(a::Multivector, val, i)
-	if issetindexable(a.comps)
-		setindex!(a.comps, val, i)
-		a
-	else
-		constructor(a)(setindex(a.comps, val, i))
-	end
-end

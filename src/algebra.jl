@@ -55,36 +55,60 @@ Base.://(a::AbstractMultivector, b::AbstractMultivector) = a*(numberone(eltype(b
 	add!(a::Multivector, b::Blade)
 	add!(a::Multivector, bits, coeff)
 
-Return the multivector with the blade coefficient added to the corresponding
-multivector component, if it exists.
-
-The blade coefficient must be convertible to the multivector’s eltype.
+Add the blade coefficient to the corresponding component of a multivector,
+if the multivector has such a component.
 
 !!! warning
-	If the multivector cannot represent components of the required grade, it is not modified.
+	If the multivector cannot represent components of the required grade, it is returned unmodified.
+
+This mutates and returns `a` if it is a mutable type, otherwise returning a new multivector of identical type.
+(Thus, the blade coefficient must be convertible to the multivector’s eltype.)
+
 
 """
 function add!(a::Multivector, bits::Unsigned, coeff)
 	i = componentindex(a, bits)
-	isnothing(i) || (a.comps[i] += coeff)
-	a
+	isnothing(i) && return a
+	if issetindexable(a.comps)
+		a.comps[i] += coeff
+		a
+	else
+		comps = setindex(a.comps, a.comps[i] + coeff, i)
+		constructor(a)(comps)
+	end
 end
 
 add!(a::Multivector, b::BasisBlade) = add!(a, b.bits, b.coeff)
 
 function add!(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig, K}
-	a.comps .+= b.comps
+	if issetindexable(a.comps)
+		a.comps .+= b.comps
+		a
+	else
+		typeof(a)(a.comps + b.comps)
+	end
+end
+
+function add!(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig}
+	if issetindexable(a.comps)
+		for k ∈ grade(a) ∩ grade(b)
+			a.comps[componentslice(a, k)] .+= b.comps[componentslice(b, k)]
+		end
+	else
+		for (bits, coeff) in nonzero_components(b)
+			a = add!(a, bits, coeff)
+		end
+	end
 	a
 end
-add!(a::Multivector, b::Multivector) = add!(a, grade(b, grade(a)))
-
 
 resulting_grades(::typeof(+), dim, pq...) = promote_grades(dim, pq...)
 
-function Base.:+(abc::AbstractMultivector{Sig}...) where {Sig}
-	Σ = zero(resulting_multivector_type(+, abc...))
-	for a in abc
-		add!(Σ, a)
+Base.:+(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K} = Multivector{Sig,K}(a.comps + b.comps)
+function Base.:+(a::AbstractMultivector{Sig}, bc::AbstractMultivector{Sig}...) where {Sig}
+	Σ = zero(resulting_multivector_type(+, a, bc...))
+	for mv in (a, bc...)
+		Σ = add!(Σ, mv)
 	end
 	Σ
 end
@@ -131,7 +155,7 @@ end
 	c = zero(resulting_multivector_type(geometric_prod, a, b))
 	for (abits::UInt, acoeff) ∈ nonzero_components(a), (bbits::UInt, bcoeff) ∈ nonzero_components(b)
 		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-		add!(c, bits, factor*(acoeff*bcoeff))
+		c = add!(c, bits, factor*(acoeff*bcoeff))
 	end
 	c
 end
@@ -215,7 +239,7 @@ resulting_grades(::Tuple{typeof(graded_prod),GradeSelector}, dim, p::Integer, q:
 		bits = abits ⊻ bbits
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
 			factor = geometric_prod_factor(Sig, abits, bbits)
-			add!(c, bits, factor*(acoeff*bcoeff))
+			c = add!(c, bits, factor*(acoeff*bcoeff))
 		end
 	end
 	c

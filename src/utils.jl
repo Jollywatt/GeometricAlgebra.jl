@@ -52,10 +52,10 @@ zeroslike(::Type{<:SubArray{T,N,P}}, dims...) where {T,N,P} = zeroslike(P, dims.
 end
 
 # whether array supports `setindex!`
-issetindexable(T::Type) = ismutabletype(T)
 issetindexable(::Type{<:AbstractSparseArray}) = true
-issetindexable(a) = issetindexable(typeof(a))
 issetindexable(::Type{<:MVector{N,T}}) where {N,T} = isbitstype(T) # see https://github.com/JuliaArrays/StaticArrays.jl/issues/27
+issetindexable(T::Type) = ismutabletype(T)
+issetindexable(a) = issetindexable(typeof(a))
 
 
 with_eltype(::Type{<:Vector}, T) = Vector{T}

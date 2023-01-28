@@ -148,7 +148,7 @@ function exp_series(a::Multivector)
 	for i in 1:max_iters
 		term *= a/i
 		infnorm(term) < eps(real(eltype(term))) && break
-		add!(result, term)
+		result = add!(result, term)
 	end
 
 	exp(λ)result^p

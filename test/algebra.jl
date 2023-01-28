@@ -1,5 +1,8 @@
 using GeometricAlgebra:
-	bits_of_grade
+	bits_of_grade,
+	add!
+
+using StaticArrays
 
 @testset "==" begin
 	v = basis(2)
@@ -26,6 +29,30 @@ end
 	end
 
 	@test a//5 === BasisBlade{(1,1)}(0b01 => 2//1)
+end
+
+@testset "add!" begin
+	u = Multivector{3,1}([1,2,3])
+	add!(u, 0b001, 100)
+	@test u == Multivector{3,1}([101,2,3])
+
+	v = copy(u)
+	add!(u, 0b111, 100)
+	@test u == v
+
+	add!(u, u)
+	@test u == 2v
+
+	# non-mutable component type:
+	# add! should return a new instance of identical type
+	u = Multivector{3,1}(SA[1,2,3])
+	v = add!(u, 0b001, 100) 
+	@test u !== v
+	@test typeof(u) === typeof(v)
+
+	m = Multivector{3,0:3}(zeros(Int, 8))
+	add!(m, u)
+	@test m == u
 end
 
 @testset "+" begin

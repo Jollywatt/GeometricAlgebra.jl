@@ -56,7 +56,7 @@ function promote_grades(dim::Integer, p, q)
 	p ⊆ (0, dim) ⊇ q && return (0, dim)
 	
 	all(iseven, p) && all(iseven, q) && return 0:2:dim
-	
+
 	0:dim
 end
 promote_grades(dim::Integer, p, q, c...) = promote_grades(dim, promote_grades(dim, p, q), c...)
@@ -71,7 +71,7 @@ Non-zero grade(s) resulting from the application of `combine` on `dim`-dimension
 resulting_grades(combine, dim, P, Q) = promote_grades(dim, (resulting_grades(combine, dim, p::Integer, q::Integer) for p in P, q in Q)...)
 
 
-# widen grades k to the next narrowest subalgebra:
+# widen grades to the next narrowest subalgebra:
 # scalars ⊂ scalar-pseudoscalar ⊂ even subalgebra ⊂ full algebra
 function resulting_grades(::Val{:subalgebra}, dim, k)
 	k == 0 && return 0
@@ -110,6 +110,7 @@ so `a` may be modified like `a[k].comps[i] = ...`.
 """
 function Base.getindex(a::Multivector, k)
 	k = promote_grades(dimension(a), k)
+	k == grade(a) && return a
 	k ⊆ grade(a) || throw(ArgumentError("""
 	attempt to access grade $k part of grade $(grade(a)) Multivector.
 	Use `grade(a, k)` to project onto grades which may not exist in `a`.
@@ -164,11 +165,8 @@ function grade(a::Multivector{Sig}, k) where {Sig}
 	k = promote_grades(dimension(a), k)
 	k == grade(a) && return a
 	k ⊆ grade(a) && return a[k]
-
-	b = zero(similar(Multivector{Sig,k}, a))
-	ak = grade(a) ∩ k
-	b.comps[componentslice(b, ak)] = a.comps[componentslice(a, ak)]
-	b
+	T = similar(Multivector{Sig,k}, a)
+	add!(zero(T), a)
 end
 
 grade(a::Multivector, ::typeof(+)) = grade(a, 0:2:dimension(a))
@@ -176,4 +174,5 @@ grade(a::Multivector, ::typeof(-)) = grade(a, 1:2:dimension(a))
 
 grade(a::Scalar, k) = 0 ∈ k ? a : zero(a)
 
-eachgrade(a::Multivector) = (Multivector{signature(a),k}(view(a.comps, componentslice(a, k))) for k in grade(a))
+# eachgrade(a::Multivector) = (Multivector{signature(a),k}(view(a.comps, componentslice(a, k))) for k in grade(a))
+eachgrade(a::Multivector) = ishomogeneous(a) ? Ref(a,) : (a[k] for k in grade(a))

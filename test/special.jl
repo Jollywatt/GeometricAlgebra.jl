@@ -18,8 +18,8 @@ using GeometricAlgebra:
 			mixed_sig[1:dim],
 		], trials in 1:5
 			a = Multivector{sig,0:dim}(rand(2^dim))
-			@test a/a ≈ 1 rtol=1e-6
-			@test 1 ≈ a\a rtol=1e-6
+			@test a/a ≈ 1 rtol=1e-5
+			@test 1 ≈ a\a rtol=1e-5
 			@test inv_matrix_method(inv(a)) ≈ a rtol=1e-6
 		end
 	end

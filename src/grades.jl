@@ -134,8 +134,8 @@ may be used as shortcuts for the even and odd parts, respectively.
 
 # Examples
 ```jldoctest
-julia> mv = Multivector{Cl(2,1), 0:4}(1:8)
-8-component Multivector{Cl(2,1), 0:4, UnitRange{Int64}}:
+julia> mv = Multivector{Cl(2,1), 0:3}(1:8)
+8-component Multivector{Cl(2,1), 0:3, UnitRange{Int64}}:
  1
  2 v1 + 3 v2 + 4 v3
  5 v12 + 6 v13 + 7 v23

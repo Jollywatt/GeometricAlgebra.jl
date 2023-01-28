@@ -1,4 +1,7 @@
-<img src="./docs/src/assets/logo.svg" alt="logo" width="100"/>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/src/assets/logo-dark.svg">
+  <img alt="logo" width="120" src="./docs/src/assets/logo.svg">
+</picture>
 
 # GeometricAlgebra.jl
 

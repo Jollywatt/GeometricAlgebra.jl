@@ -2,7 +2,7 @@ using GeometricAlgebra:
 	isscalar,
 	componentbits,
 	componentindex,
-	componentslice
+	componentindices
 using GeometricAlgebra.StaticArrays
 using GeometricAlgebra.SparseArrays
 
@@ -32,7 +32,7 @@ end
 		@test componentindex.(a, componentbits(a)) == 1:ncomponents(a)
 
 		if k isa Integer
-			bits = componentbits(a)[componentslice(a, k)]
+			bits = componentbits(a)[componentindices(a, k)]
 			@test length(bits) == binomial(n, k)
 			@test all(count_ones.(bits) .== k)
 		end

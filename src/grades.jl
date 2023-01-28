@@ -84,19 +84,23 @@ end
 #= Grade projection =#
 
 """
-	componentslice(a, k)
+	componentindices(a, k)
 
-Indices of components of grade(s) `k` in multivector `a`.
+Indices of the components of grade(s) `k` in multivector `a`.
+Throws an error if `k ∉ grade(a)`.
+
+The grade `k` may be an integer (returning a range) or
+a collection of grades (returning a vector of indices).
 """
-function componentslice(a::OrType{<:Multivector}, k::Integer)
+function componentindices(a::OrType{<:Multivector}, k::Integer)
 	i = findfirst(componentbits(a)) do bits
 		count_ones(bits) == k
 	end
-	isnothing(i) && return 1:0
+	isnothing(i) && throw(ArgumentError("$(constructor(a)) does not contain grade $k components"))
 	range(i, length = ncomponents(dimension(a), k))
 end
 
-componentslice(a::OrType{<:Multivector}, k) = reduce(vcat, componentslice.(Ref(a), k); init=Int[])
+componentindices(a::OrType{<:Multivector}, k) = reduce(vcat, componentindices.(Ref(a), k); init=Int[])
 
 
 
@@ -105,8 +109,8 @@ componentslice(a::OrType{<:Multivector}, k) = reduce(vcat, componentslice.(Ref(a
 	getindex(a::Multivector, k)
 
 Get the grade(s) `k` part of a multivector `a` if `k ⊆ grade(a)`.
-The components of the resulting `Multivector` are a view into the components of `a`,
-so `a` may be modified like `a[k].comps[i] = ...`.
+The components of the resulting `Multivector` are a _view_ into the components of `a`,
+so modifying `a[k].comps` changes `a`.
 """
 function Base.getindex(a::Multivector, k)
 	k = promote_grades(dimension(a), k)
@@ -115,7 +119,7 @@ function Base.getindex(a::Multivector, k)
 	attempt to access grade $k part of grade $(grade(a)) Multivector.
 	Use `grade(a, k)` to project onto grades which may not exist in `a`.
 	"""))
-	Multivector{signature(a),k}(view(a.comps, componentslice(a, k)))
+	Multivector{signature(a),k}(view(a.comps, componentindices(a, k)))
 end
 
 
@@ -174,5 +178,4 @@ grade(a::Multivector, ::typeof(-)) = grade(a, 1:2:dimension(a))
 
 grade(a::Scalar, k) = 0 ∈ k ? a : zero(a)
 
-# eachgrade(a::Multivector) = (Multivector{signature(a),k}(view(a.comps, componentslice(a, k))) for k in grade(a))
 eachgrade(a::Multivector) = ishomogeneous(a) ? Ref(a,) : (a[k] for k in grade(a))

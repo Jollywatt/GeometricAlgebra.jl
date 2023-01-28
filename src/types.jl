@@ -183,7 +183,7 @@ componentbits(a::OrType{<:Multivector}) = componentbits(Val(dimension(a)), Val(g
 """
 	componentindex(a::Multivector, b::Union{Unsigned,BasisBlade})
 
-Index of the component of `a` which corresponds to the basis blade `b`.
+Index of the component of `a.comps` which corresponds to the basis blade `b`.
 """
 componentindex(a::OrType{<:Multivector}, b::BasisBlade) = componentindex(a, b.bits)
 componentindex(a::OrType{<:Multivector}, bits::Unsigned) = findfirst(==(bits), componentbits(a))

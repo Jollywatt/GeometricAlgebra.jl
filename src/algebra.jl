@@ -92,7 +92,7 @@ end
 function add!(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig}
 	if issetindexable(a.comps)
 		for k ∈ grade(a) ∩ grade(b)
-			a.comps[componentslice(a, k)] .+= b.comps[componentslice(b, k)]
+			a[k].comps .+= b[k].comps
 		end
 	else
 		for (bits, coeff) in nonzero_components(b)
@@ -351,14 +351,17 @@ end
 
 Multiply the grade `k` part of `a` by `f(k)`.
 """
-graded_multiply(f, a::Scalar) = f(0)*a
-graded_multiply(f, a::BasisBlade) = f(grade(a))*a
-function graded_multiply(f, a::Multivector{Sig}) where Sig
-	comps = collect(a.comps)
-	for k ∈ grade(a)
-		comps[componentslice(a, k)] *= f(k) # TODO: what if this changes the eltype!?
+graded_multiply(f, a::Scalar) = f(0)a
+function graded_multiply(f, a::AbstractMultivector)
+	if ishomogeneous(a)
+		f(grade(a))a
+	else
+		b = zero(a)
+		for k ∈ grade(a)
+			b = add!(b, f(k)a[k]) # TODO: this doesn’t promote eltype
+		end
+		b
 	end
-	constructor(a)(comps)
 end
 
 """

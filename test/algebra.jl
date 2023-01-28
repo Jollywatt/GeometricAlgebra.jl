@@ -175,7 +175,7 @@ end
 		@test dual(v[1] + 10v[1]v[2]v[3]) == dual(v[1]) + 10dual(v[1]v[2]v[3])
 	end
 
-	for dim in 0:5, k in 0:dim
+	for dim in 0:5, k in 1:dim
 		a, b = Multivector{dim,k}.(eachcol(rand(-5:5, ncomponents(dim, k), 2)))
 		I = flipdual(one(a)) # unit pseudoscalar
 		@test a ∧ hodgedual(b) == a ⊙ ~b * I

@@ -111,13 +111,13 @@ Base.:\(a::AbstractMultivector, b::Scalar) = inv(a)*b
 #= Exponential =#
 
 function exp_with_scalar_square(a, a²::Scalar)
-	norm = sqrt(abs(a²))
-	if iszero(norm)
-		one(a)/one(norm) + a # div for type stability
-	elseif a² > 0
-		cosh(norm) + sinh(norm)/norm*a
-	else
+	iszero(a²) && return one(a)/one(a²) + a
+	if a² isa Real && a² < 0
+		norm = sqrt(-a²)
 		cos(norm) + sin(norm)/norm*a
+	else
+		norm = sqrt(a²)
+		cosh(norm) + sinh(norm)/norm*a
 	end
 end
 
@@ -138,7 +138,7 @@ function exp_series(a::Multivector)
 	a -= λ
 
 	norm = twonorm(a)
-	p = 2^max(0, floor(Int, log2(norm))) # power of 2 for fast exponentiation
+	p = 2^floor(Int, log2(max(1, norm))) # power of 2 for fast exponentiation
 	a /= p
 
 	term = one(a)
@@ -178,12 +178,13 @@ Base.log(a::AbstractMultivector) = via_matrix_repr(log, a)
 #= Trigonometric =#
 
 function eval_evenodd_trig(a, a², pos, neg, ::Val{even}) where even
-	s = sign(a²)
-	norm = sqrt(abs(a²))
-	if even
-		s > 0 ? pos(norm) : s < 0 ? neg(norm) : one(a)
+	iszero(a²) && return even ? one(a) : a
+	if a² isa Real && a² < 0
+		norm = sqrt(-a²)
+		even ? neg(norm) : neg(norm)*a/norm
 	else
-		s > 0 ? pos(norm)*a/norm : s < 0 ? neg(norm)*a/norm : a
+		norm = sqrt(a²)
+		even ? pos(norm) : pos(norm)*a/norm
 	end
 end
 

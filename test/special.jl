@@ -38,6 +38,9 @@ end
 		@test exp(a)exp(-a) ≈ 1
 		@test inv(exp(a)) ≈ exp(-a)
 	end
+
+	@test exp((3 + 0im)v[1]) ≈ exp(3v[1])
+	@test exp((3 + 2im)v[1]) ≈ GeometricAlgebra.exp_series(Multivector((3 + 2im)v[1]))
 end
 
 @testset "matrix method fallbacks" begin
@@ -52,7 +55,7 @@ end
 @testset "trig identities" begin
 	for sig in [3, (0, -1, 1), 4]
 		v = basis(sig)
-		for a in [5v[1]v[2], v[1]v[2] + v[2]v[3], rand(length(v))'v]
+		for a in [5v[1]v[2], v[1]v[2] + v[2]v[3], rand(length(v))'v, im*v[1]]
 			@test exp(a) ≈ cosh(a) + sinh(a)
 			@test tan(a) ≈ sin(a)/cos(a)
 			@test sin(a) ≈ sin(asin(sin(a)))
@@ -62,7 +65,7 @@ end
 
 @testset "compact representations" begin
 	# if grades fit in a smaller subalgebra,
-	# the restrict to that subalgebra
+	# restrict result to that subalgebra
 
 	for a in [
 		Multivector{4,0}([7])

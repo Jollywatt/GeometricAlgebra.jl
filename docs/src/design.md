@@ -30,7 +30,7 @@ Type parameters:
 - `S`: The storage type of the components of a `Multivector`, usually an `AbstractVector` subtype.
 
 
-## Metric Signatures
+## [Metric Signatures](@id sig)
 
 The metric signature type parameter `Sig` defines the dimension of the geometric algebra and the norms of its standard orthonormal basis vectors.
 Additionally, it allows various default behaviours to be customised through method definitions which dispatch on `Sig`, as detailed in [the metric signature interface](@ref sig-interface).

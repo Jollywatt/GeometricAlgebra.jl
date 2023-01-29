@@ -7,7 +7,8 @@ end
 
 # Rotors
 
-Rotors are multivectors which describe proper rotations, in an extremely uniform and elegant way.
+Rotors are multivectors which describe proper rotations.
+The rotors behave uniformly in any dimension and provide an extremely elegant and efficient description of rotations.
 For motivation, it is helpful to consider rotations in simpler algebras.
 
 In the complex plane, a complex number ``z ∈ ℂ`` is rotated about the origin with the mapping ``z ↦ e^{iθ}z``.

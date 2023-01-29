@@ -5,12 +5,18 @@ DocTestSetup = quote
 end
 ```
 
+```@setup ga
+using GeometricAlgebra
+```
+
+
 # Fundamental Automorphisms
 
 
 Generally, operations like complex conjugation ``\overline{AB} = \bar{A}\bar{B}`` or matrix transposition ``(AB)^⊺ = B^⊺A^⊺`` are useful because they preserve or reverse multiplication. (These are called [automorphisms](https://en.wikipedia.org/wiki/Automorphism) and [antiautomorphisms](https://en.wikipedia.org/wiki/Antihomomorphism) respectively.)
 
-Geometric algebras possess some important automorphisms: _reversion_ ``\tilde{A}`` and _grade involution_.
+Geometric algebras possess some important automorphisms: _reversion_ ``\tilde{A}``, _grade involution_ and the combination of both, _Clifford conjugation_.
+These are useful unary operations which cannot be expressed in terms of simple geometric multiplication.
 
 ## Reversion
 
@@ -23,7 +29,8 @@ Reversion ``\tilde{A}`` is defined on multivectors ``A`` and ``B`` by the proper
 and by ``\tilde{𝒖} = 𝒖`` for vectors.
 Computing the reversion looks like reversing the order of the geometric product:
 ```@repl ga
-~(v1*v2*v3) == v3*v2*v1
+@basis 3
+~(v1*v2 + 2v1*v2*v3) == v2*v1 + 2v3*v2*v1
 ```
 
 Swapping orthogonal basis vectors ``𝐯_i𝐯_j ↦ 𝐯_j𝐯_i = -𝐯_i𝐯_j`` introduces an overall factor of ``-1``, and it takes ``\binom{k}{2} = \frac{k(k - 1)}{2}`` swaps to reverse ``k`` many basis vectors.
@@ -31,7 +38,7 @@ Thus, the reversion of a homogeneous ``k``-vector ``A_k`` is given by
 ```math
 \tilde{A_k} = (-1)^{k(k - 1)/2} A_k
 ```
-but for inhomogeneous multivectors, reversion is not always an overall change in sign.
+For inhomogeneous multivectors, reversion affects each grade separately, so the result is not always simply a change in overall sign.
 
 
 Grade | Reversion sign

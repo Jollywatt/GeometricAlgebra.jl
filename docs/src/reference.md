@@ -1,13 +1,13 @@
 # Reference
 
-## Multivector Types
+## Multivector types
 
 ```@autodocs
 Pages = ["types.jl"]
 Modules = [GeometricAlgebra]
 ```
 
-## Algebraic Operations
+## Multivector operations
 
 ```@autodocs
 Pages = ["algebra.jl", "special.jl"]
@@ -21,9 +21,24 @@ Pages = ["signatures.jl"]
 Modules = [GeometricAlgebra]
 ```
 
-## Internals
+## Logic for bits and grades
 
 ```@autodocs
-Pages = ["bits.jl", "grades.jl", "show.jl", "generated.jl"]
+Pages = ["bits.jl", "grades.jl"]
+Modules = [GeometricAlgebra]
+```
+
+## Display methods
+
+```@autodocs
+Pages = ["show.jl"]
+Modules = [GeometricAlgebra]
+```
+
+## Code generation
+
+
+```@autodocs
+Pages = ["generated.jl"]
 Modules = [GeometricAlgebra]
 ```

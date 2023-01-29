@@ -33,8 +33,8 @@ function make(; kwargs...)
             "design.md",
             "Background Theory" => [
                 "theory/basics.md",
-                "theory/automorphisms.md",
                 "theory/products.md",
+                "theory/automorphisms.md",
                 "theory/dualities.md",
                 "theory/rotors.md",
                 "theory/references.md",

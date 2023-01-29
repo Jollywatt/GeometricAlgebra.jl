@@ -5,7 +5,7 @@ DocTestSetup = quote
 end
 ```
 
-# Wedge, Inner and Contraction Products
+# Wedge, Inner and Other Products
 
 The geometric product is the fundamental operation in geometric algebra. Together with grade projection ``⟨\phantom{A}⟩``, various other “graded products” may be defined by taking different grade projections of the basic product.
 

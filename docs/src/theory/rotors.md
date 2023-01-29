@@ -7,15 +7,17 @@ end
 
 # Rotors
 
+Rotors are multivectors which describe proper rotations, in an extremely uniform and elegant way.
+For motivation, it is helpful to consider rotations in simpler algebras.
 
 In the complex plane, a complex number ``z ∈ ℂ`` is rotated about the origin with the mapping ``z ↦ e^{iθ}z``.
 Simiarly, a [quaternion](https://juliageometry.github.io/Quaternions.jl/) ``q ∈ ℍ`` is rotated about an axis ``n`` with ``q ↦ e^{n/2}qe^{-n/2}``.
-In fact, the double-sided transformation law
+Indeed, the double-sided transformation law
 ```math
 A ↦ e^{B/2}Ae^{-B/2}
 ```
 is general to both ``ℂ`` and ``ℍ``, and in fact applies to geometric algebras of any dimension.
-Specifically, the [**rotor**](https://en.wikipedia.org/wiki/Rotor_(mathematics)) ``R = e^{B/2}`` describes a rotation in the plane spanned by the bivector ``B`` by an angle decribed by its magnitude.
+Specifically, the [**rotor**](https://en.wikipedia.org/wiki/Rotor_(mathematics)) ``R = e^{B/2}`` describes a rotation in the plane spanned by the bivector ``B`` by an angle described by its magnitude.
 
 ## Reflections and orthogonal transformations
 
@@ -40,14 +42,17 @@ By composing reflections as above, we can obtain any orthogonal transformation, 
 for some $R = 𝒗_1𝒗_2⋯𝒗_k$.
 The overall sign is positive for an even number of reflections (giving a proper rotation), and negative for an odd number.
 
-For an orthogonal transformation built using _normalised_ vectors, the inverse is
+Without loss of generality, we may use _normalised_ vectors, so that the inverse is
 ```math
-	R^{-1} = 𝒗̂_k^{-1}\cdots 𝒗̂_2^{-1}𝒗̂_1^{-1} = ±\tilde{R}	
+	R^{-1} = 𝒗̂_k^{-1}\cdots 𝒗̂_2^{-1}𝒗̂_1^{-1} = ±\tilde{R}
 ```
-since $𝒗̂^{-1} = ±𝒗̂$, and hence an orthogonal transformation is described by
+since $𝒗̂^{-1} = ±𝒗̂$.
+Hence, an orthogonal transformation is described by
 ```math
 	A ↦ ±RA\tilde{R}
 ```
+where ``R`` is satisfies ``R^{-1} = ±\tilde{R}``.
+
 
 ## Rotor groups
 
@@ -72,6 +77,7 @@ Finally, the additional requirement that $R\tilde{R} = 1$ defines the restricted
 The rotor group is a double cover of the restricted special orthogonal group $\mathsf{SO}^+(p, q)$, which is the identity-connected part of $\mathsf{SO}(p, q)$.
 
 The takeaway is that any orthogonal transformation, including reflections, rotations, and combinations of both, can be described within geometric algebra with rotors, no matter the kind of multivector being transformed, and independent of the dimension or signature of the algebra.
+In particular, proper rotations are described by **rotors**, or even multivectors satisfying ``R\tilde{R} = 1``.
 
 ## The bivector subalgebra
 
@@ -80,7 +86,13 @@ Because the even subalgebra is closed under the geometric product, the exponenti
 ```math
 	e^B = 1 + B + B^2/2 + ⋯ ∈ \mathsf{Spin}^+
 ```
-of a bivector $B$ is always an even multivector.
+of a bivector $B$ is always an even multivector, and the reverse ``\tilde{}\,(e^B) = e^{-B}`` is the inverse.
+Therefore, ``e^B ∈ \mathsf{Spin}^+`` is a rotor; and indeed, any rotor ``R ∈ \mathsf{Spin}^+`` is of the form
+```math
+R = e^B
+```
+for some bivector ``B``.
 
-Furthermore, bivectors form a Lie algebra under the commutator product $A × B ≔ \frac12(AB - BA)$.
-Indeed, this demonstrates a Lie group–Lie algebra correspondence between the rotor group $\mathsf{Spin}^+$ and the bivector subalgebra generated with $×$.
+!!! note
+	Formally, bivectors form a Lie algebra under the commutator product $A × B ≔ \frac12(AB - BA)$.
+	Indeed, this demonstrates a Lie group–Lie algebra correspondence between the rotor group $\mathsf{Spin}^+$ and bivectors equipped with $×$.

@@ -9,7 +9,7 @@ end
 using GeometricAlgebra
 ```
 
-# Geometric Algebra Fundamentals
+# Introduction
 
 This is a brief overview of the mathematics of geometric algebra, using `GeometricAlgebra.jl` to explain features along the way.
 

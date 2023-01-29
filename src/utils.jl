@@ -58,33 +58,12 @@ issetindexable(T::Type) = ismutabletype(T)
 issetindexable(a) = issetindexable(typeof(a))
 
 
-with_eltype(::Type{<:Vector}, T) = Vector{T}
-with_eltype(::Type{<:MVector{N}}, T) where {N} = MVector{N,T}
-with_eltype(::Type{<:SVector{N}}, T) where {N} = SVector{N,T}
-with_eltype(::Type{<:SparseVector}, T) = SparseVector{T}
-
-# copy array and set element in one step
-function copy_setindex(a, val, I...)
-	T = promote_type(eltype(a), typeof(val))
-	a′ = with_eltype(typeof(a), T)(a)
-	if issetindexable(a)
-		setindex!(a′, val, I...)
-		a′
-	else
-		setindex(a′, val, I...)
-	end
-end
-
-
 
 
 #= Miscellaneous =#
 
 shared_sig(::OrType{<:AbstractMultivector{Sig}}...) where {Sig} = true
 shared_sig(::OrType{<:AbstractMultivector}...) = false
-
-unwrap_type(::Type{Type{T}}) where T = T
-unwrap_type(T) = T
 
 function __init__()
 	if isdefined(Base.Experimental, :register_error_hint)

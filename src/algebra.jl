@@ -1,12 +1,24 @@
 #= Equality =#
 
 Base.:(==)(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where Sig = a.bits == b.bits ? a.coeff == b.coeff : iszero(a) && iszero(b)
-function Base.:(==)(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
-	all(grade(a, k).comps == grade(b, k).comps for k in promote_grades(a, b))
+Base.:(==)(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K} = a.comps == b.comps
+function Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig}
+	for k ∈ 0:dimension(a)
+		if grade(a) ∋ k ∈ grade(b)
+			a.comps[componentindices(a, k)] == b.comps[componentindices(b, k)] || return false
+		elseif k ∈ grade(a)
+			iszero(a.comps[componentindices(a, k)]) || return false
+		elseif k ∈ grade(b)
+			iszero(b.comps[componentindices(b, k)]) || return false
+		end
+	end
+	true
 end
+Base.:(==)(a::BasisBlade{Sig}, b::Multivector{Sig}) where {Sig} = Multivector(a) == b
+Base.:(==)(a::Multivector{Sig}, b::BasisBlade{Sig}) where {Sig} = a == Multivector(b)
 
-Base.:(==)(a::AbstractMultivector, b::Number) = iszero(b) ? iszero(a) : isscalar(a) && scalar(a) == b
-Base.:(==)(a::Number, b::AbstractMultivector) = iszero(a) ? iszero(b) : isscalar(b) && a == scalar(b)
+Base.:(==)(a::AbstractMultivector, b::Scalar) = iszero(b) ? iszero(a) : isscalar(a) && scalar(a) == b
+Base.:(==)(a::Scalar, b::AbstractMultivector) = iszero(a) ? iszero(b) : isscalar(b) && a == scalar(b)
 
 
 
@@ -22,8 +34,8 @@ function Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig};
 	isapprox(grade(a, k).comps, grade(b, k).comps; kwargs...)
 end
 
-Base.:isapprox(a::AbstractMultivector, b::Number; kwargs...) = isapprox(a, zero(a) + b; kwargs...)
-Base.:isapprox(a::Number, b::AbstractMultivector; kwargs...) = isapprox(zero(b) + a, b; kwargs...)
+Base.:isapprox(a::AbstractMultivector, b::Scalar; kwargs...) = isapprox(a, zero(a) + b; kwargs...)
+Base.:isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(zero(b) + a, b; kwargs...)
 
 
 

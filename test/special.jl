@@ -33,7 +33,7 @@ end
 	@test exp(3v[1]v[2]) ≈ cos(3) + sin(3)v[1]v[2]
 	
 	for dim in 1:5, trials in 1:5
-		a = Multivector{dim,1}(big.(randn(2^dim)))
+		a = Multivector{dim,0:dim}(big.(randn(2^dim)))
 		@test exp(a)exp(-a) ≈ 1
 		@test inv(exp(a)) ≈ exp(-a)
 	end

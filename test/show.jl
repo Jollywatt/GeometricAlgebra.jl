@@ -17,8 +17,9 @@ using StaticArrays
 	@test contains(sprint(show, BasisBlade{sig,2,Int}), prettysig)
 	@test contains(sprint(show, BasisBlade{sig,K,Int} where {K}), prettysig)
 
-	@test startswith(sprint(show, MIME("text/plain"), BasisBlade{3}), "BasisBlade{3")
-	@test startswith(sprint(show, MIME("text/plain"), BasisBlade{(1,1,1)}), "BasisBlade{⟨+++⟩")
+	for sig in [3, (1,1,1), Cl(2), Cl(3,0,1)]
+		@test startswith(sprint(show, MIME("text/plain"), BasisBlade{sig}), "BasisBlade{"*sprint(show_signature, sig))
+	end
 end
 
 @testset "multivector printing" begin

@@ -145,7 +145,7 @@ dimension(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = dimension(Sig)
 
 
 """
-	ncomponents(::CompositeMultivector)
+	ncomponents(::Multivector)
 
 Number of independent components of a multivector instance (or type).
 """
@@ -197,24 +197,23 @@ constructor(::OrType{<:BasisBlade{Sig,K}}) where {Sig,K} = BasisBlade{Sig,K}
 constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
 Base.copy(a::Multivector) = constructor(a)(copy(a.comps))
 
-
-BasisBlade(a::BasisBlade) = a
-Multivector(a::Multivector) = a
-Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = add!(zero(similar(Multivector{Sig,K}, a)), a)
-
-
-
 function Base.similar(M::Type{Multivector{Sig,K}}, abc::OrType{<:AbstractMultivector}...) where {Sig,K}
 	T = promote_type(eltype.(abc)...)
 	C = componentstype(Sig, ncomponents(M), T)
 	Multivector{Sig,K,C}
 end
 
+BasisBlade(a::BasisBlade) = a
+Multivector(a::Multivector) = a
+Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = add!(zero(similar(Multivector{Sig,K}, a)), a)
+
 """
 	resulting_multivector_type(f, a, b, ...)
 
 Return a `Multivector{Sig,K,S}` type with parameters (signature `Sig`, grade(s) `K` and storage type `S`)
 appropriate for representing the result of `f(a, b)`.
+
+Calls `resulting_grades(f, dimension(Sig), grade(a), grade(b), ...)` to determine `K`.
 """
 function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	dim = dimension(Sig)

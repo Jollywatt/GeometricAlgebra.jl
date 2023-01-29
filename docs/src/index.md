@@ -27,7 +27,7 @@ Non-euclidean metric signatures may be specified:
 
 ```jldoctest
 julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
-6-component Multivector{⟨-+++⟩, 2, UnitRange{Int64}}:
+6-component Multivector{Cl"-+++", 2, UnitRange{Int64}}:
  1 v12
  2 v13
  3 v23
@@ -36,7 +36,7 @@ julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
  6 v34
 
 julia> exp(v)
-8-component Multivector{⟨-+++⟩, 0:2:4, MVector{8, Float64}}:
+8-component Multivector{Cl"-+++", 0:2:4, MVector{8, Float64}}:
  1.18046
  0.818185 v12 + -0.141944 v13 + 0.153208 v23 + 1.076 v14 + 1.16194 v24 + 1.03866 v34
  0.999268 v1234

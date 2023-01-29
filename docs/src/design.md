@@ -51,6 +51,8 @@ BasisBlade{(t = -1, x = 1, y = 1, z = 1), 4, Int64}:
 
 ```
 
+The metric signature shorthand `Cl"-+++"` is an alias for a tuple `(-1, 1, 1, 1)`, and so on for any string of `'+'`, `'-'` and `'0'`.
+
 
 ### [The metric signature interface](@id sig-interface)
 

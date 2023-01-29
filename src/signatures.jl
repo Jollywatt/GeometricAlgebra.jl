@@ -13,8 +13,8 @@ algebra’s defining signature.
 
 
 """
-	ncomponents(sig)
-	ncomponents(sig, k)
+	ncomponents(sig) = 2^dimension(sig)
+	ncomponents(sig, k) = binomial(dimension(sig), k)
 
 Dimension of (the grade-`k` subspace of) the geometric algebra of metric
 signature `sig`, viewed as a vector space.
@@ -44,15 +44,13 @@ julia> sig = (+1,-1,-1,-1)
 (1, -1, -1, -1)
 
 julia> GeometricAlgebra.show_signature(stdout, sig)
-⟨+---⟩
+Cl"+---"
 
 julia> BasisBlade{sig}
-BasisBlade{⟨+---⟩} (pretty-printed BasisBlade{(1, -1, -1, -1)})
+BasisBlade{Cl"+---"} (pretty-printed BasisBlade{(1, -1, -1, -1)})
 ```
 """
 show_signature(io, sig) = show(io, sig)
-show_signature(io, sig::Tuple) = print(io, "⟨$(join(map(s -> get(Dict(+1=>"+", -1=>"-"), s, s), sig)))⟩")
-
 
 """
 	show_basis_blade(io, sig, indices::Vector{Int})
@@ -115,6 +113,8 @@ basis_vector_norm(sig::Union{Tuple,NamedTuple}, i) = sig[i]
 Metric signature where `p`, `q` and `r` are the number of
 basis vectors of norm `+1`, `-1` and `0`, respectively.
 
+See also [`@Cl_str`](@ref).
+
 # Examples
 ```jldoctest
 julia> basis(Cl(1,3))
@@ -145,6 +145,30 @@ Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature,
 
 #= Convenience =#
 
+"""
+	@Cl_str -> Tuple
+
+Shorthand for a tuple specifying a metric signature, e.g., `Cl"-+++" === (-1, +1, +1, +1)`.
+String may contain `'+'`, `'-'` and `'0'`.
+
+# Example
+```jldoctest
+julia> Cl"+++" # 3D Euclidean metric signature
+(1, 1, 1)
+
+julia> basis(ans)
+3-element Vector{BasisBlade{Cl"+++", 1, Int64}}:
+ 1 v1
+ 1 v2
+ 1 v3
+```
+"""
+macro Cl_str(s)
+	interpret_signature(s)
+end
+
+show_signature(io, sig::Tuple) = print(io, "Cl\"$(join(map(s -> get(Dict(+1=>"+", -1=>"-"), s, s), sig)))\"")
+
 interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i] for i in sig)
 interpret_signature(sig) = sig
 
@@ -165,7 +189,7 @@ julia> basis(3)
  1 v3
 
 julia> basis("-+++", grade=0:2:4)
-8-element Vector{BasisBlade{⟨-+++⟩, _A, Int64} where _A}:
+8-element Vector{BasisBlade{Cl"-+++", _A, Int64} where _A}:
  1
  1 v12
  1 v13

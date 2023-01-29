@@ -142,8 +142,8 @@ geometric_prod(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
 geometric_prod(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
 
 function geometric_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig}
-	factor, bits = geometric_prod_bits(Sig, a.bits, b.bits)
-	BasisBlade{Sig}(bits => factor*(a.coeff*b.coeff))
+	factor = geometric_prod_factor(Sig, a.bits, b.bits)
+	BasisBlade{Sig}(a.bits ⊻ b.bits => factor*(a.coeff*b.coeff))
 end
 
 function resulting_grades(::typeof(geometric_prod), dim, p::Integer, q::Integer)
@@ -154,8 +154,8 @@ end
 @symbolic_optim function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(resulting_multivector_type(geometric_prod, a, b))
 	for (abits::UInt, acoeff) ∈ nonzero_components(a), (bbits::UInt, bcoeff) ∈ nonzero_components(b)
-		factor, bits = geometric_prod_bits(Sig, abits, bbits)
-		c = add!(c, bits, factor*(acoeff*bcoeff))
+		factor = geometric_prod_factor(Sig, abits, bbits)
+		c = add!(c, abits ⊻ bbits, factor*(acoeff*bcoeff))
 	end
 	c
 end

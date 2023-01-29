@@ -6,7 +6,7 @@ using GeometricAlgebra:
 	componentindex,
 	sign_from_swaps,
 	factor_from_squares,
-	geometric_prod_bits
+	geometric_prod_factor
 
 
 @testset "bits <-> indices" begin
@@ -57,9 +57,9 @@ end
 	@test factor_from_squares((0, 1, 1), 0b101) == 0
 end
 
-@testset "geometric_prod_bits()" begin
-	@test geometric_prod_bits((1, 1, 1), 0b001, 0b010) == (+1, 0b011)
-	@test geometric_prod_bits((1, 1, 1), 0b010, 0b001) == (-1, 0b011)
-	@test geometric_prod_bits((1, 1, 1), 0b011, 0b001) == (-1, 0b010)
-	@test geometric_prod_bits((0, 1, 1), 0b001, 0b101) == (0, 0b100)
+@testset "geometric_prod_factor()" begin
+	@test geometric_prod_factor((1, 1, 1), 0b001, 0b010) == +1
+	@test geometric_prod_factor((1, 1, 1), 0b010, 0b001) == -1
+	@test geometric_prod_factor((1, 1, 1), 0b011, 0b001) == -1
+	@test geometric_prod_factor((0, 1, 1), 0b001, 0b101) == 0
 end

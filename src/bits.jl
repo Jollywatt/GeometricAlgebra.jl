@@ -205,20 +205,17 @@ function factor_from_squares(sig, bits::Unsigned)
 	factor
 end
 
-geometric_prod_factor(sig, a, b) = sign_from_swaps(a, b)factor_from_squares(sig, a & b)
-
 """
-	geometric_prod_bits(sig, a::Unsigned, b::Unsigned)
+	geometric_prod_factor(sig, a::Unsigned, b::Unsigned)
 
-Compute the geometric product between unit blades. Returns a tuple
-of the overall scalar factor and the resulting unit basis blade.
+The scalar factor resulting from the geometric product between unit blades.
 """
-geometric_prod_bits(sig, a::Unsigned, b::Unsigned) = (geometric_prod_factor(sig, a, b), a ⊻ b)
+geometric_prod_factor(sig, a::Unsigned, b::Unsigned) = sign_from_swaps(a, b)factor_from_squares(sig, a & b)
 
 """
 	reversion_sign(k) = mod(k, 4) <= 1 ? +1 : -1
 
-Sign from reversing a ``k``-vector.
+Sign from reversing a ``k``-vector, equal to ``(-1)^{k(k - 1)/2}``.
 """
 reversion_sign(k) = mod(k, 4) <= 1 ? +1 : -1
 

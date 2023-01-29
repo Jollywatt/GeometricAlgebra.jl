@@ -168,7 +168,7 @@ end
 
 #= Roots and Logs =#
 
-Base.sqrt(a::BasisBlade{Sig,0}) where {Sig} = BasisBlade{Sig,0}(0 => sqrt(a.coeff))
+Base.sqrt(a::BasisBlade{Sig,0}) where {Sig} = BasisBlade{Sig,0}(0, sqrt(a.coeff))
 Base.sqrt(a::Multivector) = isscalar(a) ? sqrt(scalar(a))one(a) : via_matrix_repr(sqrt, a)
 
 Base.log(a::AbstractMultivector) = via_matrix_repr(log, a)

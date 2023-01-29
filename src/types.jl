@@ -49,7 +49,6 @@ end
 
 """
 	BasisBlade{Sig}(bits, coeff)
-	BasisBlade{Sig}(bits => coeff)
 
 Basis blade with indices encoded by `bits` and scalar coefficient `coeff`.
 
@@ -57,17 +56,15 @@ Indices are encoded in binary (e.g., ``v₁∧v₃∧v₄`` has bits `0b1101`).
 
 # Examples
 ```jldoctest
-julia> BasisBlade{3}(0b110 => 42) # a grade 2 blade in 3 dimensions
+julia> BasisBlade{3}(0b110, 42) # a grade 2 blade in 3 dimensions
 BasisBlade{3, 2, Int64}:
  42 v23
 ```
 """
 BasisBlade{Sig}(bits, coeff::T) where {Sig,T} = BasisBlade{Sig,count_ones(bits),T}(bits, coeff)
-BasisBlade{Sig}(pair::Pair) where {Sig} = BasisBlade{Sig}(pair...)
 
 # warning: doesn’t check that K == count_ones(bits)
 BasisBlade{Sig,K}(bits, coeff::T) where {Sig,K,T} = BasisBlade{Sig,K,T}(bits, coeff)
-BasisBlade{Sig,K}(pair::Pair) where {Sig,K} = BasisBlade{Sig,K}(pair...)
 
 # from scalar
 BasisBlade{Sig}(coeff::T) where {Sig,T<:Scalar} = BasisBlade{Sig,0,T}(0, coeff)
@@ -224,9 +221,9 @@ end
 
 
 
-Base.zero(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(0 => numberzero(T))
+Base.zero(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(0, numberzero(T))
 Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
-Base.one(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(0 => numberone(T))
+Base.one(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(0, numberone(T))
 Base.one(::OrType{<:Multivector{Sig,K,S} where K}) where {Sig,S} = Multivector{Sig,0}(oneslike(S, 1))
 
 Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)
@@ -259,7 +256,7 @@ end
 
 
 blades(a::BasisBlade) = Ref(a)
-blades(a::Multivector{Sig}) where {Sig} = (BasisBlade{Sig}(bits => coeff) for (bits, coeff) ∈ zip(componentbits(a), a.comps))
+blades(a::Multivector{Sig}) where {Sig} = (BasisBlade{Sig}(bits, coeff) for (bits, coeff) ∈ zip(componentbits(a), a.comps))
 
-nonzero_components(a::BasisBlade) = isnumberzero(a.coeff) ? () : (a.bits => a.coeff,)
+nonzero_components(a::BasisBlade) = isnumberzero(a.coeff) ? () : (a.bits, a.coeff,)
 nonzero_components(a::Multivector) = Iterators.filter(!isnumberzero∘last, zip(componentbits(a), a.comps))

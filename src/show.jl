@@ -12,7 +12,7 @@ Display blade with parentheses surrounding coefficient if necessary.
 
 # Example
 ```jldoctest
-julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(0b1 => 1 + im))
+julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(0b1, 1 + im))
 (1+1im) x
 ```
 """
@@ -60,7 +60,7 @@ function show_multivector_row(io::IO, @nospecialize(a); indent=0, compact=false,
 	for (bits, coeff) in zip(componentbits(a), a.comps)
 		!showzeros && isnumberzero(coeff) && continue
 		isfirst ? isfirst = false : print(io, " + ")
-		show_blade(io, BasisBlade{signature(a)}(bits => coeff); compact)
+		show_blade(io, BasisBlade{signature(a)}(bits, coeff); compact)
 	end
 end
 

@@ -4,7 +4,7 @@ using GeometricAlgebra:
 	inv_matrix_method
 
 @testset "inverses" begin
-	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4) .=> 1)
+	v = BasisBlade{(-1,+1,+1,+1)}.(bits_of_grade(1, 4), 1)
 	@test inv(v[1])v[1] == 1
 	@test inv(5v[1]v[2]) == inv(v[2])inv(v[1])inv(5)
 
@@ -26,7 +26,7 @@ using GeometricAlgebra:
 end
 
 @testset "exp" begin
-	v = BasisBlade{(1,1)}.(bits_of_grade(1, 2) .=> 1)
+	v = BasisBlade{(1,1)}.(bits_of_grade(1, 2), 1)
 	@test exp(10000*2pi*v[1]v[2]) ≈ 1
 
 	@test exp(0v[1]) == 1

@@ -20,7 +20,7 @@ end
 end
 
 @testset "scalar *" begin
-	a = BasisBlade{(1,1)}(0b01 => 10)
+	a = BasisBlade{(1,1)}(0b01, 10)
 
 	for b in [a, Multivector(a)]
 		@test 3a == a*3.0
@@ -28,7 +28,7 @@ end
 		@test -a == a/(-1.0)
 	end
 
-	@test a//5 === BasisBlade{(1,1)}(0b01 => 2//1)
+	@test a//5 === BasisBlade{(1,1)}(0b01, 2//1)
 end
 
 @testset "add!" begin

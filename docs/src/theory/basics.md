@@ -93,7 +93,7 @@ where ``i_1 < ⋯ < i_k`` are called **basis blades**. Reordering the product on
 
 Scalar multiples of basis blades are represented with the `BasisBlade{Sig,K,T}` type, which encodes indices ``i_1, ..., i_k`` as binary-ones. (See [`bits_to_indices`](@ref) and [`indices_to_bits`](@ref).)
 ```@repl ga
-BasisBlade{4}(0b1011 => 42)
+BasisBlade{4}(0b1011, 42)
 ```
 You can generate all basis blades (of a given grade) for an algebra with [`basis()`](@ref).
 ```@repl ga

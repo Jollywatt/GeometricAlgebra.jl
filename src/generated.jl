@@ -75,6 +75,7 @@ function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, a
 end
 
 @generated function symbolic_multivector_eval(compstype::Type{S}, f::Function, args...) where S
+	1
 	symbolic_multivector_eval(Expr, S, f.instance, args...)
 end
 
@@ -93,7 +94,7 @@ is passed as an argument.
 
 canonical_signature(sig) = ntuple(i -> basis_vector_norm(sig, i), dimension(sig))
 canonicalize_signature(a::Multivector{Sig,K,S}) where {Sig,K,S} = Multivector{canonical_signature(Sig),K,S}(a.comps)
-canonicalize_signature(a::BasisBlade{Sig,K,T}) where {Sig,K,T} = BasisBlade{canonical_signature(Sig),K,T}(a.bits, a.coeff)
+canonicalize_signature(a::BasisBlade{Sig,K,T}) where {Sig,K,T} = BasisBlade{canonical_signature(Sig),K,T}(a.coeff, a.bits)
 canonicalize_signature(a) = a
 
 function symbolic_optim(f::Function, args::Union{Val,Function,AbstractMultivector{Sig}}...) where {Sig}

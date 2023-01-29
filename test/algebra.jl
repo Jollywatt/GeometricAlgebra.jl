@@ -20,7 +20,7 @@ end
 end
 
 @testset "scalar *" begin
-	a = BasisBlade{(1,1)}(0b01, 10)
+	a = BasisBlade{(1,1)}(10, 0b01)
 
 	for b in [a, Multivector(a)]
 		@test 3a == a*3.0
@@ -28,16 +28,16 @@ end
 		@test -a == a/(-1.0)
 	end
 
-	@test a//5 === BasisBlade{(1,1)}(0b01, 2//1)
+	@test a//5 === BasisBlade{(1,1)}(2//1, 0b01)
 end
 
 @testset "add!" begin
 	u = Multivector{3,1}([1,2,3])
-	add!(u, 0b001, 100)
+	add!(u, 100, 0b001)
 	@test u == Multivector{3,1}([101,2,3])
 
 	v = copy(u)
-	add!(u, 0b111, 100)
+	add!(u, 100, 0b111)
 	@test u == v
 
 	add!(u, u)
@@ -46,7 +46,7 @@ end
 	# non-mutable component type:
 	# add! should return a new instance of identical type
 	u = Multivector{3,1}(SA[1,2,3])
-	v = add!(u, 0b001, 100) 
+	v = add!(u, 100, 0b001)
 	@test u !== v
 	@test typeof(u) === typeof(v)
 

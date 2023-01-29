@@ -13,7 +13,7 @@ using GeometricAlgebra.SymbolicUtils
 	@test zeroslike(Vector{Union{Int,SymbolicUtils.Symbolic}}, 4) == [0, 0, 0, 0]
 
 
-	b = BasisBlade{3}(0b101, SymbolicUtils.Sym{Real}(:b))
+	b = BasisBlade{3}(SymbolicUtils.Sym{Real}(:b), 0b101)
 	kv = symbolic_argument(Multivector{3,1,Vector{Int}}, :kv)
 	mv = symbolic_argument(Multivector{3,0:3,Vector{Int}}, :mv)
 

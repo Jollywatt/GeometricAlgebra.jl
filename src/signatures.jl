@@ -189,7 +189,7 @@ function basis(sig; grade=1)
 	dim = dimension(sig)
 	grade == :all && (grade = 0:dimension(sig))
 	bits = componentbits(Val(dim), Val(grade))
-	BasisBlade{sig}.(bits, 1)
+	BasisBlade{sig}.(1, bits)
 end
 
 function generate_blades(sig; grades=:all, allperms=false, pseudoscalar=:I, scalar=false)

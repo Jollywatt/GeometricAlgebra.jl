@@ -12,7 +12,7 @@ Display blade with parentheses surrounding coefficient if necessary.
 
 # Example
 ```jldoctest
-julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(0b1, 1 + im))
+julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(1 + im, 0b1))
 (1+1im) x
 ```
 """
@@ -24,7 +24,7 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade); compact=get(io, :compa
 		else
 			type = typeof(a)
 		end
-		print(io, type, "($bits, $(a.coeff))")
+		print(io, type, "($(a.coeff), $bits)")
 	else
 		subio = IOContext(io, :compact => true)
 		if compact && isnumberzero(a.coeff)
@@ -57,31 +57,31 @@ function show_multivector_row(io::IO, @nospecialize(a); indent=0, compact=false,
 		return
 	end
 	isfirst = true
-	for (bits, coeff) in zip(componentbits(a), a.comps)
+	for (coeff, bits) in zip(a.comps, componentbits(a))
 		!showzeros && isnumberzero(coeff) && continue
 		isfirst ? isfirst = false : print(io, " + ")
-		show_blade(io, BasisBlade{signature(a)}(bits, coeff); compact)
+		show_blade(io, BasisBlade{signature(a)}(coeff, bits); compact)
 	end
 end
 
 function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true, compact=false)
 	!showzeros && iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
-	comps = zip(componentbits(a), a.comps)
+	comps = zip(a.comps, componentbits(a))
 	if !showzeros
-		comps = Iterators.filter(!isnumberzero∘last, comps)
+		comps = Iterators.filter(!isnumberzero∘first, comps)
 	end
 
 	comps = collect(comps)
 
 	isempty(comps) && return print(io, " "^indent, a.comps)
 
-	alignments = Base.alignment.(Ref(io), last.(comps))
+	alignments = Base.alignment.(Ref(io), first.(comps))
 	L = maximum(first.(alignments))
 	R = maximum(last.(alignments))
 
 	firstline = true
-	for ((bits, coeff), (l, r)) ∈ zip(comps, alignments)
+	for ((coeff, bits), (l, r)) ∈ zip(comps, alignments)
 		firstline || println(io)
 		print(io, " "^(L - l + indent))
 		Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))

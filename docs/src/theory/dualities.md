@@ -16,7 +16,7 @@ I ≔ 𝐯_1𝐯_2⋯𝐯_n
 ```
 is interpreted as an oriented unit volume.
 
-!!! note
+!!! warning
 	The unit pseudoscalar ``I`` is not to be confused with the identity matrix or unit imaginary ``i``. Indeed, ``I`` does not always commute, and ``I^2 = ±1`` depending on the algebra.
 
 Multiplying by ``I`` sends ``k``-vectors to ``(n - k)``-vectors.
@@ -70,10 +70,11 @@ By contrast, ``I^2 = ±1`` and hence ``I^{-1} = ±I`` does not depend on the mul
 The left and right complements are dual operations which do not involve multiplication by the pseudoscalar ``I``, and so are metric independent.
 [Some authors](https://rigidgeometricalgebra.org/wiki/index.php?title=Complements) denote the left and right complements by ``\underline{A}`` and ``\overline{A}``, respectively.
 
-For a unit basis blade ``a``, the complements satisfy
+For a unit basis blade ``a``, the complements are uniquely defined by
 ```math
 \textsf{ldual}(a)\,a = I = a\,\textsf{rdual}(a)
 ```
+and are extended linearly to act on general multivectors.
 They are inverses of each other,
 ```math
 \textsf{ldual}(\textsf{rdual}(a)) = a = \textsf{rdual}(\textsf{ldual}(a))
@@ -81,3 +82,18 @@ They are inverses of each other,
 and in odd-dimensional algebras, are identical.
 
 The metric-independence of the left and right duals mean they are appropriate even for degenerate algebras, since a non-zero multivector always has a non-zero dual, even if its Hodge dual is zero.
+
+## Dualized products
+
+It is common to work both with multivectors and their duals in the same context, and hence convenient to define “dualized” versions of certain products.
+For example, the regressive product ``∨`` is the dualized [wedge product](@ref wedge) ``∧``, defined by
+```math
+D(a ∨ b) = D(a) ∧ D(b)
+```
+where ``D`` is a dual operation such as ``\textsf{ldual}`` or ``\textsf{rdual}`` (each results in an equivalent definition).
+
+In the context of [projective geometric algebra](http://projectivegeometricalgebra.org/), the ``∧``-product of two objects forms the _join_ (e.g., the line joining two points) while the ``∨``-product of two objects forms the _meet_ (e.g., the point where two lines meet).
+
+Similar products may be defined by dualizing the inner product and contractions[^2] but these are less common.
+
+[^2]: See the “anti-products” defined in [Lengyel’s wiki](http://projectivegeometricalgebra.org/).

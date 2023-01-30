@@ -8,11 +8,11 @@ end
 # Rotors
 
 Rotors are multivectors which describe proper rotations.
-The rotors behave uniformly in any dimension and provide an extremely elegant and efficient description of rotations.
+The rotors formalism provides an extremely uniform, elegant and efficient description of rotations.
 For motivation, it is helpful to consider rotations in simpler algebras.
 
 In the complex plane, a complex number ``z ∈ ℂ`` is rotated about the origin with the mapping ``z ↦ e^{iθ}z``.
-Simiarly, a [quaternion](https://juliageometry.github.io/Quaternions.jl/) ``q ∈ ℍ`` is rotated about an axis ``n`` with ``q ↦ e^{n/2}qe^{-n/2}``.
+Similarly, a [quaternion](https://juliageometry.github.io/Quaternions.jl/) ``q ∈ ℍ`` is rotated about an axis ``n`` with ``q ↦ e^{n/2}qe^{-n/2}``.
 Indeed, the double-sided transformation law
 ```math
 A ↦ e^{B/2}Ae^{-B/2}
@@ -60,20 +60,20 @@ where ``R`` is satisfies ``R^{-1} = ±\tilde{R}``.
 All such multivectors satisfying $R^{-1} = ±\tilde{R}$ taken together form a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) under the geometric product.
 This is called the [pin group](https://en.wikipedia.org/wiki/Pin_group):
 ```math
-	\mathsf{Pin}(p, q) ≔ \big\{ R ∈ 𝔾(p, q) \mid R\tilde{R} = ±1 \big\}
+	\mathsf{Pin}(p, q) ≔ \big\{ R ∈ Cl(p, q) \mid R\tilde{R} = ±1 \big\}
 ```
 There are two “pinors” for every orthogonal transformation, namely $+R$ and $-R$.
 Thus, the pin group forms a [double cover](https://en.wikipedia.org/wiki/Covering_space) of the orthogonal group $\mathsf{O}(p,q)$.
 
 Furthermore, the even-grade elements of $\mathsf{Pin}(p,q)$ form a subgroup, called the _spin_ group:
 ```math
-	\mathsf{Spin}(p, q) ≔ \big\{ R ∈ 𝔾_+(p, q) \mid R\tilde{R} = ±1 \big\}
+	\mathsf{Spin}(p, q) ≔ \big\{ R ∈ Cl_+(p, q) \mid R\tilde{R} = ±1 \big\}
 ```
 The spin group, in turn, forms a double cover of the special orthogonal group $\mathsf{SO}(p, q)$.
 
 Finally, the additional requirement that $R\tilde{R} = 1$ defines the restricted spinor group, or the **rotor group**:
 ```math
-	\mathsf{Spin}^+(p, q) ≔ \big\{ R ∈ 𝔾_+(p, q) \mid R\tilde{R} = 1 \big\}
+	\mathsf{Spin}^+(p, q) ≔ \big\{ R ∈ Cl_+(p, q) \mid R\tilde{R} = 1 \big\}
 ```
 The rotor group is a double cover of the restricted special orthogonal group $\mathsf{SO}^+(p, q)$, which is the identity-connected part of $\mathsf{SO}(p, q)$.
 
@@ -94,6 +94,7 @@ R = e^B
 ```
 for some bivector ``B``.
 
-!!! note
+!!! note "Bivector Lie algebra"
 	Formally, bivectors form a Lie algebra under the commutator product $A × B ≔ \frac12(AB - BA)$.
 	Indeed, this demonstrates a Lie group–Lie algebra correspondence between the rotor group $\mathsf{Spin}^+$ and bivectors equipped with $×$.
+

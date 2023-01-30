@@ -35,10 +35,10 @@ The scalar product is simply the scalar part of the geometric product:
 ```math
 A ⊙ B ≔ ⟨AB⟩_0
 ```
-It is also commonly denoted ``A ∗	B`` or ``⟨AB⟩``.
+It is also commonly denoted ``A ∗ B`` or ``⟨AB⟩``.
 
 
-## Wedge product
+## [Wedge product](@id wedge)
 
 [`A ∧ B`](@ref) or [`wedge(A, B)`](@ref)
 

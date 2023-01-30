@@ -15,7 +15,7 @@ using GeometricAlgebra
 
 Generally, operations like complex conjugation ``\overline{AB} = \bar{A}\bar{B}`` or matrix transposition ``(AB)^⊺ = B^⊺A^⊺`` are useful because they preserve or reverse multiplication. (These are called [automorphisms](https://en.wikipedia.org/wiki/Automorphism) and [antiautomorphisms](https://en.wikipedia.org/wiki/Antihomomorphism) respectively.)
 
-Geometric algebras possess some important automorphisms: _reversion_ ``\tilde{A}``, _grade involution_ and the combination of both, _Clifford conjugation_.
+Geometric algebras possess some important automorphisms: _reversion_ ``\tilde{A}``, _grade involution_ ``A^\star`` and the combination of both, _Clifford conjugation_.
 These are useful unary operations which cannot be expressed in terms of simple geometric multiplication.
 
 ## Reversion

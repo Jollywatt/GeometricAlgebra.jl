@@ -46,6 +46,7 @@ function make(; kwargs...)
                 :macros => macros,
                 :minRuleThickness => 0.06,
             )),
+            assets = ["assets/favicon.ico"],
         );
         kwargs...
     )

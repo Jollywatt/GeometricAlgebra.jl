@@ -216,7 +216,7 @@ function basis(sig; grade=1)
 	BasisBlade{sig}.(1, bits)
 end
 
-function generate_blades(sig; grades=:all, allperms=false, pseudoscalar=:I, scalar=false)
+function generate_blades(sig; grades=:all, allperms=false, pseudoscalar=:I, scalar=false, prefix=nothing)
 	
 	grades = grades == :all ? (0:dimension(sig)) : grades
 	grades = scalar ? grades : grades ∩ (1:dimension(sig))
@@ -228,7 +228,12 @@ function generate_blades(sig; grades=:all, allperms=false, pseudoscalar=:I, scal
 	end
 
 	basisvectors = basis(sig; grade=1)
-	labels = Symbol.(sprint.(show_basis_blade, Ref(sig), indices))
+	labels = sprint.(show_basis_blade, Ref(sig), indices)
+	if !isnothing(prefix)
+		labels .= replace.(labels, r"^[^0-9]+"=>prefix)
+	end
+	labels = Symbol.(labels)
+
 	basisblades = labels .=> prod.(getindex.(Ref(basisvectors), indices))
 	filter!(basisblades) do (label, _)
 		label != Symbol("")
@@ -242,7 +247,7 @@ function generate_blades(sig; grades=:all, allperms=false, pseudoscalar=:I, scal
 end
 
 """
-	@basis sig grades=:all scalar=false pseudoscalar=:I allperms=false
+	@basis sig grades=:all scalar=false pseudoscalar=:I allperms=false prefix=nothing
 
 Populate namespace with basis blades for the geometric
 algebra defined by metric signature `sig`.
@@ -256,6 +261,7 @@ Variable names are generated with [`show_basis_blade()`](@ref).
 - `pseudoscalar`: alias for unit pseudoscalar (default `:I`).
   `pseudoscalar=nothing` defines no alias.
 - `allperms`: include all permutations of each basis blade (e.g., define `v21` as well as `v12`).
+- `prefix`: prefix for basis blades names (`nothing` leaves default names unchanged).
 
 !!! warning
 	This defines `2^dimension(sig)` variables with `grades=:all`, and more with `allperms=true`!

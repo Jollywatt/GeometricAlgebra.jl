@@ -365,7 +365,7 @@ end
 Multiply the grade `k` part of `a` by `f(k)`.
 """
 graded_multiply(f, a::Scalar) = f(0)a
-function graded_multiply(f, a::AbstractMultivector)
+@symbolic_optim function graded_multiply(f, a::AbstractMultivector)
 	if ishomogeneous(a)
 		f(grade(a))a
 	else

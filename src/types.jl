@@ -149,7 +149,11 @@ dimension(::OrType{<:AbstractMultivector{Sig}}) where {Sig} = dimension(Sig)
 Number of independent components of a multivector instance (or type).
 """
 ncomponents(a::Multivector) = length(a.comps)
-ncomponents(a::Type{<:Multivector}) = sum(ncomponents(dimension(a), k) for k in grade(a); init = 0)
+@static if VERSION >= v"1.8"
+	Base.@assume_effects :foldable ncomponents(a::Type{<:Multivector}) = sum(ncomponents.(dimension(a), grade(a)); init = 0)
+else
+	ncomponents(a::Type{<:Multivector}) = sum(ncomponents.(dimension(a), grade(a)); init = 0)
+end
 
 Base.length(::AbstractMultivector) = error(
 	"$length is not defined for multivectors. Do you mean $(repr(ncomponents))?")

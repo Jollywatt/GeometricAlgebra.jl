@@ -73,7 +73,7 @@ if the multivector has such a component.
 !!! warning
 	If the multivector cannot represent components of the required grade, it is returned unmodified.
 
-This mutates and returns `a` if it is a mutable type, otherwise returning a new multivector of identical type.
+This mutates and returns `a` if it is a mutable type, otherwise it returns a new multivector of identical type.
 (Thus, the blade coefficient must be convertible to the multivector’s eltype.)
 
 
@@ -103,11 +103,12 @@ end
 
 function add!(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig}
 	if issetindexable(a.comps)
-		for k ∈ grade(a) ∩ grade(b)
-			a[k].comps .+= b[k].comps
+		for k ∈ 0:dimension(Sig)
+			grade(a) ∋ k ∈ grade(b) || continue
+			a.comps[componentindices(a, k)] .+= b.comps[componentindices(b, k)]
 		end
 	else
-		for (coeff, bits) in nonzero_components(b)
+		for (coeff, bits) in zip(b.comps, componentbits(b))
 			a = add!(a, coeff, bits)
 		end
 	end

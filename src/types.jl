@@ -113,8 +113,7 @@ julia> grade(ans, 1)
 """
 function Multivector{Sig,K}(comps::S) where {Sig,K,S}
 	@assert length(comps) === ncomponents(Multivector{Sig,K}) """
-	ncomponents($(Multivector{Sig,K})) == $(ncomponents(Multivector{Sig,K})), but received components of length $(length(comps))
-	"""
+	instances of $(Multivector{Sig,K}) have $(ncomponents(Multivector{Sig,K})) components, but received $(length(comps))"""
 	Multivector{Sig,K,S}(comps)
 end
 

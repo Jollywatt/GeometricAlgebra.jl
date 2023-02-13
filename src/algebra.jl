@@ -75,8 +75,6 @@ if the multivector has such a component.
 
 This mutates and returns `a` if it is a mutable type, otherwise it returns a new multivector of identical type.
 (Thus, the blade coefficient must be convertible to the multivector’s eltype.)
-
-
 """
 function add!(a::Multivector, coeff, bits::Unsigned)
 	i = componentindex(a, bits)
@@ -108,7 +106,7 @@ function add!(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig}
 			a.comps[componentindices(a, k)] .+= b.comps[componentindices(b, k)]
 		end
 	else
-		for (coeff, bits) in zip(b.comps, componentbits(b))
+		for (coeff, bits) in nonzero_components(b)
 			a = add!(a, coeff, bits)
 		end
 	end
@@ -159,7 +157,7 @@ function geometric_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig}
 end
 
 function resulting_grades(::typeof(geometric_prod), dim, p::Integer, q::Integer)
-	(dim ∈ p || dim ∈ q) && return dim - min(p, q)
+	dim == max(p, q) && return dim - min(p, q)
 	abs(p - q):2:min(p + q, dim)
 end
 
@@ -182,13 +180,19 @@ Base.:*(a::AbstractMultivector, b::AbstractMultivector) = geometric_prod(a, b)
 	a ⊙ b
 	scalar_prod(a, b) -> Number
 
-Scalar part of the multivector product `a*b`.
+Scalar part of the geometric product `a*b`.
 """
 scalar_prod(a::Scalar, b::Scalar) = a*b
 scalar_prod(a::AbstractMultivector, b::Scalar) = scalar(a)*b
 scalar_prod(a::Scalar, b::AbstractMultivector) = a*scalar(b)
 
-scalar_prod(a::BasisBlade{Sig,K}, b::BasisBlade{Sig,K}) where {Sig,K} = a.bits == b.bits ? scalar(a*b) : numberzero(promote_type(eltype(a), eltype(b)))
+function scalar_prod(a::BasisBlade{Sig,K}, b::BasisBlade{Sig,K}) where {Sig,K}
+	if a.bits == b.bits
+		geometric_prod_factor(Sig, a.bits, b.bits)*(a.coeff*b.coeff)
+	else
+		numberzero(promote_type(eltype(a), eltype(b)))
+	end
+end
 scalar_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig} = numberzero(promote_type(eltype(a), eltype(b)))
 
 function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
@@ -235,11 +239,15 @@ graded_prod(grade_selector, a::AbstractMultivector, b::Scalar) = grade(a) == (gr
 graded_prod(grade_selector, a::Scalar, b::AbstractMultivector) = grade(b) == (grade_selector(0, grade(b))) ? scalar_multiply(a, b) : zero(a)
 
 function graded_prod(grade_selector::Function, a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig}
-	# TODO: type stability
-	if count_ones(a.bits ⊻ b.bits) == grade_selector(grade(a), grade(b))
-		a*b
+	K = grade_selector(grade(a), grade(b))
+	T = promote_type(eltype(a), eltype(b))
+	0 <= K <= dimension(Sig) || return BasisBlade{Sig}(numberzero(T))
+
+	if count_ones(a.bits ⊻ b.bits) == K
+		BasisBlade{Sig,K,T}(geometric_prod_factor(Sig, a.bits, b.bits)*(a.coeff*b.coeff), a.bits ⊻ b.bits)
 	else
-		BasisBlade{Sig}(zero(promote_type(eltype(a), eltype(b))))
+		bits = UInt(1) << K - 1 # the coeff is zero, so these are arbitrary — but for consistency they should match the grade
+		BasisBlade{Sig,K,T}(numberzero(T), bits)
 	end
 end
 

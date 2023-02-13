@@ -78,13 +78,13 @@ function inv_formula_method(a::Multivector)
 		return āâã/scalar(a*āâã)
 
 	elseif dim == 4
-		b = ā*graded_multiply(a*ā) do k
+		b = ā*graded_multiply(aā) do k
 			k ∈ (3, 4) ? -1 : 1
 		end
 		return b/scalar(a*b)
 
 	elseif dim == 5
-		b = ā*reversion(a*ā)
+		b = ā*reversion(aā)
 		c = b*graded_multiply(a*b) do k
 			k ∈ (1, 4) ? -1 : 1
 		end

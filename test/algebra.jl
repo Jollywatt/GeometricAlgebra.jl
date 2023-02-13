@@ -219,3 +219,31 @@ end
 	@test sandwich_prod(R, 7) ≈ 7
 	@test sandwich_prod(4, 2) == 4*2*4
 end
+
+@static if VERSION >= v"1.8"
+	@testset "inferability" begin
+		@basis 3 scalar=true
+
+		a, b = v1 + v2, v12 + v23
+
+		@inferred v1 + v12
+		@inferred v + v123
+		@inferred a + b
+
+		@inferred a*a
+		@inferred b*b
+		@inferred a*b
+		@inferred Multivector(v)*Multivector(v123)
+		@inferred Multivector(v1)*Multivector(v23)
+		@inferred Multivector(v12)*Multivector(v23)
+
+		@inferred (v + v12) + v23
+		@inferred (v + v12) + v3
+		@inferred (v + v12)*v3
+
+		@inferred ~(rdual(a)*b + v13) + b
+
+		# @inferred v12∧v3 # TODO: make graded_prod type stable
+		# @inferred a∧b # TODO: make symbolic_optim inferable
+	end
+end

@@ -115,15 +115,14 @@ function add!(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig}
 	a
 end
 
+add!(Σ, a, b, c...) = add!(add!(Σ, a), b, c...)
+
 resulting_grades(::typeof(+), dim, pq...) = promote_grades(dim, pq...)
 
 Base.:+(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K} = Multivector{Sig,K}(a.comps + b.comps)
 function Base.:+(a::AbstractMultivector{Sig}, bc::AbstractMultivector{Sig}...) where {Sig}
 	Σ = zero(resulting_multivector_type(+, a, bc...))
-	for mv in (a, bc...)
-		Σ = add!(Σ, mv)
-	end
-	Σ
+	add!(Σ, a, bc...)
 end
 Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
@@ -160,7 +159,7 @@ function geometric_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig}
 end
 
 function resulting_grades(::typeof(geometric_prod), dim, p::Integer, q::Integer)
-	dim ∈ (p, q) && return dim - min(p, q)
+	(dim ∈ p || dim ∈ q) && return dim - min(p, q)
 	abs(p - q):2:min(p + q, dim)
 end
 
@@ -208,7 +207,6 @@ end
 	s
 end
 
-
 @doc (@doc scalar_prod)
 a ⊙ b = scalar_prod(a, b)
 
@@ -237,6 +235,7 @@ graded_prod(grade_selector, a::AbstractMultivector, b::Scalar) = grade(a) == (gr
 graded_prod(grade_selector, a::Scalar, b::AbstractMultivector) = grade(b) == (grade_selector(0, grade(b))) ? scalar_multiply(a, b) : zero(a)
 
 function graded_prod(grade_selector::Function, a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig}
+	# TODO: type stability
 	if count_ones(a.bits ⊻ b.bits) == grade_selector(grade(a), grade(b))
 		a*b
 	else

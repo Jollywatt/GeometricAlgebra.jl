@@ -68,7 +68,7 @@ end
 
 	for a in [
 		Multivector{4,0}([7])
-		Multivector{4,(0, 4)}([4, 5])
+		Multivector{4,0:4:4}([4, 5])
 		Multivector{4,0:2:4}(fill(1, 8))
 		Multivector{4,0:4}(fill(1, 16))
 	]
@@ -84,5 +84,5 @@ end
 	@test sqrt(m02) |> grade === 0:2:4
 	@test exp(m02) |> grade === 0:2:4
 
-	@test via_matrix_repr(sin, Multivector{3,3}([1])) |> grade === (0, 3)
+	@test via_matrix_repr(sin, Multivector{3,0:2:2}(1:4)) |> grade === 0:2:2
 end

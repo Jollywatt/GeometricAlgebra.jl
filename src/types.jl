@@ -244,7 +244,7 @@ Base.isodd(a::AbstractMultivector) = all(isodd, grade(a))
 scalar(a::Scalar) = a
 scalar(a::BasisBlade{Sig,0}) where {Sig} = a.coeff
 scalar(a::BasisBlade) = numberzero(eltype(a))
-scalar(a::Multivector) = first(grade(a, 0).comps)
+scalar(a::Multivector) = 0 ∈ grade(a) ? a.comps[componentindex(a, UInt(0))] : zero(eltype(a))
 
 isscalar(a::Scalar) = true
 isscalar(a::BasisBlade) = iszero(grade(a)) || isnumberzero(a)

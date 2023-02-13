@@ -30,7 +30,7 @@ the result may be larger than the exact union.
 Specifically, when combining different grades, `promote_grades` will try to return
 the narrowest grade(s) out of:
  - an integer `k ∈ 0:dim` for homogeneous elements (fewest components)
- - `(0, dim)`, for elements in the scalar-pseudoscalar subalgebra
+ - `0:dim:dim`, for elements in the scalar-pseudoscalar subalgebra
  - `0:2:dim`, for elements in the even subalgebra
  - `0:dim`, for general inhomogeneous elements (most components)
 
@@ -53,13 +53,15 @@ function promote_grades(dim::Integer, p, q)
 	p ⊆ q && return q
 	p ⊇ q && return p
 
-	p ⊆ (0, dim) ⊇ q && return (0, dim)
+	if p isa Integer && q isa Integer
+		minmax(p, q) == (0, dim) && return 0:dim:dim
+	end
 	
 	all(iseven, p) && all(iseven, q) && return 0:2:dim
 
 	0:dim
 end
-promote_grades(dim::Integer, p, q, c...) = promote_grades(dim, promote_grades(dim, p, q), c...)
+promote_grades(dim::Integer, p, q, r...) = promote_grades(dim, promote_grades(dim, p, q), r...)
 
 promote_grades(abc::AbstractMultivector{Sig}...) where {Sig} = promote_grades(dimension(Sig), grade.(abc)...)
 
@@ -75,7 +77,7 @@ resulting_grades(combine, dim, P, Q) = promote_grades(dim, (resulting_grades(com
 # scalars ⊂ scalar-pseudoscalar ⊂ even subalgebra ⊂ full algebra
 function resulting_grades(::Val{:subalgebra}, dim, k)
 	k == 0 && return 0
-	k ⊆ (0, dim) && return (0, dim)
+	k ⊆ (0, dim) && return 0:dim:dim
 	all(iseven, k) ? (0:2:dim) : 0:dim
 end
 

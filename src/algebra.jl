@@ -294,6 +294,7 @@ inner(a, b) = graded_prod(abs∘-, a, b)
 @doc (@doc inner)
 ⋅(a, b) = inner(a, b)
 
+
 """
 	a ⨼ b
 	lcontract(a, b)
@@ -309,6 +310,7 @@ See also [`rcontract`](@ref) and [`inner`](@ref).
 lcontract(a, b) = graded_prod((-)∘-, a, b)
 @doc (@doc lcontract)
 ⨼(a, b) = lcontract(a, b)
+
 
 """
 	a ⨽ b
@@ -364,15 +366,11 @@ end
 Multiply the grade `k` part of `a` by `f(k)`.
 """
 graded_multiply(f, a::Scalar) = f(0)a
-@symbolic_optim function graded_multiply(f, a::AbstractMultivector)
+function graded_multiply(f, a::AbstractMultivector)
 	if ishomogeneous(a)
 		f(grade(a))a
 	else
-		b = zero(a)
-		for k ∈ grade(a)
-			b = add!(b, f(k)a[k]) # TODO: this doesn’t promote eltype
-		end
-		b
+		constructor(a)(f.(count_ones.(componentbits(a))) .* a.comps)
 	end
 end
 

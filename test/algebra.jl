@@ -244,6 +244,7 @@ end
 		@inferred ~(rdual(a)*b + v13) + b
 
 		@inferred v12∧v3
-		# @inferred a∧b # TODO: make symbolic_optim inferable
+		@inferred a∧b
+		@inferred (a⨼b)∧(v12⋅b)*I
 	end
 end

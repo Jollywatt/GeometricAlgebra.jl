@@ -54,7 +54,9 @@ This is a generated function which first evaluates `f` on symbolic versions of
 the multivector arguments `x` and then converts the symbolic result into unrolled code.
 
 Calling `symbolic_multivector_eval(Expr, compstype, f, x...)` with `Expr` as the first argument
-returns the unevaluated code as an expression (for introspection).
+returns the expression to be compiled.
+
+See also [`@symbolic_optim`](@ref).
 
 # Example
 ```julia
@@ -75,7 +77,7 @@ end
 julia> @btime symbolic_multivector_eval(MVector, geometric_prod, A, B);
   86.928 ns (3 allocations: 192 bytes)
 
-julia> @btime geometric_prod(Val(:nosym), A, B);
+julia> @btime geometric_prod(Val(:nosym), A, B); # opt-out of symbolic optim
   4.879 μs (30 allocations: 1.22 KiB)
 ```
 """
@@ -101,29 +103,36 @@ end
 	symbolic_multivector_eval(Expr, S, f.instance, args...)
 end
 
+replace_signature(a::Multivector{Sig,K,S}, ::Val{Sig′}) where {Sig,Sig′,K,S} = Multivector{Sig′,K,S}(a.comps)
+replace_signature(a ::BasisBlade{Sig,K,T}, ::Val{Sig′}) where {Sig,Sig′,K,T} =  BasisBlade{Sig′,K,T}(a.coeff, a.bits)
+replace_signature(a, ::Val) = a
+
 #=
-Because of the rules of generated functions, you can’t call methods that may be later (re)defined
-inside `symbolic_multivector_eval`. However, we want the methods
+	symbolic_optim()
+
+Because of the rules of generated functions, we can’t call methods that may be later (re)defined
+from within `symbolic_multivector_eval`. However, we still want the methods
 - `dimension(sig)`
 - `basis_vector_norm(sig, i)`
 - `componentstype(sig)`
-to be customizable by the user, and to work for user-defined `sig`s, as part of the ‘metric signature interface’.
-This means these methods must be taken outside the generated function.
+to work for user-defined signature types, as part of the “metric signature interface”.
+Since these methods may be defined in a newer world-age than `symbolic_multivector_eval`,
+we must move calls to such methods outside the generated function.
 
-To do this, the metric signature is normalized to an equivalent tuple, and the result of `componentstype(sig)`
-is passed as an argument.
+To do this, the metric signature is normalized to an equivalent tuple signature, and the result of `componentstype(sig)`
+is passed as an argument to — rather than being called from — `symbolic_multivector_eval`.
+(We assume that `dimension(::Tuple)`, etc, are core functionality that won’t be modified by the user.)
+
 =#
-
-canonical_signature(sig) = ntuple(i -> basis_vector_norm(sig, i), dimension(sig))
-canonicalize_signature(a::Multivector{Sig,K,S}) where {Sig,K,S} = Multivector{canonical_signature(Sig),K,S}(a.comps)
-canonicalize_signature(a::BasisBlade{Sig,K,T}) where {Sig,K,T} = BasisBlade{canonical_signature(Sig),K,T}(a.coeff, a.bits)
-canonicalize_signature(a) = a
-
 function symbolic_optim(f::Function, args::Union{Val,Function,AbstractMultivector{Sig}}...) where {Sig}
+	# we’re replacing objects’ type parameters, so type stability is a little delicate
 	compstype = componentstype(Sig, 0, Any)
-	result = symbolic_multivector_eval(compstype, f, canonicalize_signature.(args)...)
+	# canonicalize signature to tuple
+	Sig′ = ntuple(i -> basis_vector_norm(Sig, i), dimension(Sig))
+	args′ = ntuple(i -> replace_signature(args[i], Val(Sig′)), length(args))
+	result = symbolic_multivector_eval(compstype, f, args′...)
 	# restore original signature
-	result isa Multivector ? Multivector{Sig,grade(result)}(result.comps) : result
+	replace_signature(result, Val(Sig))
 end
 
 """
@@ -137,20 +146,20 @@ Convert a single method definition `f(args...)` into two methods:
 
 This is to reduce boilerplate when writing symbolically optimized versions of each method.
 It only makes sense for methods with at least one `AbstractMultivector` argument for
-which the exact return type is inferrable at compile time.
+which the exact return type is inferable.
 
 # Example
 
 ```julia
 # This macro call...
 @symbolic_optim foo(a, b) = (a + b)^2
-# ...is equivalent to the two method definitions:
+# ...is equivalent to the following two method definitions:
 
 foo(::Val{:nosym}, a, b) = (a + b) ^ 2
 
 function foo(a, b)
     if use_symbolic_optim(foo, a, b)
-        symbolic_multivector_eval(foo, Val(:nosym), a, b)
+        symbolic_optim(foo, Val(:nosym), a, b)
     else
         foo(Val(:nosym), a, b)
     end

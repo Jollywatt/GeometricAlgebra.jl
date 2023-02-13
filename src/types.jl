@@ -241,19 +241,29 @@ Base.isone(a::Multivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comp
 Base.iseven(a::AbstractMultivector) = all(iseven, grade(a))
 Base.isodd(a::AbstractMultivector) = all(isodd, grade(a))
 
+"""
+	scalar(a) -> Number
+
+The scalar component of a multivector.
+"""
 scalar(a::Scalar) = a
 scalar(a::BasisBlade{Sig,0}) where {Sig} = a.coeff
 scalar(a::BasisBlade) = numberzero(eltype(a))
 scalar(a::Multivector) = 0 ∈ grade(a) ? a.comps[componentindex(a, UInt(0))] : zero(eltype(a))
 
+"""
+	isscalar(a)
+
+Whether the only non-zero part of a multivector is its scalar part; `a == scalar(a)`.
+"""
 isscalar(a::Scalar) = true
 isscalar(a::BasisBlade) = iszero(grade(a)) || isnumberzero(a)
 function isscalar(a::Multivector)
-	if 0 ∈ grade(a)
-		iszero(a[setdiff(grade(a), 0)])
-	else
-		iszero(a)
+	0 ∈ grade(a) || return all(isnumberzero, a.comps)
+	for (coeff, bits) in nonzero_components(a)
+		!iszero(bits) && return false
 	end
+	true
 end
 
 

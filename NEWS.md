@@ -1,6 +1,12 @@
 # News
 
+_This package is in early development. New features and outward-facing changes are shown in this news file, but many internal improvements and changes are not._
+
 ## v0.2.1
+
+* Support `Multivector`s with immutable component arrays (in particular, `SVector`s).
+
+* Change `BasisBlade` constructor argument order to `BasisBlade{Sig}(coeff, bits)`. Matches the convention used throughout where the coefficient is followed by the unit basis blade, agreeing with mathematical notation.
 
 ## v0.2.0
 

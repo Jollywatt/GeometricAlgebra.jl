@@ -1,6 +1,11 @@
 using SparseArrays: SparseVector
 using StaticArrays: StaticVector
 
+import GeometricAlgebra:
+	dimension,
+	basis_vector_norm,
+	componentstype
+
 @testset "basis, @basis" begin
 	@test length(basis(10)) == 10
 	@test length(basis(4, grade=0:2:4)) == 8
@@ -53,18 +58,25 @@ end
 	"""
 end
 
-struct SigWithStorageType{Sig,S} end
-GeometricAlgebra.dimension(::SigWithStorageType{Sig}) where {Sig} = dimension(Sig)
-GeometricAlgebra.basis_vector_norm(::SigWithStorageType{Sig}, i) where {Sig} = GeometricAlgebra.basis_vector_norm(Sig, i)
-GeometricAlgebra.componentstype(::SigWithStorageType{Sig,<:Vector}, N, T) where {Sig} = Vector{T}
-GeometricAlgebra.componentstype(::SigWithStorageType{Sig,<:MVector}, N, T) where {Sig} = isbitstype(T) ? MVector{N,T} : Vector{T} # MVectors only support setindex! for isbits types
-GeometricAlgebra.componentstype(::SigWithStorageType{Sig,<:SparseVector}, N, T) where {Sig} = SparseVector{T}
+# Test that things generally work with Multivectors with various other component array types
+# Fixed size array types such as MVector or SVector may be most performant in few dimensions,
+# while something like SparseVector is suited to very large algebras.
+struct SigWithCompsType{Sig,S} end
+dimension(::SigWithCompsType{Sig}) where {Sig} = dimension(Sig)
+basis_vector_norm(::SigWithCompsType{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
 
+componentstype(::SigWithCompsType{Sig,<:Vector}, N, T) where {Sig} = Vector{T}
+componentstype(::SigWithCompsType{Sig,<:MVector}, N, T) where {Sig} = MVector{N,T}
+componentstype(::SigWithCompsType{Sig,<:SVector}, N, T) where {Sig} = SVector{N,T}
+componentstype(::SigWithCompsType{Sig,<:SparseVector}, N, T) where {Sig} = SparseVector{T}
 
-@testset "other storage types" begin
-	for C in [Vector, SparseVector, MVector]
+# SparseVectors are appropriate for large dims, but symbolic optimization only for small dim — you wouldn’t have both
+GeometricAlgebra.use_symbolic_optim(::SigWithCompsType{Sig,<:SparseVector}) where {Sig} = false
 
-		sig = SigWithStorageType{3,C}()
+@testset "other component array types" begin
+	for C in [Vector, MVector, SVector, SparseVector]
+
+		sig = SigWithCompsType{3,C}()
 		b = basis(sig)
 
 		@test b[1] + b[2] isa Multivector{sig,1,<:C}
@@ -73,5 +85,9 @@ GeometricAlgebra.componentstype(::SigWithStorageType{Sig,<:SparseVector}, N, T) 
 		m = 1 + b[1]
 		@test m isa Multivector{sig,K,<:C} where K
 		@test grade(m, 1) + b[2] isa Multivector{sig,1,<:C}
+
+		u = sum(b)
+		@test u/u isa Multivector{sig,K,<:C} where K
+		@test sin(~u) isa Multivector{sig,K,<:C} where K
 	end
 end

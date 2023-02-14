@@ -29,23 +29,16 @@ numberorany(::Type) = Any
 
 #= Array-like Type Utilities =#
 
-# initialize zeros/ones while abstracting away array type
+# initialize zeros while abstracting away array type
 zeroslike(::Type{<:AbstractArray{T}}, dims...) where {T<:Number} = zeros(T, dims...)
- oneslike(::Type{<:AbstractArray{T}}, dims...) where {T<:Number} =  ones(T, dims...)
-zeroslike(::Type{<:AbstractArray}, dims...) = convert(Array{Any}, zeros(Int, dims...))
- oneslike(::Type{<:AbstractArray}, dims...) = convert(Array{Any},  ones(Int, dims...))
- 
-zeroslike(::Type{<:MArray{N,T}}, dims...) where {N,T} = zeros(MArray{Tuple{dims...},numberorany(T)})
- oneslike(::Type{<:MArray{N,T}}, dims...) where {N,T} =  ones(MArray{Tuple{dims...},numberorany(T)})
-zeroslike(::Type{<:SArray{N,T}}, dims...) where {N,T} = zeros(SArray{Tuple{dims...},numberorany(T)})
- oneslike(::Type{<:SArray{N,T}}, dims...) where {N,T} =  ones(SArray{Tuple{dims...},numberorany(T)})
+zeroslike(::Type{<:AbstractArray{T}}, dims...) where {T} = convert(Array{Any}, zeros(Int, dims...))
+zeroslike(::Type{<:MArray{N,T}}, dims...) where {N,T<:Number} = zeros(MArray{Tuple{dims...},T})
+zeroslike(::Type{<:MArray{N,T}}, dims...) where {N,T} = MArray{Tuple{dims...},Any}(zeros(MArray{Tuple{dims...},Int}))
+zeroslike(::Type{<:SArray{N,T}}, dims...) where {N,T<:Number} = zeros(SArray{Tuple{dims...},T})
+zeroslike(::Type{<:SArray{N,T}}, dims...) where {N,T} = SArray{Tuple{dims...},Any}(zeros(SArray{Tuple{dims...},Int}))
 zeroslike(::Type{<:SparseVector{Tv}}, dims...) where {Tv} = spzeros(Tv, dims...)
- oneslike(::Type{<:SparseVector{Tv}}, dims...) where {Tv} = sparse(ones(Tv, dims...))
-
 zeroslike(::Type{<:SubArray{T,N,P}}, dims...) where {T,N,P} = zeroslike(P, dims...)
- oneslike(::Type{<:SubArray{T,N,P}}, dims...) where {T,N,P} = oneslike(P, dims...)
 
-# TODO: ones/zeroslike for SubArray?
 
 @static if VERSION < v"1.7"
 	ismutabletype(a::DataType) = a.mutable

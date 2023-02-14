@@ -1,6 +1,5 @@
 using GeometricAlgebra:
 	zeroslike,
-	oneslike,
 	symbolic_argument,
 	SingletonVector
 using GeometricAlgebra.SymbolicUtils

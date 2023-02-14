@@ -231,7 +231,7 @@ end
 Base.zero(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(numberzero(T))
 Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
 Base.one(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(numberone(T))
-Base.one(::OrType{<:Multivector{Sig,K,S} where K}) where {Sig,S} = Multivector{Sig,0}(oneslike(S, 1))
+Base.one(::OrType{<:Multivector{Sig,K,S} where K}) where {Sig,S} = add!(zero(Multivector{Sig,0,S}), numberone(eltype(S)), UInt(0))
 
 Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)
 Base.iszero(a::Multivector) = all(isnumberzero, a.comps)

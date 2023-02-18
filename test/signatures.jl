@@ -1,5 +1,5 @@
 using SparseArrays: SparseVector
-using StaticArrays: StaticVector
+using StaticArrays
 
 import GeometricAlgebra:
 	dimension,
@@ -27,6 +27,10 @@ import GeometricAlgebra:
 		@basis (x=1, t=-1) allperms=true
 		@test x^2 == xt^2 == tx^2 == -t^2 == 1
 	end
+
+	@test all(basis(Multivector{3,1}) .== Multivector.(basis(3)))
+	@test all(basis(Multivector{2,0:2}) .== Multivector.(basis(2, grade=0:2)))
+	@test all(eltype.(basis(Multivector{3,0:3,Vector{Bool}})) .=== Bool)
 
 end
 

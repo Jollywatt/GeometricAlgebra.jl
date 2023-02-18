@@ -73,14 +73,14 @@ BasisBlade{⟨++++⟩, 4, Int64} of grade 4:
  1 𝒆₁∧𝒆₂∧𝒆₃∧𝒆₄
 ```
 """
-function show_basis_blade(io::IO, sig, indices::Vector{<:Integer})
+function show_basis_blade(io::IO, sig, indices)
 	if dimension(sig) < 10
 		printstyled(io, "v"*join(string.(indices)); bold=true)
 	else
 		printstyled(io, join(string.("v", indices)); bold=true)
 	end
 end
-show_basis_blade(io::IO, sig::NamedTuple, indices::Vector{<:Integer}) = printstyled(io, join(keys(sig)[indices]), bold=true)
+show_basis_blade(io::IO, sig::NamedTuple, indices) = printstyled(io, join(keys(sig)[indices]), bold=true)
 
 
 
@@ -215,6 +215,35 @@ function basis(sig; grade=1)
 	bits = componentbits(Val(dim), Val(grade))
 	BasisBlade{sig}.(1, bits)
 end
+
+"""
+	basis(::Type{<:Multivector})
+
+Create a generator which iterates over basis elements of the given multivector type.
+
+# Examples
+```jldoctest
+julia> basis(Multivector{3,1}) |> collect
+3-element Vector{Multivector{3, 1, MVector{3, Int64}}}:
+ v1
+ v2
+ v3
+
+julia> basis(Multivector{2,0:2,Vector{Bool}}) |> collect
+4-element Vector{Multivector{2, 0:2, Vector{Bool}}}:
+ (1)
+ (v1)
+ (v2)
+ (v12)
+
+```
+"""
+function basis(M::Type{<:Multivector})
+	n = ncomponents(M)
+	(M(SingletonVector(true, i, n)) for i in 1:n)
+end
+basis(M::Type{Multivector{Sig,K}}) where {Sig,K} = basis(Multivector{Sig,K,componentstype(Sig, ncomponents(M), Int)})
+
 
 function generate_blades(sig; grades=:all, allperms=false, pseudoscalar=:I, scalar=false, prefix=nothing)
 	

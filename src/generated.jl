@@ -1,3 +1,5 @@
+CanBeMadeSymbolic{Sig} = Union{Scalar,AbstractMultivector{Sig},Val,Type,Function}
+
 """
 	use_symbolic_optim(sig) -> Bool
 
@@ -7,7 +9,7 @@ By default, this is enabled if `dimension(sig) ≤ 8`
 (in many dimensions, algebraic expressions may become too unwieldy).
 """
 use_symbolic_optim(sig) = dimension(sig) <= 8
-use_symbolic_optim(::Function, ::Union{Scalar,Function,AbstractMultivector{Sig}}...) where {Sig} = use_symbolic_optim(Sig)
+use_symbolic_optim(::Function, ::CanBeMadeSymbolic{Sig}...) where {Sig} = use_symbolic_optim(Sig)
 
 """
 	symbolic_components(label::Symbol, dims::Integer...)
@@ -35,7 +37,11 @@ symbolic_argument(::OrType{<:BasisBlade{Sig,K}}, label) where {Sig,K} = symbolic
 symbolic_argument(A::OrType{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(A)))
 symbolic_argument(::OrType{F}, label) where {F<:Function} = F.instance
 symbolic_argument(::OrType{Val{V}}, label) where {V} = Val(V)
+symbolic_argument(::OrType{Type{T}}, label) where {T} = T
 
+function toexpr(a::AbstractArray, compstype, T)
+	SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(a, typeof(a), T))
+end
 function toexpr(a::AbstractMultivector, compstype, T)
 	comps = SymbolicUtils.expand.(a.comps)
 	comps_expr = SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(comps, compstype, T))
@@ -87,7 +93,6 @@ function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, a
 	sym_args = symbolic_argument.(args, abc)
 	sym_result = f(sym_args...)
 
-
 	I = findall(T -> T isa Multivector, sym_args)
 	assignments = [:( $(abc[i]) = components(args[$i]) ) for i in I]
 	T = numberorany(promote_type(eltype.(args[I])...))
@@ -124,7 +129,7 @@ is passed as an argument to — rather than being called from — `symbolic_mult
 (We assume that `dimension(::Tuple)`, etc, are core functionality that won’t be modified by the user.)
 
 =#
-function symbolic_optim(f::Function, args::Union{Val,Function,AbstractMultivector{Sig}}...) where {Sig}
+function symbolic_optim(f::Function, args::CanBeMadeSymbolic{Sig}...) where {Sig}
 	# we’re replacing objects’ type parameters, so type stability is a little delicate
 	compstype = componentstype(Sig, 0, Any)
 	# canonicalize signature to tuple
@@ -169,10 +174,24 @@ end
 macro symbolic_optim(fndef::Expr)
 	fnhead, fnbody = fndef.args
 
+	# unwrap wheres
 	fnargs = fnhead::Expr
 	while fnargs.head == :where
 		fnargs = fnargs.args[1]::Expr
 	end
+
+	@assert fnargs.head === :call """
+	`@symbolic_optim` expects a named function definition
+	"""
+
+	# give anonymous arguments (like `::Val{X}`) a name
+	for arg in fnargs.args
+		if arg isa Expr && arg.head === :(::) && length(arg.args) === 1
+			insert!(arg.args, 1, gensym("arg"))
+		end
+		arg
+	end
+
 	fnhead_orig = copy(fnhead)
 	fnargs_orig = copy(fnargs)
 	insert!(fnargs.args, 2, :(::Val{:nosym}))

@@ -34,19 +34,24 @@ julia> matrix_repr(v1*v2) == matrix_repr(v1)matrix_repr(v2)
 true
 ```
 """
-function matrix_repr(a, k=0:dimension(a))
+function matrix_repr(a::AbstractMultivector, k=0:dimension(a))
 	a = grade(a, k)
 	N, T = ncomponents(a), eltype(a)
-	mat = fill(numberzero(T), N, N)
-	for (i, b) ∈ enumerate(basis(signature(a), grade(a)))
-		mat[:,i] = Multivector(a*b).comps
+	mat = zeroslike(Matrix{eltype(a)}, N, N)
+	M = Multivector{signature(a),grade(a)}
+	for (i, b) ∈ enumerate(basis(M))
+		mat[:,i] = (a*b).comps
 	end
 	mat
 end
 
+@symbolic_optim function matrix_repr(a::Multivector, ::Val{K}) where {K}
+	matrix_repr(a, K)
+end
+
 function via_matrix_repr(f::Function, a::AbstractMultivector)
 	k = resulting_grades(Val(:subalgebra), dimension(a), grade(a))
-	m = matrix_repr(a, k)
+	m = matrix_repr(a, Val(k))
 	m′ = f(m)
 	T = componentstype(signature(a), size(m′, 1), eltype(m′))
 	Multivector{signature(a),k}(convert(T, m′[:,1]))

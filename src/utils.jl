@@ -38,6 +38,7 @@ zeroslike(::Type{<:SArray{N,T}}, dims...) where {N,T<:Number} = zeros(SArray{Tup
 zeroslike(::Type{<:SArray{N,T}}, dims...) where {N,T} = SArray{Tuple{dims...},Any}(zeros(SArray{Tuple{dims...},Int}))
 zeroslike(::Type{<:SparseVector{Tv}}, dims...) where {Tv} = spzeros(Tv, dims...)
 zeroslike(::Type{<:SubArray{T,N,P}}, dims...) where {T,N,P} = zeroslike(P, dims...)
+zeroslike(a::AbstractArray, dims...) = zeroslike(typeof(a), dims...)
 
 
 @static if VERSION < v"1.7"

@@ -69,6 +69,9 @@ BasisBlade{Sig,K}(coeff::T, bits::Unsigned) where {Sig,K,T} = BasisBlade{Sig,K,T
 # from scalar
 BasisBlade{Sig}(coeff::T) where {Sig,T<:Scalar} = BasisBlade{Sig,0,T}(coeff, UInt(0))
 
+BasisBlade(a::BasisBlade) = a
+
+
 
 """
 	Multivector{Sig,K,S} <: AbstractMultivector{Sig}
@@ -116,6 +119,17 @@ function Multivector{Sig,K}(comps::S) where {Sig,K,S}
 	instances of $(Multivector{Sig,K}) have $(ncomponents(Multivector{Sig,K})) components, but received $(length(comps))"""
 	Multivector{Sig,K,S}(comps)
 end
+
+function Multivector{Sig,K}(a::BasisBlade{Sig}) where {Sig,K}
+	@assert grade(a) ∈ K
+	M = Multivector{Sig,K}
+	i = componentindex(M, a)
+	M(SingletonVector(a.coeff, i, ncomponents(M)))
+end
+
+Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = Multivector{Sig,K}(a)
+Multivector(a::Multivector) = a
+
 
 
 
@@ -173,7 +187,7 @@ which may be an integer (if `a` is homogeneous) or a collection (a range or tupl
 
 See also [`ishomogeneous`](@ref).
 """
-grade(::OrType{<:BasisBlade{Sig,K}}) where {Sig,K} = K
+grade(::OrType{<: BasisBlade{Sig,K}}) where {Sig,K} = K
 grade(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = K
 
 """
@@ -206,9 +220,6 @@ function Base.similar(M::Type{Multivector{Sig,K}}, abc::OrType{<:AbstractMultive
 	Multivector{Sig,K,C}
 end
 
-BasisBlade(a::BasisBlade) = a
-Multivector(a::Multivector) = a
-Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = add!(zero(similar(Multivector{Sig,K}, a)), a)
 
 """
 	resulting_multivector_type(f, a, b, ...)

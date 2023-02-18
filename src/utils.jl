@@ -52,6 +52,37 @@ issetindexable(T::Type) = ismutabletype(T)
 issetindexable(a) = issetindexable(typeof(a))
 
 
+"""
+	SingletonVector(el, index, length)
+
+Efficient representation of a vector of all zeros
+except for the single element `el` at the given index.
+"""
+struct SingletonVector{T} <: AbstractVector{T}
+	el::T
+	index::Int
+	length::Int
+end
+
+Base.length(a::SingletonVector) = a.length
+Base.size(a::SingletonVector) = (length(a),)
+Base.eltype(::SingletonVector{T}) where {T} = numberorany(T)
+Base.iszero(a::SingletonVector) = iszero(a.el)
+
+Base.getindex(a::SingletonVector{T}, i::Integer) where {T} = a.index == i ? a.el : numberzero(T)
+Base.getindex(a::SingletonVector, I::UnitRange) = SingletonVector(a.el, a.index - first(I) + 1, length(I))
+
+function Base.iterate(a::SingletonVector, i = 1)
+	i > a.length && return
+	(a[i], i + 1)
+end
+Base.:(==)(a::SingletonVector, b::AbstractVector) = length(a) == length(b) && mapreduce(==, &, a, b)
+
+for op in [:*, :/]
+	@eval Base.$op(a::SingletonVector, b::Number) = SingletonVector($op(a.el, b), a.index, a.length)
+	@eval Base.$op(a::Number, b::SingletonVector) = SingletonVector($op(a, b.el), b.index, b.length)
+end
+Base.:(//)(a::SingletonVector, b::Number) = SingletonVector(a.el//b, a.index, a.length)
 
 
 #= Miscellaneous =#

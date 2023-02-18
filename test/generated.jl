@@ -1,6 +1,6 @@
 using GeometricAlgebra:
 	zeroslike,
-	symbolic_argument,
+	make_symbolic,
 	SingletonVector
 using GeometricAlgebra.SymbolicUtils
 
@@ -13,10 +13,11 @@ using GeometricAlgebra.SymbolicUtils
 
 
 	b = BasisBlade{3}(SymbolicUtils.Sym{Real}(:b), 0b101)
-	kv = symbolic_argument(Multivector{3,1,Vector{Int}}, :kv)
-	mv = symbolic_argument(Multivector{3,0:3,Vector{Int}}, :mv)
+	kv = make_symbolic(Multivector{3,1,Vector{Int}}, :kv)
+	mv = make_symbolic(Multivector{3,0:3,Vector{Int}}, :mv)
 
 	for a in [b, kv, mv]
+		@show a
 		@test !iszero(a)
 		@test !isone(a)
 

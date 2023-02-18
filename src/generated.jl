@@ -33,11 +33,12 @@ function symbolic_components(label::Symbol, dims::Integer...)
 	Any[SymbolicUtils.Term{Real}(getindex, [var, I...]) for I in indices]
 end
 
-symbolic_argument(::OrType{<:BasisBlade{Sig,K}}, label) where {Sig,K} = symbolic_argument(Multivector{Sig,K}, label)
-symbolic_argument(A::OrType{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(A)))
-symbolic_argument(::OrType{F}, label) where {F<:Function} = F.instance
-symbolic_argument(::OrType{Val{V}}, label) where {V} = Val(V)
-symbolic_argument(::OrType{Type{T}}, label) where {T} = T
+make_symbolic(::OrType{<:Scalar}, label) = symbolic_components(label)[]
+make_symbolic(::OrType{<:BasisBlade{Sig,K}}, label) where {Sig,K} = make_symbolic(Multivector{Sig,K}, label)
+make_symbolic(::OrType{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(Multivector{Sig,K})))
+make_symbolic(::OrType{F}, label) where {F<:Function} = F.instance
+make_symbolic(::OrType{Val{V}}, label) where {V} = Val(V)
+make_symbolic(::OrType{Type{T}}, label) where {T} = T
 
 function toexpr(a::AbstractArray, compstype, T)
 	SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(a, typeof(a), T))
@@ -90,11 +91,11 @@ julia> @btime geometric_prod(Val(:nosym), A, B); # opt-out of symbolic optim
 function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, args...)
 	abc = Symbol.('a' .+ (0:length(args) - 1))
 
-	sym_args = symbolic_argument.(args, abc)
+	sym_args = make_symbolic.(args, abc)
 	sym_result = f(sym_args...)
 
 	I = findall(T -> T isa Multivector, sym_args)
-	assignments = [:( $(abc[i]) = components(args[$i]) ) for i in I]
+	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]
 	T = numberorany(promote_type(eltype.(args[I])...))
 
 	quote
@@ -211,24 +212,3 @@ macro symbolic_optim(fndef::Expr)
 end
 
 
-# way to convert a BasisBlade to a Multivector without allocating a full components array
-# TODO: take this more seriously
-function components(a::BasisBlade{Sig,K}) where {Sig,K}
-	i = findfirst(==(a.bits), componentbits(Val(dimension(Sig)), Val(K)))
-	SingletonVector(a.coeff, i, ncomponents(Sig, K))
-end
-components(a::Multivector) = a.comps
-
-struct SingletonVector{T} <: AbstractVector{T}
-	el::T
-	index::Int
-	length::Int
-end
-Base.length(a::SingletonVector) = a.length
-Base.size(a::SingletonVector) = (length(a),)
-Base.eltype(::SingletonVector{T}) where {T} = numberorany(T)
-Base.getindex(a::SingletonVector{T}, i) where {T} = a.index == i ? a.el : numberzero(T)
-function Base.iterate(a::SingletonVector, i = 1)
-	i > a.length && return
-	(a[i], i + 1)
-end

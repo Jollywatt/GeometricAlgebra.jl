@@ -57,7 +57,7 @@ end
 
 @testset "+" begin
 	v = basis(3)
-	bi = basis(3, grade=2)
+	bi = basis(3, 2)
 
 	@test v[1] + v[2] isa Multivector{3,1}
 	@test bi[1] + 2.5bi[2] isa Multivector{3,2}
@@ -189,20 +189,20 @@ end
 
 @testset "hodgedual, invhodgedual" begin
 	for sig in [2, 3, "++++", "-+++", "--++", 5]
-		V = basis(sig; grade=:all)
+		V = basis(sig, :all)
 		@test hodgedual.(invhodgedual.(V)) == V
 		@test invhodgedual.(hodgedual.(V)) == V
 	end
 
 	for sig in ["+++0", "++0-"]
-		V = basis(sig; grade=:all)
+		V = basis(sig, :all)
 		@test all(@. ifelse(iszero(hodgedual(V)), hodgedual(invhodgedual(V)) == V, invhodgedual(hodgedual(V)) == V))
 	end
 end
 
 @testset "∨" begin
 	for sig in ["+++", "++-", "+00", "---", "-+++", "+--0"]
-		V = basis(sig, grade=:all)
+		V = basis(sig, :all)
 		for dual ∈ [ldual, rdual]
 			@test all(dual(a∨b) == dual(a)∧dual(b) for a in V, b in V)
 			@test all(dual(a)∨dual(b) == dual(a∧b) for a in V, b in V)

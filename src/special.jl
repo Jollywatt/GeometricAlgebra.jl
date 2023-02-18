@@ -38,7 +38,7 @@ function matrix_repr(a, k=0:dimension(a))
 	a = grade(a, k)
 	N, T = ncomponents(a), eltype(a)
 	mat = fill(numberzero(T), N, N)
-	for (i, b) ∈ enumerate(basis(signature(a), grade=grade(a)))
+	for (i, b) ∈ enumerate(basis(signature(a), grade(a)))
 		mat[:,i] = Multivector(a*b).comps
 	end
 	mat

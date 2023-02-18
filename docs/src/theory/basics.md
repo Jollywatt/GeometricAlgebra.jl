@@ -119,7 +119,7 @@ BasisBlade{4}(42, 0b1011)
 ```
 You can generate all basis blades (of a given grade) for an algebra with [`basis()`](@ref).
 ```@repl ga
-basis(4, grade=2)
+basis(Cl(3,1), 2) # 4-dimensional Lorentzian 2-blades
 ```
 
 Basis blades are stored with canonically sorted indices. For example, ``𝐯_2𝐯_1`` is represented as ``-𝐯_1𝐯_2``:

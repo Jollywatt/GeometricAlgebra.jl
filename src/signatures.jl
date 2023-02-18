@@ -173,10 +173,10 @@ interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i]
 interpret_signature(sig) = sig
 
 """
-	basis(sig; grade=1)
+	basis(sig, k=1)
 
-Vector of basis blades of specified grade(s) for the geometric algebra defined by the metric signature `sig`.
-The value `grade=:all` is a shortcut for `grade=0:dimension(sig)`.
+Vector of basis blades of specified grade(s) `k` for the geometric algebra defined by the metric signature `sig`.
+The value `k=:all` is a shortcut for `0:dimension(sig)`.
 
 See also [`@basis`](@ref).
 
@@ -188,7 +188,7 @@ julia> basis(3)
  1 v2
  1 v3
 
-julia> basis("-+++", grade=0:2:4)
+julia> basis("-+++", 0:2:4)
 8-element Vector{BasisBlade{Cl"-+++", _A, Int64} where _A}:
  1
  1 v12
@@ -199,7 +199,7 @@ julia> basis("-+++", grade=0:2:4)
  1 v34
  1 v1234
 
-julia> basis(Cl(1,3), grade=:all) |> sum
+julia> basis(Cl(1,3), :all) |> sum
 16-component Multivector{Cl(1,3), 0:4, MVector{16, Int64}}:
  1
  1 v1 + 1 v2 + 1 v3 + 1 v4
@@ -208,11 +208,11 @@ julia> basis(Cl(1,3), grade=:all) |> sum
  1 v1234
 ```
 """
-function basis(sig; grade=1)
+function basis(sig, k=1)
 	sig = interpret_signature(sig)
 	dim = dimension(sig)
-	grade == :all && (grade = 0:dimension(sig))
-	bits = componentbits(Val(dim), Val(grade))
+	k == :all && (k = 0:dimension(sig))
+	bits = componentbits(Val(dim), Val(k))
 	BasisBlade{sig}.(1, bits)
 end
 
@@ -256,7 +256,7 @@ function generate_blades(sig; grades=:all, allperms=false, pseudoscalar=:I, scal
 		indices = map(permutations, indices) |> Iterators.flatten |> collect
 	end
 
-	basisvectors = basis(sig; grade=1)
+	basisvectors = basis(sig)
 	labels = sprint.(show_basis_blade, Ref(sig), indices)
 	if !isnothing(prefix)
 		labels .= replace.(labels, r"^[^0-9]+"=>prefix)
@@ -364,7 +364,7 @@ julia> cayleytable(3)
 ───────────┼──────┼───────────────────┼───────────────────┼──────
       v123 │ v123 │  v23   -v13   v12 │  -v3     v2   -v1 │   -1
 
-julia> cayleytable(basis((t=-1, x=1, y=1, z=1), grade=2), ∧)
+julia> cayleytable(basis((t=-1, x=1, y=1, z=1), 2), ∧)
  (↓) ∧ (→) │   tx     ty    xy    tz     xz    yz
 ───────────┼──────────────────────────────────────
         tx │    0      0     0     0      0  txyz
@@ -379,7 +379,7 @@ julia> cayleytable(basis((t=-1, x=1, y=1, z=1), grade=2), ∧)
 cayleytable(args...; kwargs...) = cayleytable(stdout, args...; kwargs...)
 function cayleytable(io::IO, sig, args...; kwargs...)
 	sig = interpret_signature(sig)
-	cayleytable(io, basis(sig, grade=:all), args...; kwargs...)
+	cayleytable(io, basis(sig, :all), args...; kwargs...)
 end
 
 function cayleytable(io::IO, mvs::AbstractVector, op=*; separators=:auto, title=:( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) ))

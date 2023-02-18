@@ -8,7 +8,7 @@ import GeometricAlgebra:
 
 @testset "basis, @basis" begin
 	@test length(basis(10)) == 10
-	@test length(basis(4, grade=0:2:4)) == 8
+	@test length(basis(4, 0:2:4)) == 8
 	@test grade(prod(basis(5))) == 5
 
 	@test basis((1,1,1)) == basis("+++")
@@ -29,7 +29,7 @@ import GeometricAlgebra:
 	end
 
 	@test all(basis(Multivector{3,1}) .== Multivector.(basis(3)))
-	@test all(basis(Multivector{2,0:2}) .== Multivector.(basis(2, grade=0:2)))
+	@test all(basis(Multivector{2,0:2}) .== Multivector.(basis(2, 0:2)))
 	@test all(eltype.(basis(Multivector{3,0:3,Vector{Bool}})) .=== Bool)
 
 end

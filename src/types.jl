@@ -246,8 +246,8 @@ Base.one(::OrType{<:Multivector{Sig,K,S} where K}) where {Sig,S} = add!(zero(Mul
 
 Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)
 Base.iszero(a::Multivector) = all(isnumberzero, a.comps)
-Base.isone(a::BasisBlade) = iszero(grade(a)) && isone(a.coeff)
-Base.isone(a::Multivector) = isnumberone(a.comps[1]) && all(isnumberzero, a.comps[2:end])
+Base.isone(a::BasisBlade) = iszero(grade(a)) && isnumberone(a.coeff)
+Base.isone(a::Multivector) = 0 ∈ grade(a) && isnumberone(a.comps[begin]) && all(isnumberzero, a.comps[begin + 1:end])
 
 Base.iseven(a::AbstractMultivector) = all(iseven, grade(a))
 Base.isodd(a::AbstractMultivector) = all(isodd, grade(a))

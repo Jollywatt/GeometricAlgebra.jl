@@ -11,6 +11,8 @@ using StaticArrays
 	@test 0v[1] + 0 == 0
 	@test iszero(1 + v[2] - v[2] - 1)
 	@test isone(v[1] + -v[1] + 1)
+	@test !isone(v[1])
+	@test !isone(Multivector(v[1]))
 end
 
 @testset "≈" begin

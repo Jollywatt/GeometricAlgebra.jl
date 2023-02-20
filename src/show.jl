@@ -130,7 +130,13 @@ Multivector{2, 0:2}([1, 4, 9, 16])
 
 ```
 """
-function show_multivector(io::IO, @nospecialize(a); inline=false, groupgrades=!ishomogeneous(a), indent=0, showzeros=ishomogeneous(a), compact=false, parseable=false)
+function show_multivector(io::IO, @nospecialize(a);
+                          inline=false,
+                          groupgrades=!ishomogeneous(a),
+                          indent=0,
+                          showzeros=ishomogeneous(a) && dimension(a) < 8,
+                          compact=false,
+                          parseable=false)
 	if parseable
 		@static if VERSION ≥ v"1.7"
 			type = Base.typeinfo_implicit(typeof(a.comps)) ? constructor(a) : typeof(a)

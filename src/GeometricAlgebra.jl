@@ -23,7 +23,7 @@ export geometric_prod,
 	sandwich_prod
 export reversion, involution
 export flipdual, hodgedual, invhodgedual, ldual, rdual
-export matrix_repr
+export matrix_repr, outermorphism
 
 include("bits.jl")
 include("types.jl")

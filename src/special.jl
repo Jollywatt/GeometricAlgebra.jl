@@ -101,9 +101,7 @@ function inv_formula_method(a::Multivector)
 end
 
 Base.inv(a::BasisBlade) = a/scalar(a^2)
-function Base.inv(a::Multivector)
-	inv_formula_method(a)
-end
+Base.inv(a::Multivector) = inv_formula_method(a)
 
 Base.:/(a::AbstractMultivector, b::AbstractMultivector) = a*inv(b)
 Base.:\(a::AbstractMultivector, b::AbstractMultivector) = inv(a)*b

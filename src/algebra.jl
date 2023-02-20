@@ -580,17 +580,23 @@ function sandwich_prod end
 sandwich_prod(R, a::Scalar) = scalar(R*reversion(R))*a
 @symbolic_optim sandwich_prod(R, a::AbstractMultivector) = grade(R*a*reversion(R), grade(a))
 
-#=
 
+"""
+	outermorphism(mat, a)
+
+Outermorphism of the multivector `a` specified by the matrix `mat`.
+
+If ``f`` is a linear map, then the outermorphism ``f̲`` is a linear map  satisfying
+``f̲(𝒖) = f(𝒖)`` on vectors ``𝒖`` and ``f̲(a ∧ b) = f̲(a) ∧ f̲(b)`` on
+general multivectors.
+"""
 function outermorphism(mat::AbstractMatrix, a::AbstractMultivector{Sig}) where {Sig}
-	resulttype = Multivector{Sig,grade(a)}
-	a′ = zero(similar(resulttype, a))
-	for (bits, coeff) ∈ nonzero_components(a)
-		vs = Multivector{Sig,1}.(eachcol(coeff*mat[:,bits_to_indices(bits)]))
+	a′ = zero(Multivector{Sig,grade(a)}, promote_type(eltype(mat), eltype(a)))
+	for (coeff, bits) ∈ nonzero_components(a)
+		vs = Multivector{Sig,1}.(eachcol(mat[:,bits_to_indices(bits)]))
 		v = reduce(∧, vs; init = one(a′))
-		add!(a′, v)
+		add!(a′, coeff*v)
 	end
 	a′
 end
-
-=#
+outermorphism(mat, a::Scalar) = a

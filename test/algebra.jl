@@ -222,6 +222,27 @@ end
 	@test sandwich_prod(4, 2) == 4*2*4
 end
 
+@testset "outermorphism" begin
+	@basis 3 scalar=true
+
+	𝟙 = [1 0 0; 0 1 0; 0 0 1]
+	@test outermorphism(𝟙, 7) == 7
+	@test outermorphism(𝟙, 7v) == 7v
+	@test outermorphism(𝟙, 7v1) == 7v1
+	@test outermorphism(𝟙, 7v1 + v23) == 7v1 + v23
+
+	A = [
+	1 0 0
+	0 2 1
+	0 0 1
+	]
+	@test outermorphism(A, v1) == v1
+	@test outermorphism(A, v2) == 2v2
+	@test outermorphism(A, v3) == v2 + v3
+	@test outermorphism(A, v23) == 2v2∧(v2 + v3)
+	@test outermorphism(A, v123) == 2v123
+end
+
 @static if VERSION >= v"1.8"
 	@testset "inferability" begin
 		@basis 3 scalar=true

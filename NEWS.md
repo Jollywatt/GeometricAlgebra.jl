@@ -5,8 +5,13 @@ _This package is in early development. New features and outward-facing changes a
 ## v0.2.1
 
 * Support `Multivector`s with immutable component arrays (in particular, `SVector`s).
+Various improvements to type stability throughout.
 
 * Change `BasisBlade` constructor argument order to `BasisBlade{Sig}(coeff, bits)`. Matches the convention used throughout where the coefficient is followed by the unit basis blade, agreeing with mathematical notation.
+
+* Prefer `0:dim:dim` over `(0, dim)` as the grade parameter of scalar-pseudoscalars. This is more consistent with `0:dim` and `0:2:dim`.
+
+* Add `basis(Multivector{Sig,K})` to generate a multivector basis, and `basis(sig, k)` for a basis of blades (`k` is no longer a keyword argument for consistency).
 
 ## v0.2.0
 

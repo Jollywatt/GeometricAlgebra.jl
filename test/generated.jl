@@ -17,7 +17,6 @@ using GeometricAlgebra.SymbolicUtils
 	mv = make_symbolic(Multivector{3,0:3,Vector{Int}}, :mv)
 
 	for a in [b, kv, mv]
-		@show a
 		@test !iszero(a)
 		@test !isone(a)
 

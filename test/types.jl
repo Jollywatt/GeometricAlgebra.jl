@@ -24,6 +24,10 @@ using GeometricAlgebra.SparseArrays
 		@test isscalar(zero(T))
 		@test isscalar(one(T))
 	end
+
+	@test zero(Multivector{3,1}) isa Multivector
+	@test zero(Multivector{3,1}, Float32) |> eltype === Float32
+	@test zero(Multivector{3,2}, Float32) |> grade === 2
 end
 
 @testset "components" begin
@@ -54,9 +58,4 @@ end
 	@test scalar(BasisBlade{3}(42, 0b111)) == 0
 	@test scalar(Multivector{3,0:3}(1:8)) == 1
 	@test scalar(Multivector{3,3}([42])) == 0
-end
-
-@testset "similar" begin
-	M = similar(Multivector{4,1}, BasisBlade{1}(one(Float32)))
-	@test signature(M) == 4 && grade(M) == 1 && eltype(M) == Float32
 end

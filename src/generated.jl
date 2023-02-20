@@ -1,3 +1,8 @@
+#= Types compatible with symbolic optimization. Must be convertable to a symbolic type (`make_symbolic`)
+and then back into a numeric type (`toexpr`, then eval). E.g., symbolic `Numbers` are `BasicSymbolic{Real}`
+and symbolic multivectors have a fixed number of symbolic components.
+Singleton types like `Val`, etc, are allowed and are not changed by `make_symbolic`.
+=#
 CanBeMadeSymbolic{Sig} = Union{Scalar,AbstractMultivector{Sig},Val,Type,Function}
 
 """
@@ -71,7 +76,7 @@ julia> A, B = Multivector{2,1}([1, 2]), Multivector{2,1}([3, 4]);
 
 julia> symbolic_multivector_eval(Expr, MVector, geometric_prod, A, B)
 quote # prettified for readability
-    let a = components(args[1]), b = components(args[2])
+    let a = Multivector(args[1]).comps, b = Multivector(args[2]).comps
         comps = SymbolicUtils.Code.create_array(
             MVector, Int64, Val(1), Val((2,)),
             a[1]*b[1] + a[2]*b[2],
@@ -128,8 +133,8 @@ we must move calls to such methods outside the generated function.
 To do this, the metric signature is normalized to an equivalent tuple signature, and the result of `componentstype(sig)`
 is passed as an argument to — rather than being called from — `symbolic_multivector_eval`.
 (We assume that `dimension(::Tuple)`, etc, are core functionality that won’t be modified by the user.)
-
 =#
+
 function symbolic_optim(f::Function, args::CanBeMadeSymbolic{Sig}...) where {Sig}
 	# we’re replacing objects’ type parameters, so type stability is a little delicate
 	compstype = componentstype(Sig, 0, Any)

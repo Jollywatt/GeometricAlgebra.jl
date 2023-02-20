@@ -173,8 +173,8 @@ Base.length(::AbstractMultivector) = error(
 	"$length is not defined for multivectors. Do you mean $(repr(ncomponents))?")
 
 
-Base.eltype(::OrType{<:BasisBlade{Sig,K,T} where {Sig,K}}) where T = T
-Base.eltype(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = eltype(S)
+Base.eltype(::OrType{<: BasisBlade{Sig,K,T} where {Sig,K}}) where {T} = T
+Base.eltype(::OrType{<:Multivector{Sig,K,S} where {Sig,K}}) where {S} = eltype(S)
 
 
 """
@@ -214,12 +214,6 @@ constructor(::OrType{<:BasisBlade{Sig,K}}) where {Sig,K} = BasisBlade{Sig,K}
 constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
 Base.copy(a::Multivector) = constructor(a)(copy(a.comps))
 
-function Base.similar(M::Type{Multivector{Sig,K}}, abc::OrType{<:AbstractMultivector}...) where {Sig,K}
-	T = promote_type(eltype.(abc)...)
-	C = componentstype(Sig, ncomponents(M), T)
-	Multivector{Sig,K,C}
-end
-
 
 """
 	resulting_multivector_type(f, a, b, ...)
@@ -232,7 +226,9 @@ Calls `resulting_grades(f, dimension(Sig), grade(a), grade(b), ...)` to determin
 function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	dim = dimension(Sig)
 	k = promote_grades(dim, resulting_grades(f, dim, grade.(abc)...))
-	similar(Multivector{Sig,k}, abc...)
+	T = promote_type(eltype.(abc)...)
+	C = componentstype(Sig, ncomponents(Multivector{Sig,k}), T)
+	Multivector{Sig,k,C}
 end
 
 
@@ -241,6 +237,16 @@ end
 
 Base.zero(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(numberzero(T))
 Base.zero(a::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = Multivector{Sig,K}(zeroslike(S, ncomponents(a)))
+
+"""
+	zero(::Type{Multivector{Sig,K,S})
+	zero(::Type{Multivector{Sig,K}}, [T])
+
+Multivector of metric signature `Sig` and grade(s) `K` with components all equal to zero.
+If specified, the components array is of type `S`, or is the default array type with element type `T`.
+"""
+Base.zero(a::Type{Multivector{Sig,K}}, T::Type=Int) where {Sig,K} = zero(Multivector{Sig,K,componentstype(Sig, ncomponents(a), T)})
+
 Base.one(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(numberone(T))
 Base.one(::OrType{<:Multivector{Sig,K,S} where K}) where {Sig,S} = add!(zero(Multivector{Sig,0,S}), numberone(eltype(S)), UInt(0))
 

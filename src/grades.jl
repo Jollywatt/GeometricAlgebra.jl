@@ -163,16 +163,14 @@ julia> grade(mv, +) # only even grades
 """
 function grade(a::BasisBlade, k)
 	k = promote_grades(dimension(a), k)
-	T = similar(Multivector{signature(a),k}, a)
-	add!(zero(T), a)
+	add!(zero(Multivector{signature(a),k}, eltype(a)), a)
 end
 
 function grade(a::Multivector{Sig}, k) where {Sig}
 	k = promote_grades(dimension(a), k)
 	k == grade(a) && return a
 	k ⊆ grade(a) && return a[k]
-	T = similar(Multivector{Sig,k}, a)
-	add!(zero(T), a)
+	add!(zero(Multivector{Sig,k}, eltype(a)), a)
 end
 
 grade(a::Multivector, ::typeof(+)) = grade(a, 0:2:dimension(a))

@@ -219,6 +219,7 @@ end
 	@test sandwich_prod(R, v2) ≈ v1
 	@test grade(sandwich_prod(R, v2)) == 1
 	@test sandwich_prod(R, 7) ≈ 7
+	@test sandwich_prod(2, R) == 4R
 	@test sandwich_prod(4, 2) == 4*2*4
 end
 

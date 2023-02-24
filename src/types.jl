@@ -189,6 +189,7 @@ See also [`ishomogeneous`](@ref).
 """
 grade(::OrType{<: BasisBlade{Sig,K}}) where {Sig,K} = K
 grade(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = K
+grade(::Scalar) = 0
 
 """
 	ishomogeneous(a)

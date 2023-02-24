@@ -563,8 +563,6 @@ where ``D`` is a duality operation such as `ldual`, `rdual` or, if ``I^2 ≠ 0``
 The anti-wedge product is _metric independent_ like the wedge product,
 but does depend on the choice of _orientation_ (the ordering of basis vectors).
 """
-function antiwedge end
-
 antiwedge(a, b) = rdual(ldual(a)∧ldual(b))
 
 @doc (@doc antiwedge)

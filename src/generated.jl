@@ -39,7 +39,7 @@ function symbolic_components(label::Symbol, dims::Integer...)
 end
 
 make_symbolic(::OrType{<:Scalar}, label) = symbolic_components(label)[]
-make_symbolic(::OrType{<:BasisBlade{Sig,K}}, label) where {Sig,K} = make_symbolic(Multivector{Sig,K}, label)
+# make_symbolic(::OrType{<:BasisBlade{Sig,K}}, label) where {Sig,K} = make_symbolic(Multivector{Sig,K}, label)
 make_symbolic(::OrType{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(Multivector{Sig,K})))
 make_symbolic(::OrType{F}, label) where {F<:Function} = F.instance
 make_symbolic(::OrType{Val{V}}, label) where {V} = Val(V)
@@ -99,7 +99,7 @@ function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, a
 	sym_args = make_symbolic.(args, abc)
 	sym_result = f(sym_args...)
 
-	I = findall(T -> T isa Multivector, sym_args)
+	I = findall(arg -> arg isa AbstractMultivector, sym_args)
 	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]
 	T = numberorany(promote_type(eltype.(args[I])...))
 
@@ -140,7 +140,12 @@ function symbolic_optim(f::Function, args::CanBeMadeSymbolic{Sig}...) where {Sig
 	compstype = componentstype(Sig, 0, Any)
 	# canonicalize signature to tuple
 	Sig′ = ntuple(i -> basis_vector_norm(Sig, i), dimension(Sig))
-	args′ = ntuple(i -> replace_signature(args[i], Val(Sig′)), length(args))
+	args′ = ntuple(length(args)) do i
+		# convert blades to multivectors, since blades can’t be symbolic
+		# converting before `symbolic_multivector_eval` reduces duplication of generated code
+		arg = args[i] isa BasisBlade ? Multivector(args[i]) : args[i]
+		replace_signature(arg, Val(Sig′))
+	end
 	result = symbolic_multivector_eval(compstype, f, args′...)
 	# restore original signature
 	replace_signature(result, Val(Sig))

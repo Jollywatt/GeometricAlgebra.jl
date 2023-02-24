@@ -205,7 +205,8 @@ end
 
 @symbolic_optim function scalar_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	s = numberzero(promote_type(eltype(a), eltype(b)))
-	for k in grade(a) ∩ grade(b)
+	for k in 0:dimension(Sig)
+		grade(a) ∋ k ∈ grade(b) || continue
 		s += scalar_prod(grade(a, k), grade(b, k))
 	end
 	s

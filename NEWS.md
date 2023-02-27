@@ -2,6 +2,8 @@
 
 _This package is in early development. New features and outward-facing changes are shown in this news file, but many internal improvements and changes are not._
 
+## v0.2.2
+
 ## v0.2.1
 
 * Support `Multivector`s with immutable component arrays (in particular, `SVector`s).

@@ -64,4 +64,15 @@ end
 
 	@test grade(m, +) + grade(m, -) == m
 	@test iszero(grade(m, 100))
+
+	@basis 3
+
+	@test grade(v12, +) === v12
+	@test grade(v1, -) === v1
+	@test grade(v1, +) |> iszero
+
+	@static if VERSION >= v"1.8"
+		@inferred grade(v1, +)
+		@inferred grade(v123, -)
+	end
 end

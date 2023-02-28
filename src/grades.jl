@@ -127,55 +127,54 @@ end
 
 
 """
-	grade(a::Multivector{Sig}, k) -> Multivector{Sig,k}
+	grade(::AbstractMultivector{Sig}, k) -> Multivector{Sig,k}
 
-Grade `k` part of a multivector `a`. Returns a zero `k`-vector if `k ∉ grade(a)`.
+Construct a `Multivector{Sig,k}` from the grade `k` parts of a blade or multivector.
+Multiple grades may be specified with a range or tuple.
 
-Multiple grades may be given as a range or tuple. The operators `+` and `-`
-may be used as shortcuts for the even and odd parts, respectively.
+The operators `+` and `-` may be used as shortcuts for the even and odd parts, respectively.
+
+If the return type must be inferable, use `grade(a, Val(k))`.
 
 # Examples
 ```jldoctest
-julia> mv = Multivector{Cl(2,1), 0:3}(1:8)
-8-component Multivector{Cl(2,1), 0:3, UnitRange{Int64}}:
+julia> grade(BasisBlade{3}(42, 0b101), 2)
+3-component Multivector{3, 2, MVector{3, Int64}}:
+  0 v12
+ 42 v13
+  0 v23
+
+julia> a = Multivector{3, 0:3}(1:8);
+
+julia> grade(a, 1)
+3-component Multivector{3, 1, UnitRange{Int64}}:
+ 2 v1
+ 3 v2
+ 4 v3
+
+julia> grade(a, 0:3:3)
+2-component Multivector{3, 0:3:3, MVector{2, Int64}}:
  1
- 2 v1 + 3 v2 + 4 v3
- 5 v12 + 6 v13 + 7 v23
  8 v123
 
-julia> grade(mv, 2)
-3-component Multivector{Cl(2,1), 2, UnitRange{Int64}}:
- 5 v12
- 6 v13
- 7 v23
-
-julia> grade(mv, (0, 3))
-2-component Multivector{Cl(2,1), (0, 3), SubArray{Int64, 1, UnitRange{Int64}, Tuple{Vector{Int64}}, false}}:
- 1
- 8 v123
-
-julia> grade(mv, +) # only even grades
-4-component Multivector{Cl(2,1), 0:2:2, SubArray{Int64, 1, UnitRange{Int64}, Tuple{Vector{Int64}}, false}}:
+julia> grade(a, +) # only even grades
+4-component Multivector{3, 0:2:2, MVector{4, Int64}}:
  1
  5 v12 + 6 v13 + 7 v23
 ```
-
 """
-function grade(a::BasisBlade, k)
-	k = promote_grades(dimension(a), k)
-	add!(zero(Multivector{signature(a),k}, eltype(a)), a)
+grade(a::AbstractMultivector, k) = grade(a, Val(promote_grades(dimension(a), k)))
+
+grade(a::BasisBlade{Sig}, ::Val{K′}) where {Sig,K′} = add!(zero(Multivector{Sig,K′}, eltype(a)), a)
+function grade(a::Multivector{Sig,K}, ::Val{K′}) where {Sig,K,K′}
+	K′ == K && return a
+	K′ ∈ K && return a[K′] # only worth making view if k is a single grade (hence ∈ and not ⊆)
+	add!(zero(Multivector{Sig,K′}, eltype(a)), a)
 end
 
-function grade(a::Multivector{Sig}, k) where {Sig}
-	k = promote_grades(dimension(a), k)
-	k == grade(a) && return a
-	k ⊆ grade(a) && return a[k]
-	add!(zero(Multivector{Sig,k}, eltype(a)), a)
-end
+grade(a::AbstractMultivector, ::typeof(+)) = iseven(a) ? a :  isodd(a) ? zero(a) : grade(a, Val(0:2:dimension(a)))
+grade(a::AbstractMultivector, ::typeof(-)) =  isodd(a) ? a : iseven(a) ? zero(a) : grade(a, Val(1:2:dimension(a)))
 
-grade(a::Multivector, ::typeof(+)) = grade(a, 0:2:dimension(a))
-grade(a::Multivector, ::typeof(-)) = grade(a, 1:2:dimension(a))
-
-grade(a::Scalar, k) = 0 ∈ k ? a : zero(a)
+grade(a::Scalar, k) = 0 ∈ k ? a : numberzero(a)
 
 eachgrade(a::Multivector) = ishomogeneous(a) ? Ref(a,) : (a[k] for k in grade(a))

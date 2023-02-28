@@ -8,8 +8,20 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jollywatt.github.io/GeometricAlgebra.jl/dev/)
 ![Build Status](https://github.com/Jollywatt/GeometricAlgebra.jl/actions/workflows/CI.yml/badge.svg)
 [![Coverage](https://codecov.io/gh/jollywatt/GeometricAlgebra.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/jollywatt/GeometricAlgebra.jl)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/jollywatt/GeometricAlgebra.jl)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 
-Yet another Julia package for working with geometric (or Clifford) algebras.
+A Julia package for working with geometric (or Clifford) algebras.
+
+## Installation
+
+This package is usable but is not registered and may undergo rapid changes.
+
+```julia
+julia> using Pkg
+
+julia> Pkg.add(url="https://github.com/Jollywatt/GeometricAlgebra.jl", rev="v0.2.1")
+```
 
 ## Quick Start
 

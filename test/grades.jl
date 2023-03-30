@@ -19,6 +19,8 @@ using GeometricAlgebra:
 	@test promote_grades(3, 2, 0:2:3) === 0:2:3
 	@test promote_grades(3, (3, 0), 0) === (0, 3)
 	@test promote_grades(3, 0:2:3, 1) === 0:3
+
+	@test promote_grades(4, 0:2:0, 4) === 0:4:4
 end
 
 @testset "grade inference" begin

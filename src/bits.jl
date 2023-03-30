@@ -94,7 +94,7 @@ struct BitPermutations{T<:Unsigned}
 end
 BitPermutations(n) = BitPermutations{UInt}(n)
 
-function Base.iterate(itr::BitPermutations{T}, bits=(one(T) << itr.n) - one(T)) where T
+function Base.iterate(itr::BitPermutations{T}, bits=~(~zero(T) << itr.n)) where T
 	(bits, next_bit_permutation(bits))
 end
 

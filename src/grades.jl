@@ -14,6 +14,7 @@ function promote_grades(dim::Integer, k)
 	length(k) == 1 ? first(k) : Tuple(k)
 end
 function promote_grades(dim::Integer, k::OrdinalRange)
+	isempty(k) && return k
 	lo, hi = max(0, minimum(k)), min(dim, maximum(k))
 	lo == hi && return lo
 	Δ = abs(step(k))
@@ -46,6 +47,14 @@ julia> promote_grades(4, 0, 3) # not worth having a specific type for grades (0,
 0:4
 ```
 """
+function promote_grades(dim::Integer, p::OrdinalRange, q::Integer)
+	q ∈ p && return promote_grades(dim, p)
+	q ∈ 0:dim:dim ⊇ p && return 0:dim:dim
+	iseven(q) && all(iseven, p) && return 0:2:dim
+	0:dim
+end
+promote_grades(dim::Integer, p::Integer, q::OrdinalRange) = promote_grades(dim, q, p)
+
 function promote_grades(dim::Integer, p, q)
 	p = promote_grades(dim, p)
 	q = promote_grades(dim, q)
@@ -61,7 +70,7 @@ function promote_grades(dim::Integer, p, q)
 
 	0:dim
 end
-promote_grades(dim::Integer, p, q, r...) = promote_grades(dim, promote_grades(dim, p, q), r...)
+promote_grades(dim::Integer, p, q, r, s...) = promote_grades(dim, promote_grades(dim, p, q), r, s...)
 
 promote_grades(abc::AbstractMultivector{Sig}...) where {Sig} = promote_grades(dimension(Sig), grade.(abc)...)
 

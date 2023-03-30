@@ -180,10 +180,10 @@ Base.eltype(::OrType{<:Multivector{Sig,K,S} where {Sig,K}}) where {S} = eltype(S
 """
 	grade(a)
 
-Grade(s) of a multivector `a`.
+Grade or grades present in a multivector `a`.
 
-The grade of a `BasisBlade{Sig,K}` or `Multivector{Sig,K}` is the second type parameter, `K`,
-which may be an integer (if `a` is homogeneous) or a collection (a range or tuple of grades).
+The grade of a `BasisBlade{Sig,K}` or `Multivector{Sig,K}` is the second type parameter, `K`.
+In the case of a multivector, `K` may be an integer (if it is homogeneous) or a collection (a range or tuple of grades).
 
 See also [`ishomogeneous`](@ref).
 """
@@ -199,6 +199,7 @@ Whether `a` is homogeneous, i.e., consists of nonzero parts of the same grade.
 ishomogeneous(a) = isone(length(grade(a)))
 
 componentbits(a::OrType{<:Multivector}) = componentbits(Val(dimension(a)), Val(grade(a)))
+componentbits(a::OrType{<:Multivector{Sig,K,<:MVector{N}}}) where {Sig,K,N} = MVector{N}(componentbits(Val(dimension(a)), Val(grade(a))))
 
 """
 	componentindex(a::Multivector, b::Union{Unsigned,BasisBlade})

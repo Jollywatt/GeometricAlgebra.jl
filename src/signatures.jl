@@ -211,8 +211,8 @@ julia> basis(Cl(1,3), :all) |> sum
 function basis(sig, k=1)
 	sig = interpret_signature(sig)
 	dim = dimension(sig)
-	k == :all && (k = 0:dimension(sig))
-	bits = componentbits(Val(dim), Val(k))
+	k == :all && (k = 0:dim)
+	bits = componentbits(dim, k)
 	BasisBlade{sig}.(1, bits)
 end
 
@@ -314,7 +314,7 @@ julia> @basis (t=1,x=-1,y=-1,z=-1) grades=2 allperms=true
 ```
 """
 macro basis(sig, args...)
-	sig = interpret_signature(Main.eval(sig))
+	sig = interpret_signature(__module__.eval(sig))
 	pairs = @eval generate_blades($sig; $(args...))
 	assignments = map(pairs) do (label, blade)
 		:($(esc(label)) = $blade)

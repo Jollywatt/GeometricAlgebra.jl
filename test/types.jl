@@ -36,7 +36,7 @@ end
 		@test componentindex.(a, componentbits(a)) == 1:ncomponents(a)
 
 		if k isa Integer
-			bits = componentbits(a)[componentindices(a, k)]
+			bits = collect(componentbits(a))[componentindices(a, k)]
 			@test length(bits) == binomial(n, k)
 			@test all(count_ones.(bits) .== k)
 		end

@@ -25,15 +25,15 @@ end
 
 @testset "componentbits" begin
 	for n ∈ 0:8, k ∈ 0:n
-		bits = componentbits(n, k)
+		bits = collect(componentbits(n, k))
 		@test length(bits) == binomial(n, k)
 		@test all(count_ones.(bits) .== k)
 
-		@test length(componentbits(n, 0:n)) == 2^n
+		@test length(collect(componentbits(n, 0:n))) == 2^n
 
 		if n > 1
-			@test length(componentbits(n, 0:2:n)) == 2^(n - 1)
-			@test length(componentbits(n, (0, n))) == 2
+			@test length(collect(componentbits(n, 0:2:n))) == 2^(n - 1)
+			@test length(collect(componentbits(n, (0, n)))) == 2
 		end
 	end
 end

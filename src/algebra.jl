@@ -197,8 +197,8 @@ scalar_prod(a::BasisBlade{Sig}, b::BasisBlade{Sig}) where {Sig} = numberzero(pro
 
 function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
 	s = numberzero(promote_type(eltype(a), eltype(b)))
-	for (a, b, bits) in zip(a.comps, b.comps, componentbits(Multivector{Sig,K}))
-		s += geometric_square_factor(Sig, bits)*(a*b)
+	for (acoeff, bcoeff, bits) in zip(a.comps, b.comps, componentbits(Multivector{Sig,K}))
+		s += geometric_square_factor(Sig, bits)*(acoeff*bcoeff)
 	end
 	s
 end

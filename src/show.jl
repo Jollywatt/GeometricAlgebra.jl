@@ -1,3 +1,26 @@
+struct BasisDisplayStyle
+	blades::Dict{UInt,Tuple{Int,Vector{Int}}}
+	blade_order
+end
+
+
+BASIS_DISPLAY_STYLES = IdDict(
+	# 3 => BasisDisplayStyle(
+	# 	Dict(0b101 => (-1, [3, 1])),
+	# 	Dict(),
+	# )
+)
+DEFAULT_BASIS_DISPLAY_STYLE = BasisDisplayStyle(Dict(), Dict())
+get_basis_display_style(sig) = get(BASIS_DISPLAY_STYLES, sig, DEFAULT_BASIS_DISPLAY_STYLE)
+
+function get_basis_blade(style::BasisDisplayStyle, bits::Unsigned)
+	if bits ∈ keys(style.blades)
+		style.blades[bits]
+	else
+		(1, bits_to_indices(bits))
+	end
+end
+
 
 #= BasisBlade =#
 
@@ -16,7 +39,10 @@ julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(1 + im, 0b1))
 (1+1im) x
 ```
 """
-function show_blade(io::IO, @nospecialize(a::BasisBlade); compact=get(io, :compact, false), parseable=false)
+function show_blade(io::IO, @nospecialize(a::BasisBlade);
+                    compact=get(io, :compact, false),
+                    parseable=false,
+                    style=get_basis_display_style(signature(a)))
 	if parseable
 		bits = "0b"*bitstring(a.bits)[end - dimension(a) + 1:end]
 		@static if VERSION ≥ v"1.7"
@@ -27,21 +53,25 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade); compact=get(io, :compa
 		print(io, type, "($(a.coeff), $bits)")
 	else
 		subio = IOContext(io, :compact => true)
-		if compact && isnumberzero(a.coeff)
+
+		parity, indices = get_basis_blade(style, a.bits)
+		coeff = parity*a.coeff
+
+		if compact && isnumberzero(coeff)
 			print(io, "0")
 			return
-		elseif compact && isnumberone(a.coeff)
+		elseif compact && isnumberone(coeff)
 			isscalar(a) && print(io, "1")
-		elseif compact && isnumberone(-a.coeff) 
+		elseif compact && isnumberone(-coeff) 
 			print(io, isscalar(a) ? "-1" : "-")
 		else
-			Base.show_unquoted(subio, a.coeff, 0, Base.operator_precedence(:*))
+			Base.show_unquoted(subio, coeff, 0, Base.operator_precedence(:*))
 		end
 		# blades with higher grade than dimension are always zero,
 		#  and should not have basis blade printed
 		0 < grade(a) <= dimension(a) || return
 		compact || print(io, " ") # coefficient–basis separator
-		show_basis_blade(io, signature(a), bits_to_indices(a.bits))
+		show_basis_blade(io, signature(a), indices)
 	end
 end
 

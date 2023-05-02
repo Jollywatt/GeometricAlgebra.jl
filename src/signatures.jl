@@ -245,15 +245,23 @@ end
 basis(M::Type{Multivector{Sig,K}}) where {Sig,K} = basis(Multivector{Sig,K,componentstype(Sig, ncomponents(M), Int)})
 
 
-function generate_blades(sig; grades=:all, allperms=false, pseudoscalar=:I, scalar=false, prefix=nothing)
+function generate_blades(sig;
+                         grades=:all,
+                         allperms=false,
+                         pseudoscalar=:I,
+                         scalar=false,
+                         prefix=nothing,
+                         style=get_basis_display_style(sig))
 	
 	grades = grades == :all ? (0:dimension(sig)) : grades
 	grades = scalar ? grades : grades ∩ (1:dimension(sig))
 
-	indices = componentbits(dimension(sig), grades) .|> bits_to_indices
+	bits = componentbits(dimension(sig), grades) 
 
 	if allperms
-		indices = map(permutations, indices) |> Iterators.flatten |> collect
+		indices = map(permutations∘bits_to_indices, bits) |> Iterators.flatten |> collect
+	else
+		indices = last.(get_basis_blade.(Ref(style), bits))
 	end
 
 	basisvectors = basis(sig)
@@ -305,6 +313,9 @@ julia> 1v2 + 3v12
 8-component Multivector{3, 0:3, MVector{8, Int64}}:
  1 v2
  3 v12
+
+julia> @basis "0++" prefix=:e
+[ Info: Defined basis blades e1, e2, e3, e12, e13, e23, e123, I in Main
 
 julia> @basis 2 allperms=true scalar=true pseudoscalar=nothing
 [ Info: Defined basis blades v, v1, v2, v12, v21 in Main

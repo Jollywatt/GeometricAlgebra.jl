@@ -1,27 +1,3 @@
-struct BasisDisplayStyle
-	blades::Dict{UInt,Tuple{Int,Vector{Int}}}
-	blade_order
-end
-
-
-BASIS_DISPLAY_STYLES = IdDict(
-	# 3 => BasisDisplayStyle(
-	# 	Dict(0b101 => (-1, [3, 1])),
-	# 	Dict(),
-	# )
-)
-DEFAULT_BASIS_DISPLAY_STYLE = BasisDisplayStyle(Dict(), Dict())
-get_basis_display_style(sig) = get(BASIS_DISPLAY_STYLES, sig, DEFAULT_BASIS_DISPLAY_STYLE)
-
-function get_basis_blade(style::BasisDisplayStyle, bits::Unsigned)
-	if bits ∈ keys(style.blades)
-		style.blades[bits]
-	else
-		(1, bits_to_indices(bits))
-	end
-end
-
-
 #= BasisBlade =#
 
 # make things line up right when printing in arrays

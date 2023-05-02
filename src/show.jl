@@ -18,7 +18,7 @@ julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(1 + im, 0b1))
 function show_blade(io::IO, @nospecialize(a::BasisBlade);
                     compact=get(io, :compact, false),
                     parseable=false,
-                    style=get_basis_display_style(signature(a)))
+                    basis_display_style=get_basis_display_style(signature(a)))
 	if parseable
 		bits = "0b"*bitstring(a.bits)[end - dimension(a) + 1:end]
 		@static if VERSION ≥ v"1.7"
@@ -30,8 +30,8 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade);
 	else
 		subio = IOContext(io, :compact => true)
 
-		parity, indices = get_basis_blade(style, a.bits)
-		coeff = parity*a.coeff
+		indices, parity = get_basis_blade(basis_display_style, a.bits)
+		coeff = (-1)^parity*a.coeff
 
 		if compact && isnumberzero(coeff)
 			print(io, "0")
@@ -56,29 +56,35 @@ end
 #= Multivector =#
 
 
-function show_multivector_row(io::IO, @nospecialize(a); indent=0, compact=false, showzeros=false)
+function show_multivector_row(io::IO, @nospecialize(a);
+                              indent=0,
+                              compact=false,
+                              showzeros=false,
+                              basis_display_style=get_basis_display_style(signature(a)))
 	print(io, " "^indent)
 	if (!showzeros || compact) && iszero(a)
 		print(io, numberzero(eltype(a)))
 		return
 	end
 	isfirst = true
-	for (coeff, bits) in zip(a.comps, componentbits(a))
+	for bits ∈ componentbits(basis_display_style, a)
+		coeff = a.comps[componentindex(a, bits)]
 		!showzeros && isnumberzero(coeff) && continue
 		isfirst ? isfirst = false : print(io, " + ")
-		show_blade(io, BasisBlade{signature(a)}(coeff, bits); compact)
+		show_blade(io, BasisBlade{signature(a)}(coeff, bits); compact, basis_display_style)
 	end
 end
 
-function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true, compact=false)
+function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true, compact=false, basis_display_style=get_basis_display_style(signature(a)))
 	!showzeros && iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
-	comps = zip(a.comps, componentbits(a))
-	if !showzeros
-		comps = Iterators.filter(!isnumberzero∘first, comps)
-	end
+	bits = componentbits(basis_display_style, a)
+	indices_parities = get_basis_blade.(Ref(basis_display_style), bits)
+	comps = @. (-1)^last(indices_parities)*a.comps[componentindex(a, bits)] => first(indices_parities)
 
-	comps = collect(comps)
+	if !showzeros
+		filter!(!isnumberzero∘first, comps)
+	end
 
 	isempty(comps) && return print(io, " "^indent, a.comps)
 
@@ -87,12 +93,12 @@ function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true
 	R = maximum(last.(alignments))
 
 	firstline = true
-	for ((coeff, bits), (l, r)) ∈ zip(comps, alignments)
+	for ((coeff, indices), (l, r)) ∈ zip(comps, alignments)
 		firstline || println(io)
 		print(io, " "^(L - l + indent))
 		Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
 		print(io, " "^(R - r), compact ? "" : " ")
-		show_basis_blade(io, signature(a), bits_to_indices(bits))
+		show_basis_blade(io, signature(a), indices)
 		firstline = false
 	end
 end
@@ -142,7 +148,8 @@ function show_multivector(io::IO, @nospecialize(a);
                           indent=0,
                           showzeros=ishomogeneous(a) && dimension(a) < 8,
                           compact=false,
-                          parseable=false)
+                          parseable=false,
+                          basis_display_style=get_basis_display_style(signature(a)))
 	if parseable
 		@static if VERSION ≥ v"1.7"
 			type = Base.typeinfo_implicit(typeof(a.comps)) ? constructor(a) : typeof(a)
@@ -169,16 +176,16 @@ function show_multivector(io::IO, @nospecialize(a);
 				end
 
 				inline && print(io, "(")
-				show_multivector_row(io, ak; showzeros, compact)
+				show_multivector_row(io, ak; showzeros, compact, basis_display_style)
 				inline && print(io, ")")
 
 				firstgroup = false
 			end
 		else
 			if inline
-				show_multivector_row(io, a; indent, showzeros, compact)
+				show_multivector_row(io, a; indent, showzeros, compact, basis_display_style)
 			else
-				show_multivector_col(io, a; indent, showzeros, compact)
+				show_multivector_col(io, a; indent, showzeros, compact, basis_display_style)
 			end
 		end
 	end

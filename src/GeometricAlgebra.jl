@@ -1,7 +1,7 @@
 module GeometricAlgebra
 
 using StaticArrays, SparseArrays
-using Combinatorics: permutations
+using Combinatorics: permutations, parity
 using SymbolicUtils
 using PrettyTables: pretty_table
 

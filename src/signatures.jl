@@ -146,28 +146,33 @@ Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature,
 #= Convenience =#
 
 """
-	@Cl_str -> Tuple
+	Cl(sig::String) -> Tuple
 
-Shorthand for a tuple specifying a metric signature, e.g., `Cl"-+++" === (-1, +1, +1, +1)`.
+Shorthand for a tuple specifying a metric signature, e.g., `Cl("-+++") === (-1, +1, +1, +1)`.
 String may contain `'+'`, `'-'` and `'0'`.
 
 # Example
 ```jldoctest
-julia> Cl"+++" # 3D Euclidean metric signature
+julia> Cl("+++") # 3D Euclidean metric signature
 (1, 1, 1)
 
 julia> basis(ans)
-3-element Vector{BasisBlade{Cl"+++", 1, Int64}}:
+3-element Vector{BasisBlade{Cl("+++"), 1, Int64}}:
  1 v1
  1 v2
  1 v3
 ```
 """
+Cl(s::String) = interpret_signature(s)
+
+# depreciated?
 macro Cl_str(s)
 	interpret_signature(s)
 end
 
-show_signature(io, sig::Tuple) = print(io, "Cl\"$(join(map(s -> get(Dict(+1=>"+", -1=>"-"), s, s), sig)))\"")
+
+# show_signature(io, sig::Tuple) = print(io, "Cl\"$(join(map(s -> get(Dict(+1=>"+", -1=>"-"), s, s), sig)))\"")
+show_signature(io, sig::Tuple) = print(io, "Cl(\"$(join(map(s -> get(Dict(+1=>"+", -1=>"-"), s, s), sig)))\")")
 
 interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i] for i in sig)
 interpret_signature(sig) = sig

@@ -110,7 +110,7 @@ end
 		GeometricAlgebra.show_blade(io, a; compact=true)
 	end == "v13"
 	@test sprint(v13) do io, a
-		GeometricAlgebra.show_blade(io, a; compact=true,  basis_display_style=cyclic)
+		GeometricAlgebra.show_blade(io, a; compact=true, basis_display_style=cyclic)
 	end == "-v31"
 
 	@test sprint(1v23 + 2v3*v1 + 3v12) do io, a

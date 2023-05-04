@@ -4,7 +4,7 @@ _This package is in early development. New features and outward-facing changes a
 
 ## v0.2.2
 
-* Add ability to customise how basis blades are displayed with `BasisDisplayStyle`.
+* Add ability to customise the order in which basis blades are displayed with `BasisDisplayStyle` on a per-algebra basis. (E.g., so that `3v12 - 2v13 + 1v23` displays as `1v23 + 2v31 + 3v12`).
 
 ## v0.2.1
 

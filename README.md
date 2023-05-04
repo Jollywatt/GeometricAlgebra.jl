@@ -40,8 +40,8 @@ julia> u = Multivector{3,1}([1, -1, 0]) # 3D Euclidean vector
 Non-euclidean metric signatures may be specified:
 
 ```julia
-julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
-6-component Multivector{⟨-+++⟩, 2, UnitRange{Int64}}:
+julia> v = Multivector{Cl("-+++"),2}(1:6) # Lorentzian bivector
+6-component Multivector{Cl("-+++"), 2, UnitRange{Int64}}:
  1 v12
  2 v13
  3 v23
@@ -50,7 +50,7 @@ julia> v = Multivector{(-1,1,1,1),2}(1:6) # Lorentzian bivector
  6 v34
 
 julia> exp(v)
-8-component Multivector{⟨-+++⟩, 0:2:4, Vector{Float64}}:
+8-component Multivector{Cl("-+++"), 0:2:4, MVector{8, Float64}}:
  1.18046
  0.818185 v12 + -0.141944 v13 + 0.153208 v23 + 1.076 v14 + 1.16194 v24 + 1.03866 v34
  0.999268 v1234
@@ -81,10 +81,10 @@ Macros are provided for interactive use:
 
 ```julia
 julia> @basis "+---"
-[ Info: Defined basis blades v, v1, v2, v3, v4, v12, v13, v14, v23, v24, v34, v123, v124, v134, v234, v1234
+[ Info: Defined basis blades v1, v2, v3, v4, v12, v13, v23, v14, v24, v34, v123, v124, v134, v234, v1234, I in Main
 
 julia> @basis (t = +1, x = -1) allperms=true
-[ Info: Defined basis blades t, x, tx, xt
+[ Info: Defined basis blades t, x, tx, xt, I in Main
 ```
 
 
@@ -144,5 +144,6 @@ This package derives inspiration from many others:
 - [digitaldomain/Multivectors.jl](https://github.com/digitaldomain/Multivectors.jl)
 - [MasonProtter/GeometricMatrixAlgebras.jl](https://github.com/MasonProtter/GeometricMatrixAlgebras.jl)
 - [serenity4/GeometricAlgebra.jl](https://github.com/serenity4/GeometricAlgebra.jl)
+- [serenity4/SymbolicGA.jl](https://github.com/serenity4/SymbolicGA.jl)
 - [velexi-research/GeometricAlgebra.jl](https://github.com/velexi-research/GeometricAlgebra.jl)
 - in the future, [JuliaGeometricAlgebra/GeometricAlgebra.jl](https://github.com/JuliaGeometricAlgebra/GeometricAlgebra.jl)

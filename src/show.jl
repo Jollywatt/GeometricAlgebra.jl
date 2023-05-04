@@ -30,7 +30,8 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade);
 	else
 		subio = IOContext(io, :compact => true)
 
-		indices, parity = get_basis_blade(basis_display_style, a.bits)
+		indices = get_basis_blade(basis_display_style, a.bits)
+		parity = get(basis_display_style.parities, a.bits, false)
 		coeff = (-1)^parity*a.coeff
 
 		if compact && isnumberzero(coeff)
@@ -79,8 +80,11 @@ function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true
 	!showzeros && iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
 	bits = componentbits(basis_display_style, a)
-	indices_parities = get_basis_blade.(Ref(basis_display_style), bits)
-	comps = @. (-1)^last(indices_parities)*a.comps[componentindex(a, bits)] => first(indices_parities)
+	indices = get_basis_blade.(Ref(basis_display_style), bits)
+	comps = @. *(
+		(-1)^get($Ref(basis_display_style.parities), bits, false),
+		getindex($Ref(a.comps), componentindex(a, bits)),
+	) => indices
 
 	if !showzeros
 		filter!(!isnumberzero∘first, comps)

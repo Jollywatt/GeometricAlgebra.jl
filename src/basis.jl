@@ -1,5 +1,6 @@
 """
 	BasisDisplayStyle(dim, blades, blade_order)
+	BasisDisplayStyle(dim, blades_and_order)
 
 Specifies how basis blades are displayed and ordered.
 
@@ -18,9 +19,14 @@ style = BasisDisplayStyle(
 	Dict(0b101 => [3, 1]), # basis vector order for each basis blade
 	Dict(2 => [0b110, 0b101, 0b011]) # order of basis blades for each grade
 )
+# or equivalently:
+style = BasisDisplayStyle(
+	3,
+	Dict(2 => [[2, 3], [3, 1], [1, 2]])
+)
 ```
 With the style above, `v3*v1` is displayed as `v31` instead of `-v13`,
-and orders the basis bivectors like `v23, v31, v12` instead of `v12, v13, v23`.
+and the basis bivectors are ordered as `v23, v31, v12` instead of `v12, v13, v23`.
 
 ```jldoctest; setup = :(style = GeometricAlgebra.BasisDisplayStyle(3, Dict(0b101 => [3, 1]), Dict(2 => [0b110, 0b101, 0b011])))
 julia> @basis 3
@@ -38,40 +44,41 @@ julia> GeometricAlgebra.show_multivector(stdout, u, basis_display_style=style, i
 """
 struct BasisDisplayStyle
 	dim::Int
-	blades::Dict{UInt,Tuple{Vector{Int},Bool}}
-	blade_order
+	blades::Dict{UInt,Vector{Int}}
+	blade_order::Dict{Int,Vector{UInt}}
+	parities::Dict{UInt,Bool}
 	function BasisDisplayStyle(dim, blades, basis_order)
-		for (bits, (indices, p)) ∈ blades
+		for (bits, indices) ∈ blades
 			@assert bits == indices_to_bits(indices)
-			@assert parity(sortperm(indices)) == p
 		end
 		for (k, bits) ∈ basis_order
-			@assert all(componentbits(dim, k) .== sort(bits))
+			@assert issetequal(componentbits(dim, k), bits)
 		end
-		new(dim, blades, basis_order)
+		parities = Dict(bits => parity(sortperm(indices)) for (bits, indices) ∈ blades)
+		new(dim, blades, basis_order, parities)
 	end
 end
 
-function BasisDisplayStyle(dim, blades::Dict{<:Unsigned,<:Vector}, blade_order=Dict())
-	blades = Dict(bits => (indices, parity(sortperm(indices))) for (bits, indices) in blades)
+
+function BasisDisplayStyle(dim, blades_and_order::Dict{<:Integer,<:Vector{<:Vector}})
+	all_indices = reduce(vcat, values(blades_and_order))
+	blades = Dict(indices_to_bits.(all_indices) .=> all_indices)
+	blade_order = Dict(k => indices_to_bits.(indices) for (k, indices) ∈ blades_and_order)
 	BasisDisplayStyle(dim, blades, blade_order)
 end
 
-componentbits(style::BasisDisplayStyle, n, k::Integer) = k ∈ keys(style.blade_order) ? style.blade_order[k] : componentbits(n, k)
+get_basis_blade(style::BasisDisplayStyle, bits::Unsigned) =
+	bits ∈ keys(style.blades) ? style.blades[bits] : bits_to_indices(bits)
+
+componentbits(style::BasisDisplayStyle, n, k::Integer) =
+	k ∈ keys(style.blade_order) ? style.blade_order[k] : componentbits(n, k)
 componentbits(style::BasisDisplayStyle, n, K) = Iterators.flatten(Iterators.map(k -> componentbits(style, n, k), K))
 componentbits(style::BasisDisplayStyle, a::OrType{Multivector}) = componentbits(style, dimension(a), grade(a))
 
 
-BASIS_DISPLAY_STYLES = IdDict()
+const BASIS_DISPLAY_STYLES = IdDict{Any,BasisDisplayStyle}()
 get_basis_display_style(sig) = get(BASIS_DISPLAY_STYLES, sig, BasisDisplayStyle(dimension(sig), Dict(), Dict()))
 
-function get_basis_blade(style::BasisDisplayStyle, bits::Unsigned)
-	if bits ∈ keys(style.blades)
-		style.blades[bits]
-	else
-		(bits_to_indices(bits), false)
-	end
-end
 
 function Base.show(io::IO, style::BasisDisplayStyle)
 	dump(io, style; maxdepth=1)
@@ -92,6 +99,13 @@ end
 
 Vector of basis blades of specified grade(s) `k` for the geometric algebra defined by the metric signature `sig`.
 The value `k=:all` is a shortcut for `0:dimension(sig)`.
+
+The particular basis blades returned by `basis` and their order reflects the signature’s `BasisDisplayStyle`.
+You can guarantee the default style by using
+```julia
+	BasisBlade{sig}.(1, componentbits(dimension(sig), k))
+```
+instead of `basis(sig, k)`.
 
 See also [`@basis`](@ref).
 
@@ -177,7 +191,7 @@ function generate_blades(sig;
 	if allperms
 		indices = map(permutations∘bits_to_indices, bits) |> Iterators.flatten |> collect
 	else
-		indices = first.(get_basis_blade.(Ref(style), bits))
+		indices = get_basis_blade.(Ref(style), bits)
 	end
 
 	basisvectors = basis(sig)

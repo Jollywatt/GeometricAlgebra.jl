@@ -4,7 +4,8 @@ using StaticArrays
 import GeometricAlgebra:
 	dimension,
 	basis_vector_norm,
-	componentstype
+	componentstype,
+	BasisDisplayStyle
 
 @testset "basis, @basis" begin
 	@test length(basis(10)) == 10
@@ -94,4 +95,30 @@ GeometricAlgebra.use_symbolic_optim(::SigWithCompsType{Sig,<:SparseVector}) wher
 		@test u/u isa Multivector{sig,K,<:C} where K
 		@test sin(~u) isa Multivector{sig,K,<:C} where K
 	end
+end
+
+@testset "basis display styles" begin
+	cyclic = BasisDisplayStyle(
+		3, # dimension
+		Dict(0b101 => [3, 1]), # basis vector order for each basis blade
+		Dict(2 => [0b110, 0b101, 0b011]) # order of basis blades for each grade
+	)
+
+	@basis 3
+
+	@test sprint(v13) do io, a
+		GeometricAlgebra.show_blade(io, a; compact=true)
+	end == "v13"
+	@test sprint(v13) do io, a
+		GeometricAlgebra.show_blade(io, a; compact=true,  basis_display_style=cyclic)
+	end == "-v31"
+
+	@test sprint(1v23 + 2v3*v1 + 3v12) do io, a
+		GeometricAlgebra.show_multivector(io, a; compact=true, inline=true)
+	end == "3v12 + -2v13 + v23"
+	@test sprint(1v23 + 2v3*v1 + 3v12) do io, a
+		GeometricAlgebra.show_multivector(io, a; compact=true, inline=true, basis_display_style=cyclic)
+	end == "v23 + 2v31 + 3v12"
+
+
 end

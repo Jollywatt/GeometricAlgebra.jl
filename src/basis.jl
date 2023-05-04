@@ -3,9 +3,14 @@
 
 Specifies how basis blades are displayed and ordered.
 
-# Examples
+!!! warning
+	`BasisDisplayStyle` only affects how multivectors are _displayed_.
+	The actual internal layout of multivectors is never affected.
 
-The following style:
+	This means that non-standard display styles can result in multivectors
+	whose components appear to disagree with the underlying component array.
+
+# Examples
 
 ```julia
 style = BasisDisplayStyle(
@@ -14,8 +19,8 @@ style = BasisDisplayStyle(
 	Dict(2 => [0b110, 0b101, 0b011]) # order of basis blades for each grade
 )
 ```
-displays `v3*v1` as `v31` instead of `-v13`, and orders the basis bivectors
-like `v23, v31, v12` instead of `v12, v13, v23`.
+With the style above, `v3*v1` is displayed as `v31` instead of `-v13`,
+and orders the basis bivectors like `v23, v31, v12` instead of `v12, v13, v23`.
 
 ```jldoctest; setup = :(style = GeometricAlgebra.BasisDisplayStyle(3, Dict(0b101 => [3, 1]), Dict(2 => [0b110, 0b101, 0b011])))
 julia> @basis 3

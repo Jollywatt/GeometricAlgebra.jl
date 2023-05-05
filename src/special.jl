@@ -134,9 +134,10 @@ twonorm(a::Multivector) = sqrt(sum(abs2.(a.comps)))
 
 function exp_series(a::Multivector)
 	# Series convergence is better when `a` is not too large.
-	# Use the fact that ``exp(λa) = exp(λ)exp(a/p)^p`` and choose `p`
+	# Use the fact that `exp(a) = exp(a/p)^p` and choose `p`
 	# so that the 2-norm of `a` is of order one.
 
+	# Also use the fact that `exp(λ + a) = exp(λ)exp(a)` for scalar `λ`
 	λ = scalar(a)
 	a -= λ
 

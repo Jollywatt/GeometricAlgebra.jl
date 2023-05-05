@@ -118,7 +118,7 @@ julia> basis(3)
  1 v3
 
 julia> basis("-+++", 0:2:4)
-8-element Vector{BasisBlade{Cl"-+++", _A, Int64} where _A}:
+8-element Vector{BasisBlade{Cl("-+++"), _A, Int64} where _A}:
  1
  1 v12
  1 v13

@@ -49,9 +49,11 @@ julia> basis((t=-1, x=1, y=1, z=1)) |> prod
 BasisBlade{(t = -1, x = 1, y = 1, z = 1), 4, Int64}:
  1 txyz
 
+julia> sum(basis(Cl("++"))) # shorthand for metric signature (1, 1)
+2-component Multivector{Cl("++"), 1, MVector{2, Int64}}:
+ 1 v1
+ 1 v2
 ```
-
-The metric signature shorthand `Cl"-+++"` is an alias for a tuple `(-1, 1, 1, 1)`, and so on for any string of `'+'`, `'-'` and `'0'`.
 
 
 ### [The metric signature interface](@id sig-interface)

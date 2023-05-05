@@ -44,10 +44,10 @@ julia> sig = (+1,-1,-1,-1)
 (1, -1, -1, -1)
 
 julia> GeometricAlgebra.show_signature(stdout, sig)
-Cl"+---"
+Cl("+---")
 
 julia> BasisBlade{sig}
-BasisBlade{Cl"+---"} (pretty-printed BasisBlade{(1, -1, -1, -1)})
+BasisBlade{Cl("+---")} (pretty-printed BasisBlade{(1, -1, -1, -1)})
 ```
 """
 show_signature(io, sig) = show(io, sig)

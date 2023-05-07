@@ -1,45 +1,41 @@
 """
-	BasisDisplayStyle(dim, blades, blade_order)
+	BasisDisplayStyle(dim, blades[, blade_order])
 	BasisDisplayStyle(dim, blades_and_order)
 
 Specifies how basis blades are displayed and ordered.
 
-!!! warning
+- `dim::Int` is the dimension of the algebra (number of basis vectors).
+- `blades::Dict{UInt,Vector{Int}}` encodes the order of basis vectors
+   in basis blades. E.g., `0b101 => [1, 3]` is the default style.
+- `blade_order::Dict{Int,Vector{UInt}}` specifies the order of basis blades
+   in a single grade. E.g., `3 => [0b011, 0b101, 0b110]` is the default ordering.
+- `blades_and_order::Dict{Int,Vector{Int}}` gives a way of specifying the previous
+   two mappings at once.
+
+!!! note
 	`BasisDisplayStyle` only affects how multivectors are _displayed_.
 	The actual internal layout of multivectors is never affected.
 
-	This means that non-standard display styles can result in multivectors
-	whose components appear to disagree with the underlying component array.
-
 # Examples
 
-```julia
-style = BasisDisplayStyle(
-	3, # dimension
-	Dict(0b101 => [3, 1]), # basis vector order for each basis blade
-	Dict(2 => [0b110, 0b101, 0b011]) # order of basis blades for each grade
-)
-# or equivalently:
-style = BasisDisplayStyle(
-	3,
-	Dict(2 => [[2, 3], [3, 1], [1, 2]])
-)
-```
-With the style above, `v3*v1` is displayed as `v31` instead of `-v13`,
-and the basis bivectors are ordered as `v23, v31, v12` instead of `v12, v13, v23`.
+```jldoctest
+julia> Multivector{Cl(0,3),2}([3, -2, 1])
+3-component Multivector{Cl(0,3), 2, Vector{Int64}}:
+  3 v12
+ -2 v13
+  1 v23
 
-```jldoctest; setup = :(style = GeometricAlgebra.BasisDisplayStyle(3, Dict(0b101 => [3, 1]), Dict(2 => [0b110, 0b101, 0b011])))
-julia> @basis 3
-[ Info: Defined basis blades v1, v2, v3, v12, v13, v23, v123, I in Main
+julia> cyclical_style = GeometricAlgebra.BasisDisplayStyle(
+           3, Dict(2 => [[2,3], [3,1], [1,2]])
+       );
 
-julia> u = v1 + 3v12 - 2v13 + 1v23
-8-component Multivector{3, 0:3, MVector{8, Int64}}:
- 1 v1
- 3 v12 + -2 v13 + 1 v23
+julia> GeometricAlgebra.BASIS_DISPLAY_STYLES[Cl(0,3)] = cyclical_style;
 
-julia> GeometricAlgebra.show_multivector(stdout, u, basis_display_style=style, indent=1)
- 1 v1
- 1 v23 + 2 v31 + 3 v12
+julia> Multivector{Cl(0,3),2}([3, -2, 1])
+3-component Multivector{Cl(0,3), 2, Vector{Int64}}:
+ 1 v23
+ 2 v31
+ 3 v12
 ```
 """
 struct BasisDisplayStyle
@@ -47,24 +43,25 @@ struct BasisDisplayStyle
 	blades::Dict{UInt,Vector{Int}}
 	blade_order::Dict{Int,Vector{UInt}}
 	parities::Dict{UInt,Bool}
-	function BasisDisplayStyle(dim, blades, basis_order)
+	basis_vector_labels::Vector{String}
+	function BasisDisplayStyle(dim, blades, basis_order=Dict{Int,Vector{UInt}}(); labels=1:dim)
 		for (bits, indices) ∈ blades
-			@assert bits == indices_to_bits(indices)
+			@assert bits == indices_to_bits(indices) "$(sprint(show, bits; context=:show_as_binary_with_width=>dim)) == indices_to_bits($indices)"
 		end
 		for (k, bits) ∈ basis_order
 			@assert issetequal(componentbits(dim, k), bits)
 		end
 		parities = Dict(bits => parity(sortperm(indices)) for (bits, indices) ∈ blades)
-		new(dim, blades, basis_order, parities)
+		new(dim, blades, basis_order, parities, string.(collect(labels)))
 	end
 end
 
 
-function BasisDisplayStyle(dim, blades_and_order::Dict{<:Integer,<:Vector{<:Vector}})
-	all_indices = reduce(vcat, values(blades_and_order))
+function BasisDisplayStyle(dim, blades_and_order::Dict{<:Integer,<:Vector{<:Vector}}=Dict{Int,Vector{Vector{Int}}}(); labels=string.(1:dim))
+	all_indices = reduce(vcat, values(blades_and_order); init = Int[])
 	blades = Dict(indices_to_bits.(all_indices) .=> all_indices)
 	blade_order = Dict(k => indices_to_bits.(indices) for (k, indices) ∈ blades_and_order)
-	BasisDisplayStyle(dim, blades, blade_order)
+	BasisDisplayStyle(dim, blades, blade_order, labels=labels)
 end
 
 get_basis_blade(style::BasisDisplayStyle, bits::Unsigned) =
@@ -79,16 +76,45 @@ componentbits(style::BasisDisplayStyle, a::OrType{Multivector}) = componentbits(
 const BASIS_DISPLAY_STYLES = IdDict{Any,BasisDisplayStyle}()
 get_basis_display_style(sig) = get(BASIS_DISPLAY_STYLES, sig, BasisDisplayStyle(dimension(sig), Dict(), Dict()))
 
+# yes, an instance of type piracy...
+function Base.show(io::IO, n::Unsigned)
+	width = get(io, :show_as_binary_with_width, nothing)
+	if isnothing(width)
+		print(io, "0x", string(n, pad = sizeof(n)<<1, base = 16))
+	else
+		print(io, "0b", string(n, pad = width, base = 2))
+	end
+end
 
 function Base.show(io::IO, style::BasisDisplayStyle)
-	dump(io, style; maxdepth=1)
-	println(io, "Style preview:")
-	dim = style.dim
-	a = Multivector{dim,0:dim}(trues(2^dim))
-	show_multivector(io, a;
-		compact=true,
-		indent=2,
-		basis_display_style=style)
+	println(io, typeof(style), ":")
+	subio = IOContext(io, :show_as_binary_with_width => style.dim)
+	for i ∈ fieldnames(BasisDisplayStyle)
+		print(io, "  ", i, ": ")
+		field = getfield(style, i)
+		if field isa Dict
+			print.(subio, "\n    ", collect(field))
+		else
+			show(io, field)
+		end
+		println(io)
+	end
+
+	print(io, "Preview:")
+	# for (grade, bits) ∈ style.blade_order
+	for grade in 0:style.dim
+		# bits = get(style.blade_order, grade, UInt[])
+		bits = componentbits(style, style.dim, grade)
+		println(io)
+		print(io, "  ")
+		first = true
+		for b ∈ bits
+			first || print(io, ", ")
+			indices = get_basis_blade(style, b)
+			show_basis_blade(io, 0, style.basis_vector_labels[indices])
+			first = false
+		end
+	end
 end
 
 

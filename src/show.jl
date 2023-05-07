@@ -48,7 +48,7 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade);
 		#  and should not have basis blade printed
 		0 < grade(a) <= dimension(a) || return
 		compact || print(io, " ") # coefficient–basis separator
-		show_basis_blade(io, signature(a), indices)
+		show_basis_blade(io, signature(a), basis_display_style.basis_vector_labels[indices])
 	end
 end
 

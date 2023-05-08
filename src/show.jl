@@ -2,7 +2,8 @@
 
 # make things line up right when printing in arrays
 function Base.alignment(io::IO, @nospecialize(b::BasisBlade))
-	(l, r) = Base.alignment(io, b.coeff)
+	style = get_basis_display_style(dimension(b))
+	(l, r) = Base.alignment(io, b.coeff*(-1)^get(style.parities, b.bits, false))
 	(l, length(sprint(show, b)) - l)
 end
 
@@ -30,7 +31,6 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade);
 	else
 		subio = IOContext(io, :compact => true)
 
-		indices = get_basis_blade(basis_display_style, a.bits)
 		parity = get(basis_display_style.parities, a.bits, false)
 		coeff = (-1)^parity*a.coeff
 
@@ -48,7 +48,8 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade);
 		#  and should not have basis blade printed
 		0 < grade(a) <= dimension(a) || return
 		compact || print(io, " ") # coefficient–basis separator
-		show_basis_blade(io, signature(a), basis_display_style.basis_vector_labels[indices])
+
+		show_basis_blade(io, basis_display_style, a.bits)
 	end
 end
 
@@ -84,7 +85,7 @@ function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true
 	comps = @. *(
 		(-1)^get($Ref(basis_display_style.parities), bits, false),
 		getindex($Ref(a.comps), componentindex(a, bits)),
-	) => indices
+	) => bits
 
 	if !showzeros
 		filter!(!isnumberzero∘first, comps)
@@ -97,12 +98,12 @@ function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true
 	R = maximum(last.(alignments))
 
 	firstline = true
-	for ((coeff, indices), (l, r)) ∈ zip(comps, alignments)
+	for ((coeff, b), (l, r)) ∈ zip(comps, alignments)
 		firstline || println(io)
 		print(io, " "^(L - l + indent))
 		Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
 		print(io, " "^(R - r), compact ? "" : " ")
-		show_basis_blade(io, signature(a), indices)
+		show_basis_blade(io, basis_display_style, b)
 		firstline = false
 	end
 end

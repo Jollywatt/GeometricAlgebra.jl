@@ -12,6 +12,8 @@ Specifies how basis blades are displayed and ordered.
 - `blades_and_order::Dict{Int,Vector{Int}}` gives a way of specifying the previous
    two mappings at once.
 
+Styles can be set with `GeometricAlgebra.BASIS_DISPLAY_STYLES[sig] = style`.
+
 !!! note
 	`BasisDisplayStyle` only affects how multivectors are _displayed_.
 	The actual internal layout of multivectors is never affected.
@@ -41,77 +43,127 @@ julia> Multivector{Cl(0,3),2}([3, -2, 1])
 struct BasisDisplayStyle
 	dim::Int
 	blades::Dict{UInt,Vector{Int}}
-	blade_order::Dict{Int,Vector{UInt}}
 	parities::Dict{UInt,Bool}
-	basis_vector_labels::Vector{String}
-	function BasisDisplayStyle(dim, blades, basis_order=Dict{Int,Vector{UInt}}(); labels=1:dim)
+	order::Dict{Int,Vector{UInt}}
+	indices::Vector{String}
+	prefix::String
+	sep::Union{Nothing,String}
+	labels::Dict{UInt,String}
+	function BasisDisplayStyle(
+			dim,
+			blades,
+			order=Dict{Int,Vector{UInt}}();
+			indices=1:dim,
+			prefix="v",
+			sep=nothing,
+			labels=Dict{UInt,String}()
+		)
+
 		for (bits, indices) ∈ blades
-			@assert bits == indices_to_bits(indices) "$(sprint(show, bits; context=:show_as_binary_with_width=>dim)) == indices_to_bits($indices)"
+			@assert bits == indices_to_bits(indices) "$(sprint(niceshow, dim, bits)) == indices_to_bits($indices)"
 		end
-		for (k, bits) ∈ basis_order
-			@assert issetequal(componentbits(dim, k), bits)
+
+		for (k, bits) ∈ order
+			@assert issetequal(componentbits(dim, k), bits) "Blade order for key $k must be a permutation of componentbits($dim, $k)"
 		end
+
 		parities = Dict(bits => parity(sortperm(indices)) for (bits, indices) ∈ blades)
-		new(dim, blades, basis_order, parities, string.(collect(labels)))
+
+		if keytype(labels) <: Vector{<:Integer}
+			labels = Dict(indices_to_bits(indices) => label for (indices, label) ∈ labels)
+		end
+
+		indices = string.(collect(indices))
+		@assert length(indices) == dim
+
+		new(
+			dim,
+			blades,
+			parities,
+			order,
+			indices,
+			prefix,
+			sep,
+			labels,
+		)
 	end
 end
 
-
-function BasisDisplayStyle(dim, blades_and_order::Dict{<:Integer,<:Vector{<:Vector}}=Dict{Int,Vector{Vector{Int}}}(); labels=string.(1:dim))
+function BasisDisplayStyle(dim, blades_and_order::Dict{<:Integer,<:Vector{<:Vector}}=Dict{Int,Vector{Vector{Int}}}(); kwargs...)
 	all_indices = reduce(vcat, values(blades_and_order); init = Int[])
 	blades = Dict(indices_to_bits.(all_indices) .=> all_indices)
-	blade_order = Dict(k => indices_to_bits.(indices) for (k, indices) ∈ blades_and_order)
-	BasisDisplayStyle(dim, blades, blade_order, labels=labels)
+	order = Dict(k => indices_to_bits.(indices) for (k, indices) ∈ blades_and_order)
+	BasisDisplayStyle(dim, blades, order; kwargs...)
 end
-
-get_basis_blade(style::BasisDisplayStyle, bits::Unsigned) =
-	bits ∈ keys(style.blades) ? style.blades[bits] : bits_to_indices(bits)
-
-componentbits(style::BasisDisplayStyle, n, k::Integer) =
-	k ∈ keys(style.blade_order) ? style.blade_order[k] : componentbits(n, k)
-componentbits(style::BasisDisplayStyle, n, K) = Iterators.flatten(Iterators.map(k -> componentbits(style, n, k), K))
-componentbits(style::BasisDisplayStyle, a::OrType{Multivector}) = componentbits(style, dimension(a), grade(a))
-
 
 const BASIS_DISPLAY_STYLES = IdDict{Any,BasisDisplayStyle}()
 get_basis_display_style(sig) = get(BASIS_DISPLAY_STYLES, sig, BasisDisplayStyle(dimension(sig), Dict(), Dict()))
 
-# yes, an instance of type piracy...
-function Base.show(io::IO, n::Unsigned)
-	width = get(io, :show_as_binary_with_width, nothing)
-	if isnothing(width)
-		print(io, "0x", string(n, pad = sizeof(n)<<1, base = 16))
-	else
-		print(io, "0b", string(n, pad = width, base = 2))
-	end
+get_basis_blade(style::BasisDisplayStyle, bits::Unsigned) =
+	bits ∈ keys(style.blades) ? style.blades[bits] : bits_to_indices(bits)
+
+componentbits(style::BasisDisplayStyle, k::Integer) =
+	k ∈ keys(style.order) ? style.order[k] : componentbits(style.dim, k)
+componentbits(style::BasisDisplayStyle, K) = Iterators.flatten(Iterators.map(k -> componentbits(style, k), K))
+componentbits(style::BasisDisplayStyle, a::OrType{Multivector}) = componentbits(style, grade(a))
+
+
+function show_basis_blade(io::IO, style::BasisDisplayStyle, bits::Unsigned)
+	bits ∈ keys(style.labels) && return printstyled(io, style.labels[bits], bold=true)
+	indices = bits ∈ keys(style.blades) ? style.blades[bits] : bits_to_indices(bits)
+	show_basis_blade(io, style, indices)
 end
+function show_basis_blade(io::IO, style::BasisDisplayStyle, indices::Vector)
+	str = IOBuffer()
+	if isnothing(style.sep)
+		print(str, style.prefix)
+		join(str, style.indices[indices])
+	elseif isempty(indices)
+		print(str, style.prefix)
+	else
+		join(str, style.prefix.*style.indices[indices], style.sep)
+	end
+	printstyled(io, String(take!(str)); bold=true)
+end
+
+# show unsigned numbers as bitstrings as long as the algebras’ dimension
+niceshow(io::IO, dim, n::Unsigned) = print(io, "0b", string(n, pad = dim, base = 2))
+niceshow(io::IO, dim, n) = show(io, n)
+niceshow(io::IO, dim, (a, b)::Pair) = (niceshow(io, dim, a); print(io, " => "); niceshow(io, dim, b))
+function niceshow(io::IO, dim, a::Union{Vector,Dict})
+	first = true
+	print(io, "[")
+	for i in a
+		first || print(io, ", ")
+		niceshow(io, dim, i)
+		first = false
+	end
+	print(io, "]")
+end
+
 
 function Base.show(io::IO, style::BasisDisplayStyle)
 	println(io, typeof(style), ":")
-	subio = IOContext(io, :show_as_binary_with_width => style.dim)
 	for i ∈ fieldnames(BasisDisplayStyle)
 		print(io, "  ", i, ": ")
 		field = getfield(style, i)
-		if field isa Dict
-			print.(subio, "\n    ", collect(field))
+		if field isa Dict && false
+			print.(io, "\n    ", sprint.(niceshow, style.dim, collect(field)))
 		else
-			show(io, field)
+			niceshow(io, style.dim, field)
 		end
 		println(io)
 	end
 
 	print(io, "Preview:")
-	# for (grade, bits) ∈ style.blade_order
 	for grade in 0:style.dim
-		# bits = get(style.blade_order, grade, UInt[])
-		bits = componentbits(style, style.dim, grade)
+		bits = componentbits(style, grade)
 		println(io)
 		print(io, "  ")
 		first = true
 		for b ∈ bits
 			first || print(io, ", ")
-			indices = get_basis_blade(style, b)
-			show_basis_blade(io, 0, style.basis_vector_labels[indices])
+			show_basis_blade(io, style, b)
 			first = false
 		end
 	end
@@ -168,8 +220,9 @@ function basis(sig, k=1)
 	dim = dimension(sig)
 	k == :all && (k = 0:dim)
 	style = get_basis_display_style(sig)
-	bits = componentbits(style, dim, k)
-	BasisBlade{sig}.(1, bits)
+	bits = componentbits(style, k)
+	parities = get.(Ref(style.parities), bits, false)
+	BasisBlade{sig}.((-1).^parities, bits)
 end
 
 """
@@ -212,7 +265,7 @@ function generate_blades(sig;
 	grades = grades == :all ? (0:dimension(sig)) : grades
 	grades = scalar ? grades : grades ∩ (1:dimension(sig))
 
-	bits = componentbits(style, dimension(sig), grades) 
+	bits = componentbits(style, grades) 
 
 	if allperms
 		indices = map(permutations∘bits_to_indices, bits) |> Iterators.flatten |> collect
@@ -221,7 +274,7 @@ function generate_blades(sig;
 	end
 
 	basisvectors = basis(sig)
-	labels = sprint.(show_basis_blade, Ref(sig), indices)
+	labels = sprint.(show_basis_blade, Ref(style), indices)
 	if !isnothing(prefix)
 		labels .= replace.(labels, r"^[^0-9]+"=>prefix)
 	end

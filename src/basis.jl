@@ -3,7 +3,8 @@
 	BasisDisplayStyle(dim, blades_and_order; kwargs...)
 
 Specifies how basis blades are displayed and ordered.
-Styles can be set with `GeometricAlgebra.BASIS_DISPLAY_STYLES[sig] = style`.
+The default style for multivectors of metric signature `sig` can be set with
+`GeometricAlgebra.BASIS_DISPLAY_STYLES[sig] = style`.
 
 - `dim::Int` is the dimension of the algebra (number of basis vectors).
 - `blades::Dict{UInt,Vector{Int}}` encodes the order of basis vectors
@@ -41,7 +42,7 @@ julia> Multivector{Cl(0,3),2}([3, -2, 1])
  -2 v13
   1 v23
 
-julia> cyclical_style = GeometricAlgebra.BasisDisplayStyle(
+julia> cyclical_style = BasisDisplayStyle(
            3, Dict(2 => [[2,3], [3,1], [1,2]]);
            indices = "₁₂₃",
            prefix = "e",
@@ -128,33 +129,29 @@ bits_to_indices(style::BasisDisplayStyle, bits::Unsigned) =
 
 
 basis_blade_parity(style, bits) = false
-basis_blade_parity(style::BasisDisplayStyle, bits::Unsigned) =
-	get(style.parities, bits, false)
+basis_blade_parity(style::BasisDisplayStyle, bits::Unsigned) = get(style.parities, bits, false)
 
 
-componentbits(style::BasisDisplayStyle, k::Integer) =
-	k ∈ keys(style.order) ? style.order[k] : componentbits(style.dim, k)
+componentbits(style::BasisDisplayStyle, k::Integer) = k ∈ keys(style.order) ? style.order[k] : componentbits(style.dim, k)
 componentbits(style::BasisDisplayStyle, K) = Iterators.flatten(Iterators.map(k -> componentbits(style, k), K))
 componentbits(style::BasisDisplayStyle, a::OrType{Multivector}) = componentbits(style, grade(a))
 
 
 function show_basis_blade(io::IO, style::BasisDisplayStyle, bits::Unsigned)
 	bits ∈ keys(style.labels) && return printstyled(io, style.labels[bits], bold=true)
-	indices = bits ∈ keys(style.blades) ? style.blades[bits] : bits_to_indices(bits)
-	show_basis_blade(io, style, indices)
+	show_basis_blade(io, style, bits_to_indices(style, bits))
 end
 function show_basis_blade(io::IO, style::BasisDisplayStyle, indices::Vector)
 	str = IOBuffer()
 	if isnothing(style.sep)
 		print(str, style.prefix)
 		join(str, style.indices[indices])
-	elseif isempty(indices)
-		print(str, style.prefix)
 	else
 		join(str, style.prefix.*style.indices[indices], style.sep)
 	end
 	printstyled(io, String(take!(str)); bold=true)
 end
+
 
 # show unsigned numbers as bitstrings as long as the algebras’ dimension
 niceshow(io::IO, dim, n::Unsigned) = print(io, "0b", string(n, pad = dim, base = 2))
@@ -174,29 +171,31 @@ end
 
 function Base.show(io::IO, style::BasisDisplayStyle)
 	println(io, typeof(style), ":")
+
 	for i ∈ fieldnames(BasisDisplayStyle)
-		print(io, "  ", i, ": ")
+		print(io, lpad(i, 9), ": ")
 		field = getfield(style, i)
-		if field isa Dict && false
-			print.(io, "\n    ", sprint.(niceshow, style.dim, collect(field)))
-		else
-			niceshow(io, style.dim, field)
-		end
+		niceshow(io, style.dim, field)
 		println(io)
 	end
 
-	print(io, "Preview:")
-	for grade in 0:style.dim
-		bits = componentbits(style, grade)
-		println(io)
-		print(io, "  ")
-		first = true
-		for b ∈ bits
-			first || print(io, ", ")
-			show_basis_blade(io, style, b)
-			first = false
+	println(io, "  preview:")
+	n = style.dim
+	mat = fill("", n + 1, binomial(n, n÷2))
+	for k in 0:n
+		blades = basis(n, k; style)
+		for (i, b) in enumerate(blades)
+			mat[begin + k,i] = sprint(show_basis_blade, style, b.bits)
 		end
 	end
+
+	pretty_table(io, [string.(0:n) mat];
+		vlines=[1],
+		hlines=[],
+		show_header=false,
+		columns_width=[7; fill(0, size(mat, 2))],
+		alignment=[:r; fill(:l, size(mat, 2))],
+	)
 end
 
 
@@ -245,11 +244,11 @@ julia> basis(Cl(1,3), :all) |> sum
  1 v1234
 ```
 """
-function basis(sig, k=1)
+function basis(sig, k=1; style=nothing)
 	sig = interpret_signature(sig)
 	dim = dimension(sig)
 	k == :all && (k = 0:dim)
-	style = get_basis_display_style(sig)
+	isnothing(style) && (style = get_basis_display_style(sig))
 	bits = componentbits(style, k)
 	parities = basis_blade_parity.(Ref(style), bits)
 	BasisBlade{sig}.((-1).^parities, bits)

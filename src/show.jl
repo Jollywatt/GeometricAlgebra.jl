@@ -15,7 +15,7 @@ Display blade with parentheses surrounding coefficient if necessary.
 # Example
 ```jldoctest
 julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(1 + im, 0b1))
-(1+1im) x
+(1 + 1im) x
 ```
 """
 function show_blade(io::IO, @nospecialize(a::BasisBlade);

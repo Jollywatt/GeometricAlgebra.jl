@@ -161,8 +161,8 @@ julia> componentbits(3, 0:3) .|> UInt8 .|> bitstring
  "00000111"
 ```
 """
-componentbits(n, k::Integer) = bits_of_grade(k, n)
-componentbits(n, K) = Iterators.flatten(Iterators.map(k -> componentbits(n, k), K))
+componentbits(sig, k::Integer) = bits_of_grade(k, dimension(sig))
+componentbits(sig, K=0:dimension(sig)) = Iterators.flatten(Iterators.map(k -> componentbits(sig, k), K))
 
 # generating this only saves about ~20ns
 @generated componentbits(::Val{N}, ::Val{K}) where {N,K} = collect(componentbits(N, K))

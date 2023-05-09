@@ -2,9 +2,11 @@
 
 # make things line up right when printing in arrays
 function Base.alignment(io::IO, @nospecialize(b::BasisBlade))
-	style = get_basis_display_style(dimension(b))
-	(l, r) = Base.alignment(io, b.coeff*(-1)^get(style.parities, b.bits, false))
-	(l, length(sprint(show, b)) - l)
+	style = get_basis_display_style(signature(b))
+	coeff = b.coeff*(-1)^basis_blade_parity(style, b.bits)
+	coeff_width = length(sprint(show, coeff; context=io))
+	basis_width = length(sprint(show_basis_blade, style, b.bits; context=io))
+	(coeff_width, basis_width)
 end
 
 """
@@ -29,9 +31,7 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade);
 		end
 		print(io, type, "($(a.coeff), $bits)")
 	else
-		subio = IOContext(io, :compact => true)
-
-		parity = get(basis_display_style.parities, a.bits, false)
+		parity = basis_blade_parity(basis_display_style, a.bits)
 		coeff = (-1)^parity*a.coeff
 
 		if compact && isnumberzero(coeff)
@@ -42,7 +42,7 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade);
 		elseif compact && isnumberone(-coeff) 
 			print(io, isscalar(a) ? "-1" : "-")
 		else
-			Base.show_unquoted(subio, coeff, 0, Base.operator_precedence(:*))
+			Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
 		end
 		# blades with higher grade than dimension are always zero,
 		#  and should not have basis blade printed
@@ -63,13 +63,14 @@ function show_multivector_row(io::IO, @nospecialize(a);
                               compact=false,
                               showzeros=false,
                               basis_display_style=get_basis_display_style(signature(a)))
+	io = IOContext(io, :compact=>true)
 	print(io, " "^indent)
 	if (!showzeros || compact) && iszero(a)
 		print(io, numberzero(eltype(a)))
 		return
 	end
 	isfirst = true
-	for bits ∈ componentbits(basis_display_style, a)
+	for bits ∈ componentbits(basis_display_style, grade(a))
 		coeff = a.comps[componentindex(a, bits)]
 		!showzeros && isnumberzero(coeff) && continue
 		isfirst ? isfirst = false : print(io, " + ")
@@ -80,12 +81,10 @@ end
 function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true, compact=false, basis_display_style=get_basis_display_style(signature(a)))
 	!showzeros && iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
-	bits = componentbits(basis_display_style, a)
-	indices = get_basis_blade.(Ref(basis_display_style), bits)
-	comps = @. *(
-		(-1)^get($Ref(basis_display_style.parities), bits, false),
-		getindex($Ref(a.comps), componentindex(a, bits)),
-	) => bits
+	bits = componentbits(basis_display_style, grade(a))
+	comps = [
+		(-1)^basis_blade_parity(basis_display_style, b)*a.comps[componentindex(a, b)] => b
+	for b in bits]
 
 	if !showzeros
 		filter!(!isnumberzero∘first, comps)

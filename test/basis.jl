@@ -120,5 +120,30 @@ end
 		GeometricAlgebra.show_multivector(io, a; compact=true, inline=true, basis_display_style=cyclic)
 	end == "v23 + 2v31 + 3v12"
 
+	quats = BasisDisplayStyle(
+		3,
+		Dict(2 => [[3,2], [1,3], [2,1]]);
+		labels=Dict([3,2] => "𝒊", [1,3] => "𝒋", [2,1] => "𝒌"),
+	)
+
+	@test sprint(v23) do io, a
+		GeometricAlgebra.show_blade(io, a; compact=true, basis_display_style=quats)
+	end == "-𝒊"
+
+	sta = BasisDisplayStyle(
+		4,
+		Dict(
+			2 => [[1,2], [1,3], [1,4], [3,4], [4,2], [2,3]],
+			3 => [[2,3,4], [1,3,4], [1,4,2], [1,2,3]]
+		);
+		indices = "txyz",
+		prefix = "γ",
+		sep = nothing,
+	)
+
+	@test sprint(BasisBlade{Cl(1,3),2}(1, 0b1010)) do io, a
+		GeometricAlgebra.show_blade(io, a; compact=true, basis_display_style=sta)
+	end == "-γzx"
 
 end
+

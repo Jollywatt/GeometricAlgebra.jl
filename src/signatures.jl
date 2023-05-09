@@ -73,15 +73,16 @@ BasisBlade{⟨++++⟩, 4, Int64} of grade 4:
  1 𝒆₁∧𝒆₂∧𝒆₃∧𝒆₄
 ```
 """
-function show_basis_blade(io::IO, sig, indices)
+function show_basis_blade(io::IO, sig, indices::Vector)
 	if dimension(sig) < 10
 		printstyled(io, "v"*join(string.(indices)); bold=true)
 	else
 		printstyled(io, join(string.("v", indices)); bold=true)
 	end
 end
-show_basis_blade(io::IO, sig::NamedTuple, indices) = printstyled(io, join(keys(sig)[indices]), bold=true)
+show_basis_blade(io::IO, sig::NamedTuple, indices::Vector) = printstyled(io, join(keys(sig)[indices]), bold=true)
 
+show_basis_blade(io::IO, sig, bits::Unsigned) = show_basis_blade(io, sig, bits_to_indices(sig, bits))
 
 
 """

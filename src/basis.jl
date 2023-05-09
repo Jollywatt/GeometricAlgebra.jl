@@ -97,10 +97,18 @@ function BasisDisplayStyle(dim, blades_and_order::Dict{<:Integer,<:Vector{<:Vect
 end
 
 const BASIS_DISPLAY_STYLES = IdDict{Any,BasisDisplayStyle}()
-get_basis_display_style(sig) = get(BASIS_DISPLAY_STYLES, sig, BasisDisplayStyle(dimension(sig), Dict(), Dict()))
+get_basis_display_style(sig) = get(BASIS_DISPLAY_STYLES, sig, sig)
 
-get_basis_blade(style::BasisDisplayStyle, bits::Unsigned) =
+
+bits_to_indices(style, bits::Unsigned) = bits_to_indices(bits)
+bits_to_indices(style::BasisDisplayStyle, bits::Unsigned) =
 	bits ∈ keys(style.blades) ? style.blades[bits] : bits_to_indices(bits)
+
+
+basis_blade_parity(style, bits) = false
+basis_blade_parity(style::BasisDisplayStyle, bits::Unsigned) =
+	get(style.parities, bits, false)
+
 
 componentbits(style::BasisDisplayStyle, k::Integer) =
 	k ∈ keys(style.order) ? style.order[k] : componentbits(style.dim, k)
@@ -221,7 +229,7 @@ function basis(sig, k=1)
 	k == :all && (k = 0:dim)
 	style = get_basis_display_style(sig)
 	bits = componentbits(style, k)
-	parities = get.(Ref(style.parities), bits, false)
+	parities = basis_blade_parity.(Ref(style), bits)
 	BasisBlade{sig}.((-1).^parities, bits)
 end
 
@@ -270,7 +278,7 @@ function generate_blades(sig;
 	if allperms
 		indices = map(permutations∘bits_to_indices, bits) |> Iterators.flatten |> collect
 	else
-		indices = get_basis_blade.(Ref(style), bits)
+		indices = bits_to_indices.(Ref(style), bits)
 	end
 
 	basisvectors = basis(sig)

@@ -1,8 +1,9 @@
 """
-	BasisDisplayStyle(dim, blades[, blade_order])
-	BasisDisplayStyle(dim, blades_and_order)
+	BasisDisplayStyle(dim, blades[, blade_order]; kwargs...)
+	BasisDisplayStyle(dim, blades_and_order; kwargs...)
 
 Specifies how basis blades are displayed and ordered.
+Styles can be set with `GeometricAlgebra.BASIS_DISPLAY_STYLES[sig] = style`.
 
 - `dim::Int` is the dimension of the algebra (number of basis vectors).
 - `blades::Dict{UInt,Vector{Int}}` encodes the order of basis vectors
@@ -10,17 +11,30 @@ Specifies how basis blades are displayed and ordered.
 - `blade_order::Dict{Int,Vector{UInt}}` specifies the order of basis blades
    in a single grade. E.g., `3 => [0b011, 0b101, 0b110]` is the default ordering.
 - `blades_and_order::Dict{Int,Vector{Int}}` gives a way of specifying the previous
-   two mappings at once.
+   two mappings at once. E.g., `3 => [[1,2], [1,3], [2,3]]`.
 
-Styles can be set with `GeometricAlgebra.BASIS_DISPLAY_STYLES[sig] = style`.
+# Keyword arguments
+
+- `indices=1:dim` specifies the symbols used for each basis vector.
+- `prefix="v"` is the prefix string for basis blades (if `sep == nothing`) or for each
+   basis vector.
+- `sep=nothing` is a string (e.g., `"∧"`) to separate each basis vector in a blade.
+   If `sep` is `nothing`, blades are shown as e.g., `v123`, whereas an empty string
+   results in `v1v2v3`.
+- `labels` is a dictionary allowing individual basis blades to be given custom labels.
+   E.g., `[3,2] => "𝒊"` means `4v32` is displayed as `4𝒊` (so long as the order
+   `0b110 => [3,2]` is also specified in the `blades` argument — otherwise it would
+   display as the default `-4v23`).
+
 
 !!! note
 	`BasisDisplayStyle` only affects how multivectors are _displayed_.
 	The actual internal layout of multivectors is never affected.
+	However, the active style for `sig` can affect the value of `basis(sig)`.
 
 # Examples
 
-```jldoctest
+```jldoctest; setup = :(delete!(GeometricAlgebra.BASIS_DISPLAY_STYLES, Cl(0,3)))
 julia> Multivector{Cl(0,3),2}([3, -2, 1])
 3-component Multivector{Cl(0,3), 2, Vector{Int64}}:
   3 v12
@@ -28,16 +42,24 @@ julia> Multivector{Cl(0,3),2}([3, -2, 1])
   1 v23
 
 julia> cyclical_style = GeometricAlgebra.BasisDisplayStyle(
-           3, Dict(2 => [[2,3], [3,1], [1,2]])
+           3, Dict(2 => [[2,3], [3,1], [1,2]]);
+           indices = "₁₂₃",
+           prefix = "e",
+           sep = "",
+           labels = Dict([1,2,3] => "I"),
        );
 
 julia> GeometricAlgebra.BASIS_DISPLAY_STYLES[Cl(0,3)] = cyclical_style;
 
 julia> Multivector{Cl(0,3),2}([3, -2, 1])
 3-component Multivector{Cl(0,3), 2, Vector{Int64}}:
- 1 v23
- 2 v31
- 3 v12
+ 1 e₂e₃
+ 2 e₃e₁
+ 3 e₁e₂
+
+julia> ans*rdual(ans) # pseudoscalar `e₁e₂e₃` displayed as `I`
+4-component Multivector{Cl(0,3), 1:2:3, MVector{4, Int64}}:
+ 14 I
 ```
 """
 struct BasisDisplayStyle

@@ -132,7 +132,7 @@ function symbolic_optim(f::Function, args...)
 	# we’re replacing objects’ type parameters, so type stability is a little delicate
 	Sig = first_signature(args...)
 	# canonicalize signature to tuple
-	Sig′ = ntuple(i -> basis_vector_norm(Sig, i), dimension(Sig))
+	Sig′ = ntuple(i -> basis_vector_square(Sig, i), dimension(Sig))
 	args′ = ntuple(length(args)) do i
 		# convert blades to multivectors, since blades can’t be symbolic
 		# converting before `symbolic_multivector_eval` reduces duplication of generated code

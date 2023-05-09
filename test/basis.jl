@@ -3,7 +3,7 @@ using StaticArrays
 
 import GeometricAlgebra:
 	dimension,
-	basis_vector_norm,
+	basis_vector_square,
 	componentstype,
 	BasisDisplayStyle
 
@@ -68,7 +68,7 @@ end
 # while something like SparseVector is suited to very large algebras.
 struct SigWithCompsType{Sig,S} end
 dimension(::SigWithCompsType{Sig}) where {Sig} = dimension(Sig)
-basis_vector_norm(::SigWithCompsType{Sig}, i) where {Sig} = basis_vector_norm(Sig, i)
+basis_vector_square(::SigWithCompsType{Sig}, i) where {Sig} = basis_vector_square(Sig, i)
 
 componentstype(::SigWithCompsType{Sig,<:Vector}, N, T) where {Sig} = Vector{T}
 componentstype(::SigWithCompsType{Sig,<:MVector}, N, T) where {Sig} = MVector{N,T}

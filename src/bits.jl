@@ -200,7 +200,7 @@ function factor_from_squares(sig, bits::Unsigned)
 	bv = 1
 	while bits > 0
 		if isone(bits & 1)
-			factor *= basis_vector_norm(sig, bv)
+			factor *= basis_vector_square(sig, bv)
 		end
 		bits >>= 1
 		bv += 1

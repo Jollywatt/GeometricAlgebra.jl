@@ -117,7 +117,7 @@ replace_signature(a, ::Val) = a
 Because of the rules of generated functions, we can’t call methods that may be later (re)defined
 from within `symbolic_multivector_eval`. However, we still want the methods
 - `dimension(sig)`
-- `basis_vector_norm(sig, i)`
+- `basis_vector_square(sig, i)`
 - `componentstype(sig)`
 to work for user-defined signature types, as part of the “metric signature interface”.
 Since these methods may be defined in a newer world-age than `symbolic_multivector_eval`,

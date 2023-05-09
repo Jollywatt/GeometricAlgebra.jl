@@ -17,7 +17,7 @@ Modules = [GeometricAlgebra]
 ## Metric Signatures
 
 ```@autodocs
-Pages = ["signatures.jl"]
+Pages = ["signatures.jl", "basis.jl"]
 Modules = [GeometricAlgebra]
 ```
 

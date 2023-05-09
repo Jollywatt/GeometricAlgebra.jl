@@ -17,13 +17,13 @@ Some of these parts are often useful on their own, and so warrant their own name
 
 These are summarised below, where the grade of the result is shown for each product between a ``p``-vector and ``q``-vector.
 
-Name | Symbol | Resulting grade
-----:|:------:|----
-scalar | ``\odot`` | ``0``
-wedge | ``∧`` | ``p + q``
-inner | ``⋅`` | ``\|p - q\|``
-left contraction | ``\lcontr`` | ``q - p``
-right contraction | ``\rcontr`` | ``p - q``
+Name | Symbol | REPL shortcut | Resulting grade
+----:|:------:|:-----|:---------------
+scalar | ``\odot`` | `\odot<tab>` | ``0``
+wedge | ``∧`` | `\wedge<tab>` | ``p + q``
+inner | ``⋅`` | `\cdot<tab>` | ``\|p - q\|``
+left contraction | ``\lcontr`` | `\intprod<tab>` | ``q - p``
+right contraction | ``\rcontr`` | `\intprodr<tab>` | ``p - q``
 
 
 ## Scalar product

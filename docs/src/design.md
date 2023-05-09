@@ -65,7 +65,7 @@ As well as defining the geometric algebra, the signature is used to specify basi
 | Required methods | Description |
 |:-----------------|:------------|
 | `dimension(sig)` | The dimension of the underlying vector space, or number of basis vectors.
-| `basis_vector_norm(sig, i)` | The norm of the `i`th basis vector. |
+| `basis_vector_square(sig, i)` | The scalar square of the `i`th basis vector. |
 
 | Optional methods | Description |
 |:-----------------|:------------|
@@ -81,7 +81,7 @@ struct DiracGamma end
 
 # define the algebra
 GeometricAlgebra.dimension(::DiracGamma) = 4
-GeometricAlgebra.basis_vector_norm(::DiracGamma, i) = i > 1 ? -1 : +1
+GeometricAlgebra.basis_vector_square(::DiracGamma, i) = i > 1 ? -1 : +1
 
 # set the preferred component storage type (optional)
 using StaticArrays

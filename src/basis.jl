@@ -62,6 +62,11 @@ julia> ans*rdual(ans) # pseudoscalar `e₁e₂e₃` displayed as `I`
 4-component Multivector{Cl(0,3), 1:2:3, MVector{4, Int64}}:
  14 I
 ```
+To recover the default style:
+```jldoctest
+julia> delete!(GeometricAlgebra.BASIS_DISPLAY_STYLES, Cl(0,3))
+IdDict{Any, BasisDisplayStyle}() 
+```
 """
 struct BasisDisplayStyle
 	dim::Int

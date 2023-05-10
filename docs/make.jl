@@ -31,7 +31,7 @@ function make(; kwargs...)
         pages=[
             "index.md",
             "design.md",
-            "Background Theory" => [
+            "Mathematical Background" => [
                 "theory/basics.md",
                 "theory/products.md",
                 "theory/automorphisms.md",

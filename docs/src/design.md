@@ -5,6 +5,10 @@ DocTestSetup = quote
 end
 ```
 
+```@setup ga
+using GeometricAlgebra
+```
+
 # Design and Internals
 
 ## Multivector Types
@@ -71,34 +75,25 @@ As well as defining the geometric algebra, the signature is used to specify basi
 |:-----------------|:------------|
 | `show_signature(io, sig)` | Show the metric signature in a compact human-readable form.
 | `show_basis_blade(io, sig, indices)` | Print a basis blade with the given indices (e.g., `v12` or `𝒆₁∧𝒆₂`).
+| `bits_to_indices(sig, bits)` | Define display order of indices for a basis blade (must also implement `basis_blade_parity(sig, bits)` consistently).
 | `componentstype(sig, N, T)` | Preferred array type for `Multivector{sig}` components. (E.g., `Vector`, `MVector`, `SparseVector`, etc.)
 | `use_symbolic_optim(sig)` | Whether to use symbolic code generation to optimise multivector products. (Default is true for low dimensions.)
 
 
-Below is an example of how one might define a geometric algebra with specific behaviours:
-```jldoctest
-struct DiracGamma end
+Below is an example of how one might define a “projectivised” signature which adds a projective dimension ``𝐯_0`` squaring to ``-1`` to any signature:
+```@example ga
+import GeometricAlgebra: dimension, basis_vector_square, show_signature, show_basis_blade
 
-# define the algebra
-GeometricAlgebra.dimension(::DiracGamma) = 4
-GeometricAlgebra.basis_vector_square(::DiracGamma, i) = i > 1 ? -1 : +1
+struct ℙ{Sig} end
+ℙ(sig) = ℙ{sig}()
 
-# set the preferred component storage type (optional)
-using StaticArrays
-GeometricAlgebra.componentstype(::DiracGamma, N, T) = MVector{N,T}
+dimension(::ℙ{Sig}) where Sig = dimension(Sig) + 1
+basis_vector_square(::ℙ{Sig}, i) where Sig = i == 1 ? -1 : basis_vector_square(Sig, i - 1)
+show_signature(io::IO, ::ℙ{Sig}) where Sig = print(io, "ℙ($Sig)")
 
-# custom labels (optional)
-function GeometricAlgebra.show_basis_blade(io::IO, ::DiracGamma, indices::Vector{<:Integer})
-	print(io, join("γ".*GeometricAlgebra.superscript.(indices .- 1)))
-end
+show_basis_blade(io::IO, ::ℙ, indices::Vector) = print(io, "v", join(indices .- 1))
 
-basis(DiracGamma())
-# output
-4-element Vector{BasisBlade{DiracGamma(), 1, Int64}}:
- 1 γ⁰
- 1 γ¹
- 1 γ²
- 1 γ³
+basis(ℙ(3)) |> sum
 ```
 
 

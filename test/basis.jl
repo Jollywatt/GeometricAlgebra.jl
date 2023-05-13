@@ -70,10 +70,10 @@ struct SigWithCompsType{Sig,S} end
 dimension(::SigWithCompsType{Sig}) where {Sig} = dimension(Sig)
 basis_vector_square(::SigWithCompsType{Sig}, i) where {Sig} = basis_vector_square(Sig, i)
 
-componentstype(::SigWithCompsType{Sig,<:Vector}, N, T) where {Sig} = Vector{T}
-componentstype(::SigWithCompsType{Sig,<:MVector}, N, T) where {Sig} = MVector{N,T}
-componentstype(::SigWithCompsType{Sig,<:SVector}, N, T) where {Sig} = SVector{N,T}
-componentstype(::SigWithCompsType{Sig,<:SparseVector}, N, T) where {Sig} = SparseVector{T}
+componentstype(::SigWithCompsType{Sig,<:Vector}, N) where {Sig} = Vector
+componentstype(::SigWithCompsType{Sig,<:MVector}, N) where {Sig} = MVector{N}
+componentstype(::SigWithCompsType{Sig,<:SVector}, N) where {Sig} = SVector{N}
+componentstype(::SigWithCompsType{Sig,<:SparseVector}, N) where {Sig} = SparseVector
 
 # SparseVectors are appropriate for large dims, but symbolic optimization only for small dim — you wouldn’t have both
 GeometricAlgebra.use_symbolic_optim(::SigWithCompsType{Sig,<:SparseVector}) where {Sig} = false

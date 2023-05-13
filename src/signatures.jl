@@ -90,16 +90,15 @@ show_basis_blade(io::IO, sig, bits::Unsigned) = show_basis_blade(io, sig, bits_t
 
 
 """
-	componentstype(sig, N, T)
+	componentstype(sig, N) -> Type{<:AbstractVector}
 
-Array type to use to store components of multivectors of signature `sig`.
-The resulting type should be able to store `N` components (in the case
-of a fixed-size array) of type `T`.
+The component array type for `N`-component multivectors with signature `sig`.
 
-The fallback method returns `MVector{N,T}` for `dimension(sig) <= 8`, and
-`Vector{T}` otherwise.
+You can redefine this method to customise the default array type.
+The fallback method returns `MVector{N}` for `N <= 16`, and `Vector` otherwise.
 """
-componentstype(sig, N, T) = dimension(sig) <= 8 ? MVector{N,T} : Vector{T}
+componentstype(sig, N) = N <= 16 ? MVector{N} : Vector
+componentstype(sig, N, T) = typeintersect(componentstype(sig, N), AbstractVector{T})
 
 
 #= Built-in Metric Signatures =#

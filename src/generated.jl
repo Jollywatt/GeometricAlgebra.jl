@@ -139,7 +139,7 @@ function symbolic_optim(f::Function, args...)
 		arg = args[i] isa BasisBlade ? Multivector(args[i]) : args[i]
 		replace_signature(arg, Val(Sig′))
 	end
-	compstype = componentstype(Sig, 0, Any)
+	compstype = componentstype(Sig, 0)
 	result = symbolic_multivector_eval(compstype, f, args′...)
 	# restore original signature
 	replace_signature(result, Val(Sig))

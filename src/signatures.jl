@@ -117,8 +117,6 @@ basis_vector_square(sig::Union{Tuple,NamedTuple}, i) = sig[i]
 Metric signature where `p`, `q` and `r` are the number of
 basis vectors of norm `+1`, `-1` and `0`, respectively.
 
-See also [`@Cl_str`](@ref).
-
 # Examples
 ```jldoctest
 julia> basis(Cl(1,3))

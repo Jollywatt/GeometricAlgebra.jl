@@ -76,7 +76,7 @@ As well as defining the geometric algebra, the signature is used to specify basi
 | `show_signature(io, sig)` | Show the metric signature in a compact human-readable form.
 | `show_basis_blade(io, sig, indices)` | Print a basis blade with the given indices (e.g., `v12` or `𝒆₁∧𝒆₂`).
 | `bits_to_indices(sig, bits)` | Define display order of indices for a basis blade (must also implement `basis_blade_parity(sig, bits)` consistently).
-| `componentstype(sig, N, T)` | Preferred array type for `Multivector{sig}` components. (E.g., `Vector`, `MVector`, `SparseVector`, etc.)
+| `componentstype(sig, N)` | Preferred array type for `Multivector{sig}` components. (E.g., `Vector`, `MVector`, `SparseVector`, etc.)
 | `use_symbolic_optim(sig)` | Whether to use symbolic code generation to optimise multivector products. (Default is true for low dimensions.)
 
 

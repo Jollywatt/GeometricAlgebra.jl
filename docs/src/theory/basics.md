@@ -62,6 +62,8 @@ where ``∧^k V`` is the ``k``th exterior power of the ``n``-dimensional base sp
 Grade zero elements (``∧^0V = ℝ``) are scalars; grade one elements (``∧^1V = V``) are vectors; and grade-``k`` elements (``∧^k V``) are called **``k``-vectors** or **homogeneous multivectors**.
 Elements of ``Cl(V, ⋅)`` may consist of parts of differing grade, and when they do they are called **(inhomogeneous) multivectors**.
 
+### Grade projection
+
 There are no non-zero ``k``-vectors outside the range ``0 ≤ k ≤ n``, so the subspace of ``∧^nV`` contains the highest-grade objects, called **pseudoscalars**.
 
 Grade | Dimension of subspace | Name
@@ -110,7 +112,7 @@ Products of the form
 ```math
 𝐯_{i_1}𝐯_{i_2}⋯𝐯_{i_k}
 ```
-where ``i_1 < ⋯ < i_k`` are the standard **basis blades**. Reordering the product only introduces overall factors of ``±1``, changing the **orientation** of the blade.
+where ``i_1 < ⋯ < i_k`` are the standard **basis blades**. Reordering the product only introduces overall factors of ``±1``, flipping the **orientation** of the blade.
 
 
 Scalar multiples of basis blades are represented with the `BasisBlade{Sig,K,T}` type, which encodes indices ``i_1, ..., i_k`` as binary-ones. (See [`bits_to_indices`](@ref) and [`indices_to_bits`](@ref).)
@@ -127,6 +129,8 @@ Basis blades are stored with canonically sorted indices. For example, ``𝐯_2�
 @basis 2 allperms=true
 v21
 ```
+While this is always the way blades are represented internally, how they are _displayed_ can be customised through a [`BasisDisplayStyle`](@ref).
+
 
 #### Multiplication of basis blades
 
@@ -134,8 +138,8 @@ Basis blades are closed under multiplication: a product of basis blades is a bas
 
 
 The geometric product of ``𝐯_I ≡ 𝐯_{i_1}𝐯_{i_2}⋯𝐯_{i_p}`` and ``𝐯_J ≡ 𝐯_{j_1}𝐯_{j_2}⋯𝐯_{j_q}`` can be put into canonical form it two steps:
-1. Sort the basis vectors into ``𝐯_{k_1}𝐯_{k_2}⋯𝐯_{k_{p+q}}`` where ``k_1 < ⋯ < k_{p + q}``. Each transposition of adjacent vectors results in an overall factor of ``-1``.
-2. Simplify adjacent repeated vectors with the relation ``𝒗^2 = 𝒗⋅𝒗``.
+1. Sort the basis vectors into ``𝐯_{k_1}𝐯_{k_2}⋯𝐯_{k_{p+q}}`` where ``k_1 ≤ ⋯ ≤ k_{p + q}``. Each transposition of adjacent, distinct vectors results in an overall factor of ``-1``. 
+2. Simplify adjacent repeated vectors using the fact that ``𝒗^2 = 𝒗⋅𝒗`` is a scalar.
 
 Mathematically, this is
 ```math
@@ -144,14 +148,17 @@ Mathematically, this is
 	\underbrace{\operatorname{sign}(\operatorname{sortperm}(I ⊻ J))}_{\text{sign from swaps}}
 	\; 𝐯_{I ⊻ J}
 ```
-where ``I ∩ J`` are the shared indices and ``I ⊻ J``, the symmetric difference, are indices present in only one blade. In multi-index notation, ``𝐯_{I ⊻ J} ≡ 𝐯_{k_1}𝐯_{k_2}⋯𝐯_{k_m}`` where ``I ⊻ J = \{k_1, ..., k_m\}``.
+where ``I ∩ J`` are the shared indices and ``I ⊻ J`` is the symmetric difference (the indices present in only one blade). In multi-index notation, ``𝐯_{I ⊻ J} ≡ 𝐯_{k_1}𝐯_{k_2}⋯𝐯_{k_m}`` where ``I ⊻ J = \{k_1, ..., k_m\}``. ``\operatorname{sortperm}(I)`` is the permutation that puts the indices ``I`` in ascending order.
 
-This operation is at the heart of numerical geometric algebra: general multivectors are multiplied by linearly extending it to sums of blades.
+You can print a basis blade multiplication table using [`cayleytable`](@ref):
+```@repl ga
+cayleytable(3)
+```
 
 
 ### Blades
 
-While a _basis_ blade is a product of orthogonal _basis_ vectors, the mathematical definition of a **``k``-blade** is a product of ``k`` distinct, mutually orthogonal vectors — or equivalently, a ``k``-blade is a ``∧``-product of ``k`` many vectors.
+While a _basis_ blade is a product of orthogonal _basis_ vectors, the mathematical definition of a **``k``-blade** is a product of ``k`` distinct, mutually orthogonal vectors — or equivalently, a ``k``-blade is a ``∧``-product of ``k`` linearly independent vectors.
 
 Not all blades are representable as basis blades in a given choice of basis. For example, in ``Cl(3)`` the product ``𝐯_1(𝐯_2 + 𝐯_3)`` is a blade (since ``𝐯_1`` and ``𝐯_2 + 𝐯_3`` are orthogonal vectors), but it is a sum of two basis blades, ``𝐯_1𝐯_2 + 𝐯_1𝐯_3``.
 
@@ -159,7 +166,7 @@ Thus, we cannot represent all blades with the `BasisBlade` type.
 Instead, we may use the more general `Multivector` type:
 ```@repl ga
 @basis 3
-v1*(v2 + v3)
+v1*(v2 + v3) # a blade, but not a basis blade
 ```
 
 ### Multivectors

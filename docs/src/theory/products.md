@@ -7,7 +7,7 @@ end
 
 # Wedge, Inner and Other Products
 
-The geometric product is the fundamental operation in geometric algebra. Together with grade projection ``⟨\phantom{A}⟩``, various other “graded products” may be defined by taking different grade projections of the basic product.
+The geometric product is the fundamental operation in geometric algebra. Together with grade projection ``⟨\phantom{A}⟩_k``, various other “graded products” may be defined by taking different projections of the basic product.
 
 To motivate this, consider a ``p``-vector ``A`` and ``q``-vector ``B``. The product contains parts of every grade between the difference ``|p - q|`` and sum ``p + q`` in steps of two:
 ```math
@@ -24,6 +24,13 @@ wedge | ``∧`` | `\wedge<tab>` | ``p + q``
 inner | ``⋅`` | `\cdot<tab>` | ``\|p - q\|``
 left contraction | ``\lcontr`` | `\intprod<tab>` | ``q - p``
 right contraction | ``\rcontr`` | `\intprodr<tab>` | ``p - q``
+
+To glance at a multiplication table for a product, you can use [`cayleytable`](@ref). For example, left contraction in ``Cl(1,1)`` looks like:
+```@example
+using GeometricAlgebra # hide
+cayleytable(Cl(1,1), ⨼)
+```
+
 
 
 ## Scalar product

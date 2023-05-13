@@ -11,7 +11,7 @@ using GeometricAlgebra
 
 # User Guide
 
-[GeometricAlgebra.jl](https://github.com/jollywatt/GeometricAlgebra.jl) implements flexible types for working with geometric (or Clifford) algebras.
+[GeometricAlgebra.jl](https://github.com/jollywatt/GeometricAlgebra.jl) implements a flexible, performant type for multivectors in geometric (or Clifford) algebra.
 
 ## Installation
 
@@ -47,7 +47,7 @@ Many multivector operations are implemented, including:
 - `exp`, `log`, trigonometric functions
 
 
-Non-euclidean metric signatures can be specified, such as `Cl(3,0,1)` for projective geometric algebra (PGA), or a named tuple such as `(t=-1, x=+1)` for custom basis vector names (see [`BasisDisplayStyle`](@ref) for more control).
+Non-euclidean metric signatures can be specified, such as `Cl(3,0,1)` for projective geometric algebra (PGA), or a named tuple such as `(t=-1, x=+1)` for custom basis vector names (see [Custom basis display styles](@ref) for more control).
 
 For example, here is a bivector in the spacetime algebra (STA) using the ``({-}{+}{+}{+})`` metric.
 ```@repl ga
@@ -77,47 +77,55 @@ The macro [`@basis`](@ref) introduces basis blades into the current namespace fo
 
 ## Custom basis display styles
 
-There are many notations used in geometric algebra literature, so the way basis blades are printed can be customised.
-This is done by constructing a [`BasisDisplayStyle`](@ref). E.g., `v12 + 2v13` might be written as
+You can customise both the notation and canonical ordering with which basis blades are displayed to agree with conventions.
+This can be done by defining a [`BasisDisplayStyle(dim; kwargs...)`](@ref) and setting a key of [`GeometricAlgebra.BASIS_DISPLAY_STYLES`](@ref).
+
+Some example styles for `v12 + 2v13` are:
 
 | Notation | Display style | Keyword arguments
 |:--------:|:--------------|:-----------------
 | ``𝐞_{12} + 2𝐞_{13}`` | `𝐞12 + 2𝐞13` | `prefix="𝐞"`
 | ``γ^0γ^1 + 2γ^0γ^2`` | `γ⁰γ¹ + 2γ⁰γ²` | `prefix="γ", sep="", indices=0:3`
-| ``\mathrm{d}x ∧ \mathrm{d}y - 2 \mathrm{d}z ∧ \mathrm{d}x`` | `dx ∧ dy - 2 dz ∧ dx` | `prefix="d", sep=" ∧ ", indices="xyz` with a custom ordering
+| ``\mathrm{d}x ∧ \mathrm{d}y - 2 \mathrm{d}z ∧ \mathrm{d}x`` | `dx ∧ dy - 2 dz ∧ dx` | `prefix="d", sep=" ∧ ", indices="xyz"`
 
-The last style uses a **custom basis blade ordering**.
+The last style additionally uses a **custom basis blade ordering**.
+
+### Custom basis blade orderings
 
 By default, multivectors are _displayed_ with their components the same sign and in the same order as they are stored.
-Internally, basis blades are encoded in binary.
+Internally, the basis vectors in a blade are encoded in binary and assumed to be in order of increasing index.
 ```@repl ga
 BasisBlade{4}(42, 0b1101)
 ```
-Multivector components are stored in order of grade, then binary value. For example, the components of a full 3D multivector correspond to basis blades as follows:
+Multivector components are stored in order of grade, then by binary value. For example, the components of a full 3D multivector correspond to the basis blades:
 ```@repl ga
 GeometricAlgebra.componentbits(Multivector{3,0:3}) .|> UInt8 .|> bitstring
 ```
 
-However, it can be convenient to adopt different conventions in certain situations.
-For example, in 3D, it is useful to use a “cyclical” basis of bivectors, ``(𝐯_{23}, 𝐯_{31}, 𝐯_{12})``, which are the respective duals of ``(𝐯_1, 𝐯_2, 𝐯_3)``.
+However, it can sometimes be convenient to adopt different conventions.
+For example, in 3D, it is common to see “cyclical” basis bivectors, ``(𝐯_{23}, 𝐯_{31}, 𝐯_{12})``, as these are the respective duals of ``(𝐯_1, 𝐯_2, 𝐯_3)``.
 This style can be achieved as follows:
 ```@repl ga
 style = BasisDisplayStyle(
-  3, # dimension of algebra
-  Dict(2 => [[2,3], [3,1], [1,2]]), # indices and order of basis bivectors
-  prefix="𝐞"
+	3, # dimension of algebra
+	Dict(2 => [[2,3], [3,1], [1,2]]), # indices and order of basis bivectors
+	prefix="𝐞"
 )
 GeometricAlgebra.BASIS_DISPLAY_STYLES[3] = style;
 ```
-Now it is easier to “read off” the duals of a vector or bivector:
+The second argument of `BasisDisplayStyle` defines the complete list of basis blade indices for each grade.
+
+With this style, it is easier to “read off” the duals of a 3D (bi)vector:
 ```@repl ga
 u = Multivector{3,1}(rand(1:100, 3))
 ldual(u)
 ```
-Notice how the vector and dual vector components correspond clearly.
+Notice how the vector and dual vector components align nicely.
 To recover the default style:
 ```@repl ga
 delete!(GeometricAlgebra.BASIS_DISPLAY_STYLES, 3)
 ldual(u)
 ```
 
+!!! note
+	`BasisDisplayStyle` does not affect how components are stored internally. Bear this in mind when accessing the components field of a `Multivector` when using a style with custom ordering.

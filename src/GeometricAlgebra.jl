@@ -11,7 +11,7 @@ export AbstractMultivector, BasisBlade, Multivector
 export basis, @basis, cayleytable
 export BasisDisplayStyle
 export signature, dimension, ncomponents, grade, eachgrade, blades
-export Cl, @Cl_str
+export Cl
 export scalar, isscalar, ishomogeneous
 export geometric_prod,
 	scalar_prod, ⊙,

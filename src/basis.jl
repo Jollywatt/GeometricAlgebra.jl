@@ -124,6 +124,16 @@ function BasisDisplayStyle(dim, blades_and_order::Dict{<:Integer,<:Vector{<:Vect
 	BasisDisplayStyle(dim, blades, order; kwargs...)
 end
 
+"""
+	GeometricAlgebra.BASIS_DISPLAY_STYLES
+
+A dictionary specifying the [`BasisDisplayStyle`](@ref) to use for each metric signature key.
+
+The style for the key `sig` must have the same dimension as `sig`.
+
+To use the default display style, remove the entry for `sig` with `delete!(GeometricAlgebra.BASIS_DISPLAY_STYLES, sig)`
+or remove all with `empty!`.
+"""
 const BASIS_DISPLAY_STYLES = IdDict{Any,BasisDisplayStyle}()
 get_basis_display_style(sig) = get(BASIS_DISPLAY_STYLES, sig, sig)
 

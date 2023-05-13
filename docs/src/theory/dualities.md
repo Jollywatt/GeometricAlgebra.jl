@@ -81,7 +81,7 @@ They are inverses of each other,
 ```
 and in odd-dimensional algebras, are identical.
 
-The metric-independence of the left and right duals mean they are appropriate even for degenerate algebras, since a non-zero multivector always has a non-zero dual, even if its Hodge dual is zero.
+The metric-independence of the left and right duals mean they are useful even in degenerate algebras, since a non-zero multivector always has a non-zero dual even when its Hodge dual is zero.
 
 ## Dualized products
 
@@ -92,7 +92,7 @@ D(a ∨ b) = D(a) ∧ D(b)
 ```
 where ``D`` is a dual operation such as ``\textsf{ldual}`` or ``\textsf{rdual}`` (each results in an equivalent definition).
 
-In the context of [projective geometric algebra](http://projectivegeometricalgebra.org/), the ``∧``-product of two objects forms the _join_ (e.g., the line joining two points) while the ``∨``-product of two objects forms the _meet_ (e.g., the point where two lines meet).
+In the context of [point-based projective geometric algebra](https://rigidgeometricalgebra.org/), the ``∧``-product of two objects forms the _join_ (e.g., the line joining two points) while the ``∨``-product of two objects forms the _meet_ (e.g., the point where two lines meet) and vice versa in plane-based PGA.
 
 Similar products may be defined by dualizing the inner product and contractions[^2] but these are less common.
 

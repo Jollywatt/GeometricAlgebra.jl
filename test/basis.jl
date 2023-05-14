@@ -5,7 +5,10 @@ import GeometricAlgebra:
 	dimension,
 	basis_vector_square,
 	componentstype,
-	BasisDisplayStyle
+	BasisDisplayStyle,
+	show_blade,
+	show_basis_blade,
+	show_multivector
 
 @testset "basis, @basis" begin
 	@test length(basis(10)) == 10
@@ -107,17 +110,17 @@ end
 	@basis 3
 
 	@test sprint(v13) do io, a
-		GeometricAlgebra.show_blade(io, a; compact=true)
+		show_blade(io, a; compact=true)
 	end == "v13"
 	@test sprint(v13) do io, a
-		GeometricAlgebra.show_blade(io, a; compact=true, basis_display_style=cyclic)
+		show_blade(io, a; compact=true, basis_display_style=cyclic)
 	end == "-v31"
 
 	@test sprint(1v23 + 2v3*v1 + 3v12) do io, a
-		GeometricAlgebra.show_multivector(io, a; compact=true, inline=true)
+		show_multivector(io, a; compact=true, inline=true)
 	end == "3v12 + -2v13 + v23"
 	@test sprint(1v23 + 2v3*v1 + 3v12) do io, a
-		GeometricAlgebra.show_multivector(io, a; compact=true, inline=true, basis_display_style=cyclic)
+		show_multivector(io, a; compact=true, inline=true, basis_display_style=cyclic)
 	end == "v23 + 2v31 + 3v12"
 
 	quats = BasisDisplayStyle(
@@ -127,7 +130,7 @@ end
 	)
 
 	@test sprint(v23) do io, a
-		GeometricAlgebra.show_blade(io, a; compact=true, basis_display_style=quats)
+		show_blade(io, a; compact=true, basis_display_style=quats)
 	end == "-𝒊"
 
 	sta = BasisDisplayStyle(
@@ -142,8 +145,15 @@ end
 	)
 
 	@test sprint(BasisBlade{Cl(1,3),2}(1, 0b1010)) do io, a
-		GeometricAlgebra.show_blade(io, a; compact=true, basis_display_style=sta)
+		show_blade(io, a; compact=true, basis_display_style=sta)
 	end == "-γzx"
+
+	# test that displaying `BasisDisplayStyle`s gives a preview of every blade
+	basis_blade_labels = [sprint(show_basis_blade, sta, bits) for bits ∈ GeometricAlgebra.componentbits(4, 0:4)]
+	style_repr = repr(sta)
+	@test all(basis_blade_labels) do label
+		occursin(label, style_repr)
+	end
 
 end
 

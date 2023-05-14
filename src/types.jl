@@ -131,6 +131,7 @@ Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = Multivector{Sig,K}(a)
 Multivector(a::Multivector) = a
 
 
+Base.convert(::Type{Multivector{Sig,K,S}}, a::Multivector{Sig,K}) where {Sig,K,S} = Multivector{Sig,K}(convert(S, a.comps))
 
 
 #= AbstractMultivector Interface =#

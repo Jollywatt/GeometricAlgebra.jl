@@ -47,7 +47,7 @@ Many multivector operations are implemented, including:
 - `exp`, `log`, trigonometric functions
 
 
-Non-euclidean metric signatures can be specified, such as `Cl(3,0,1)` for projective geometric algebra (PGA), or a named tuple such as `(t=-1, x=+1)` for custom basis vector names (see [Custom basis display styles](@ref) for more control).
+Non-euclidean [metric signatures](@ref sig) can be specified, such as `Cl(3,0,1)` for projective geometric algebra (PGA), or a named tuple such as `(t=-1, x=+1)` for custom basis vector names (see [Custom basis display styles](@ref) for more control).
 
 For example, here is a bivector in the spacetime algebra (STA) using the ``({-}{+}{+}{+})`` metric.
 ```@repl ga
@@ -82,10 +82,10 @@ This can be done by defining a [`BasisDisplayStyle(dim; kwargs...)`](@ref) and s
 
 Some example styles for `v12 + 2v13` are:
 
-| Notation | Display style | Keyword arguments
+| Notation | Display style | `BasisDisplayStyle` keyword arguments
 |:--------:|:--------------|:-----------------
 | ``𝐞_{12} + 2𝐞_{13}`` | `𝐞12 + 2𝐞13` | `prefix="𝐞"`
-| ``γ^0γ^1 + 2γ^0γ^2`` | `γ⁰γ¹ + 2γ⁰γ²` | `prefix="γ", sep="", indices=0:3`
+| ``γ^0γ^1 + 2γ^0γ^2`` | `γ⁰γ¹ + 2γ⁰γ²` | `prefix="γ", sep="", indices="⁰¹²³"`
 | ``\mathrm{d}x ∧ \mathrm{d}y - 2 \mathrm{d}z ∧ \mathrm{d}x`` | `dx ∧ dy - 2 dz ∧ dx` | `prefix="d", sep=" ∧ ", indices="xyz"`
 
 The last style additionally uses a **custom basis blade ordering**.
@@ -93,7 +93,7 @@ The last style additionally uses a **custom basis blade ordering**.
 ### Custom basis blade orderings
 
 By default, multivectors are _displayed_ with their components the same sign and in the same order as they are stored.
-Internally, the basis vectors in a blade are encoded in binary and assumed to be in order of increasing index.
+Internally, the basis vectors in a blade are encoded in binary (see [`bits_to_indices`](@ref) and [`indices_to_bits`](@ref).) For example:
 ```@repl ga
 BasisBlade{4}(42, 0b1101)
 ```

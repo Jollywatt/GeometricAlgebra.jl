@@ -10,11 +10,11 @@ end
 
 ## Pseudoscalar duality
 
-The highest-grade elements, pseudoscalars, play a special role in geometric algebra. The **unit pseudoscalar**
+The highest-grade elements of geometric algebras are called pseudoscalars. The **unit pseudoscalar**
 ```math
 I ≔ 𝐯_1𝐯_2⋯𝐯_n
 ```
-is interpreted as an oriented unit volume.
+plays an important role, and may be interpreted as an _oriented unit volume_.
 
 !!! warning
 	The unit pseudoscalar ``I`` is not to be confused with the identity matrix or unit imaginary ``i``. Indeed, ``I`` does not always commute, and ``I^2 = ±1`` depending on the algebra.

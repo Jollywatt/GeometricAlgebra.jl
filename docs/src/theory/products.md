@@ -7,9 +7,9 @@ end
 
 # Wedge, Inner and Other Products
 
-The geometric product is the fundamental operation in geometric algebra. Together with grade projection ``⟨\phantom{A}⟩_k``, various other “graded products” may be defined by taking different projections of the basic product.
+The geometric product is the fundamental operation in geometric algebra. Together with grade projection ``⟨\phantom{A}⟩_k``, various other “graded products” may be defined by taking different projections of the geometric product.
 
-To motivate this, consider a ``p``-vector ``A`` and ``q``-vector ``B``. The product contains parts of every grade between the difference ``|p - q|`` and sum ``p + q`` in steps of two:
+To motivate this, consider a ``p``-vector ``A`` and ``q``-vector ``B``. The geometric product contains parts of every grade between the difference ``|p - q|`` and sum ``p + q`` in steps of two:
 ```math
 AB = ⟨AB⟩_{|p - q|} + ⟨AB⟩_{|p - q| + 2} + ⋯ + ⟨AB⟩_{p + q - 2} + ⟨AB⟩_{p + q}
 ```
@@ -49,7 +49,7 @@ It is also commonly denoted ``A ∗ B`` or ``⟨AB⟩``.
 
 [`A ∧ B`](@ref) or [`wedge(A, B)`](@ref)
 
-The wedge product may be defined as the highest-grade part of the geometric product.
+The wedge product may be thought of as the highest-grade part of the geometric product.
 For example, if ``A`` and ``B`` are multivectors of grade ``p`` and ``q``, respectively, then ``A ∧ B = ⟨AB⟩_{p + q}``.
 This definition can be extended linearly to general multivectors as
 ```math
@@ -66,24 +66,24 @@ Between two vectors, the wedge product is the antisymmetric part of the product:
 𝒖 ∧ 𝒗 = \frac12(𝒖𝒗 - 𝒗𝒖)
 ```
 
-More generally, the wedge product may be written as an antisymmetrised geometric product
+More generally, the wedge product of many vectors may be written as an antisymmetrised geometric product
 ```math
-𝒖_1 ∧ ⋯ ∧ 𝒖_k = \frac{1}{k!}\sum_{σ ∈ S_k} \operatorname{sign}(σ) 𝒖_{σ(1)} ∧ ⋯ ∧ 𝒖_{σ(k)}
+𝒖_1 ∧ ⋯ ∧ 𝒖_k = \frac{1}{k!}\sum_{σ ∈ S_k} \operatorname{sign}(σ) 𝒖_{σ(1)} ⋯ 𝒖_{σ(k)}
 ```
 where the sum is over all permutations ``σ`` of the indices ``\{1, ..., k\}``.
-This shows the connection to [antisymmetric tensors](https://en.wikipedia.org/wiki/Antisymmetric_tensor), but in practice it is much cheaper to compute the highest-grade part of the geometric product!
+This shows the connection to [antisymmetric tensors](https://en.wikipedia.org/wiki/Antisymmetric_tensor).
 
 
 ## Generalised inner product
 
 [`A ⋅ B`](@ref) or [`inner(A, B)`](@ref)
 
-To complement the wedge product, we also define the generalised inner product as the _lowest_-grade part of the geometric product.
+To complement the wedge product, the generalised inner product is the _lowest_-grade part of the geometric product.
 For general multivectors, define
 ```math
 A ⋅ B ≔ \sum_{p,q} \big⟨⟨A⟩_p ⟨B⟩_q\big⟩_{|p - q|}
 ```
-Strictly, this should not be confused with the vector inner product, although they are equivalent on vectors.
+Strictly speaking, this should not be confused with the vector inner product, although they are equivalent on vectors.
 
 
 ## Left and right contractions

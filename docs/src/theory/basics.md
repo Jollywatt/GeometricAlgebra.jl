@@ -13,6 +13,12 @@ using GeometricAlgebra
 
 This is a brief overview of the mathematics of geometric algebra, using `GeometricAlgebra.jl` to explain features along the way.
 
+To follow along, install `GeometricAlgebra.jl` and load it with
+
+```julia
+julia> using GeometricAlgebra
+```
+
 
 ## Definition
 
@@ -32,10 +38,10 @@ The elements ``𝐯_i𝐯_j`` are [**bivectors**](https://en.wikipedia.org/wiki/
 [^2]: The second rule is implied by the first, which is the defining relation ``𝒖^2 = 𝒖⋅𝒖``.
 
 In code, we may obtain an orthonormal basis with [`basis(sig)`](@ref), where `sig` is the [metric signature parameter](@ref sig).
-We may also introduce basis variables into the global namespace with
+We may also introduce basis variables into the global namespace with the macro [`@basis`](@ref).
 ```@repl ga
 @basis 3
-v1^2 # vector square gives its norm
+v1^2 # vector square gives its norm, a scalar (or grade 0 blade)
 v2*v1 # orthogonal vectors anticommute
 ```
 
@@ -60,10 +66,6 @@ Cl(V, ⋅) = ⨁_{k=0}^n ∧^n V = ℝ ⊕ V ⊕ ∧^2 V ⊕ ⋯ ⊕ ∧^n V
 where ``∧^k V`` is the ``k``th exterior power of the ``n``-dimensional base space ``V``.
 
 Grade zero elements (``∧^0V = ℝ``) are scalars; grade one elements (``∧^1V = V``) are vectors; and grade-``k`` elements (``∧^k V``) are called **``k``-vectors** or **homogeneous multivectors**.
-Elements of ``Cl(V, ⋅)`` may consist of parts of differing grade, and when they do they are called **(inhomogeneous) multivectors**.
-
-### Grade projection
-
 There are no non-zero ``k``-vectors outside the range ``0 ≤ k ≤ n``, so the subspace of ``∧^nV`` contains the highest-grade objects, called **pseudoscalars**.
 
 Grade | Dimension of subspace | Name
@@ -79,8 +81,24 @@ Grade | Dimension of subspace | Name
 ``n`` | ``1`` | pseudoscalars
 all | ``2^n`` | multivectors
 
-Notice that subspaces of grade ``k`` and ``n - k`` have the same dimension.
-Subspaces ``∧^kV`` and their “pseudo”-prefixed counterparts ``∧^{n - k}V`` are associated through [duality](dualities.md).
+!!! info
+	Notice that subspaces of grade ``k`` and ``n - k`` have the same dimension.
+	Subspaces ``∧^kV`` and their “pseudo”-prefixed counterparts ``∧^{n - k}V`` are associated through [duality](dualities.md).
+
+A ``k``-vector in ``n``-dimensional Euclidean space is represented as a component vector wrapped in the `Multivector{n,k}` type.
+
+```@repl ga
+Multivector{3,2}(rand(3))
+```
+
+Elements of ``Cl(V, ⋅)`` may consist of parts of differing grade, and when they do they are called **(inhomogeneous) multivectors**.
+
+These are represented as a single contiguous component vector wrapped in a `Multivector` type where the grade parameter `k` is a range of grades.
+For example, a general 4D multivector is expressible as `Multivector{4,0:4}`.
+
+If the inner product ``⋅`` is non-Euclidean, the first type parameter `n` is replaced with a [metric signature](@ref sig).
+
+### Grade projection
 
 If ``A ∈ Cl(V, ⋅)`` is a multivector, then denote its grade ``k`` part as
 ```math
@@ -103,6 +121,8 @@ A general element in a geometric algebra is called a **multivector**, though the
 \textsf{$k$-vectors} ⊂
 \textsf{multivectors}
 ```
+
+However, `GeomtricAlgebra.jl` defines only two types: [`BasisBlade`](@ref) and [`Multivector`](@ref).
 
 
 ### Basis blades

@@ -8,7 +8,7 @@ end
 # Rotors
 
 Rotors are multivectors which describe proper rotations.
-The rotors formalism provides an extremely uniform, elegant and efficient description of rotations.
+The rotor formalism provides an extremely uniform, elegant and efficient description of rotations.
 For motivation, it is helpful to consider rotations in simpler algebras.
 
 In the complex plane, a complex number ``z ∈ ℂ`` is rotated about the origin with the mapping ``z ↦ e^{iθ}z``.

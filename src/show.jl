@@ -109,15 +109,18 @@ end
 
 
 """
+	show_multivector(io, a; kwargs...)
+
 Display multivector components in a column or inline, optionally grouping by grade.
 
-Parameters:
+# Keyword arguments
+
 - `inline::Bool`: print on one line (default `true`)
 - `groupgrades::Bool`: visually group components by grade (default `true`).
    If inline, draws parentheses around parts of each grade; if multiline, draw
    each grade on its own line
 - `showzeros::Bool`: whether to omit zero components from display
-- `indent::Integer`: indent amount
+- `indent::Integer`: indentation width
 - `parseable::Bool`: use parseable style (used by `repr`) instead of human-readable style
 
 # Examples

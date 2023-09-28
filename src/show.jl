@@ -23,13 +23,14 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade);
                     parseable=false,
                     basis_display_style=get_basis_display_style(signature(a)))
 	if parseable
-		bits = "0b"*bitstring(a.bits)[end - dimension(a) + 1:end]
 		@static if VERSION ≥ v"1.7"
 			type = Base.typeinfo_implicit(typeof(a.coeff)) ? constructor(a) : typeof(a)
 		else
 			type = typeof(a)
 		end
-		print(io, type, "($(a.coeff), $bits)")
+		print(io, type, "(", a.coeff, ", ")
+		niceshow(io, dimension(a), a.bits)
+		print(io, ")")
 	else
 		parity = basis_blade_parity(basis_display_style, a.bits)
 		coeff = (-1)^parity*a.coeff

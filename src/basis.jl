@@ -99,6 +99,8 @@ struct BasisDisplayStyle
 
 		if keytype(labels) <: Vector{<:Integer}
 			labels = Dict(indices_to_bits(indices) => label for (indices, label) ∈ labels)
+		elseif keytype(labels) <: Integer && valtype(labels) <: AbstractVector{<:AbstractString}
+			labels = reduce(merge, Dict(bits => label for (bits, label) ∈ zip(get(order, grade, componentbits(dim, grade)), labels[grade])) for grade ∈ keys(labels))
 		end
 
 		indices = string.(collect(indices))
@@ -317,13 +319,14 @@ function generate_blades(sig;
 		indices = bits_to_indices.(Ref(style), bits)
 	end
 
-	basisvectors = basis(sig)
-	labels = sprint.(show_basis_blade, Ref(style), indices)
+	# if allperms == true, then index order matters; otherwise, use style's default index ordering
+	labels = sprint.(show_basis_blade, Ref(style), allperms ? indices : bits) 
 	if !isnothing(prefix)
 		labels .= replace.(labels, r"^[^0-9]+"=>prefix)
 	end
 	labels = Symbol.(labels)
 
+	basisvectors = basis(sig)
 	basisblades = labels .=> prod.(getindex.(Ref(basisvectors), indices))
 	filter!(basisblades) do (label, _)
 		label != Symbol("")

@@ -228,10 +228,10 @@ Calls `resulting_grades(f, dimension(Sig), grade(a), grade(b), ...)` to determin
 """
 function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}...) where {Sig}
 	dim = dimension(Sig)
-	k = promote_grades(dim, resulting_grades(f, dim, grade.(abc)...))
+	K = promote_grades(dim, resulting_grades(f, dim, grade.(abc)...))
 	T = promote_type(eltype.(abc)...)
-	C = componentstype(Sig, ncomponents(Multivector{Sig,k}), T)
-	Multivector{Sig,k,C}
+	S = componentstype(Sig, ncomponents(Multivector{Sig,K}), T)
+	Multivector{Sig,K,S}
 end
 
 

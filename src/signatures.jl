@@ -15,6 +15,21 @@ In addition to the required methods above, metric signatures may implement
 - `show_basis_blade(io, sig, indices)` for custom basis blade styles (e.g., "dx ∧ dy", "e₁₂")
 =#
 
+"""
+	canonicalize_signature(sig)
+
+Canonical tuple representation of a metric signature.
+
+# Examples
+```jldoctest
+julia> Cl(1,3)
+Cl(1,3) (pretty-printed Cl{1, 3, 0}())
+
+julia> GeometricAlgebra.canonicalize_signature(ans)
+(1, -1, -1, -1)
+```
+"""
+canonicalize_signature(sig) = ntuple(i -> basis_vector_square(sig, i), dimension(sig))
 
 """
 	ncomponents(sig) = 2^dimension(sig)

@@ -23,11 +23,12 @@ function make(; kwargs...)
         "\\rcontr" => "\\lfloor",
     )
 
+    bib = CitationBibliography("src/references.bib")
     makedocs(
-        CitationBibliography("src/references.bib"),
         sitename="GeometricAlgebra.jl",
         root=joinpath(project_root, "docs"),
         modules=[GeometricAlgebra],
+        plugins=[bib],
         pages=[
             "index.md",
             "design.md",

@@ -5,3 +5,7 @@ GeometricAlgebra = "11bbe1ca-eae6-48c2-942c-9f17e43de0f0"
 MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
+[compat]
+Documenter = "1"
+DocumenterCitations = "1.2"

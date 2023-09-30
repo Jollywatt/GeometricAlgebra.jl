@@ -168,7 +168,9 @@ Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature,
 Shorthand for a tuple specifying a metric signature, e.g., `Cl("-+++") === (-1, +1, +1, +1)`.
 String may contain `'+'`, `'-'` and `'0'`.
 
-# Example
+For readability, `AbstractMultivector` types with a tuple metric signature display the signature as `Cl("...")`.
+
+# Examples
 ```jldoctest
 julia> Cl("+++") # 3D Euclidean metric signature
 (1, 1, 1)
@@ -178,6 +180,9 @@ julia> basis(ans)
  1 v1
  1 v2
  1 v3
+
+julia> Multivector{(0,-1,1,1,1),2}
+Multivector{Cl("0-+++"), 2} (pretty-printed Multivector{(0, -1, 1, 1, 1), 2})
 ```
 """
 Cl(s::String) = interpret_signature(s)

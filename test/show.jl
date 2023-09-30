@@ -50,7 +50,7 @@ end
 	@test sprint(1 + 1v[1] + 2v[2] + v[1]v[2]v[3]) do io, a
 		show_multivector(io, a, inline=false, groupgrades=false)
 	end == """
-		1 v
+		1
 		1 v1
 		2 v2
 		1 v123"""

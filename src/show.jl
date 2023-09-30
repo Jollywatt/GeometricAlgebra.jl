@@ -100,11 +100,14 @@ function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true
 	firstline = true
 	for ((coeff, b), (l, r)) ∈ zip(comps, alignments)
 		firstline || println(io)
+		firstline = false
+
 		print(io, " "^(L - l + indent))
 		Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
+
+		iszero(b) && continue
 		print(io, " "^(R - r), compact ? "" : " ")
 		show_basis_blade(io, basis_display_style, b)
-		firstline = false
 	end
 end
 
@@ -129,7 +132,7 @@ Display multivector components in a column or inline, optionally grouping by gra
 julia> a = Multivector{2,0:2}((1:4) .^ 2);
 
 julia> GeometricAlgebra.show_multivector(stdout, a; inline=false, groupgrades=false)
- 1 v
+ 1
  4 v1
  9 v2
 16 v12

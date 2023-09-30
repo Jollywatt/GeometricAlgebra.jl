@@ -38,6 +38,7 @@ function make(; kwargs...)
                 "theory/automorphisms.md",
                 "theory/dualities.md",
                 "theory/rotors.md",
+                "theory/special.md",
                 "theory/references.md",
             ],
             "reference.md",

@@ -275,7 +275,7 @@ end
 
 Wedge product of multivectors (a.k.a. the _outer_, _exterior_, _progressive_ or _alternating_ product, or _join_).
 
-This is a grade-raising operation, equivalent to [`graded_prod(+, a, b)`](@ref).
+This is a grade-raising operation, equivalent to [`graded_prod(+, a, b)`](@ref GeometricAlgebra.graded_prod).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ∧ b` is defined as
 the grade ``p + q`` part of `a*b`.
 """
@@ -290,7 +290,7 @@ a ∧ b = wedge(a, b)
 
 Inner product of multivectors.
 
-This is a grade lowering operation, equivalent to [`graded_prod(abs∘-, a, b)`](@ref).
+This is a grade lowering operation, equivalent to [`graded_prod(abs∘-, a, b)`](@ref GeometricAlgebra.graded_prod).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⋅ b` is defined as
 the grade ``|p - q|`` part of `a*b`.
 
@@ -310,7 +310,7 @@ inner(a, b) = graded_prod(abs∘-, a, b)
 
 Left contraction of multivectors.
 
-Equivalent to [`graded_prod((p, q) -> q - p, a, b)`](@ref).
+Equivalent to [`graded_prod((p, q) -> q - p, a, b)`](@ref GeometricAlgebra.graded_prod).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨼ b` is defined as
 the grade ``q - p`` part of `a*b`.
 
@@ -327,7 +327,7 @@ lcontract(a, b) = graded_prod((-)∘-, a, b)
 
 Right contraction of multivectors.
 
-Equivalent to [`graded_prod(-, a, b)`](@ref).
+Equivalent to [`graded_prod(-, a, b)`](@ref GeometricAlgebra.graded_prod).
 If `a` and `b` are of grades ``p`` and ``q`` respectively, then `a ⨽ b` is defined as
 the grade ``p - q`` part of `a*b`.
 

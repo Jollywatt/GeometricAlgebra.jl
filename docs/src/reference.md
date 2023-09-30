@@ -27,7 +27,6 @@ Modules = [GeometricAlgebra]
 Pages = ["bits.jl", "grades.jl"]
 Modules = [GeometricAlgebra]
 ```
-
 ## Display methods
 
 ```@autodocs
@@ -37,8 +36,14 @@ Modules = [GeometricAlgebra]
 
 ## Code generation
 
-
 ```@autodocs
 Pages = ["generated.jl"]
+Modules = [GeometricAlgebra]
+```
+
+## Utilities
+
+```@autodocs
+Pages = ["utils.jl"]
 Modules = [GeometricAlgebra]
 ```

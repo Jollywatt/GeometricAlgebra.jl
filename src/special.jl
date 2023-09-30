@@ -178,7 +178,13 @@ end
 # TODO: sqrt_formula_method?
 function Base.sqrt(a::AbstractMultivector)
 
-	isscalar(a) && return sqrt(scalar(a))one(a)
+	if isscalar(a)
+		s = scalar(a)
+		s >= 0 && return sqrt(s)one(a)
+		if pseudoscalar_square(a) < 0
+			sqrt(abs(s))unit_pseudoscalar(a)
+		end
+	end
 
 	a² = a^2
 	if isscalar(a²)

@@ -24,6 +24,22 @@ using GeometricAlgebra:
 	end
 end
 
+@testset "sqrt" begin
+	@basis 3 scalar=true
+
+	# sqrt of scalar
+	@test sqrt(4v) === 2.0v
+	@test sqrt(4Multivector(v)) == 2
+	@test sqrt(-v) == I
+
+	@test sqrt(I)^2 ≈ I
+
+	u = Multivector{3,1}([1,2,3]/4)
+	@test sqrt(u)^2 ≈ u
+	@test sqrt(u*I)^2 ≈ u*I
+	@test sqrt(u + I)^2 ≈ u + I
+end
+
 @testset "exp" begin
 	v = basis((1,1))
 	@test exp(10000*2pi*v[1]v[2]) ≈ 1

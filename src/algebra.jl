@@ -122,6 +122,7 @@ function Base.:+(a::AbstractMultivector{Sig}, bc::AbstractMultivector{Sig}...) w
 	Σ = zero(resulting_multivector_type(+, a, bc...))
 	add!(Σ, a, bc...)
 end
+Base.:-(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K} = Multivector{Sig,K}(a.comps - b.comps)
 Base.:-(a::AbstractMultivector, b::AbstractMultivector) = a + (-b)
 
 
@@ -222,18 +223,22 @@ a ⊙ b = scalar_prod(a, b)
 """
 	graded_prod(grade_selector::Function, a, b)
 
-A "graded" product of multivectors, generalising the wedge ``∧``, inner ``⋅`` and contraction products.
-For example, the wedge product is defined as:
-```julia
-wedge(a, b) = graded_prod(+, a, b)
-```
+A grade-filtered product of multivectors.
 
-If `grade(a) == p` and `grade(b) == q`, then `graded_prod(f, a, b)` is the grade `f(p, q)` part of `a*b`.
-The definition extends linearly to general multivectors ``A`` and ``B`` as
+Terms of the geometric product `a*b` are filtered according to `grade_selector`.
+For instance, if `grade(a) == p` and `grade(b) == q`, then `graded_prod(f, a, b)` is the grade `f(p, q)` part of `a*b`.
+The extends linearly to general multivectors ``A`` and ``B`` as
 ```math
 	(A, B) ↦ \\sum_{p,q} ⟨⟨A⟩_p ⟨B⟩_q⟩_{f(p, q)}
 ```
 where ``⟨⋅⟩_k`` denotes the grade ``k`` part.
+
+The [wedge ``∧``](@ref GeometricAlgebra.wedge), [inner ``⋅``](@ref GeometricAlgebra.inner) and
+[contraction](@ref GeometricAlgebra.lcontract) products are special cases of this product.
+For example, the wedge product is defined as:
+```julia
+wedge(a, b) = graded_prod(+, a, b)
+```
 """
 graded_prod(grade_selector, a::Scalar, b::Scalar) = iszero(grade_selector(0, 0)) ? a*b : zero(promote_type(a, b))
 graded_prod(grade_selector, a::AbstractMultivector, b::Scalar) = grade(a) == (grade_selector(grade(a), 0)) ? scalar_multiply(a, b) : zero(a)
@@ -348,15 +353,21 @@ function power_with_scalar_square(a, a², p::Integer)
 	iseven(p) ? aⁿ*one(a) : aⁿ*a
 end
 
-Base.:^(a::BasisBlade, p::Integer) = power_with_scalar_square(a, scalar(a*a), p)
-Base.literal_pow(::typeof(^), a::BasisBlade{Sig}, ::Val{2}) where {Sig} = BasisBlade{Sig}(geometric_square_factor(Sig, a.bits)*a.coeff^2)
+square(a::BasisBlade{Sig}) where Sig = BasisBlade{Sig}(geometric_square_factor(Sig, a.bits)*a.coeff^2)
+function square(a::Multivector)
+	dim = dimension(a)
+	# (pseudo)(scalars|vectors) always square to scalars
+	grade(a) ∈ (0, 1, dim - 1, dim) ? inner(a, a) : a*a
+end
 
+Base.literal_pow(::typeof(^), a::AbstractMultivector, ::Val{2}) = square(a)
+
+Base.:^(a::BasisBlade, p::Integer) = power_with_scalar_square(a, scalar(a*a), p)
 function Base.:^(a::Multivector{Sig,S}, p::Integer) where {Sig,S}
-	# TODO: type stability?
 	p < 0 && return inv(a)^abs(p)
 	p == 0 && return one(a)
 	p == 1 && return a
-	a² = a*a
+	a² = square(a)
 	p == 2 && return a²
 	if isscalar(a²)
 		power_with_scalar_square(a, scalar(a²), p)
@@ -599,3 +610,14 @@ function outermorphism(mat::AbstractMatrix, a::AbstractMultivector{Sig}) where {
 	a′
 end
 outermorphism(mat, a::Scalar) = a
+
+
+
+unit_pseudoscalar(::Val{Sig}) where {Sig} = let dim = dimension(Sig)
+	BasisBlade{Sig,dim}(1, bits_dual(dim, UInt(0)))
+end
+unit_pseudoscalar(a::AbstractMultivector{Sig}) where {Sig} = unit_pseudoscalar(Val(Sig))
+
+pseudoscalar_square(sig::Val) = scalar(unit_pseudoscalar(sig)^2)
+pseudoscalar_square(a::AbstractMultivector{Sig}) where {Sig} = pseudoscalar_square(Val(Sig))
+

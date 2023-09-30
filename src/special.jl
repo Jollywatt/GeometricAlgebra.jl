@@ -72,6 +72,9 @@ function inv_formula_method(a::Multivector)
 	# See https://doi.org/10.1016/j.amc.2017.05.027
 
 	dim = dimension(a)
+	scalar_square = grade(a) ∈ (0, 1, dim - 1, dim) # (pseudo)(scalars|vectors) always square to scalars
+	scalar_square && return a/scalar(a^2)
+
 	ā = clifford_conj(a)
 	aā = a*ā
 
@@ -172,8 +175,27 @@ end
 
 #= Roots and Logs =#
 
-Base.sqrt(a::BasisBlade{Sig,0}) where {Sig} = BasisBlade{Sig}(sqrt(a.coeff))
-Base.sqrt(a::Multivector) = isscalar(a) ? sqrt(scalar(a))one(a) : via_matrix_repr(sqrt, a)
+# TODO: sqrt_formula_method?
+function Base.sqrt(a::AbstractMultivector)
+
+	isscalar(a) && return sqrt(scalar(a))one(a)
+
+	a² = a^2
+	if isscalar(a²)
+		s = scalar(a²)
+		λ = sqrt(abs(s))
+		if s < 0
+			return (a + λ)/sqrt(2λ)
+		elseif s > 0
+			if pseudoscalar_square(a) < 0
+				I = unit_pseudoscalar(a)
+				return (a + λ*I)/(1 + I)sqrt(λ)
+			end
+		end
+	end
+
+	via_matrix_repr(sqrt, a)
+end
 
 Base.log(a::AbstractMultivector) = via_matrix_repr(log, a)
 

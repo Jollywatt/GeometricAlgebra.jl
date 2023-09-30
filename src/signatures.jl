@@ -187,8 +187,6 @@ macro Cl_str(s)
 	interpret_signature(s)
 end
 
-
-# show_signature(io, sig::Tuple) = print(io, "Cl\"$(join(map(s -> get(Dict(+1=>"+", -1=>"-"), s, s), sig)))\"")
 show_signature(io, sig::Tuple) = print(io, "Cl(\"$(join(map(s -> get(Dict(+1=>"+", -1=>"-"), s, s), sig)))\")")
 
 interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i] for i in sig)

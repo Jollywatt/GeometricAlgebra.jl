@@ -49,3 +49,19 @@ end
 	@test eltype(nan) === Any
 	@test collect(nan) == [0, "nan", 0, 0, 0]
 end
+
+@testset "@symbolicga" begin
+
+	@basis 3
+	x = (1, 0, 0)
+	y = (0, 1, 0)
+	z = (0, 0, 1)
+
+	@test @symbolicga(3, (x=1, y=1), x + y, Tuple) == (1, 1, 0)
+	@test @symbolicga(3, (x=1, y=1), x*y) == v12
+
+	R = exp(π/4*v12)
+	@assert grade(R) == 0:2:3
+	@test @symbolicga(3, (x=1, R=0:2:3), grade(~R*x*R, 1)) ≈ v2
+
+end

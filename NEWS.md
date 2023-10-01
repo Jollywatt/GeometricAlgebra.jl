@@ -6,6 +6,8 @@ _This package is in early development. New features and outward-facing changes a
 
 * Add ability to customise the order in which basis blades are displayed with `BasisDisplayStyle` on a per-algebra basis. (E.g., so that `3v12 - 2v13 + 1v23` displays as `1𝒆23 + 2𝒆31 + 3𝒆12` or `1𝒊 + 2𝒋 + 3𝒌`).
 
+* Add `@symbolicga` convenience macro for compiling symbolically evaluated expressions, inspired by [serenity4/SymbolicGA.jl](https://github.com/serenity4/SymbolicGA.jl).
+
 ## v0.2.1
 
 * Support `Multivector`s with immutable component arrays (in particular, `SVector`s).

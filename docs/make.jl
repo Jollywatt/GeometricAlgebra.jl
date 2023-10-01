@@ -40,7 +40,7 @@ function make(; kwargs...)
                 "theory/special.md",
                 "theory/references.md",
             ],
-            "reference.md",
+            "docstrings.md",
         ],
         format=Documenter.HTML(
             mathengine=KaTeX(Dict(

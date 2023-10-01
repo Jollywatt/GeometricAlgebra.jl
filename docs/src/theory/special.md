@@ -18,7 +18,7 @@ For a multivector ``A ∈ Cl(ℝ^d, ·)`` with metric ``·`` in ``d`` dimensions
 
 - ``Ā`` be the [Clifford conjugate](@ref "Clifford conjugation")
 - ``Â`` be the [involute](@ref involution)
-- ``Ã`` be the [reverse](@ref "Reversion").
+- ``Ã`` be the [reverse](@ref "Reversion")
 - ``[A]_K`` denote the negation of grades ``k ∈ K``, i.e.,
 ```math
 [A]_K = \sum_{k=0}^d ⟨A⟩_k · \begin{cases}

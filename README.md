@@ -15,7 +15,7 @@ A Julia package for working with multivectors from geometric (or Clifford) algeb
 
 ## Installation
 
-This package is usable but is not registered and may undergo rapid changes.
+This package readily usable, but unregistered. (Mostly because I haven’t thought of a good package name appropriate for the General registry!)
 
 ```julia
 julia> using Pkg

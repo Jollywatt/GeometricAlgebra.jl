@@ -103,24 +103,41 @@ Thanks to the wonderful [`SymbolicUtils`](https://symbolicutils.juliasymbolics.o
 For example, we can compute the product of two vectors symbolically as follows:
 
 ```jldoctest
-julia> GeometricAlgebra.symbolic_components.([:x, :y], 3)
-2-element Vector{Vector{Any}}:
- [x[1], x[2], x[3]]
- [y[1], y[2], y[3]]
-
-julia> Multivector{3,1}.(ans)
-2-element Vector{Multivector{3, 1, Vector{Any}}}:
- x[1]v1 + x[2]v2 + x[3]v3
- y[1]v1 + y[2]v2 + y[3]v3
+julia> GeometricAlgebra.make_symbolic.(Multivector{2,1}, [:A, :B])
+2-element Vector{Multivector{2, 1, Vector{Any}}}:
+ A[1]v1 + A[2]v2
+ B[1]v1 + B[2]v2
 
 julia> prod(ans)
-4-component Multivector{3, 0:2:2, MVector{4, Any}}:
- x[1]*y[1] + x[2]*y[2] + x[3]*y[3]
- x[1]*y[2] - x[2]*y[1] v12 + x[1]*y[3] - x[3]*y[1] v13 + x[2]*y[3] - x[3]*y[2] v23
-
+2-component Multivector{2, 0:2:2, MVector{2, Any}}:
+ A[1]*B[1] + A[2]*B[2]
+ A[1]*B[2] - A[2]*B[1] v12
 ```
 
-This makes it easy to optimize multivector operations by first performing the general calculation symbolically, then converting the resulting expression into unrolled code.
- (See [`symbolic_multivector_eval()`](@ref) for details.)
+This makes it easy to optimize multivector operations: first perform the calculation symbolically and then compile the resulting analytic expression. By default, this optimization is enabled for most products (including the geometric, wedge and inner products in up to eight dimensions[^1]).
+This is done by prefixing method definitions with the internal [`@symbolic_optim`](@ref) macro.
 
-By default, symbolic code generation is used for most products in up to eight dimensions (above which general algebraic expressions become unwieldy). This can be changed on a per-algebra basis by defining methods for [`use_symbolic_optim()`](@ref).
+[^1]: This can be changed on a per-algebra basis by defining methods for [`use_symbolic_optim()`](@ref).
+
+Symbolic optimisation is also exposed through a user-facing macro [`@symbolicga`](@ref), inspired by the `@ga` macro in [serenity4/SymbolicGA.jl](https://github.com/serenity4/SymbolicGA.jl).
+This is especially useful when you want use geometric algebra without manipulating `Multivector` types.
+
+For example, using ``Cl(ℝ³)`` to represent homogeneous coordinates on the plane:
+```jldoctest
+julia> joinpoints(p, q) = @symbolicga 3 (p=1, q=1) p ∧ q Tuple
+joinpoints (generic function with 1 method)
+
+julia> intersectlines(p, q) = @symbolicga 3 (p=2, q=2) rdual(ldual(p) ∧ ldual(q)) Tuple
+intersectlines (generic function with 1 method)
+
+julia> L1 = joinpoints((1, 0, 1), (0, 1, 1)) # line y = 1 - x
+(1, 1, -1)
+
+julia> L2 = joinpoints((0, 0, 1), (1, 1, 1)) # line y = x
+(0, -1, -1)
+
+julia> intersectlines(L1, L2) # point (0.5, 0.5)
+(-1, -1, -2)
+
+```
+The resulting methods are loop-free and allocation-free.

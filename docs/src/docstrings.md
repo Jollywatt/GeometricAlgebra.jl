@@ -1,4 +1,4 @@
-# Reference
+# Docstrings
 
 ## Multivector types
 

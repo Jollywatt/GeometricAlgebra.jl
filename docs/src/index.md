@@ -29,12 +29,11 @@ julia> using GeometricAlgebra
 
 To construct a geometric multivector from a vector of components, provide the _metric signature_ and _grade_ as type parameters.
 
-For example, a 3D Euclidean vector of grade one is a `Multivector{3,1}`.
-
+For example, a 3D Euclidean vector of grade one:
 ```@repl ga
 u = Multivector{3,1}([1, -1, 0])
 ```
-The `Multivector` type is essentially a wrapper which signifies the parent algebra and grade(s) of the underlying components vector (accessed with `u.comps`).
+The `Multivector` type is simply a wrapper which associates a geometric algebra and multivector grade(s) to the underlying components vector (accessed with `u.comps`).
 
 
 Many multivector operations are implemented, including:
@@ -73,6 +72,15 @@ The macro [`@basis`](@ref) introduces basis blades into the current namespace fo
 1 + 10v23 + 1000/I
 @basis (t = +1, x = -1) allperms=true
 6tx == -6xt
+```
+
+## Code generation
+
+The [`@symbolicga`](@ref) macro may be used to generate loop- and allocation-free code from geometric algebra expressions.
+
+```@repl ga
+volume(v1, v2, v3) = @symbolicga 3 (v1=1, v2=1, v3=1) (v1 ∧ v2 ∧ v3).comps[]
+volume((1, 1, 1), (2, 3, 4), (5, 0, 5))
 ```
 
 ## Custom basis display styles

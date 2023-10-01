@@ -121,7 +121,7 @@ function Multivector{Sig,K}(comps::S) where {Sig,K,S}
 end
 
 function Multivector{Sig,K}(a::BasisBlade{Sig}) where {Sig,K}
-	@assert grade(a) ∈ K
+	grade(a) ∈ K || error("$(constructor(a)) cannot be represented as a $(Multivector{Sig,K})")
 	M = Multivector{Sig,K}
 	i = componentindex(M, a)
 	M(SingletonVector(a.coeff, i, ncomponents(M)))
@@ -129,6 +129,12 @@ end
 
 Multivector(a::BasisBlade{Sig,K}) where {Sig,K} = Multivector{Sig,K}(a)
 Multivector(a::Multivector) = a
+
+Multivector{Sig,K}(a::Multivector{Sig,K}) where {Sig,K} = a
+function Multivector{Sig,K′}(a::Multivector{Sig,K}) where {Sig,K,K′}
+	K ⊆ K′ || error("$(constructor(a)) cannot be represented as a $(Multivector{Sig,K})")
+	grade(a, K′)
+end
 
 
 Base.convert(::Type{Multivector{Sig,K,S}}, a::Multivector{Sig,K}) where {Sig,K,S} = Multivector{Sig,K}(convert(S, a.comps))

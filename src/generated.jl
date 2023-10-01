@@ -38,15 +38,15 @@ make_symbolic(::OrType{F}, label) where {F<:Function} = F.instance
 make_symbolic(::OrType{Val{V}}, label) where {V} = Val(V)
 make_symbolic(::OrType{Type{T}}, label) where {T} = T
 
-function toexpr(a::AbstractArray, compstype, T)
-	SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(a, typeof(a), T))
+function toexpr(a::AbstractArray, compstype)
+	SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(a, typeof(a)))
 end
-function toexpr(a::Multivector, compstype, T)
+function toexpr(a::Multivector, compstype)
 	comps = SymbolicUtils.expand.(a.comps)
-	comps_expr = SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(comps, compstype, T))
+	comps_expr = SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(comps, compstype))
 	:( $(constructor(a))($comps_expr) )
 end
-toexpr(a, compstype, T) = SymbolicUtils.Code.toexpr(a)
+toexpr(a, compstype) = SymbolicUtils.Code.toexpr(a)
 
 
 """
@@ -94,11 +94,9 @@ function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, a
 
 	I = findall(arg -> arg isa AbstractMultivector, sym_args)
 	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]
-	T = numberorany(promote_type(eltype.(args[I])...))
-
 	quote
 		let $(assignments...)
-			$(toexpr(sym_result, compstype, T))
+			$(toexpr(sym_result, compstype))
 		end
 	end
 end
@@ -214,4 +212,73 @@ macro symbolic_optim(fndef::Expr)
 	end |> esc
 end
 
+"""
+	@symbolicga sig grades expr
 
+Evaluate a symbolically optimised geometric algebra expression.
+
+The expression is first evaluated symbolically  at the time of macro expansion
+in the algebra defined by metric signature `sig`, producing
+unrolled code which evaluates the expression with runtime values.
+
+The `grades` argument is a `NamedTuple` where `keys(grades)` defines the
+identifiers in `expr` to be interpreted as `Multivector`s and `values(grades)`
+defines their respective grades.
+The identifiers must exist at runtime, and can be a `Multivector` of matching
+signature and grade or any iterable with the correct number of components.
+
+Operations for which components do not have simple closed forms
+(such as `exp` or `log`) are not amenable to symbolic evaluation.
+
+# Examples
+```jldoctest
+julia> let v = (1, 2, 0), R = exp(Multivector{3,2}([0, π/4, 0]))
+           # Rotate a tuple (viewed as a grade 1 vector) by a rotor.
+           @symbolicga 3 (v=1, R=0:2:4) grade(R*v*~R, 1)
+           # The compiled code evaluates the sandwich product and
+           # grade projection from a single analytic expression.
+       end
+3-component Multivector{3, 1, MVector{3, Float64}}:
+  2.220446049250313e-16 v1
+  2.0                   v2
+ -1.0                   v3
+```
+```julia
+# This macro call...
+@symbolicga 2 (a=1, b=1) a∧b
+# ...is equivalent to the following:
+let a = Multivector{3, 1}(a).comps, b = Multivector{3, 1}(b).comps
+    Multivector{3, 2}(MVector(
+        a[1]*b[2] - a[2]*b[1],
+        a[1]*b[3] - a[3]*b[1],
+        a[2]*b[3] - a[3]*b[2],
+    ))
+end
+```
+"""
+macro symbolicga(sig, grades, expr)
+	Sig = @eval $sig
+	grades = @eval $grades
+	@assert grades isa NamedTuple
+	labels = keys(grades)
+
+	symbolic_assignments = map(labels, grades) do label, K
+		mv = make_symbolic(Multivector{Sig,K}, label)
+		:($label = $mv)
+	end
+	symbolic_result = @eval let $(symbolic_assignments...)
+		@basis $Sig
+		$expr
+	end
+
+	expr_assignments = map(labels, grades) do label, K
+		:($label = Multivector{$Sig,$K}($label).comps)
+	end
+
+	quote
+		let $(expr_assignments...)
+			$(toexpr(symbolic_result, MVector))
+		end
+	end |> esc
+
+end

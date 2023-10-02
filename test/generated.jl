@@ -1,7 +1,10 @@
 using GeometricAlgebra:
 	zeroslike,
 	make_symbolic
-using GeometricAlgebra.SymbolicUtils
+import GeometricAlgebra.SymbolicUtils
+using GeometricAlgebra.StaticArrays:
+	MVector,
+	SVector
 
 
 @testset "symbolic components" begin
@@ -46,11 +49,19 @@ end
 	y = (0, 1, 0)
 	z = (0, 0, 1)
 
-	@test @symbolicga(3, (x=1, y=1), x + y, Tuple) == (1, 1, 0)
+	@test @symbolicga(3, (x=1, y=1), x + y, SVector) === SVector(1, 1, 0)
 	@test @symbolicga(3, (x=1, y=1), x*y) == v12
 
 	R = exp(π/4*v12)
 	@assert grade(R) == 0:2:3
 	@test @symbolicga(3, (x=1, R=0:2:3), grade(~R*x*R, 1)) ≈ v2
+
+	joinpoints(a::Tuple, b::Tuple) = @symbolicga 3 (a=1, b=1) a∧b Tuple
+	meetlines(a::Tuple, b::Tuple) = @symbolicga 3 (a=2, b=2) a∨b Tuple
+	from_homogeneous((x, y, z)) = (x/z, y/z)
+
+	l1 = @inferred joinpoints((1, 0, 1), (0, 1, 1)) # line y = 1 - x 
+	l2 = @inferred joinpoints((0, 0, 1), (1, 1, 1)) # line y = x
+	@test from_homogeneous(meetlines(l1, l2)) == (0.5, 0.5)
 
 end

@@ -16,6 +16,9 @@ use_symbolic_optim(sig) = dimension(sig) <= 8
 
 Create an array of symbolic values of the specified shape.
 
+See also [`make_symbolic`](@ref).
+
+
 # Example
 ```jldoctest
 julia> GeometricAlgebra.symbolic_components(:a, 2, 3)
@@ -33,6 +36,23 @@ function symbolic_components(label::Symbol, dims::Integer...)
 	Any[SymbolicUtils.Term{Real}(getindex, [var, I...]) for I in indices]
 end
 
+"""
+	make_symbolic(a, label)
+
+Multivector with symbolic components of the same type as the `Multivector` instance or type `a`.
+
+See also [`symbolic_components`](@ref).
+
+# Example
+
+```jldoctest
+julia> GeometricAlgebra.make_symbolic(Multivector{3,1}, :A)
+3-component Multivector{3, 1, Vector{Any}}:
+ A[1] v1
+ A[2] v2
+ A[3] v3
+```
+"""
 make_symbolic(::OrType{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(Multivector{Sig,K})))
 make_symbolic(::OrType{F}, label) where {F<:Function} = F.instance
 make_symbolic(::OrType{Val{V}}, label) where {V} = Val(V)
@@ -218,28 +238,34 @@ end
 
 Evaluate a symbolically optimised geometric algebra expression.
 
-On macro expansion, `expr` is evaluated with symbolic multivectors (specified by `mv_grades`)
+Upon macro expansion, `expr` is evaluated with symbolic multivectors (specified by `mv_grades`)
 in the algebra defined by metric signature `sig`. The resulting symbolic expression
-is then compiled and executed at runtime. If `result_type` is given, the components array
-of the resulting `Multivector` is returned and converted to that type.
+is then compiled and executed at runtime.
 
-The `grades` argument is a `NamedTuple` where `keys(grades)` defines the
-identifiers in `expr` to be interpreted as `Multivector`s and `values(grades)`
-defines their respective grades.
-The identifiers must exist at runtime, and can be a `Multivector` of matching
-signature and grade or any iterable with the correct number of components.
+The `mv_grades` argument is a `NamedTuple` where `keys(mv_grades)`
+defines the identifiers in `expr` to be interpreted as `Multivector`s,
+while `values(mv_grades)` defines their respective grades.
+The identifiers must exist at runtime, and can be a `Multivector` with matching
+signature/grade or any iterable with the correct number of components.
 
-Operations for which components do not have simple closed forms
-(such as `exp` or `log`) are not amenable to symbolic evaluation.
+If `result_type` is given, then the components of the resulting multivector
+are converted to that type. The result type `T` should implement `T(::Tuple)`,
+e.g., `Tuple` or `MVector`.
+
+!!! warning
+	Operations that are not amenable to symbolic evaluation
+	(such as `exp`, `log`, `sqrt`, etc) are not supported.
+
+	(You may test if operations work on symbolic multivectors
+	created with [`GeometricAlgebra.make_symbolic`](@ref).)
 
 # Examples
 ```jldoctest
-julia> let v = (1, 2, 0), R = exp(Multivector{3,2}([0, π/8, 0]))
-           # Rotate a tuple (viewed as a grade 1 vector) by a rotor.
-           @symbolicga 3 (v=1, R=0:2:4) grade(R*v*~R, 1) Tuple
-           # The compiled code evaluates the sandwich product and
-           # grade projection from a single analytic expression.
-       end
+julia> v = (1, 2, 0); R = exp(Multivector{3,2}([0, π/8, 0]));
+
+julia> # Rotate a tuple (interpreted as a grade 1 vector)
+       # by a rotor, returning a tuple.
+       @symbolicga 3 (v=1, R=0:2:4) grade(R*v*~R, 1) Tuple
 (0.7071067811865475, 2.0, -0.7071067811865476)
 ```
 ```julia
@@ -256,9 +282,11 @@ end
 ```
 """
 macro symbolicga(sig, mv_grades, expr, result_type=nothing)
-	Sig = @eval $sig
-	mv_grades = @eval $mv_grades
+	Sig = eval(sig)
+	mv_grades = eval(mv_grades)
 	@assert mv_grades isa NamedTuple
+	result_type = eval(result_type)
+
 	labels = keys(mv_grades)
 
 	symbolic_assignments = map(labels, mv_grades) do label, K
@@ -269,13 +297,12 @@ macro symbolicga(sig, mv_grades, expr, result_type=nothing)
 		$expr
 	end
 
-	# TODO: this should be improved. Assumes that result is a Multivector
 	if isnothing(result_type)
-		result_expr = toexpr(symbolic_result, MVector)
-	elseif result_type == :Tuple
-		result_expr = toexpr(Tuple(symbolic_result.comps), nothing)
+		result_expr = toexpr(symbolic_result, componentstype(Sig, 0))
 	else
-		result_expr = :($result_type($(toexpr.(symbolic_result.comps, MVector)...)))
+		symbolic_result isa Multivector || error("@symbolicga expression must evaluate to a Multivector when result_type ($result_type) is given; got $(typeof(symbolic_result)).")
+		symbolic_comps = Tuple(toexpr(comp, nothing) for comp in symbolic_result.comps)
+		result_expr = :($result_type(($(symbolic_comps...),)))
 	end
 
 	expr_assignments = map(labels, mv_grades) do label, K

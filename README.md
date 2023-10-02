@@ -8,8 +8,8 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://jollywatt.github.io/GeometricAlgebra.jl/dev/)
 ![Build Status](https://github.com/Jollywatt/GeometricAlgebra.jl/actions/workflows/CI.yml/badge.svg)
 [![Coverage](https://codecov.io/gh/jollywatt/GeometricAlgebra.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/jollywatt/GeometricAlgebra.jl)
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/jollywatt/GeometricAlgebra.jl)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/jollywatt/GeometricAlgebra.jl)
 
 A Julia package for working with multivectors from geometric (or Clifford) algebra.
 

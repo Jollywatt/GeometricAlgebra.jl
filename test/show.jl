@@ -59,6 +59,16 @@ end
 		show_multivector(io, a, inline=true, groupgrades=false)
 	end == "1 + 1 v1 + 2 v2 + 1 v123"
 
+	for groupgrades = false:true, inline = false:true, compact = false:true
+		@test sprint(zero(Multivector{3,2})) do io, a
+			show_multivector(io, a, showzeros=false; groupgrades, inline, compact)
+		end == "0"
+	end
+
+	@test sprint(zero(Multivector{3,2})) do io, a
+		show_multivector(io, a, inline=true, showzeros=true)
+	end == "0 v12 + 0 v13 + 0 v23"
+
 end
 
 @testset "repr parseability" begin

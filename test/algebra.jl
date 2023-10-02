@@ -19,6 +19,8 @@ end
 	v = basis(3)
 	@test v[1] + √eps(1.0) ≈ v[1] rtol=1e-6
 	@test 1e-10 + v[1] ≈ v[1] rtol=1e-10
+	@test sum(v)/1e16 ≈ 0 atol=1e-10 
+	@test sin(π*v[1]) ≈ 0 atol=1e-10
 end
 
 @testset "scalar *" begin
@@ -66,6 +68,7 @@ end
 	@test v[1] + bi[2] isa Multivector{3,0:3}
 	@test sum(Multivector.(bi)) isa Multivector{3,2}
 	@test v[1] - v[2] == -v[2] + v[1]
+	@test (v[1] + v[2]) - (v[2] - v[3]) == v[1] + v[3]
 
 	@testset "with scalars" begin
 		@test v[1] + 7.5 == 7.5 + v[1]

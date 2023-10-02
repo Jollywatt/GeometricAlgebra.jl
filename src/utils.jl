@@ -108,6 +108,6 @@ end
 
 const SUBSCRIPT_DIGITS   = collect("₀₁₂₃₄₅₆₇₈₉")
 const SUPERSCRIPT_DIGITS = collect("⁰¹²³⁴⁵⁶⁷⁸⁹")
-subscript(n::Integer)   = join(SUBSCRIPT_DIGITS[begin .+ reverse(digits(n))])
-superscript(n::Integer) = join(SUPERSCRIPT_DIGITS[begin .+ reverse(digits(n))])
+subscript(n::Integer)   = (n < 0 ? '₋' : "")*join(SUBSCRIPT_DIGITS[begin .+ reverse(digits(abs(n)))])
+superscript(n::Integer) = (n < 0 ? '⁻' : "")*join(SUPERSCRIPT_DIGITS[begin .+ reverse(digits(abs(n)))])
 

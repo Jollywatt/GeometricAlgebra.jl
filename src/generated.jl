@@ -221,7 +221,7 @@ Evaluate a symbolically optimised geometric algebra expression.
 On macro expansion, `expr` is evaluated with symbolic multivectors (specified by `mv_grades`)
 in the algebra defined by metric signature `sig`. The resulting symbolic expression
 is then compiled and executed at runtime. If `result_type` is given, the components array
-of the resulting `Multivector` is returned and converted. 
+of the resulting `Multivector` is returned and converted to that type.
 
 The `grades` argument is a `NamedTuple` where `keys(grades)` defines the
 identifiers in `expr` to be interpreted as `Multivector`s and `values(grades)`

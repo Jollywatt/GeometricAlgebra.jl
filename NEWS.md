@@ -1,6 +1,8 @@
 # News
 
-_This package is in early development. New features and outward-facing changes are shown in this news file, but many internal improvements and changes are not._
+_This package is in early development; minor versions may introduce breaking changes. New features are shown in this news file, but many internal improvements are not._
+
+## v0.2.3
 
 ## v0.2.2
 

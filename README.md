@@ -137,9 +137,10 @@ By default, symbolic code generation is used for most products in up to eight di
 
 ## Similar Packages
 
-This package derives inspiration from many others:
+This package derives inspiration from many others. Here is a list of Julia implementations (of varying completeness) which I have come across:
 
 - [ATell-SoundTheory/CliffordAlgebras.jl](https://github.com/ATell-SoundTheory/CliffordAlgebras.jl)
+- [brainandforce/CliffordNumbers.jl](https://github.com/brainandforce/CliffordNumbers.jl)
 - [chakravala/Grassmann.jl](https://github.com/chakravala/Grassmann.jl)
 - [digitaldomain/Multivectors.jl](https://github.com/digitaldomain/Multivectors.jl)
 - [MasonProtter/GeometricMatrixAlgebras.jl](https://github.com/MasonProtter/GeometricMatrixAlgebras.jl)

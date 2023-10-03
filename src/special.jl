@@ -193,7 +193,7 @@ function Base.sqrt(a::AbstractMultivector)
 		if s < 0
 			return (a + λ)/sqrt(2λ)
 		elseif s > 0
-			if pseudoscalar_square(a) < 0
+			if pseudoscalar_square(a) < 0 && iseven(a)
 				I = unit_pseudoscalar(a)
 				return (a + λ*I)/(1 + I)sqrt(λ)
 			end

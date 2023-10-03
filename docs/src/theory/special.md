@@ -41,5 +41,5 @@ For a multivector ``A ∈ Cl(ℝ^d, ·)`` with metric ``·`` in ``d`` dimensions
 | Special case | Formula |
 |:-------------|:--------|
 | ``A^2 ∈ ℝ, A^2 < 0`` | ``\sqrt{A} = \frac{A + λ}{\sqrt{2λ}}, λ = \sqrt{-A^2}`` 
-| ``A^2 ∈ ℝ, A^2 > 0, I^2 = -1`` | ``\sqrt{A} = \frac{A + Iλ}{(1 + I)\sqrt{λ}}, λ = \sqrt{A^2}`` 
+| ``A^2 ∈ ℝ, A^2 > 0, I^2 = -1, AI = IA`` | ``\sqrt{A} = \frac{A + Iλ}{(1 + I)\sqrt{λ}}, λ = \sqrt{A^2}`` 
 

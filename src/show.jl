@@ -121,7 +121,7 @@ Display multivector components in a column or inline, optionally grouping by gra
 
 - `inline::Bool`: print on one line (default `true`)
 - `groupgrades::Bool`: visually group components by grade (default `true`).
-   If inline, draws parentheses around parts of each grade; if multiline, draw
+   If inline, prints parentheses around parts of each grade; if multiline, prints
    each grade on its own line
 - `showzeros::Bool`: whether to omit zero components from display
 - `indent::Integer`: indentation width

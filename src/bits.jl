@@ -165,7 +165,7 @@ componentbits(sig, k::Integer) = bits_of_grade(k, dimension(sig))
 componentbits(sig, K=0:dimension(sig)) = Iterators.flatten(Iterators.map(k -> componentbits(sig, k), K))
 
 # generating this only saves about ~20ns
-@generated componentbits(::Val{N}, ::Val{K}) where {N,K} = collect(componentbits(N, K))
+@generated componentbits(::Val{N}, ::Val{K}) where {N,K} = :(SVector($(componentbits(N, K)...)))
 
 
 

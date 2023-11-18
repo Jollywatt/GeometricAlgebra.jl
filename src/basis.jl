@@ -221,7 +221,7 @@ end
 """
 	basis(sig, k=1)
 
-Vector of basis blades of specified grade(s) `k` for the geometric algebra defined by the metric signature `sig`.
+Vector of `BasisBlade`s of specified grade(s) `k` for the geometric algebra defined by the metric signature `sig`.
 The value `k=:all` is a shortcut for `0:dimension(sig)`.
 
 The particular basis blades returned by `basis` and their order reflects the signature’s `BasisDisplayStyle`.

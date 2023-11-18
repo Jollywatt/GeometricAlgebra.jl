@@ -206,7 +206,6 @@ Whether `a` is homogeneous, i.e., consists of nonzero parts of the same grade.
 ishomogeneous(a) = isone(length(grade(a)))
 
 componentbits(a::OrType{<:Multivector}) = componentbits(Val(dimension(a)), Val(grade(a)))
-componentbits(a::OrType{<:Multivector{Sig,K,<:MVector{N}}}) where {Sig,K,N} = MVector{N}(componentbits(Val(dimension(a)), Val(grade(a))))
 
 """
 	componentindex(a::Multivector, b::Union{Unsigned,BasisBlade})
@@ -257,7 +256,7 @@ If specified, the components array is of type `S`, or is the default array type 
 Base.zero(a::Type{Multivector{Sig,K}}, T::Type=Int) where {Sig,K} = zero(Multivector{Sig,K,componentstype(Sig, ncomponents(a), T)})
 
 Base.one(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(numberone(T))
-Base.one(::OrType{<:Multivector{Sig,K,S} where K}) where {Sig,S} = add!(zero(Multivector{Sig,0,S}), numberone(eltype(S)), UInt(0))
+Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = add!(zero(Multivector{Sig,0 ∈ K ? K : 0,S}), numberone(eltype(S)), UInt(0))
 
 Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)
 Base.iszero(a::Multivector) = all(isnumberzero, a.comps)
@@ -275,7 +274,7 @@ The scalar component of a multivector.
 scalar(a::Scalar) = a
 scalar(a::BasisBlade{Sig,0}) where {Sig} = a.coeff
 scalar(a::BasisBlade) = numberzero(eltype(a))
-scalar(a::Multivector) = 0 ∈ grade(a) ? a.comps[componentindex(a, UInt(0))] : zero(eltype(a))
+scalar(a::Multivector) = 0 ∈ grade(a) ? a.comps[componentindex(a, UInt(0))] : numberzero(eltype(a))
 
 """
 	isscalar(a)

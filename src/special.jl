@@ -49,12 +49,31 @@ end
 	matrix_repr(a, K)
 end
 
+"""
+	try_ensure_real(a::Multivector)
+
+Tries to convert a complex-valued `Multivector` into an equivalent real one,
+returning the original multivector if it failed.
+
+If an algebra ``G`` has a commuting pseudoscalar squaring to ``-1``, then there
+is a canonical map ``G ⊗ ℂ ↦ G`` from the complexified algebra into itself given
+my sending the imaginary unit to the pseudoscalar.
+"""
+function try_ensure_real(a::Multivector)
+	eltype(a) <: Real && return a
+	pseudoscalar_square(a) < 0 && isodd(dimension(a)) || return a
+	M = constructor(a)
+	M(real.(a.comps)) + M(imag.(a.comps))*unit_pseudoscalar(a)
+end
+
 function via_matrix_repr(f::Function, a::AbstractMultivector)
+	wasreal = eltype(a) <: Real
 	k = resulting_grades(Val(:subalgebra), dimension(a), grade(a))
 	m = matrix_repr(a, Val(k))
 	m′ = f(m)
 	T = componentstype(signature(a), size(m′, 1), eltype(m′))
-	Multivector{signature(a),k}(convert(T, m′[:,1]))
+	a′ = Multivector{signature(a),k}(convert(T, m′[:,1]))
+	wasreal ? try_ensure_real(a′) : a′
 end
 
 

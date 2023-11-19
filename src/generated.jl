@@ -270,7 +270,7 @@ julia> # Rotate a tuple (interpreted as a grade 1 vector)
 ```
 ```julia
 # This macro call...
-@symbolicga 2 (a=1, b=1) a∧b
+@symbolicga 3 (a=1, b=1) a∧b
 # ...is equivalent to the following:
 let a = Multivector{3, 1}(a).comps, b = Multivector{3, 1}(b).comps
     Multivector{3, 2}(MVector(

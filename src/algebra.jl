@@ -271,6 +271,18 @@ resulting_grades(::Tuple{typeof(graded_prod),GradeSelector}, dim, p::Integer, q:
 	c
 end
 
+@symbolic_optim function graded_prod(::Val{K}, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig,K}
+	c = zero(Multivector{Sig,K}, promote_type(eltype(a), eltype(b)))
+	for (acoeff, abits) ∈ nonzero_components(a), (bcoeff, bbits) ∈ nonzero_components(b)
+		bits = abits ⊻ bbits
+		if count_ones(bits) in K
+			factor = geometric_prod_factor(Sig, abits, bbits)
+			c = add!(c, factor*(acoeff*bcoeff), bits)
+		end
+	end
+	c
+end
+
 
 #= Derived Products =#
 
@@ -357,7 +369,13 @@ square(a::BasisBlade{Sig}) where Sig = BasisBlade{Sig}(geometric_square_factor(S
 function square(a::Multivector)
 	dim = dimension(a)
 	# (pseudo)(scalars|vectors) always square to scalars
-	grade(a) ∈ (0, 1, dim - 1, dim) ? inner(a, a) : a*a
+	k = grade(a)
+	if k == 0 || k == 1 || k == dim || k == dim - 1
+		inner(a, a) # we want this branch to be taken at compile time
+	else 
+		a*a
+	end
+	# grade(a) ∈ (0, 1, dim - 1, dim) ? inner(a, a) : a*a
 end
 
 Base.literal_pow(::typeof(^), a::AbstractMultivector, ::Val{2}) = square(a)

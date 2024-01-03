@@ -86,13 +86,18 @@ function inv_matrix_method(a::Multivector)
 	Multivector{signature(a),k}(A⁻¹)
 end
 
-function inv_formula_method(a::Multivector)
+function has_scalar_square(::T) where T<:AbstractMultivector
+	dim = dimension(T)
+	grade(T) ∈ (0, 1, dim - 1, dim)
+end
+
+function inv_formula_method(a::Multivector{Sig,K}) where {Sig,K}
 	# In low dimensions, explicit formulae exist.
 	# See https://doi.org/10.1016/j.amc.2017.05.027
 
+	has_scalar_square(a) && return a/scalar(a^2)
+
 	dim = dimension(a)
-	scalar_square = grade(a) ∈ (0, 1, dim - 1, dim) # (pseudo)(scalars|vectors) always square to scalars
-	scalar_square && return a/scalar(a^2)
 
 	ā = clifford_conj(a)
 	aā = a*ā
@@ -101,21 +106,36 @@ function inv_formula_method(a::Multivector)
 		return ā/scalar(aā)
 
 	elseif dim == 3
-		āâã = ā*involution(a)*reversion(a)
-		return āâã/scalar(a*āâã)
+		āâã = graded_prod(Val(K), ā, reversion(aā))
+		return āâã/scalar_prod(a, āâã)
 
 	elseif dim == 4
-		b = ā*graded_multiply(aā) do k
+		b = graded_multiply(aā) do k
 			k ∈ (3, 4) ? -1 : 1
 		end
-		return b/scalar(a*b)
+		c = graded_prod(Val(K), ā, b)
+		return c/scalar_prod(a, c)
 
 	elseif dim == 5
 		b = ā*reversion(aā)
-		c = b*graded_multiply(a*b) do k
+		c = graded_multiply(a*b) do k
 			k ∈ (1, 4) ? -1 : 1
 		end
-		return c/scalar(a*c)
+		d = graded_prod(Val(K), b, c)
+		return d/scalar_prod(a, d)
+
+	else
+		mask = nonzerobitmask(a)
+		effective_dim = count_ones(mask)
+		if effective_dim <= 5
+			via_subalgebra_mask(inv, a, mask)
+		elseif effective_dim < dim
+			via_subalgebra_mask(inv_matrix_method, a, mask)
+		else
+			inv_matrix_method(a)
+		end
+	end
+end
 
 	else	
 		inv_matrix_method(a) # ?? replace with via_matrix_repr(inv, a)
@@ -219,6 +239,14 @@ function Base.sqrt(a::AbstractMultivector)
 		end
 	end
 
+
+	# try dropping any unused basis vectors
+	# even reducing the total dimension by one seems to pay off
+	mask = nonzerobitmask(a)
+	if count_ones(mask) < dimension(a)
+		return via_subalgebra_mask(sqrt, a, mask)
+	end
+
 	via_matrix_repr(sqrt, a)
 end
 
@@ -273,3 +301,50 @@ for (fn,    invfn) ∈ [
 	@eval Base.$fn(a::AbstractMultivector) = inv(Base.$invfn(a))
 end
 
+function project_to_subalgebra(a::Multivector, mask::Unsigned)
+	allbits = componentbits(a)
+
+	indices = bits_to_indices(mask)
+	subsig = Tuple(basis_vector_square.(Ref(signature(a)), indices))
+
+	if all(==(1), subsig)
+		subsig = length(subsig)
+	end
+
+	subsig
+
+	k = promote_grades(dimension(subsig), grade(a))
+	a′ = Multivector{subsig,k}(a.comps[allbits .& mask .== allbits])
+
+end
+
+function embed_in_superalgebra(sig, a::Multivector, mask::Unsigned)
+	k = promote_grades(dimension(sig), grade(a)...)
+	T = Multivector{sig,k}
+	allbits = componentbits(T)
+
+	j = 1
+	b = zeroslike(a.comps, length(allbits))
+	for (i, bits) ∈ enumerate(allbits)
+		if bits & mask == bits
+			b[i] = a.comps[j]
+			j += 1
+		end
+	end
+	T(b)
+end
+
+function nonzerobitmask(a::Multivector)
+	usedbits = zero(UInt)
+	for (_, bits) in nonzero_components(a)
+		usedbits |= bits
+	end
+	usedbits
+end
+
+
+function via_subalgebra_mask(fn, a::Multivector, mask)
+	a′ = project_to_subalgebra(a, mask)
+	b = fn(a′)
+	embed_in_superalgebra(signature(a), b, mask)
+end

@@ -137,10 +137,36 @@ function inv_formula_method(a::Multivector{Sig,K}) where {Sig,K}
 	end
 end
 
-	else	
-		inv_matrix_method(a) # ?? replace with via_matrix_repr(inv, a)
-	end
+function max_nonzero_grade(a::Multivector) 
+	i = findlast(!iszero, a.comps)
+	isnothing(i) && return 0
+	count_ones(componentbits(a)[i])
 end
+
+"""
+	inv_flv_method(::AbstractMultivector)
+
+Inverse of a multivector using the Faddeev–LeVerrier algorithm [^1].
+
+This algorithm requires ``2^{d - 1}`` many geometric multiplications, where ``d`` is
+the dimension of the algebra.
+
+[^1]: "Algorithmic Computation of Multivector Inverses and Characteristic Polynomials in Non-degenerate Clifford Algebras", [Dimiter2024](@cite).
+"""
+function inv_flv_method(a::Multivector)
+	n = 2^(cld(max_nonzero_grade(a), 2) + 1)
+	m = one(a)
+	am = a
+	c = -n*scalar(a)
+	for k = 2:n
+		m = am + c
+		am = a*m
+		c = -n/k*scalar(am)
+	end
+	iszero(c) && error("Multivector has no inverse")
+	-m/c
+end
+
 
 Base.inv(a::BasisBlade) = a/scalar(a^2)
 Base.inv(a::Multivector) = inv_formula_method(a)

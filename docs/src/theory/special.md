@@ -9,7 +9,14 @@ end
 
 In general, finding the inverse ``A^{-1}``, square root ``\sqrt{A}`` or logarithm ``\log A`` of a general multivector ``A`` is difficult. However, for certain cases, explicit formulae exist.
 
-## Formulae for multivector inverses
+## Multivector inverses
+
+Any multivector ``A`` has either no inverse or exactly one inverse ``A^{-1}`` such that ``AA^{-1} = A^{-1}A = 1``.
+
+
+
+### Explicit formulae for multivector inverses
+
 
 For any metric in up to five dimensions, explicit formulae exist for the inverse of a multivector ``A``.
 The implementation used in `GeometricAlgebra.jl` is mainly based on [Hitzer2017](@cite) and is described here.

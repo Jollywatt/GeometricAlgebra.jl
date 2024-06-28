@@ -71,6 +71,7 @@ function promote_grades(dim::Integer, p, q)
 	0:dim
 end
 promote_grades(dim::Integer, p, q, r, s...) = promote_grades(dim, promote_grades(dim, p, q), r, s...)
+promote_grades(dim::Integer) = ()
 
 promote_grades(abc::AbstractMultivector{Sig}...) where {Sig} = promote_grades(dimension(Sig), grade.(abc)...)
 

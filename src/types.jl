@@ -13,8 +13,8 @@ metric signature `Sig`.
 
 ```
          AbstractMultivector{Sig}
-            /               \\                             
-BasisBlade{Sig,K,T}   Multivector{Sig,K,S}                
+            /               \\
+BasisBlade{Sig,K,T}   Multivector{Sig,K,S}
 ```
 
 - [`BasisBlade`](@ref): a scalar multiple of a wedge product of orthogonal basis vectors.
@@ -121,7 +121,7 @@ function Multivector{Sig,K}(comps::S) where {Sig,K,S}
 end
 
 function Multivector{Sig,K}(a::BasisBlade{Sig}) where {Sig,K}
-	grade(a) ∈ K || error("$(constructor(a)) cannot be represented as a $(Multivector{Sig,K})")
+	grade(a) ∈ K || error("$(constructor(a)) cannot be represented as a $(Multivector{Sig,K}), since $(grade(a)) ∉ $K")
 	M = Multivector{Sig,K}
 	i = componentindex(M, a)
 	M(SingletonVector(a.coeff, i, ncomponents(M)))
@@ -138,6 +138,12 @@ end
 
 
 Base.convert(::Type{Multivector{Sig,K,S}}, a::Multivector{Sig,K}) where {Sig,K,S} = Multivector{Sig,K}(convert(S, a.comps))
+function Base.convert(::Type{Multivector{Sig,K,S}}, a::Multivector{Sig,K′}) where {Sig,K,K′,S}
+	K′ ⊆ K || error("$(constructor(a)) cannot be represented as $(Multivector{Sig,K}), since $K′ ⊈ $K")
+	add!(zero(Multivector{Sig,K,S}), a)
+end
+Base.convert(::Type{Multivector{Sig,K}}, a::Multivector{Sig,K′,S}) where {Sig,K,K′,S} = convert(Multivector{Sig,K,S}, a)
+
 
 
 #= AbstractMultivector Interface =#

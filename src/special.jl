@@ -138,7 +138,7 @@ function inv_formula_method(a::Multivector{Sig,K}) where {Sig,K}
 end
 
 function max_nonzero_grade(a::Multivector) 
-	i = findlast(!iszero, a.comps)
+	i = findlast(!isnumberzero, a.comps)
 	isnothing(i) && return 0
 	count_ones(componentbits(a)[i])
 end
@@ -163,7 +163,7 @@ function inv_flv_method(a::Multivector)
 		am = a*m
 		c = -n/k*scalar(am)
 	end
-	iszero(c) && error("Multivector has no inverse")
+	isnumberzero(c) && error("Multivector has no inverse")
 	-m/c
 end
 

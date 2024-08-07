@@ -49,6 +49,7 @@ function make(; kwargs...)
             )),
             assets = ["assets/favicon.ico"],
         );
+        remotes=nothing,
         kwargs...
     )
 end

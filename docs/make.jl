@@ -15,7 +15,7 @@ DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
     using Revise, GeometricAlgebra
 end; recursive=true)
 
-const bib = CitationBibliography("src/references.bib")
+const bibfile = "src/references.bib"
 
 function make(; kwargs...)
     macros = Dict(
@@ -27,7 +27,7 @@ function make(; kwargs...)
         sitename="GeometricAlgebra.jl",
         root=joinpath(project_root, "docs"),
         modules=[GeometricAlgebra],
-        plugins=[bib],
+        plugins=[CitationBibliography(bibfile)],
         pages=[
             "index.md",
             "design.md",
@@ -63,7 +63,7 @@ test() = doctest(GeometricAlgebra)
 
 fix() = begin
     Revise.revise()
-    doctest(GeometricAlgebra, fix=true, plugins=[bib])
+    doctest(GeometricAlgebra, fix=true, plugins=[CitationBibliography(bibfile)])
     nothing
 end
 

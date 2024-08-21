@@ -42,6 +42,41 @@ For a multivector ``A ∈ Cl(ℝ^d, ·)`` with metric ``·`` in ``d`` dimensions
 | ``d = 5`` | ``A^{-1} = \frac{B}{AB}, B = ĀÂÃ[AĀÂÃ]_{1,4}``
 
 
+### Faddeev--LeVerrier inverse algorithm
+
+The [Faddeev--LeVerrier inverse algorithm](https://en.wikipedia.org/wiki/Faddeev–LeVerrier_algorithm) may be used to find the inverse of an ``n \times n`` matrix ``A`` in exactly ``n`` steps (with one matrix multiplication per step).
+This algorithm can also be used to invert elements in a geometric algebra by considering a linear representation of multivectors as ``n \times n`` matrices. [Dimiter2024](@cite)
+This method is implemented in [`inv_flv_method`](@ref).
+
+Crucially, we do not actually need to find a linear representation to use this method: we only need to know that one exists for a given dimension ``n``.
+Assume the dimension of the smallest representation is ``\text{repsize}(A)``.
+
+**Algorithm pseudocode**
+1. **given** a multivector ``A``
+1. ``n := \text{repsize}(A)``
+1. ``c_n := 1``
+1. ``N \leftarrow 1``
+1. **for** ``k \in (n - 1, n - 2, ..., 1, 0)``
+1.   ``N \leftarrow N + c_{k + 1} I``
+1.   ``c_k := \frac{n}{k - n} A \odot N``
+1. **return** ``A^{-1} = -N/c_0``
+
+The inverse exists if and only if ``c_0 \ne 0``.
+
+If ``A`` is a ``d``-dimensional multivector, then:
+```math
+\text{repsize}(A) = \begin{cases}
+	1 & A = ⟨A⟩_0 \\
+	2 & \text{$A$ is a pseudoscalar or (pseudo)vector} \\
+	2^{\lfloor d/2 \rfloor} & \text{$A$ is even} \\
+	2^{\lceil d/2 \rceil} & \text{in general} \\
+\end{cases}
+```
+In some cases, the algorithm works in fewer steps than given above, particularly for multivectors of particular grades.
+However, I have not figured out how to determine the true minimum number of steps.
+(For example, by inspection, inverting a ``5``-dimensional ``3``-vector requires only ``n = 4`` steps, not ``8`` as suggested by this prescription.)
+It's an interesting problem!
+
 
 ## Formulae for multivector square roots
 

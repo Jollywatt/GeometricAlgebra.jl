@@ -112,8 +112,14 @@ function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, a
 
 	sym_args = make_symbolic.(args, abc)
 	sym_result = f(sym_args...)
-
 	I = findall(arg -> arg isa AbstractMultivector, sym_args)
+
+	# special case for zero-component results - ensure sensible eltype
+	if sym_result isa Multivector && isempty(sym_result.comps)
+		T = promote_type(eltype.(args[I])...)
+		return constructor(sym_result)(zeroslike(componentstype(signature(sym_result), 0, T), 0))
+	end
+
 	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]
 	quote
 		let $(assignments...)

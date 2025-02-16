@@ -264,6 +264,11 @@ Base.zero(a::Type{Multivector{Sig,K}}, T::Type=Int) where {Sig,K} = zero(Multive
 Base.one(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(numberone(T))
 Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = add!(zero(Multivector{Sig,0 ∈ K ? K : 0,S}), numberone(eltype(S)), UInt(0))
 
+
+Base.randn(rng::AbstractRNG, T::Type{<:Multivector}) = T(randn(rng, ncomponents(T)))
+Base.rand(rng::AbstractRNG, T::Type{<:Multivector}) = T(rand(rng, ncomponents(T)))
+
+
 Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)
 Base.iszero(a::Multivector) = all(isnumberzero, a.comps)
 Base.isone(a::BasisBlade) = iszero(grade(a)) && isnumberone(a.coeff)

@@ -4,6 +4,7 @@ using StaticArrays, SparseArrays
 using Combinatorics: permutations, parity
 using SymbolicUtils
 using PrettyTables: pretty_table
+using Random: AbstractRNG
 
 export MVector
 

@@ -618,10 +618,10 @@ If ``f`` is a linear map, then the outermorphism ``f̲`` is a linear map  satisf
 ``f̲(𝒖) = f(𝒖)`` on vectors ``𝒖`` and ``f̲(a ∧ b) = f̲(a) ∧ f̲(b)`` on
 general multivectors.
 """
-function outermorphism(mat::AbstractMatrix, a::AbstractMultivector{Sig}) where {Sig}
-	a′ = zero(Multivector{Sig,grade(a)}, promote_type(eltype(mat), eltype(a)))
+function outermorphism(mat::AbstractMatrix, a::AbstractMultivector{Sig}; sig=Sig) where {Sig}
+	a′ = zero(Multivector{sig,grade(a)}, promote_type(eltype(mat), eltype(a)))
 	for (coeff, bits) ∈ nonzero_components(a)
-		vs = Multivector{Sig,1}.(eachcol(mat[:,bits_to_indices(bits)]))
+		vs = Multivector{sig,1}.(eachcol(mat[:,bits_to_indices(bits)]))
 		v = reduce(∧, vs; init = one(a′))
 		add!(a′, coeff*v)
 	end

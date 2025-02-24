@@ -288,7 +288,7 @@ end
 
 """
 	a ∧ b
-	wedge(a, b)
+	wedge(a, b, ...)
 
 Wedge product of multivectors (a.k.a. the _outer_, _exterior_, _progressive_ or _alternating_ product, or _join_).
 
@@ -300,6 +300,9 @@ wedge(a, b) = graded_prod(+, a, b)
 @doc (@doc wedge)
 a ∧ b = wedge(a, b)
 
+# since wedge is associative, this can be handy
+wedge(a, b, c, d...) = wedge(wedge(a, b), c, d...)
+wedge(a) = a
 
 """
 	a ⋅ b

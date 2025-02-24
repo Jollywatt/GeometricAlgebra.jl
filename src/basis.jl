@@ -300,6 +300,17 @@ end
 basis(M::Type{Multivector{Sig,K}}) where {Sig,K} = basis(Multivector{Sig,K,componentstype(Sig, ncomponents(M), Int)})
 
 
+"""
+	basis(sig, k, i::Integer)
+
+The `i`th basis blade of grade(s) `k` in the geometric algebra of signature `sig`.
+
+If `k` is a collection, indexing is done in the canonical order, with lower grades first
+(see [`componentbits`](@ref)).
+"""
+basis(sig, k, i::Integer) = BasisBlade{sig,k}(1, collect(GeometricAlgebra.componentbits(sig,k))[i])
+
+
 function generate_blades(sig;
                          grades=:all,
                          allperms=false,

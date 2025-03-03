@@ -1,5 +1,5 @@
 const OrType{T} = Union{T,Type{T}}
-const Scalar = Union{Number,SymbolicUtils.Symbolic}
+const Scalar = Union{Number,NanoCAS.SumNode,NanoCAS.ProductNode}
 
 
 
@@ -135,6 +135,8 @@ function Multivector{Sig,K′}(a::Multivector{Sig,K}) where {Sig,K,K′}
 	K ⊆ K′ || error("$(constructor(a)) cannot be represented as a $(Multivector{Sig,K})")
 	grade(a, K′)
 end
+
+Multivector{Sig,K}(comps::Scalar...) where {Sig,K} = Multivector{Sig,K}(makevec(componentstype(Sig, length(comps)), comps...))
 
 
 Base.convert(::Type{Multivector{Sig,K,S}}, a::Multivector{Sig,K}) where {Sig,K,S} = Multivector{Sig,K}(convert(S, a.comps))

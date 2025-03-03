@@ -2,7 +2,6 @@ module GeometricAlgebra
 
 using StaticArrays, SparseArrays
 using Combinatorics: permutations, parity
-using SymbolicUtils
 using PrettyTables: pretty_table
 using Random: AbstractRNG
 
@@ -28,6 +27,8 @@ export flipdual, hodgedual, invhodgedual, ldual, rdual
 export matrix_repr, outermorphism
 export @symbolicga
 
+include("NanoCAS/NanoCAS.jl")
+
 include("bits.jl")
 include("types.jl")
 include("grades.jl")
@@ -39,5 +40,6 @@ include("special.jl")
 include("show.jl")
 include("utils.jl")
 include("algebras.jl")
+
 
 end # module GeometricAlgebra

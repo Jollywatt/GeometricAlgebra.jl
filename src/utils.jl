@@ -52,6 +52,10 @@ issetindexable(T::Type) = ismutabletype(T)
 issetindexable(a) = issetindexable(typeof(a))
 
 
+makevec(::Type{<:Vector}, comps...) = collect(comps)
+makevec(::Type{<:MVector}, comps...) = MVector(comps...)
+makevec(::Type{<:SVector}, comps...) = SVector(comps...)
+
 """
 	SingletonVector(el, index, length)
 

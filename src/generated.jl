@@ -31,10 +31,10 @@ a[1, 1]*a[1, 2]*a[1, 3]*a[2, 1]*a[2, 2]*a[2, 3]
 ```
 """
 function symbolic_components(label::Symbol, dims::Integer...)
-	var = SymbolicUtils.Sym{Array{length(dims),Real}}(label)
-	indices = Iterators.product(Base.OneTo.(dims)...)
-	Any[SymbolicUtils.Term{Real}(getindex, [var, I...]) for I in indices]
+	NanoCAS.variables(label, dims...)
 end
+
+Multivector{Sig,K}(sym::Symbol) where {Sig,K} = make_symbolic(Multivector{Sig,K}, sym)
 
 """
 	make_symbolic(a, label)
@@ -58,16 +58,13 @@ make_symbolic(::OrType{F}, label) where {F<:Function} = F.instance
 make_symbolic(::OrType{Val{V}}, label) where {V} = Val(V)
 make_symbolic(::OrType{Type{T}}, label) where {T} = T
 
-function toexpr(a::AbstractArray, compstype)
-	SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(a, typeof(a)))
-end
-function toexpr(a::Multivector, compstype)
-	comps = SymbolicUtils.expand.(a.comps)
-	comps_expr = SymbolicUtils.Code.toexpr(SymbolicUtils.Code.MakeArray(comps, compstype))
-	:( $(constructor(a))($comps_expr) )
-end
-toexpr(a::Tuple, compstype) = Expr(:tuple, (toexpr(ai, compstype) for ai ∈ a)...)
-toexpr(a, compstype) = SymbolicUtils.Code.toexpr(a)
+
+import .NanoCAS: toexpr
+
+toexpr(a::Multivector) = :( $(constructor(a))($(toexpr(a.comps)...)) )
+
+# toexpr(a::Tuple, compstype) = Expr(:tuple, (toexpr(ai, compstype) for ai ∈ a)...)
+# toexpr(a, compstype) = SymbolicUtils.Code.toexpr(a)
 
 
 """
@@ -107,7 +104,7 @@ julia> @btime geometric_prod(Val(:nosym), A, B); # opt-out of symbolic optim
   4.879 μs (30 allocations: 1.22 KiB)
 ```
 """
-function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, args...)
+function symbolic_multivector_eval(::Type{Expr}, f::Function, args...)
 	abc = Symbol.('a' .+ (0:length(args) - 1))
 
 	sym_args = make_symbolic.(args, abc)
@@ -121,15 +118,13 @@ function symbolic_multivector_eval(::Type{Expr}, compstype::Type, f::Function, a
 	end
 
 	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]
-	quote
-		let $(assignments...)
-			$(toexpr(sym_result, compstype))
-		end
-	end
+	:(let $(assignments...)
+		$(toexpr(sym_result))
+	end)
 end
 
-@generated function symbolic_multivector_eval(compstype::Type{S}, f::Function, args...) where S
-	symbolic_multivector_eval(Expr, S, f.instance, args...)
+@generated function symbolic_multivector_eval(f::Function, args...)
+	symbolic_multivector_eval(Expr, f.instance, args...)
 end
 
 replace_signature(a::Multivector{Sig,K,S}, ::Val{Sig′}) where {Sig,Sig′,K,S} = Multivector{Sig′,K,S}(a.comps)
@@ -166,7 +161,7 @@ function symbolic_optim(f::Function, args...)
 	Sig = first_signature(args...)
 	Sig′ = canonicalize_signature(Sig)
 	args′ = normalize_symbolic_optim_args(Val(Sig′), args...)
-	result = symbolic_multivector_eval(componentstype(Sig, 0), f, args′...)
+	result = symbolic_multivector_eval(f, args′...)
 	replace_signature(result, Val(Sig)) # restore original signature
 end
 

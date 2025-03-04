@@ -48,8 +48,8 @@ function make(; kwargs...)
                 :minRuleThickness => 0.06,
             )),
             assets = ["assets/favicon.ico"],
-        );
-        remotes=nothing,
+        ),
+        remotes=Dict(".." => Remotes.GitHub("Jollywatt", "GeometricAlgebra.jl"));
         kwargs...
     )
 end

@@ -17,13 +17,13 @@ Some of these parts are often useful on their own, and so warrant their own name
 
 These are summarised below, where the grade of the result is shown for each product between a ``p``-vector and ``q``-vector.
 
-Name | Symbol | REPL shortcut | Resulting grade
-----:|:------:|:-----|:---------------
-scalar | ``\odot`` | `\odot<tab>` | ``0``
-wedge | ``∧`` | `\wedge<tab>` | ``p + q``
-inner | ``⋅`` | `\cdot<tab>` | ``\|p - q\|``
-left contraction | ``\lcontr`` | `\intprod<tab>` | ``q - p``
-right contraction | ``\rcontr`` | `\intprodr<tab>` | ``p - q``
+Name | Function | Symbol | REPL shortcut | Resulting grade
+----:|:---------|:------:|:-----|:---------------
+scalar product | [`scalar_prod`](@ref) | ``\odot`` | `\odot<tab>` | ``0``
+wedge/outer product | [`wedge`](@ref) | ``∧`` | `\wedge<tab>` | ``p + q``
+inner product | [`inner`](@ref) | ``⋅`` | `\cdot<tab>` | ``\|p - q\|``
+left contraction | [`lcontract`](@ref) | ``\lcontr`` | `\intprod<tab>` | ``q - p``
+right contraction | [`rcontract`](@ref) | ``\rcontr`` | `\intprodr<tab>` | ``p - q``
 
 To glance at a multiplication table for a product, you can use [`cayleytable`](@ref). For example, left contraction in ``Cl(1,1)`` looks like:
 ```@example

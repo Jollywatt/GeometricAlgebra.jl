@@ -10,15 +10,22 @@ Modules = [GeometricAlgebra]
 ## Multivector operations
 
 ```@autodocs
-Pages = ["algebra.jl", "special.jl"]
+Pages = ["operations.jl", "special.jl"]
 Modules = [GeometricAlgebra]
 ```
 
-## Metric Signatures
+## Metric signatures
 
 ```@autodocs
 Pages = ["signatures.jl", "basis.jl"]
 Modules = [GeometricAlgebra]
+```
+
+## Common algebras
+
+```@autodocs
+Pages = ["algebras.jl"]
+Modules = [GeometricAlgebra.Algebras]
 ```
 
 ## Logic for bits and grades
@@ -39,6 +46,13 @@ Modules = [GeometricAlgebra]
 ```@autodocs
 Pages = ["generated.jl"]
 Modules = [GeometricAlgebra]
+```
+
+## Symbolic utilities
+
+```@autodocs
+Pages = ["NanoCAS/NanoCAS.jl", "NanoCAS/algebra.jl"]
+Modules = [NanoCAS]
 ```
 
 ## Utilities

@@ -104,14 +104,14 @@ For example, we can compute the product of two vectors symbolically as follows:
 
 ```jldoctest
 julia> GeometricAlgebra.make_symbolic.(Multivector{2,1}, [:A, :B])
-2-element Vector{Multivector{2, 1, Vector{Any}}}:
+2-element Vector{Multivector{2, 1, Vector{GeometricAlgebra.NanoCAS.ProductNode{GeometricAlgebra.NanoCAS.IndexNode{1}}}}}:
  A[1]v1 + A[2]v2
  B[1]v1 + B[2]v2
 
 julia> prod(ans)
-2-component Multivector{2, 0:2:2, MVector{2, SymbolicUtils.BasicSymbolic{Real}}}:
- A[1]*B[1] + A[2]*B[2]
- A[1]*B[2] - A[2]*B[1] v12
+2-component Multivector{2, 0:2:2, MVector{2, GeometricAlgebra.NanoCAS.SumNode{GeometricAlgebra.NanoCAS.IndexNode{1}, Int64}}}:
+ B[2] * A[2] + A[1] * B[1]
+ -1 * (A[2] * B[1]) + A[1] * B[2] v12
 ```
 
 This makes it easy to optimize multivector operations: first perform the calculation symbolically and then compile the resulting analytic expression. By default, this optimization is enabled for most products (including the geometric, wedge and inner products in up to eight dimensions[^1]).

@@ -6,6 +6,7 @@ end
 ```
 
 ```@setup ga
+using BenchmarkTools
 using GeometricAlgebra
 ```
 
@@ -79,8 +80,8 @@ The macro [`@basis`](@ref) introduces basis blades into the current namespace fo
 The [`@symbolicga`](@ref) macro may be used to generate loop- and allocation-free code from geometric algebra expressions.
 
 ```@repl ga
-volume(v1, v2, v3) = @symbolicga 3 (v1=1, v2=1, v3=1) (v1 ∧ v2 ∧ v3).comps[]
-volume((1, 1, 1), (2, 3, 4), (5, 0, 5))
+volume(v1, v2, v3) = @symbolicga 3 (v1=1, v2=1, v3=1) scalar(rdual(v1 ∧ v2 ∧ v3))
+@btime volume((1, 1, 1), (2, 3, 4), (5, 0, 5))
 ```
 
 ## Custom basis display styles

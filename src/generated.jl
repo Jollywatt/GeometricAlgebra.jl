@@ -21,12 +21,13 @@ See also [`make_symbolic`](@ref).
 # Example
 ```jldoctest
 julia> GeometricAlgebra.symbolic_components(:a, 2, 3)
-2×3 Matrix{Any}:
+2×3 Matrix{GeometricAlgebra.NanoCAS.ProductNode{GeometricAlgebra.NanoCAS.IndexNode{2}}}:
  a[1, 1]  a[1, 2]  a[1, 3]
  a[2, 1]  a[2, 2]  a[2, 3]
 
 julia> prod(ans)
-a[1, 1]*a[1, 2]*a[1, 3]*a[2, 1]*a[2, 2]*a[2, 3]
+GeometricAlgebra.NanoCAS.ProductNode{GeometricAlgebra.NanoCAS.IndexNode{2}}:
+ a[1, 3] * a[2, 3] * a[2, 2] * a[1, 1] * a[1, 2] * a[2, 1]
 ```
 """
 function symbolic_components(label::Symbol, dims::Integer...)
@@ -46,7 +47,7 @@ See also [`symbolic_components`](@ref).
 
 ```jldoctest
 julia> GeometricAlgebra.make_symbolic(Multivector{3,1}, :A)
-3-component Multivector{3, 1, Vector{Any}}:
+3-component Multivector{3, 1, Vector{GeometricAlgebra.NanoCAS.ProductNode{GeometricAlgebra.NanoCAS.IndexNode{1}}}}:
  A[1] v1
  A[2] v2
  A[3] v3
@@ -77,7 +78,7 @@ Evaluate `f(args...)` using symbolically optimised code for operations on `Multi
 This is a generated function which first evaluates `f` on symbolic versions of
 the multivector arguments `make_symbolic.(args)` and then converts the symbolic result into unrolled code.
 
-If the result is a `Multivector`, it given the metric signature `sig`.
+If the result is a `Multivector`, it is given the metric signature `sig`.
 
 Calling `symbolic_multivector_eval(Expr, sig, f, args...)` with `Expr` as the first argument
 returns the expression to be compiled.

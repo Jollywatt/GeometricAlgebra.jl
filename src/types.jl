@@ -267,8 +267,11 @@ Base.one(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig
 Base.one(::OrType{<:Multivector{Sig,K,S}}) where {Sig,K,S} = add!(zero(Multivector{Sig,0 ∈ K ? K : 0,S}), numberone(eltype(S)), UInt(0))
 
 
-Base.randn(rng::AbstractRNG, T::Type{<:Multivector}) = T(randn(rng, ncomponents(T)))
-Base.rand(rng::AbstractRNG, T::Type{<:Multivector}) = T(rand(rng, ncomponents(T)))
+randlike(fn::Union{typeof(rand),typeof(randn)}, rng::AbstractRNG, ::Type{<:Vector}, n::Integer) = fn(rng, n)
+randlike(fn::Union{typeof(rand),typeof(randn)}, rng::AbstractRNG, T::Type{<:StaticVector}, _::Integer) = fn(rng, T)
+
+Base.randn(rng::AbstractRNG, T::Type{<:Multivector}) = T(randlike(randn, rng, componentstype(signature(T), ncomponents(T)), ncomponents(T)))
+Base.rand(rng::AbstractRNG, T::Type{<:Multivector}) = T(randlike(rand, rng, componentstype(signature(T), ncomponents(T)), ncomponents(T)))
 
 
 Base.iszero(a::BasisBlade) = isnumberzero(a.coeff)

@@ -292,9 +292,9 @@ macro symbolicga(sig, mv_grades, expr, result_type=nothing)
 	Sig = eval(sig)
 	mv_grades = eval(mv_grades)
 	@assert mv_grades isa NamedTuple
+	labels = keys(mv_grades)
 	result_type = eval(result_type)
 
-	labels = keys(mv_grades)
 
 	symbolic_assignments = map(labels, mv_grades) do label, K
 		mv = make_symbolic(Multivector{Sig,K}, label)
@@ -305,19 +305,21 @@ macro symbolicga(sig, mv_grades, expr, result_type=nothing)
 	end
 
 	if isnothing(result_type)
-		result_expr = toexpr(symbolic_result, componentstype(Sig, 0))
+		result_expr = toexpr(symbolic_result)
 	else
-		symbolic_result isa Multivector || error("@symbolicga expression must evaluate to a Multivector when result_type ($result_type) is given; got $(typeof(symbolic_result)).")
-		symbolic_comps = Tuple(toexpr(comp, nothing) for comp in symbolic_result.comps)
-		result_expr = :($result_type(($(symbolic_comps...),)))
+		symbolic_result isa Multivector || throw(ArgumentError("""
+			@symbolicga expression must evaluate to a Multivector when result_type=$result_type is specified; \
+			got a value of type $(typeof(symbolic_result))."""))
+
+		result_expr = :($makevec($result_type, $(toexpr(symbolic_result.comps)...)))
 	end
 
-	expr_assignments = map(labels, mv_grades) do label, K
+	comps_assignments = map(labels, mv_grades) do label, K
 		:($label = Multivector{$Sig,$K}($label).comps)
 	end
 
 	quote
-		let $(expr_assignments...)
+		let $(comps_assignments...)
 			$result_expr
 		end
 	end |> esc

@@ -27,7 +27,7 @@ export flipdual, hodgedual, invhodgedual, ldual, rdual
 export matrix_repr, outermorphism
 export @symbolicga
 
-include("NanoCAS/NanoCAS.jl")
+include("MiniCAS/MiniCAS.jl")
 
 include("bits.jl")
 include("types.jl")

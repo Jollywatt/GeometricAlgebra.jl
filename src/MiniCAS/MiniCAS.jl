@@ -1,6 +1,7 @@
-module NanoCAS
+module MiniCAS
 
 import Base: ==, +, -, *, /, \, ^
+using OrderedCollections: OrderedDict
 
 export WeightDict
 export ProductNode, SumNode
@@ -9,6 +10,7 @@ export variable, variables, factor, toexpr
 
 include("weightedset.jl")
 include("algebra.jl")
+include("cse.jl")
 
 variable(s::Symbol) = ProductNode(s => 1)
 
@@ -27,4 +29,4 @@ toexpr(a::AbstractArray) = toexpr.(a)
 toexpr(a::IndexNode) = Expr(:ref, a.symbol, a.indices...)
 Base.show(io::IO, a::IndexNode) = print(io, toexpr(a))
 
-end # module NanoCAS
+end # module MiniCAS

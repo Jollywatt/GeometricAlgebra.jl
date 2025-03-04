@@ -190,6 +190,7 @@ end
 #= interaction with vectors =#
 
 (a::Union{Π,Σ} * v::AbstractArray{<:Union{Π,Σ}}) = Ref(a).*v
+(v::AbstractArray{<:Union{Π,Σ}} * a::Union{Π,Σ}) = v.*Ref(a)
 
 #= display =#
 

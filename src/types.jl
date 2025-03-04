@@ -1,5 +1,5 @@
 const OrType{T} = Union{T,Type{T}}
-const Scalar = Union{Number,NanoCAS.SumNode,NanoCAS.ProductNode}
+const Scalar = Union{Number,MiniCAS.SumNode,MiniCAS.ProductNode}
 
 
 

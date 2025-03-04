@@ -21,17 +21,17 @@ See also [`make_symbolic`](@ref).
 # Example
 ```jldoctest
 julia> GeometricAlgebra.symbolic_components(:a, 2, 3)
-2×3 Matrix{GeometricAlgebra.NanoCAS.ProductNode{GeometricAlgebra.NanoCAS.IndexNode{2}}}:
+2×3 Matrix{GeometricAlgebra.MiniCAS.ProductNode{GeometricAlgebra.MiniCAS.IndexNode{2}}}:
  a[1, 1]  a[1, 2]  a[1, 3]
  a[2, 1]  a[2, 2]  a[2, 3]
 
 julia> prod(ans)
-GeometricAlgebra.NanoCAS.ProductNode{GeometricAlgebra.NanoCAS.IndexNode{2}}:
+GeometricAlgebra.MiniCAS.ProductNode{GeometricAlgebra.MiniCAS.IndexNode{2}}:
  a[1, 3] * a[2, 3] * a[2, 2] * a[1, 1] * a[1, 2] * a[2, 1]
 ```
 """
 function symbolic_components(label::Symbol, dims::Integer...)
-	NanoCAS.variables(label, dims...)
+	MiniCAS.variables(label, dims...)
 end
 
 Multivector{Sig,K}(sym::Symbol) where {Sig,K} = make_symbolic(Multivector{Sig,K}, sym)
@@ -47,7 +47,7 @@ See also [`symbolic_components`](@ref).
 
 ```jldoctest
 julia> GeometricAlgebra.make_symbolic(Multivector{3,1}, :A)
-3-component Multivector{3, 1, Vector{GeometricAlgebra.NanoCAS.ProductNode{GeometricAlgebra.NanoCAS.IndexNode{1}}}}:
+3-component Multivector{3, 1, Vector{GeometricAlgebra.MiniCAS.ProductNode{GeometricAlgebra.MiniCAS.IndexNode{1}}}}:
  A[1] v1
  A[2] v2
  A[3] v3
@@ -59,7 +59,7 @@ make_symbolic(::OrType{Val{V}}, label) where {V} = Val(V)
 make_symbolic(::OrType{Type{T}}, label) where {T} = T
 
 
-import .NanoCAS: toexpr
+import .MiniCAS: toexpr
 
 toexpr(a::Multivector) = :( $(constructor(a))($(toexpr(a.comps)...)) )
 

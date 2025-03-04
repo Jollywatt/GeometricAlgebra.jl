@@ -1,5 +1,3 @@
-first_signature(::OrType{<:AbstractMultivector{Sig}}, args...) where {Sig} = Sig
-first_signature(a, args...) = first_signature(args...)
 
 """
 	use_symbolic_optim(sig) -> Bool
@@ -10,6 +8,7 @@ By default, this is enabled if `dimension(sig) ≤ 8`
 (in many dimensions, algebraic expressions may become too unwieldy).
 """
 use_symbolic_optim(sig) = dimension(sig) <= 8
+use_symbolic_optim(::Val{Sig}) where Sig = use_symbolic_optim(Sig)
 
 """
 	symbolic_components(label::Symbol, dims::Integer...)
@@ -66,45 +65,47 @@ toexpr(a::Multivector) = :( $(constructor(a))($(toexpr(a.comps)...)) )
 # toexpr(a::Tuple, compstype) = Expr(:tuple, (toexpr(ai, compstype) for ai ∈ a)...)
 # toexpr(a, compstype) = SymbolicUtils.Code.toexpr(a)
 
+toexpr(a::Multivector, ::Val{Sig}) where Sig = :(Multivector{$Sig,$(grade(a))}($(toexpr(a.comps)...)))
+toexpr(a, ::Val) = a
+
 
 """
-	symbolic_multivector_eval(compstype, f, x::AbstractMultivector...)
+	symbolic_multivector_eval(sig::Val, f::Function, args...)
 
-Evaluate `f(x...)` using symbolically generated code, returning a `Multivector`
-with components array of type `compstype`.
+Evaluate `f(args...)` using symbolically optimised code for operations on `Multivector`s.
 
 This is a generated function which first evaluates `f` on symbolic versions of
-the multivector arguments `x` and then converts the symbolic result into unrolled code.
+the multivector arguments `make_symbolic.(args)` and then converts the symbolic result into unrolled code.
 
-Calling `symbolic_multivector_eval(Expr, compstype, f, x...)` with `Expr` as the first argument
+If the result is a `Multivector`, it given the metric signature `sig`.
+
+Calling `symbolic_multivector_eval(Expr, sig, f, args...)` with `Expr` as the first argument
 returns the expression to be compiled.
 
 See also [`@symbolic_optim`](@ref).
 
 # Example
 ```julia
-julia> A, B = Multivector{2,1}([1, 2]), Multivector{2,1}([3, 4]);
+julia> A, B = randn(Multivector{3,0:3}, 2)
 
-julia> symbolic_multivector_eval(Expr, MVector, geometric_prod, A, B)
-quote # prettified for readability
-    let a = Multivector(args[1]).comps, b = Multivector(args[2]).comps
-        comps = SymbolicUtils.Code.create_array(
-            MVector, Int64, Val(1), Val((2,)),
-            a[1]*b[1] + a[2]*b[2],
-            a[1]*b[2] - a[2]*b[1],
-        )
-        Multivector{2, 0:2:2}(comps)
-    end
-end
+julia> symbolic_multivector_eval(Expr, Val(2), geometric_prod, A, B)
+:(let a = (Multivector(args[1])).comps, b = (Multivector(args[2])).comps
+      Multivector{2, 0:2}(
+          a[1] * b[1] + -1 * (b[4] * a[4]) + b[2] * a[2] + b[3] * a[3],
+          b[3] * a[4] + b[1] * a[2] + -1 * (b[4] * a[3]) + a[1] * b[2],
+          -1 * (a[4] * b[2]) + b[4] * a[2] + b[3] * a[1] + b[1] * a[3],
+          b[3] * a[2] + a[4] * b[1] + -1 * (b[2] * a[3]) + b[4] * a[1],
+      )
+  end)
 
-julia> @btime symbolic_multivector_eval(MVector, geometric_prod, A, B);
-  86.928 ns (3 allocations: 192 bytes)
+julia> @btime symbolic_multivector_eval(Val(2), geometric_prod, A, B);
+  19.684 ns (2 allocations: 64 bytes)
 
 julia> @btime geometric_prod(Val(:nosym), A, B); # opt-out of symbolic optim
-  4.879 μs (30 allocations: 1.22 KiB)
+  7.312 μs (125 allocations: 4.67 KiB)
 ```
 """
-function symbolic_multivector_eval(::Type{Expr}, f::Function, args...)
+function symbolic_multivector_eval(::Type{Expr}, sig::Val, f::Function, args...)
 	abc = Symbol.('a' .+ (0:length(args) - 1))
 
 	sym_args = make_symbolic.(args, abc)
@@ -120,17 +121,22 @@ function symbolic_multivector_eval(::Type{Expr}, f::Function, args...)
 
 	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]
 	:(let $(assignments...)
-		$(toexpr(sym_result))
+		$(toexpr(sym_result, sig))
 	end)
 end
 
-@generated function symbolic_multivector_eval(f::Function, args...)
-	symbolic_multivector_eval(Expr, f.instance, args...)
+
+@generated function symbolic_multivector_eval(::Val{Sig}, f::Function, args...) where Sig
+	symbolic_multivector_eval(Expr, Val(Sig), f.instance, args...)
 end
+
+
+# return the first metric signature parameter encountered in an argument list
+first_signature(::OrType{<:AbstractMultivector{Sig}}, args...) where Sig = Val(Sig)
+first_signature(a, args...) = first_signature(args...)
 
 replace_signature(a::Multivector{Sig,K,S}, ::Val{Sig′}) where {Sig,Sig′,K,S} = Multivector{Sig′,K,S}(a.comps)
 replace_signature(a, ::Val) = a
-
 
 canonicalize(a::Multivector) = replace_signature(a, Val(canonical_signature(signature(a))))
 canonicalize(a::BasisBlade) = canonicalize(Multivector(a))
@@ -161,9 +167,8 @@ To do this, the metric signatures in `args` are replaced with the equivalent can
 function symbolic_optim(f::Function, args...)
 	# we’re replacing objects’ type parameters, so type stability is a little delicate
 	args′ = canonicalize.(args)
-	result = symbolic_multivector_eval(f, args′...)
-	Sig = first_signature(args...) # guess what the original (non-canonical) signature would be
-	replace_signature(result, Val(Sig)) # restore original signature
+	Sig::Val = first_signature(args...) # guess the original (non-canonical) signature of f(args...)
+	result = symbolic_multivector_eval(Sig, f, args′...)
 end
 
 """

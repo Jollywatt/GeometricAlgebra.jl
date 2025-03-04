@@ -165,6 +165,7 @@ end
 @symbolic_optim function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(resulting_multivector_type(geometric_prod, a, b))
 	for (acoeff, abits) ∈ nonzero_components(a), (bcoeff, bbits) ∈ nonzero_components(b)
+		# println(abits, ":", bbits)
 		factor = geometric_prod_factor(Sig, abits, bbits)
 		c = add!(c, factor*(acoeff*bcoeff), abits ⊻ bbits)
 	end

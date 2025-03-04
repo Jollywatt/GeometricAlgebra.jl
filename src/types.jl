@@ -114,9 +114,10 @@ julia> grade(ans, 1)
  4 v3
 ```
 """
-function Multivector{Sig,K}(comps::S) where {Sig,K,S}
-	@assert length(comps) === ncomponents(Multivector{Sig,K}) """
-	instances of $(Multivector{Sig,K}) have $(ncomponents(Multivector{Sig,K})) components, but received $(length(comps))"""
+function Multivector{Sig,K}(comps::S) where {Sig,K,S<:AbstractVector}
+	n = ncomponents(Multivector{Sig,K})
+	@assert length(comps) == n """
+	instances of $(Multivector{Sig,K}) have $n components, but received $(length(comps))"""
 	Multivector{Sig,K,S}(comps)
 end
 
@@ -136,7 +137,7 @@ function Multivector{Sig,K′}(a::Multivector{Sig,K}) where {Sig,K,K′}
 	grade(a, K′)
 end
 
-Multivector{Sig,K}(comps::Scalar...) where {Sig,K} = Multivector{Sig,K}(makevec(componentstype(Sig, length(comps)), comps...))
+Multivector{Sig,K}(comps...) where {Sig,K} = Multivector{Sig,K}(makevec(componentstype(Sig, length(comps)), comps...))
 
 
 Base.convert(::Type{Multivector{Sig,K,S}}, a::Multivector{Sig,K}) where {Sig,K,S} = Multivector{Sig,K}(convert(S, a.comps))

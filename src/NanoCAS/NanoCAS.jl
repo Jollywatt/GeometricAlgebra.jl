@@ -5,10 +5,12 @@ import Base: ==, +, -, *, /, \, ^
 export WeightDict
 export ProductNode, SumNode
 
-export factor
+export variable, variables, factor, toexpr
 
 include("weightedset.jl")
 include("algebra.jl")
+
+variable(s::Symbol) = ProductNode(s => 1)
 
 function variables(s::Symbol, dims::Integer...)
 	indices = Iterators.product(Base.OneTo.(dims)...)

@@ -20,6 +20,8 @@ Base.hash(a::Union{Π,Σ}, seed::UInt) = hash(a.x, seed)
 Π(iter::Base.Generator) = Π(WeightedSet(iter))
 Σ(iter::Base.Generator) = Σ(WeightedSet(iter))
 
+Π{K}(iter::Base.Generator) where K = Π{K}(WeightedSet{K,Int}(iter))
+
 Base.convert(::Type{Π{K}}, a::Π{K′}) where {K,K′} = Π(WeightedSet{K,Int}(a.x))
 Σ(d::WeightedSet{Π,V}) where V = Σ(WeightedSet{Π{Any},V}(d))
 
@@ -54,7 +56,7 @@ mul!(a::Π, b::Π) = Π(combine!(a.x, b.x))
 (a::Σ \ λ::Number) = scalarmul!(inv(a), λ)
 
 Base.inv(a::Π) = Π(negate!(copy(a.x)))
-(a::Π ^ p::Integer) = Π(k => p*v for (k, v) in a.x)
+(a::Π{K} ^ p::Integer) where K = Π{K}(k => p*v for (k, v) in a.x)
 
 
 #= scalar multiplication of sums =#
@@ -179,11 +181,19 @@ function Base.inv(a::Σ)
 end
 
 
+#= special functions =#
 
+for fn in [:sqrt, :cosh, :sinh, :cos, :sin]
+	@eval Base.$fn(a::Union{Π,Σ}) = Π(Expr(:call, $(Meta.quot(fn)), toexpr(a)) => 1)
+end
+
+#= interaction with vectors =#
+
+(a::Union{Π,Σ} * v::AbstractArray{<:Union{Π,Σ}}) = Ref(a).*v
 
 #= display =#
 
-toexpr(a::Symbol) = a
+toexpr(a::Union{Symbol,Expr,Number}) = a
 function toexpr(a::Π)
 	terms = [isone(v) ? toexpr(k) : Expr(:call, :^, toexpr(k), v) for (k, v) in a.x]
 	isempty(terms) && return 1

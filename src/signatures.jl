@@ -16,7 +16,7 @@ In addition to the required methods above, metric signatures may implement
 =#
 
 """
-	canonicalize_signature(sig)
+	canonical_signature(sig)
 
 Canonical tuple representation of a metric signature.
 
@@ -25,11 +25,11 @@ Canonical tuple representation of a metric signature.
 julia> Cl(1,3)
 Cl(1,3) (pretty-printed Cl{1, 3, 0}())
 
-julia> GeometricAlgebra.canonicalize_signature(ans)
+julia> GeometricAlgebra.canonical_signature(ans)
 (1, -1, -1, -1)
 ```
 """
-canonicalize_signature(sig) = ntuple(i -> basis_vector_square(sig, i), dimension(sig))
+canonical_signature(sig) = ntuple(i -> basis_vector_square(sig, i), dimension(sig))
 
 """
 	ncomponents(sig) = 2^dimension(sig)

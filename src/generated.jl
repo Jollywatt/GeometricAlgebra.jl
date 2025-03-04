@@ -114,7 +114,8 @@ function symbolic_multivector_eval(::Type{Expr}, f::Function, args...)
 	# special case for zero-component results - ensure sensible eltype
 	if sym_result isa Multivector && isempty(sym_result.comps)
 		T = promote_type(eltype.(args[I])...)
-		return constructor(sym_result)(zeroslike(componentstype(signature(sym_result), 0, T), 0))
+		comps = zeroslike(componentstype(signature(sym_result), 0, T), 0)
+		return constructor(sym_result)(comps)
 	end
 
 	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]
@@ -128,22 +129,20 @@ end
 end
 
 replace_signature(a::Multivector{Sig,K,S}, ::Val{Sig′}) where {Sig,Sig′,K,S} = Multivector{Sig′,K,S}(a.comps)
-# replace_signature(a ::BasisBlade{Sig,K,T}, ::Val{Sig′}) where {Sig,Sig′,K,T} =  BasisBlade{Sig′,K,T}(a.coeff, a.bits)
 replace_signature(a, ::Val) = a
 
 
-function normalize_symbolic_optim_args(sig::Val, arg, args...)
-	arg = arg isa BasisBlade ? Multivector(arg) : arg
-	arg = replace_signature(arg, sig)
-	(arg, normalize_symbolic_optim_args(sig, args...)...)
-end
-normalize_symbolic_optim_args(sig::Val) = ()
+canonicalize(a::Multivector) = replace_signature(a, Val(canonical_signature(signature(a))))
+canonicalize(a::BasisBlade) = canonicalize(Multivector(a))
+canonicalize(a) = a
 
-#=
-	symbolic_optim()
+"""
+	symbolic_optim(f, args...)
 
-Because of the rules of generated functions, we can’t call methods that may be later (re)defined
-from within `symbolic_multivector_eval`. However, we still want the methods
+Evaluate `f(args...)` by invoking the generated function [`symbolic_multivector_eval`](@ref).
+
+Because of the rules of generated functions, [`symbolic_multivector_eval`](@ref) must not call
+methods that may be later (re)defined. However, we still want the methods
 - `dimension(sig)`
 - `basis_vector_square(sig, i)`
 - `componentstype(sig)`
@@ -151,17 +150,19 @@ to work for user-defined signature types, as part of the “metric signature int
 Since these methods may be defined in a newer world-age than `symbolic_multivector_eval`,
 we must move calls to such methods outside the generated function.
 
-To do this, the metric signature is normalized to an equivalent tuple signature, and the result of `componentstype(sig)`
-is passed as an argument to — rather than being called from — `symbolic_multivector_eval`.
+To do this, the metric signatures in `args` are replaced with the equivalent canonical tuple signature.
 (We assume that `dimension(::Tuple)`, etc, are core functionality that won’t be modified by the user.)
-=#
 
+!!! warning
+	If `f(args...)` is a `Multivector`, its signature is assumed to be identical to the signature
+	of the first `AbstractMultivector` argument in `args`.
+	(The actual signature is lost because signatures are converted to canonical tuples.)
+"""
 function symbolic_optim(f::Function, args...)
 	# we’re replacing objects’ type parameters, so type stability is a little delicate
-	Sig = first_signature(args...)
-	Sig′ = canonicalize_signature(Sig)
-	args′ = normalize_symbolic_optim_args(Val(Sig′), args...)
+	args′ = canonicalize.(args)
 	result = symbolic_multivector_eval(f, args′...)
+	Sig = first_signature(args...) # guess what the original (non-canonical) signature would be
 	replace_signature(result, Val(Sig)) # restore original signature
 end
 

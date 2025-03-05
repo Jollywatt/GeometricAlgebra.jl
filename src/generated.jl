@@ -64,13 +64,14 @@ import .MiniCAS: toexpr, factor
 toexpr(a::Multivector{Sig}) where Sig = toexpr(a, Val(Sig))
 
 toexpr(a::Multivector, ::Val{Sig}) where Sig = :(Multivector{$Sig,$(grade(a))}($(toexpr.(a.comps)...)))
-toexpr(a, ::Val) = a
+toexpr(a, ::Val) = toexpr(a)
 
 toexpr(a::Vector) = :([$(a...)])
 toexpr(a::MVector) = :(MVector($(a...)))
 toexpr(a::SVector) = :(SVector($(a...)))
 
 factor(a::Multivector) = constructor(a)(factor.(a.comps))
+factor(a::Number) = a
 
 
 """
@@ -125,14 +126,16 @@ function symbolic_multivector_eval(::Type{Expr}, sig::Val, f::Function, args...;
 		end
 
 		sym_result = MiniCAS.factor(sym_result)
-		if simplify
-			sym_result = MiniCAS.cse(sym_result)
-		end
+	end
+
+	expr = toexpr(sym_result, sig)
+	if simplify && expr isa Expr
+		expr = MiniCAS.cse(expr)
 	end
 
 	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]
 	:(let $(assignments...)
-		$(toexpr(sym_result, sig))
+		$expr
 	end)
 end
 

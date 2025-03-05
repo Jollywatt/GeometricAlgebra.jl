@@ -54,5 +54,6 @@ function toexpr(l::SubexprList; pretty=true)
 	names = Dict(k => pretty ? letter(i) : gensym() for (i, k) in enumerate(keys(l.defs)))
 	c = collect(l)
 	defs = [names[k] => substitute(v, names) for (k, v) in l]
-	Expr(:let, [:($k = $v) for (k, v) in defs[1:end-1]], last(defs[end]))
+	lets = [:($k = $v) for (k, v) in defs[1:end-1]]
+	Expr(:let, Expr(:block, lets...), last(defs[end]))
 end

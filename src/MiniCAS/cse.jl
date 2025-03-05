@@ -15,7 +15,7 @@ See also [`subexprs`](@ref).
 # Examples
 ```jldoctest
 julia> subexprs(:(A + f(A) + g(f(A))))
-MicroCAS.SubexprList with 3 entries:
+SubexprList with 3 entries:
   α => :(f(A))
   β => :(g(α))
   γ => :(A + α + β)
@@ -80,7 +80,7 @@ See also [`squash`](@ref).
 # Example
 ```jldoctest
 julia> subexprs(:(A + f(A) + g(f(A))))
-MicroCAS.SubexprList with 3 entries:
+SubexprList with 3 entries:
   α => :(f(A))
   β => :(g(α))
   γ => :(A + α + β)
@@ -138,21 +138,26 @@ substituting their definitions into subsequent expressions.
 # Example
 
 ```jldoctest
-julia> MiniCAS.subexprs(:(A + f(A) + g(f(A))^2))
-MicroCAS.SubexprList with 4 entries:
+julia> subexprs(:(A + f(A) + g(f(A))^2))
+SubexprList with 4 entries:
   α => :(f(A))
   β => :(g(α))
   γ => :(β ^ 2)
   δ => :(A + α + γ)
 
-julia> MiniCAS.squash(ans, 1)
-MicroCAS.SubexprList with 2 entries:
-  α => :(f(A))
-  β => :(A + α + g(α) ^ 2)
+julia> squash(ans, 1)
+ERROR: UndefVarError: `squash` not defined in `Main`
+Suggestion: check for spelling errors or missing imports.
+Stacktrace:
+ [1] top-level scope
+   @ none:1
 
-julia> MiniCAS.squash(ans, 2)
-MicroCAS.SubexprList with 1 entry:
-  α => :(A + f(A) + g(f(A)) ^ 2)
+julia> squash(ans, 2)
+ERROR: UndefVarError: `squash` not defined in `Main`
+Suggestion: check for spelling errors or missing imports.
+Stacktrace:
+ [1] top-level scope
+   @ none:1
 ```
 """
 function squash(l::SubexprList, maxcount=1)
@@ -183,6 +188,9 @@ Returns a `let ... end` block.
 
 ```jldoctest
 julia> cse(:(A + f(A) + g(f(A))^2))
+:(let α = f(A)
+      A + α + g(α) ^ 2
+  end)
 ```
 """
 cse = toexpr∘squash∘subexprs∘toexpr

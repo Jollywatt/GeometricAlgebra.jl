@@ -3,8 +3,8 @@ module MiniCAS
 import Base: ==, +, -, *, /, \, ^
 using OrderedCollections: OrderedDict
 
-export WeightDict
-export ProductNode, SumNode
+export ProductNode, SumNode, IndexNode
+export SubexprList
 
 export variable, variables, factor, toexpr, subexprs, cse
 

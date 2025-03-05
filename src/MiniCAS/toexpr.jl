@@ -1,5 +1,3 @@
-
-
 function toexpr(a::ProductNode)
 	terms = [isone(v) ? toexpr(k) : Expr(:call, :^, toexpr(k), v) for (k, v) in a.x]
 	isempty(terms) && return 1

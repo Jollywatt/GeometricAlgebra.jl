@@ -627,7 +627,7 @@ function outermorphism(mat::AbstractMatrix, a::AbstractMultivector{Sig}; sig=Sig
 	for (coeff, bits) ∈ nonzero_components(a)
 		vs = Multivector{sig,1}.(eachcol(mat[:,bits_to_indices(bits)]))
 		v = reduce(∧, vs; init = one(a′))
-		add!(a′, coeff*v)
+		a′ = add!(a′, coeff*v)
 	end
 	a′
 end

@@ -59,7 +59,7 @@ make_symbolic(::OrType{Val{V}}, label) where {V} = Val(V)
 make_symbolic(::OrType{Type{T}}, label) where {T} = T
 
 
-import .MiniCAS: toexpr
+import .MiniCAS: toexpr, factor
 
 toexpr(a::Multivector{Sig}) where Sig = toexpr(a, Val(Sig))
 
@@ -69,6 +69,8 @@ toexpr(a, ::Val) = a
 toexpr(a::Vector) = :([$(a...)])
 toexpr(a::MVector) = :(MVector($(a...)))
 toexpr(a::SVector) = :(SVector($(a...)))
+
+factor(a::Multivector) = constructor(a)(factor.(a.comps))
 
 
 """
@@ -107,18 +109,25 @@ julia> @btime geometric_prod(Val(:nosym), A, B); # opt-out of symbolic optim
   7.312 μs (125 allocations: 4.67 KiB)
 ```
 """
-function symbolic_multivector_eval(::Type{Expr}, sig::Val, f::Function, args...)
+function symbolic_multivector_eval(::Type{Expr}, sig::Val, f::Function, args...; simplify=true)
 	abc = Symbol.('a' .+ (0:length(args) - 1))
 
 	sym_args = make_symbolic.(args, abc)
 	sym_result = f(sym_args...)
 	I = findall(arg -> arg isa AbstractMultivector, sym_args)
 
-	# special case for zero-component results - ensure sensible eltype
-	if sym_result isa Multivector && isempty(sym_result.comps)
-		T = promote_type(eltype.(args[I])...)
-		comps = zeroslike(componentstype(signature(sym_result), 0, T), 0)
-		return constructor(sym_result)(comps)
+	if sym_result isa Multivector
+		# special case for zero-component results - ensure sensible eltype
+		if isempty(sym_result.comps)
+			T = promote_type(eltype.(args[I])...)
+			comps = zeroslike(componentstype(signature(sym_result), 0, T), 0)
+			return constructor(sym_result)(comps)
+		end
+
+		sym_result = MiniCAS.factor(sym_result)
+		if simplify
+			sym_result = MiniCAS.cse(sym_result)
+		end
 	end
 
 	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]

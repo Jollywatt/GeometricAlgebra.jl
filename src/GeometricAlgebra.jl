@@ -5,7 +5,7 @@ using Combinatorics: permutations, parity
 using PrettyTables: pretty_table
 using Random: AbstractRNG
 
-export MVector
+export SVector, MVector
 
 export AbstractMultivector, BasisBlade, Multivector
 export basis, @basis, cayleytable

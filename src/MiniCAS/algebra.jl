@@ -26,6 +26,7 @@ Base.convert(::Type{Π{K}}, a::Π{K′}) where {K,K′} = Π(WeightedSet{K,Int}(
 Σ(d::WeightedSet{Π,V}) where V = Σ(WeightedSet{Π{Any},V}(d))
 
 Base.one(::Type{Π{K}}) where K = Π{K}(Dict{K,Int}())
+Base.zero(::Type{Π{K}}) where K = zero(Σ{K,Int})
 Base.one(::Type{Σ{K,V}}) where {K,V} = Σ(one(Π{K}) => one(V))
 Base.zero(::Type{Σ{K,V}}) where {K,V} = Σ{K,V}(Dict{Π{K},V}())
 

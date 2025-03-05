@@ -180,7 +180,7 @@ To do this, the metric signatures in `args` are replaced with the equivalent can
 """
 function symbolic_optim(f::Function, args...)
 	# we’re replacing objects’ type parameters, so type stability is a little delicate
-	args′ = canonicalize.(args)
+	args′ = map(canonicalize, args)
 	Sig::Val = first_signature(args...) # guess the original (non-canonical) signature of f(args...)
 	result = symbolic_multivector_eval(Sig, f, args′...)
 end

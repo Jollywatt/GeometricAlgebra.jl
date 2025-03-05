@@ -7,7 +7,8 @@ end
 
 Represents a directed acyclic graph of expressions as an ordered list of definitions.
 The last entry defines the full expression in terms of preceding subexpressions.
-Subexpressions are referenced with a `SubexprPointer`, which are the keys of the underlying `OrderedDict` and are pretty printed as Greek letters.
+Subexpressions are referenced with a `SubexprPointer`, which are the keys of the underlying `OrderedDict`
+and are pretty printed as Greek letters.
 
 See also [`subexprs`](@ref).
 
@@ -131,24 +132,25 @@ end
 """
 	squash(::SubexprList, maxcount=1)::SubexprList
 
-Eliminate subexpressions which are referenced at most `maxcount` times by substituting their definitions in subsequent expressions.
+Eliminate subexpressions which are only referenced up to `maxcount` times
+substituting their definitions into subsequent expressions.
 
 # Example
 
 ```jldoctest
-julia> subexprs(:(A + f(A) + g(f(A))^2))
+julia> MiniCAS.subexprs(:(A + f(A) + g(f(A))^2))
 MicroCAS.SubexprList with 4 entries:
   α => :(f(A))
   β => :(g(α))
   γ => :(β ^ 2)
   δ => :(A + α + γ)
 
-julia> squash(ans, 1)
+julia> MiniCAS.squash(ans, 1)
 MicroCAS.SubexprList with 2 entries:
   α => :(f(A))
   β => :(A + α + g(α) ^ 2)
 
-julia> squash(ans, 2)
+julia> MiniCAS.squash(ans, 2)
 MicroCAS.SubexprList with 1 entry:
   α => :(A + f(A) + g(f(A)) ^ 2)
 ```
@@ -170,24 +172,17 @@ function squash(l::SubexprList, maxcount=1)
 	out
 end
 
-cse(expr::Expr) = toexpr(squash(subexprs(expr)))
 
 """
-	toexpr(::SubexprList; pretty=false)
+	cse(a)
 
-Render a subexpression list as a `let ... end` expression.
+Perform [common subexpression elimination](https://en.wikipedia.org/wiki/Common_subexpression_elimination)
+on an `Expr` or value (to be converted with [`toexpr`](@ref)).
 
-# Example
+Returns a `let ... end` block.
+
 ```jldoctest
-julia> toexpr(subexprs(:(x^2 + f(x^2))), pretty=true)
-:(let α = x ^ 2, β = f(α)
-      α + β
-  end)
+julia> cse(:(A + f(A) + g(f(A))^2))
 ```
 """
-function toexpr(l::SubexprList; pretty=true)
-	names = Dict(k => pretty ? letter(i) : gensym() for (i, k) in enumerate(keys(l.defs)))
-	c = collect(l)
-	defs = [names[k] => substitute(v, names) for (k, v) in l]
-	Expr(:let, [:($k = $v) for (k, v) in defs[1:end-1]], last(defs[end]))
-end
+cse = toexpr∘squash∘subexprs∘toexpr

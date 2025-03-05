@@ -61,13 +61,14 @@ make_symbolic(::OrType{Type{T}}, label) where {T} = T
 
 import .MiniCAS: toexpr
 
-toexpr(a::Multivector) = :( $(constructor(a))($(toexpr(a.comps)...)) )
+toexpr(a::Multivector{Sig}) where Sig = toexpr(a, Val(Sig))
 
-# toexpr(a::Tuple, compstype) = Expr(:tuple, (toexpr(ai, compstype) for ai ∈ a)...)
-# toexpr(a, compstype) = SymbolicUtils.Code.toexpr(a)
-
-toexpr(a::Multivector, ::Val{Sig}) where Sig = :(Multivector{$Sig,$(grade(a))}($(toexpr(a.comps)...)))
+toexpr(a::Multivector, ::Val{Sig}) where Sig = :(Multivector{$Sig,$(grade(a))}($(toexpr.(a.comps)...)))
 toexpr(a, ::Val) = a
+
+toexpr(a::Vector) = :([$(a...)])
+toexpr(a::MVector) = :(MVector($(a...)))
+toexpr(a::SVector) = :(SVector($(a...)))
 
 
 """
@@ -312,7 +313,7 @@ macro symbolicga(sig, mv_grades, expr, result_type=nothing)
 			@symbolicga expression must evaluate to a Multivector when result_type=$result_type is specified; \
 			got a value of type $(typeof(symbolic_result))."""))
 
-		result_expr = :($makevec($result_type, $(toexpr(symbolic_result.comps)...)))
+		result_expr = :($makevec($result_type, $(toexpr.(symbolic_result.comps)...)))
 	end
 
 	comps_assignments = map(labels, mv_grades) do label, K

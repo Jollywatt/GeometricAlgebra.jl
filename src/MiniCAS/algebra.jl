@@ -191,28 +191,3 @@ end
 
 (a::Union{Π,Σ} * v::AbstractArray{<:Union{Π,Σ}}) = Ref(a).*v
 (v::AbstractArray{<:Union{Π,Σ}} * a::Union{Π,Σ}) = v.*Ref(a)
-
-#= display =#
-
-toexpr(a::Union{Symbol,Expr,Number}) = a
-function toexpr(a::Π)
-	terms = [isone(v) ? toexpr(k) : Expr(:call, :^, toexpr(k), v) for (k, v) in a.x]
-	isempty(terms) && return 1
-	isone(length(terms)) && return only(terms)
-	Expr(:call, :*, terms...)
-end
-
-function toexpr(a::Σ)
-	terms = [isone(v) ? toexpr(k) : Expr(:call, :*, v, toexpr(k)) for (k, v) in a.x]
-	isempty(terms) && return 0
-	isone(length(terms)) && return only(terms)
-	Expr(:call, :+, terms...)
-end
-
-Base.show(io::IO, a::Union{Π,Σ}) = print(io, toexpr(a))
-Base.show(io::IO, ::MIME"text/plain", a::Union{Π,Σ}) = print(io, typeof(a), ":\n ", a)
-
-debug(a) = a
-debug(a::Π) = Expr(:call, :Π, (:($(debug(k))^$v) for (k, v) in a.x)...)
-debug(a::Σ) = Expr(:call, :Σ, (:($v*$(debug(k))) for (k, v) in a.x)...)
-

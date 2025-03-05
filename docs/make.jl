@@ -7,12 +7,17 @@ using Pkg; Pkg.activate("."); Pkg.instantiate()
 using Documenter, DocumenterCitations
 using Revise
 using GeometricAlgebra
+using GeometricAlgebra.MiniCAS
 
 const project_root = pathof(GeometricAlgebra) |> dirname |> dirname
 
 # apply setup code to all doctests in doc strings
 DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
     using Revise, GeometricAlgebra
+end; recursive=true)
+
+DocMeta.setdocmeta!(GeometricAlgebra.MiniCAS, :DocTestSetup, quote
+    using Revise, GeometricAlgebra.MiniCAS
 end; recursive=true)
 
 const bibfile = "src/references.bib"

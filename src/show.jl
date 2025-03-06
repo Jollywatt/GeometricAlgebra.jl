@@ -60,12 +60,12 @@ end
 
 
 function show_multivector_row(io::IO, @nospecialize(a);
-                              indent=0,
-                              compact=false,
-                              showzeros=false,
-                              basis_display_style=get_basis_display_style(signature(a)))
+	                           indent=0,
+	                           compact=false,
+	                           showzeros=false,
+	                           eps=0,
+	                           basis_display_style=get_basis_display_style(signature(a)))
 	io = IOContext(io, :compact=>true)
-	print(io, " "^indent)
 	if (!showzeros || compact) && iszero(a)
 		print(io, numberzero(eltype(a)))
 		return
@@ -74,12 +74,19 @@ function show_multivector_row(io::IO, @nospecialize(a);
 	for bits ∈ componentbits(basis_display_style, grade(a))
 		coeff = a.comps[componentindex(a, bits)]
 		!showzeros && isnumberzero(coeff) && continue
-		isfirst ? isfirst = false : print(io, " + ")
+		applicable(abs, coeff) && abs(coeff) < eps && continue
+		isfirst ? print(io, " "^indent) : print(io, " + ")
 		show_blade(io, BasisBlade{signature(a)}(coeff, bits); compact, basis_display_style)
+		isfirst = false
 	end
 end
 
-function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true, compact=false, basis_display_style=get_basis_display_style(signature(a)))
+function show_multivector_col(io::IO, @nospecialize(a);
+	                           indent=0,
+	                           showzeros=true,
+	                           compact=false,
+	                           eps=0,
+	                           basis_display_style=get_basis_display_style(signature(a)))
 	!showzeros && iszero(a) && return print(io, " "^indent, numberzero(eltype(a)))
 
 	bits = componentbits(basis_display_style, grade(a))
@@ -89,6 +96,8 @@ function show_multivector_col(io::IO, @nospecialize(a); indent=0, showzeros=true
 
 	if !showzeros
 		filter!(!isnumberzero∘first, comps)
+		filter!(>=(eps)∘abs∘first, comps)
+
 	end
 
 	isempty(comps) && return print(io, " "^indent, a.comps)
@@ -119,13 +128,16 @@ Display multivector components in a column or inline, optionally grouping by gra
 
 # Keyword arguments
 
-- `inline::Bool`: print on one line (default `true`)
+- `inline::Bool`: print on one line (default `true`).
 - `groupgrades::Bool`: visually group components by grade (default `true`).
    If inline, prints parentheses around parts of each grade; if multiline, prints
-   each grade on its own line
-- `showzeros::Bool`: whether to omit zero components from display
-- `indent::Integer`: indentation width
-- `parseable::Bool`: use parseable style (used by `repr`) instead of human-readable style
+   each grade on its own line.
+- `showzeros::Bool`: whether to omit zero components from display.
+- `eps::Real`: supprxess components with a magnitude smaller than a threshold (default `0`).
+- `indent::Integer`: indentation width.
+- `parseable::Bool`: use parseable style (used by `repr`) instead of human-readable style.
+- `compact::Bool`: omit unnecessary spaces, coefficients of unity, etc (default: `false`).
+- `basis_display_style::BasisDisplayStyle`: style to use to print basis blades.
 
 # Examples
 ```jldoctest
@@ -156,10 +168,11 @@ Multivector{2, 0:2}([1, 4, 9, 16])
 function show_multivector(io::IO, @nospecialize(a);
                           inline=false,
                           groupgrades=!ishomogeneous(a),
-                          indent=0,
                           showzeros=ishomogeneous(a) && dimension(a) < 8,
-                          compact=false,
+                          eps=0,
+                          indent=0,
                           parseable=false,
+                          compact=false,
                           basis_display_style=get_basis_display_style(signature(a)))
 	if parseable
 		@static if VERSION ≥ v"1.7"
@@ -179,7 +192,9 @@ function show_multivector(io::IO, @nospecialize(a);
 			for k in grade(a)
 				ak = grade(a, k)
 
-				showzeros || iszero(ak) && continue
+				if !showzeros
+					issmall(ak, eps) && continue
+				end
 
 				firstgroup || print(io, inline ? " + " : "\n")
 				if firstgroup || !inline
@@ -187,16 +202,16 @@ function show_multivector(io::IO, @nospecialize(a);
 				end
 
 				inline && print(io, "(")
-				show_multivector_row(io, ak; showzeros, compact, basis_display_style)
+				show_multivector_row(io, ak; showzeros, compact, eps, basis_display_style)
 				inline && print(io, ")")
 
 				firstgroup = false
 			end
 		else
 			if inline
-				show_multivector_row(io, a; indent, showzeros, compact, basis_display_style)
+				show_multivector_row(io, a; indent, showzeros, compact, eps, basis_display_style)
 			else
-				show_multivector_col(io, a; indent, showzeros, compact, basis_display_style)
+				show_multivector_col(io, a; indent, showzeros, compact, eps, basis_display_style)
 			end
 		end
 	end

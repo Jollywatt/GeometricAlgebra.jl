@@ -54,7 +54,7 @@ BasisBlade{(t = -1, x = 1, y = 1, z = 1), 4, Int64}:
  1 txyz
 
 julia> sum(basis(Cl("++"))) # shorthand for metric signature (1, 1)
-2-component Multivector{Cl("++"), 1, MVector{2, Int64}}:
+2-component Multivector{Cl("++"), 1, SVector{2, Int64}}:
  1 v1
  1 v2
 ```
@@ -109,9 +109,9 @@ julia> GeometricAlgebra.make_symbolic.(Multivector{2,1}, [:A, :B])
  B[1]v1 + B[2]v2
 
 julia> prod(ans)
-2-component Multivector{2, 0:2:2, MVector{2, GeometricAlgebra.MiniCAS.SumNode{GeometricAlgebra.MiniCAS.IndexNode{1}, Int64}}}:
- B[1] * A[1] + B[2] * A[2]
- -(B[1] * A[2]) + B[2] * A[1] v12
+2-component Multivector{2, 0:2:2, SVector{2, GeometricAlgebra.MiniCAS.SumNode{GeometricAlgebra.MiniCAS.IndexNode{1}, Int64}}}:
+ A[1] * B[1] + B[2] * A[2]
+ -(B[1] * A[2]) + A[1] * B[2] v12
 ```
 
 This makes it easy to optimize multivector operations: first perform the calculation symbolically and then compile the resulting analytic expression. By default, this optimization is enabled for most products (including the geometric, wedge and inner products in up to eight dimensions[^1]).

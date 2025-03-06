@@ -533,7 +533,7 @@ julia> u = Multivector{3,1}(1:3)
  3 v3
 
 julia> hodgedual(u)
-3-component Multivector{3, 2, MVector{3, Int64}}:
+3-component Multivector{3, 2, SVector{3, Int64}}:
   3 v12
  -2 v13
   1 v23

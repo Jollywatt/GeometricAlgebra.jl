@@ -51,8 +51,14 @@ Modules = [GeometricAlgebra]
 ## Symbolic utilities
 
 ```@autodocs
-Pages = ["NanoCAS/NanoCAS.jl", "NanoCAS/algebra.jl"]
-Modules = [NanoCAS]
+Pages = [
+	"MiniCAS/MiniCAS.jl",
+	"MiniCAS/weightedset.jl",
+	"MiniCAS/algebra.jl",
+	"MiniCAS/cse.jl",
+	"MiniCAS/toexpr.jl",
+]
+Modules = [MiniCAS]
 ```
 
 ## Utilities

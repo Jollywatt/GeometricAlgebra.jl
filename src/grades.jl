@@ -149,7 +149,7 @@ If the return type must be inferable, use `grade(a, Val(k))`.
 # Examples
 ```jldoctest
 julia> grade(BasisBlade{3}(42, 0b101), 2)
-3-component Multivector{3, 2, MVector{3, Int64}}:
+3-component Multivector{3, 2, SVector{3, Int64}}:
   0 v12
  42 v13
   0 v23
@@ -163,12 +163,12 @@ julia> grade(a, 1)
  4 v3
 
 julia> grade(a, 0:3:3)
-2-component Multivector{3, 0:3:3, MVector{2, Int64}}:
+2-component Multivector{3, 0:3:3, SVector{2, Int64}}:
  1
  8 v123
 
 julia> grade(a, +) # only even grades
-4-component Multivector{3, 0:2:2, MVector{4, Int64}}:
+4-component Multivector{3, 0:2:2, SVector{4, Int64}}:
  1
  5 v12 + 6 v13 + 7 v23
 ```

@@ -59,7 +59,7 @@ julia> Multivector{Cl(0,3),2}([3, -2, 1])
  3 e₁e₂
 
 julia> ans*rdual(ans) # pseudoscalar `e₁e₂e₃` displayed as `I`
-4-component Multivector{Cl(0,3), 1:2:3, MVector{4, Int64}}:
+4-component Multivector{Cl(0,3), 1:2:3, SVector{4, Int64}}:
  14 I
 ```
 To recover the default style:
@@ -279,7 +279,7 @@ Create a generator which iterates over basis elements of the given multivector t
 # Examples
 ```jldoctest
 julia> basis(Multivector{3,1}) |> collect
-3-element Vector{Multivector{3, 1, MVector{3, Int64}}}:
+3-element Vector{Multivector{3, 1, SVector{3, Int64}}}:
  v1
  v2
  v3

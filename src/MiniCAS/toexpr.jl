@@ -1,17 +1,19 @@
-function toexpr(a::ProductNode)
+function toexpr(a::ProductNode; stable=false)
 	terms = [isone(v) ? toexpr(k) : Expr(:call, :^, toexpr(k), v) for (k, v) in a.x]
+	stable && sort!(terms, by=repr)
 	isempty(terms) && return 1
 	isone(length(terms)) && return only(terms)
 	Expr(:call, :*, terms...)
 end
 
-function toexpr(a::SumNode)
+function toexpr(a::SumNode; stable=false)
 	function pretty(v, expr)
 		v == 1 && return expr
 		v == -1 && return :(-$expr)
 		:($v*$expr)
 	end
 	terms = [pretty(v, toexpr(k)) for (k, v) in a.x]
+	stable && sort!(terms, by=repr)
 	isempty(terms) && return 0
 	isone(length(terms)) && return only(terms)
 	Expr(:call, :+, terms...)
@@ -20,7 +22,7 @@ end
 
 #= show methods =#
 
-Base.show(io::IO, a::Union{Π,Σ}) = print(io, toexpr(a))
+Base.show(io::IO, a::Union{Π,Σ}) = print(io, toexpr(a, stable=true))
 Base.show(io::IO, ::MIME"text/plain", a::Union{Π,Σ}) = print(io, typeof(a), ":\n ", a)
 
 debug(a) = a

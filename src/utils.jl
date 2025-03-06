@@ -10,12 +10,12 @@ multivector with eltype `Int`), so need `numberzero(::Any)` to work.
 =#
 
 
-isnumberzero(a::Number) = iszero(a)
-isnumberone(a::Number) = isone(a)
+isnumberzero(a) = iszero(a)
+isnumberone(a) = isone(a)
 
 # don't treat a symbolic type as one/zero, even if it could represent one
-isnumberzero(a) = false
-isnumberone(a) = false
+# isnumberzero(a) = false
+# isnumberone(a) = false
 
 numberzero(T::Type{<:Number}) = zero(T)
 numberone(T::Type{<:Number}) = one(T)

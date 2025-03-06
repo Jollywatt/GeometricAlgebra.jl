@@ -1,8 +1,8 @@
 using GeometricAlgebra:
 	zeroslike,
 	make_symbolic
-import GeometricAlgebra.SymbolicUtils
-using GeometricAlgebra.StaticArrays:
+using GeometricAlgebra:
+	MiniCAS,
 	MVector,
 	SVector
 
@@ -10,11 +10,11 @@ using GeometricAlgebra.StaticArrays:
 @testset "symbolic components" begin
 	@test zeroslike(Vector{Int}, 1) == [0]
 	@test zeroslike(Vector{Any}, 2) == [0, 0]
-	@test zeroslike(Vector{SymbolicUtils.Symbolic}, 3) == [0, 0, 0]
-	@test zeroslike(Vector{Union{Int,SymbolicUtils.Symbolic}}, 4) == [0, 0, 0, 0]
+	@test zeroslike(Vector{MiniCAS.ProductNode}, 3) == [0, 0, 0]
+	@test zeroslike(Vector{Union{Int,MiniCAS.ProductNode}}, 4) == [0, 0, 0, 0]
 
 
-	b = BasisBlade{3}(SymbolicUtils.Sym{Real}(:b), 0b101)
+	b = BasisBlade{3}(MiniCAS.variable(:b), 0b101)
 	kv = make_symbolic(Multivector{3,1,Vector{Int}}, :kv)
 	mv = make_symbolic(Multivector{3,0:3,Vector{Int}}, :mv)
 

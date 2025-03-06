@@ -35,11 +35,9 @@ include("grades.jl")
 include("signatures.jl")
 include("basis.jl")
 include("generated.jl")
-include("operations.jl")
+include("algebra.jl")
 include("special.jl")
 include("show.jl")
 include("utils.jl")
-include("algebras.jl")
-
 
 end # module GeometricAlgebra

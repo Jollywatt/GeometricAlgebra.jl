@@ -10,7 +10,7 @@ Modules = [GeometricAlgebra]
 ## Multivector operations
 
 ```@autodocs
-Pages = ["operations.jl", "special.jl"]
+Pages = ["algebra.jl", "special.jl"]
 Modules = [GeometricAlgebra]
 ```
 
@@ -19,13 +19,6 @@ Modules = [GeometricAlgebra]
 ```@autodocs
 Pages = ["signatures.jl", "basis.jl"]
 Modules = [GeometricAlgebra]
-```
-
-## Common algebras
-
-```@autodocs
-Pages = ["algebras.jl"]
-Modules = [GeometricAlgebra.Algebras]
 ```
 
 ## Logic for bits and grades

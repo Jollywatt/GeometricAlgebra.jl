@@ -145,7 +145,6 @@ end
 
 @generated function symbolic_multivector_eval(::Val{Sig}, f::Function, args...) where Sig
 	@assert isdefined(f, :instance)
-	1
 	symbolic_multivector_eval(Expr, Val(Sig), f.instance, args...)
 end
 

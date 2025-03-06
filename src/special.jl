@@ -353,7 +353,7 @@ function embed_in_superalgebra(sig, a::Multivector, mask::Unsigned)
 	allbits = componentbits(T)
 
 	j = 1
-	b = zeroslike(a.comps, length(allbits))
+	b = zeros(length(allbits)) # must be mutable!!
 	for (i, bits) ∈ enumerate(allbits)
 		if bits & mask == bits
 			b[i] = a.comps[j]

@@ -67,8 +67,11 @@ toexpr(a::Multivector, ::Val{Sig}) where Sig = :(Multivector{$Sig,$(grade(a))}($
 toexpr(a, ::Val) = toexpr(a)
 
 toexpr(a::Vector) = :([$(a...)])
-toexpr(a::MVector) = :(MVector($(a...)))
-toexpr(a::SVector) = :(SVector($(a...)))
+toexpr(a::Matrix) = :(Base.hvcat($(size(a, 2)), $(toexpr.(a)...)))
+# toexpr(a::MVector) = :(MVector($(a...)))
+# toexpr(a::SVector) = :(SVector($(a...)))
+toexpr(a::SArray{Size}) where Size = :(SArray{$Size}($(toexpr.(a)...)))
+toexpr(a::MArray{Size}) where Size = :(MArray{$Size}($(toexpr.(a)...)))
 
 factor(a::Multivector) = constructor(a)(factor.(a.comps))
 factor(a::Number) = a
@@ -141,6 +144,8 @@ end
 
 
 @generated function symbolic_multivector_eval(::Val{Sig}, f::Function, args...) where Sig
+	@assert isdefined(f, :instance)
+	1
 	symbolic_multivector_eval(Expr, Val(Sig), f.instance, args...)
 end
 

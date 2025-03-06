@@ -46,7 +46,8 @@ function matrix_repr(a::AbstractMultivector, k=0:dimension(a))
 end
 
 @symbolic_optim function matrix_repr(a::Multivector, ::Val{K}) where {K}
-	matrix_repr(a, K)
+	n = ncomponents(a)
+	MMatrix{n,n}(matrix_repr(a, K))
 end
 
 """
@@ -258,7 +259,9 @@ function Base.sqrt(a::AbstractMultivector)
 		if s < 0
 			return (a + λ)/sqrt(2λ)
 		elseif s > 0
-			if pseudoscalar_square(a) < 0 && iseven(a)
+			# formula exists if a commutes with I
+			commutative = iseven(a) || isodd(dimension(a))
+			if pseudoscalar_square(a) < 0 && commutative
 				I = unit_pseudoscalar(a)
 				return (a + λ*I)/(1 + I)sqrt(λ)
 			end

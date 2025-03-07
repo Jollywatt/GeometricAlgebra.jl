@@ -156,6 +156,8 @@ function factor(a::Σ)
 	end
 end
 
+factor(a::Π) = a
+
 
 #= exponentiation =#
 

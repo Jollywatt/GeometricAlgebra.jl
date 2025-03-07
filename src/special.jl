@@ -40,14 +40,13 @@ function matrix_repr(a::AbstractMultivector, k=0:dimension(a))
 	mat = zeroslike(Matrix{eltype(a)}, N, N)
 	M = Multivector{signature(a),grade(a)}
 	for (i, b) ∈ enumerate(basis(M))
-		mat[:,i] = (a*b).comps
+		mat[:,i] = grade(a*b, k).comps
 	end
 	mat
 end
 
 @symbolic_optim function matrix_repr(a::Multivector, ::Val{K}) where {K}
-	n = ncomponents(a)
-	MMatrix{n,n}(matrix_repr(a, K))
+	matrix_repr(a, K)
 end
 
 """

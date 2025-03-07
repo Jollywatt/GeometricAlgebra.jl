@@ -67,9 +67,7 @@ toexpr(a::Multivector, ::Val{Sig}) where Sig = :(Multivector{$Sig,$(grade(a))}($
 toexpr(a, ::Val) = toexpr(a)
 
 toexpr(a::Vector) = :([$(a...)])
-toexpr(a::Matrix) = :(Base.hvcat($(size(a, 2)), $(toexpr.(a)...)))
-# toexpr(a::MVector) = :(MVector($(a...)))
-# toexpr(a::SVector) = :(SVector($(a...)))
+toexpr(a::Matrix) = :(Base.hvcat($(size(a, 2)), $(toexpr.(permutedims(a))...)))
 toexpr(a::SArray{Size}) where Size = :(SArray{$Size}($(toexpr.(a)...)))
 toexpr(a::MArray{Size}) where Size = :(MArray{$Size}($(toexpr.(a)...)))
 

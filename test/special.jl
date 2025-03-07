@@ -37,7 +37,7 @@ end
 	u = Multivector{3,1}([1,2,3]/4)
 	@test sqrt(u)^2 ≈ u
 	@test sqrt(u*I)^2 ≈ u*I
-	@test sqrt(u + I)^2 ≈ u + I
+	@test sqrt(u + I)^2 ≈ u + I rtol=sqrt(eps())
 end
 
 @testset "exp" begin
@@ -47,7 +47,7 @@ end
 	@test exp(0v[1]) == 1
 	@test exp(3v[1]) ≈ cosh(3) + sinh(3)v[1]
 	@test exp(3v[1]v[2]) ≈ cos(3) + sin(3)v[1]v[2]
-	
+
 	for dim in 1:5, trials in 1:5
 		a = Multivector{dim,0:dim}(big.(randn(2^dim)))
 		@test exp(a)exp(-a) ≈ 1
@@ -84,7 +84,7 @@ end
 
 	for a in [
 		Multivector{4,0}([7])
-		Multivector{4,0:4:4}([4, 5])
+		Multivector{Cl(1,3),0:4:4}([4, 5])
 		Multivector{4,0:2:4}(fill(1, 8))
 		Multivector{4,0:4}(fill(1, 16))
 	]

@@ -112,7 +112,7 @@ The component array type for `N`-component multivectors with signature `sig`.
 You can redefine this method to customise the default array type.
 The fallback method returns `MVector{N}` for `N <= 16`, and `Vector` otherwise.
 """
-componentstype(sig, N) = N <= 4 ? SVector{N} : N <= 16 ? MVector{N} : Vector
+componentstype(sig, N) = N <= 8 ? SVector{N} : N <= 16 ? MVector{N} : Vector
 componentstype(sig, N, T) = typeintersect(componentstype(sig, N), AbstractVector{T})
 
 componentstype(T::Type{<:Multivector}) = componentstype(signature(T), ncomponents(T))

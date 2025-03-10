@@ -117,7 +117,7 @@ julia> grade(ans, 1)
 function Multivector{Sig,K}(comps::S) where {Sig,K,S<:AbstractVector}
 	n = ncomponents(Multivector{Sig,K})
 	@assert length(comps) == n """
-	instances of $(Multivector{Sig,K}) have $n components, but received $(length(comps))"""
+		instances of $(Multivector{Sig,K}) have $n components, but received $(length(comps))"""
 	Multivector{Sig,K,S}(comps)
 end
 
@@ -138,7 +138,7 @@ function Multivector{Sig,K′}(a::Multivector{Sig,K}) where {Sig,K,K′}
 end
 Multivector{Sig,K}(a::Multivector) where {Sig,K} = Multivector{Sig,K}(a.comps)
 
-Multivector{Sig,K}(comps...) where {Sig,K} = Multivector{Sig,K}(makevec(componentstype(Sig, length(comps)), comps...))
+Multivector{Sig,K}(comps::Scalar...) where {Sig,K} = Multivector{Sig,K}(makevec(componentstype(Sig, length(comps)), comps...))
 
 
 Base.convert(::Type{Multivector{Sig,K,S}}, a::Multivector{Sig,K}) where {Sig,K,S} = Multivector{Sig,K}(convert(S, a.comps))
@@ -231,6 +231,12 @@ componentindex(a::OrType{<:Multivector}, bits::Unsigned) = findfirst(==(bits), c
 constructor(::OrType{<:BasisBlade{Sig,K}}) where {Sig,K} = BasisBlade{Sig,K}
 constructor(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = Multivector{Sig,K}
 Base.copy(a::Multivector) = constructor(a)(copy(a.comps))
+
+function mutable(a::Multivector)
+	ismutable(a.comps) && return a
+	a.comps isa StaticVector && return constructor(a)(MVector(a.comps...))
+	constructor(a)(collect(a))
+end
 
 
 """

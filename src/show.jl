@@ -58,6 +58,11 @@ end
 
 #= Multivector =#
 
+issmall(x::Real, eps) = abs(x) < eps
+issmall(x, eps) = false
+issmall(x::AbstractArray, eps) = all(Base.Fix2(issmall, eps), x)
+issmall(x::Multivector, eps) = issmall(x.comps, eps)
+
 
 function show_multivector_row(io::IO, @nospecialize(a);
 	                           indent=0,
@@ -74,7 +79,7 @@ function show_multivector_row(io::IO, @nospecialize(a);
 	for bits ∈ componentbits(basis_display_style, grade(a))
 		coeff = a.comps[componentindex(a, bits)]
 		!showzeros && isnumberzero(coeff) && continue
-		applicable(abs, coeff) && abs(coeff) < eps && continue
+		issmall(coeff, eps) && continue
 		isfirst ? print(io, " "^indent) : print(io, " + ")
 		show_blade(io, BasisBlade{signature(a)}(coeff, bits); compact, basis_display_style)
 		isfirst = false

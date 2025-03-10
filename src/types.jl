@@ -120,6 +120,7 @@ function Multivector{Sig,K}(comps::S) where {Sig,K,S<:AbstractVector}
 		instances of $(Multivector{Sig,K}) have $n components, but received $(length(comps))"""
 	Multivector{Sig,K,S}(comps)
 end
+Multivector{Sig,K}(comps::Tuple) where {Sig,K} = Multivector{Sig,K}(SVector(comps))
 
 function Multivector{Sig,K}(a::BasisBlade{Sig}) where {Sig,K}
 	grade(a) ∈ K || error("$(constructor(a)) cannot be represented as a $(Multivector{Sig,K}), since $(grade(a)) ∉ $K")

@@ -186,7 +186,7 @@ end
 
 #= special functions =#
 
-for fn in [:sqrt, :cosh, :sinh, :cos, :sin]
+for fn in [:abs, :sqrt, :cosh, :sinh, :cos, :sin]
 	@eval Base.$fn(a::Union{Π,Σ}) = Π(Expr(:call, $(Meta.quot(fn)), toexpr(a)) => 1)
 end
 

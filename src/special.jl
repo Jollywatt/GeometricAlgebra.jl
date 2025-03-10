@@ -181,15 +181,20 @@ Base.:\(a::AbstractMultivector, b::Scalar) = inv(a)*b
 
 #= Exponential =#
 
-function exp_with_scalar_square(a, a²::Scalar)
+const Symbolic = Union{MiniCAS.SumNode,MiniCAS.ProductNode}
+
+cosh_cos(x, s) = s > 0 ? cosh(x) : cos(x)
+sinh_sin(x, s) = s > 0 ? sinh(x) : sin(x)
+
+
+for fn in [cosh_cos, sinh_sin]
+	@eval $(nameof(fn))(a::Symbolic, s) = MiniCAS.ProductNode(Expr(:call, $fn, toexpr(a), toexpr(s)) => 1)
+end
+
+@symbolic_optim function exp_with_scalar_square(a, a²::Scalar)
 	iszero(a²) && return one(a)/one(a²) + a
-	if a² isa Real && a² < 0
-		norm = sqrt(-a²)
-		cos(norm) + sin(norm)/norm*a
-	else
-		norm = sqrt(a²)
-		cosh(norm) + sinh(norm)/norm*a
-	end
+	λ = sqrt(abs(a²))
+	cosh_cos(λ, a²) + sinh_sin(λ, a²)/λ*a
 end
 
 

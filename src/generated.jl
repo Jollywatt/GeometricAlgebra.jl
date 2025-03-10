@@ -30,10 +30,26 @@ GeometricAlgebra.MiniCAS.ProductNode{GeometricAlgebra.MiniCAS.IndexNode{2}}:
  a[1, 1] * a[1, 2] * a[1, 3] * a[2, 1] * a[2, 2] * a[2, 3]
 ```
 """
-function symbolic_components(label::Symbol, dims::Integer...)
-	MiniCAS.variables(label, dims...)
-end
+symbolic_components(label::Symbol, dims::Integer...) = MiniCAS.variables(label, dims...)
 
+"""
+	Multivector{Sig,K}(sym::Symbol)
+
+Multivector with independent symbolic components.
+
+# Example
+```jldoctest
+julia> a = Multivector{3,1}(:a)
+3-component Multivector{3, 1, Vector{GeometricAlgebra.MiniCAS.ProductNode{GeometricAlgebra.MiniCAS.IndexNode{1}}}}:
+ a[1] v1
+ a[2] v2
+ a[3] v3
+
+julia> a ⊙ a
+GeometricAlgebra.MiniCAS.SumNode{GeometricAlgebra.MiniCAS.IndexNode{1}, Int64}:
+ a[1] ^ 2 + a[2] ^ 2 + a[3] ^ 2
+```
+"""
 Multivector{Sig,K}(sym::Symbol) where {Sig,K} = make_symbolic(Multivector{Sig,K}, sym)
 
 """
@@ -56,7 +72,8 @@ julia> GeometricAlgebra.make_symbolic(Multivector{3,1}, :A)
 make_symbolic(::OrType{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(Multivector{Sig,K})))
 make_symbolic(::OrType{F}, label) where {F<:Function} = F.instance
 make_symbolic(::OrType{Val{V}}, label) where {V} = Val(V)
-make_symbolic(::OrType{Type{T}}, label) where {T} = T
+# make_symbolic(::OrType{Type{T}}, label) where {T} = T
+make_symbolic(::OrType{<:Number}, label) = MiniCAS.variable(label)
 
 
 import .MiniCAS: toexpr, factor
@@ -134,7 +151,7 @@ function symbolic_multivector_eval(::Type{Expr}, sig::Val, f::Function, args...;
 		expr = MiniCAS.cse(expr)
 	end
 
-	assignments = [:( $(abc[i]) = Multivector(args[$i]).comps ) for i in I]
+	assignments = [i in I ? :( $(abc[i]) = Multivector(args[$i]).comps ) : :($(abc[i]) = args[$i]) for i in eachindex(args)]
 	:(let $(assignments...)
 		$expr
 	end)
@@ -328,7 +345,10 @@ macro symbolicga(sig, mv_grades, expr, result_type=nothing)
 			got a value of type $(typeof(symbolic_result))."""))
 
 		result_expr = :($makevec($result_type, $(toexpr.(symbolic_result.comps)...)))
+
 	end
+
+	result_expr = MiniCAS.cse(result_expr)
 
 	comps_assignments = map(labels, mv_grades) do label, K
 		:($label = Multivector{$Sig,$K}($label).comps)

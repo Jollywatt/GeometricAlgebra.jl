@@ -115,6 +115,9 @@ The fallback method returns `MVector{N}` for `N <= 16`, and `Vector` otherwise.
 componentstype(sig, N) = N <= 4 ? SVector{N} : N <= 16 ? MVector{N} : Vector
 componentstype(sig, N, T) = typeintersect(componentstype(sig, N), AbstractVector{T})
 
+componentstype(T::Type{<:Multivector}) = componentstype(signature(T), ncomponents(T))
+componentstype(::Multivector{Sig,K,T}) where {Sig,K,T} = T
+
 
 #= Built-in Metric Signatures =#
 

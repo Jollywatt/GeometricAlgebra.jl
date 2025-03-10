@@ -136,6 +136,7 @@ function Multivector{Sig,K′}(a::Multivector{Sig,K}) where {Sig,K,K′}
 	K ⊆ K′ || error("$(constructor(a)) cannot be represented as a $(Multivector{Sig,K})")
 	grade(a, K′)
 end
+Multivector{Sig,K}(a::Multivector) where {Sig,K} = Multivector{Sig,K}(a.comps)
 
 Multivector{Sig,K}(comps...) where {Sig,K} = Multivector{Sig,K}(makevec(componentstype(Sig, length(comps)), comps...))
 

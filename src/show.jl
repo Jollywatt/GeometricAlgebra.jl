@@ -1,3 +1,21 @@
+mutable struct DisplayOptions
+	inline::Bool
+	groupgrades::Union{Bool,Nothing}
+	showzeros::Union{Bool,Nothing}
+	eps::Float64
+	parseable::Bool
+	compact::Bool
+end
+
+const display_options = DisplayOptions(
+	false,
+	nothing,
+	nothing,
+	0,
+	false,
+	false,
+)
+
 #= BasisBlade =#
 
 # make things line up right when printing in arrays
@@ -58,7 +76,7 @@ end
 
 #= Multivector =#
 
-issmall(x::Real, eps) = abs(x) < eps
+issmall(x::Number, eps) = abs(x) <= eps
 issmall(x, eps) = false
 issmall(x::AbstractArray, eps) = all(Base.Fix2(issmall, eps), x)
 issmall(x::Multivector, eps) = issmall(x.comps, eps)
@@ -78,8 +96,7 @@ function show_multivector_row(io::IO, @nospecialize(a);
 	isfirst = true
 	for bits ∈ componentbits(basis_display_style, grade(a))
 		coeff = a.comps[componentindex(a, bits)]
-		!showzeros && isnumberzero(coeff) && continue
-		issmall(coeff, eps) && continue
+		!showzeros && issmall(coeff, eps) && continue
 		isfirst ? print(io, " "^indent) : print(io, " + ")
 		show_blade(io, BasisBlade{signature(a)}(coeff, bits); compact, basis_display_style)
 		isfirst = false
@@ -99,11 +116,7 @@ function show_multivector_col(io::IO, @nospecialize(a);
 		(-1)^basis_blade_parity(basis_display_style, b)*a.comps[componentindex(a, b)] => b
 	for b in bits]
 
-	if !showzeros
-		filter!(!isnumberzero∘first, comps)
-		filter!(>=(eps)∘abs∘first, comps)
-
-	end
+	!showzeros && filter!(!Base.Fix2(issmall, eps)∘first, comps)
 
 	isempty(comps) && return print(io, " "^indent, a.comps)
 
@@ -171,13 +184,13 @@ Multivector{2, 0:2}([1, 4, 9, 16])
 ```
 """
 function show_multivector(io::IO, @nospecialize(a);
-                          inline=false,
-                          groupgrades=!ishomogeneous(a),
-                          showzeros=ishomogeneous(a) && dimension(a) < 8,
-                          eps=0,
+                          inline=display_options.inline,
+                          groupgrades=something(display_options.groupgrades, !ishomogeneous(a)),
+                          showzeros=something(display_options.showzeros, ishomogeneous(a) && dimension(a) < 8),
+                          eps=display_options.eps,
                           indent=0,
-                          parseable=false,
-                          compact=false,
+                          parseable=display_options.parseable,
+                          compact=display_options.compact,
                           basis_display_style=get_basis_display_style(signature(a)))
 	if parseable
 		@static if VERSION ≥ v"1.7"
@@ -188,7 +201,7 @@ function show_multivector(io::IO, @nospecialize(a);
 		print(io, type, "(", a.comps, ")")
 	else
 		if groupgrades
-			if iszero(a)
+			if issmall(a, eps)
 				print(io, " "^indent, numberzero(eltype(a)))
 				return
 			end
@@ -200,7 +213,6 @@ function show_multivector(io::IO, @nospecialize(a);
 				if !showzeros
 					issmall(ak, eps) && continue
 				end
-
 				firstgroup || print(io, inline ? " + " : "\n")
 				if firstgroup || !inline
 					print(io, " "^indent)

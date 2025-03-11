@@ -1,6 +1,6 @@
 function toexpr(a::ProductNode; stable=false)
-	terms = [isone(v) ? toexpr(k) : Expr(:call, :^, toexpr(k), v) for (k, v) in a.x]
-	stable && sort!(terms, by=repr)
+	terms = [isone(v) ? toexpr(k; stable) : Expr(:call, :^, toexpr(k; stable), v) for (k, v) in a.x]
+	stable && sort!(terms, by=string)
 	isempty(terms) && return 1
 	isone(length(terms)) && return only(terms)
 	Expr(:call, :*, terms...)
@@ -12,13 +12,14 @@ function toexpr(a::SumNode; stable=false)
 		v == -1 && return :(-$expr)
 		:($v*$expr)
 	end
-	terms = [pretty(v, toexpr(k)) for (k, v) in a.x]
-	stable && sort!(terms, by=repr)
+	terms = [pretty(v, toexpr(k; stable)) for (k, v) in a.x]
+	stable && sort!(terms, by=string)
 	isempty(terms) && return 0
 	isone(length(terms)) && return only(terms)
 	Expr(:call, :+, terms...)
 end
 
+toexpr(a; stable) = toexpr(a)
 
 #= show methods =#
 

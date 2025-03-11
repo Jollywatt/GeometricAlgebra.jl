@@ -13,11 +13,9 @@ const project_root = pathof(GeometricAlgebra) |> dirname |> dirname
 
 # apply setup code to all doctests in doc strings
 DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
-    using Revise, GeometricAlgebra
-end; recursive=true)
-
-DocMeta.setdocmeta!(GeometricAlgebra.MiniCAS, :DocTestSetup, quote
-    using Revise, GeometricAlgebra.MiniCAS
+    using Revise
+    using GeometricAlgebra
+    using GeometricAlgebra.MiniCAS
 end; recursive=true)
 
 const bibfile = "src/references.bib"

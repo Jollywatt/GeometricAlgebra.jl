@@ -11,7 +11,9 @@ const project_root = pathof(GeometricAlgebra) |> dirname |> dirname
 
 # apply setup code to all doctests in doc strings
 DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
-    using Revise, GeometricAlgebra
+    using Revise
+    using GeometricAlgebra
+    using GeometricAlgebra.MiniCAS
 end; recursive=true)
 
 alltests() = setdiff(filter(endswith(".jl"), readdir()), [basename(@__FILE__)])
@@ -51,7 +53,7 @@ if isempty(ARGS)
 		"""
 	if !isinteractive()
 		test()
-		VERSION >= v"1.8" && doctest(GeometricAlgebra) # doctests are sensitive to Julia version
+		VERSION >= v"1.11" && doctest(GeometricAlgebra) # doctests are sensitive to Julia version
 	end
 elseif "--code-coverage" in ARGS
 	coverage()

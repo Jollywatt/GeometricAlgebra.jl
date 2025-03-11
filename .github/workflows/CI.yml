@@ -26,13 +26,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         arch: [x64]
-        version: ['1.6', '1.7', '1.8']
+        version: ['1.10', '1.11']
 
     runs-on: ${{ matrix.os }}
 
     env:
         codecov-arch: x64
-        codecov-version: '1.8'
+        codecov-version: '1.11'
 
     steps:
       - name: Check out code
@@ -62,11 +62,11 @@ jobs:
             runner.os == 'Linux' &&
             matrix.arch == env.codecov-arch &&
             matrix.version == env.codecov-version
-      
+
         uses: julia-actions/julia-processcoverage@v1
         with:
           directories: src
-      
+
       - name: Upload code coverage data to codecov.io
         # Only run for 'master' branch running on 'Linux' with the latest version of Julia
         if: |
@@ -74,7 +74,7 @@ jobs:
             runner.os == 'Linux' &&
             matrix.arch == env.codecov-arch &&
             matrix.version == env.codecov-version
-      
+
         uses: codecov/codecov-action@v2
         with:
           # token: {{ CODECOV_TOKEN }} # not required for public repos
@@ -93,7 +93,7 @@ jobs:
       - name: Set up Julia environment
         uses: julia-actions/setup-julia@latest
         with:
-          version: '1.8'
+          version: '1.11'
 
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'

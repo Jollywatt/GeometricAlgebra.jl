@@ -21,12 +21,12 @@ See also [`make_symbolic`](@ref).
 # Example
 ```jldoctest
 julia> GeometricAlgebra.symbolic_components(:a, 2, 3)
-2×3 Matrix{ProductNode{IndexNode{2}}}:
+2×3 Matrix{ProductNode{Expr}}:
  a[1, 1]  a[1, 2]  a[1, 3]
  a[2, 1]  a[2, 2]  a[2, 3]
 
 julia> prod(ans)
-ProductNode{IndexNode{2}}:
+ProductNode{Expr}:
  a[1, 1] * a[1, 2] * a[1, 3] * a[2, 1] * a[2, 2] * a[2, 3]
 ```
 """
@@ -42,13 +42,13 @@ See also [`make_symbolic`](@ref).
 # Example
 ```jldoctest
 julia> a = Multivector{3,1}(:a)
-3-component Multivector{3, 1, Vector{ProductNode{IndexNode{1}}}}:
+3-component Multivector{3, 1, Vector{ProductNode{Expr}}}:
  a[1] v1
  a[2] v2
  a[3] v3
 
 julia> a ⊙ a
-SumNode{IndexNode{1}, Int64}:
+SumNode{Expr, Int64}:
  a[1] ^ 2 + a[2] ^ 2 + a[3] ^ 2
 ```
 """
@@ -65,7 +65,7 @@ See also [`symbolic_components`](@ref).
 
 ```jldoctest
 julia> GeometricAlgebra.make_symbolic(Multivector{3,1}, :A)
-3-component Multivector{3, 1, Vector{ProductNode{IndexNode{1}}}}:
+3-component Multivector{3, 1, Vector{ProductNode{Expr}}}:
  A[1] v1
  A[2] v2
  A[3] v3

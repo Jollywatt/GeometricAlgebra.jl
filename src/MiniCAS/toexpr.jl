@@ -30,16 +30,6 @@ debug(a) = a
 debug(a::Π) = Expr(:call, :Π, (:($(debug(k))^$v) for (k, v) in a.x)...)
 debug(a::Σ) = Expr(:call, :Σ, (:($v*$(debug(k))) for (k, v) in a.x)...)
 
-
-
-struct IndexNode{N}
-	symbol::Symbol
-	indices::NTuple{N,Integer}
-end
-toexpr(a::IndexNode) = Expr(:ref, a.symbol, a.indices...)
-Base.show(io::IO, a::IndexNode) = print(io, toexpr(a))
-
-
 """
 	toexpr(::SubexprList; pretty=false)
 

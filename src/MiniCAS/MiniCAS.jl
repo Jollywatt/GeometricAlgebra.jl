@@ -3,7 +3,7 @@ module MiniCAS
 import Base: ==, +, -, *, /, \, ^
 using OrderedCollections: OrderedDict
 
-export ProductNode, SumNode, IndexNode
+export ProductNode, SumNode
 export SubexprList
 
 export variable, variables, factor, toexpr, subexprs, cse
@@ -19,7 +19,7 @@ variable(s::Symbol) = ProductNode(s => 1)
 
 function variables(s::Symbol, dims::Integer...)
 	indices = Iterators.product(Base.OneTo.(dims)...)
-	[ProductNode(IndexNode(s, I) => 1) for I in indices]
+	[ProductNode(Expr(:ref, s, I...) => 1) for I in indices]
 end
 
 

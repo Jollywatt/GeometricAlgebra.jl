@@ -104,12 +104,12 @@ For example, we can compute the product of two vectors symbolically as follows:
 
 ```jldoctest
 julia> GeometricAlgebra.make_symbolic.(Multivector{2,1}, [:A, :B])
-2-element Vector{Multivector{2, 1, Vector{GeometricAlgebra.MiniCAS.ProductNode{GeometricAlgebra.MiniCAS.IndexNode{1}}}}}:
+2-element Vector{Multivector{2, 1, Vector{GeometricAlgebra.MiniCAS.ProductNode{Expr}}}}:
  A[1]v1 + A[2]v2
  B[1]v1 + B[2]v2
 
 julia> prod(ans)
-2-component Multivector{2, 0:2:2, SVector{2, GeometricAlgebra.MiniCAS.SumNode{GeometricAlgebra.MiniCAS.IndexNode{1}, Int64}}}:
+2-component Multivector{2, 0:2:2, SVector{2, GeometricAlgebra.MiniCAS.SumNode{Expr, Int64}}}:
  A[1] * B[1] + A[2] * B[2]
  -(A[2] * B[1]) + A[1] * B[2] v12
 ```

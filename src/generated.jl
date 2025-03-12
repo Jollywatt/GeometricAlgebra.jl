@@ -125,6 +125,7 @@ function symbolic_multivector_eval(::Type{Expr}, sig::Val, f::Function, args...;
 		end
 
 		sym_result = MiniCAS.factor(sym_result)
+		sym_result = squashgrades(sym_result)
 	end
 
 	expr = toexpr(sym_result, sig)

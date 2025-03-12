@@ -134,7 +134,7 @@ Multivector(a::Multivector) = a
 
 Multivector{Sig,K}(a::Multivector{Sig,K}) where {Sig,K} = a
 function Multivector{Sig,K′}(a::Multivector{Sig,K}) where {Sig,K,K′}
-	K ⊆ K′ || error("$(constructor(a)) cannot be represented as a $(Multivector{Sig,K})")
+	K ⊆ K′ || error("$(constructor(a)) cannot be represented as a $(Multivector{Sig,K′})")
 	grade(a, K′)
 end
 Multivector{Sig,K}(a::Multivector) where {Sig,K} = Multivector{Sig,K}(a.comps)
@@ -257,7 +257,20 @@ function resulting_multivector_type(f, abc::OrType{<:AbstractMultivector{Sig}}..
 end
 
 
+"""
+	squashgrades(a::Multivector{Sig,K})
 
+Drop the grades of a multivector which are zero and which result in a
+simpler grade parameter `K` (as returned by [`promote_grades`](@ref)).
+"""
+function squashgrades(a::Multivector)
+	nonzero_grades = Int[]
+	for aₖ in eachgrade(a)
+		iszero(aₖ) || push!(nonzero_grades, grade(aₖ))
+	end
+	k = promote_grades(dimension(a), nonzero_grades...)
+	grade(a, k)
+end
 
 
 Base.zero(::OrType{<:BasisBlade{Sig,K,T} where K}) where {Sig,T} = BasisBlade{Sig}(numberzero(T))

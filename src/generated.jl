@@ -11,28 +11,6 @@ use_symbolic_optim(sig) = dimension(sig) <= 8
 use_symbolic_optim(::Val{Sig}) where Sig = use_symbolic_optim(Sig)
 
 """
-	symbolic_components(label::Symbol, dims::Integer...)
-
-Create an array of symbolic values of the specified shape.
-
-See also [`make_symbolic`](@ref).
-
-
-# Example
-```jldoctest
-julia> GeometricAlgebra.symbolic_components(:a, 2, 3)
-2×3 Matrix{ProductNode{Expr}}:
- a[1, 1]  a[1, 2]  a[1, 3]
- a[2, 1]  a[2, 2]  a[2, 3]
-
-julia> prod(ans)
-ProductNode{Expr}:
- a[1, 1] * a[1, 2] * a[1, 3] * a[2, 1] * a[2, 2] * a[2, 3]
-```
-"""
-symbolic_components(label::Symbol, dims::Integer...) = MiniCAS.variables(label, dims...)
-
-"""
 	Multivector{Sig,K}(sym::Symbol)
 
 Multivector with independent symbolic components.
@@ -59,7 +37,7 @@ Multivector{Sig,K}(sym::Symbol) where {Sig,K} = make_symbolic(Multivector{Sig,K}
 
 Multivector with symbolic components of the same type as the `Multivector` instance or type `a`.
 
-See also [`symbolic_components`](@ref).
+See also [`MiniCAS.variables`](@ref).
 
 # Example
 
@@ -72,7 +50,7 @@ julia> GeometricAlgebra.make_symbolic(Multivector{3,1}, :A)
 
 ```
 """
-make_symbolic(::OrType{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(symbolic_components(label, ncomponents(Multivector{Sig,K})))
+make_symbolic(::OrType{<:Multivector{Sig,K}}, label) where {Sig,K} = Multivector{Sig,K}(MiniCAS.variables(label, ncomponents(Multivector{Sig,K})))
 make_symbolic(::OrType{F}, label) where {F<:Function} = F.instance
 make_symbolic(::OrType{Val{V}}, label) where {V} = Val(V)
 # make_symbolic(::OrType{Type{T}}, label) where {T} = T
@@ -163,6 +141,7 @@ end
 
 @generated function symbolic_multivector_eval(::Val{Sig}, f::Function, args...) where Sig
 	@assert isdefined(f, :instance)
+	1
 	symbolic_multivector_eval(Expr, Val(Sig), f.instance, args...)
 end
 
@@ -313,14 +292,14 @@ julia> # Rotate a tuple (interpreted as a grade 1 vector)
 ```
 ```julia
 # This macro call...
-@symbolicga 3 (a=1, b=1) a∧b
+@symbolicga 3 (a=1, b=1) wedge(a, b)
 # ...is equivalent to the following:
 let a = Multivector{3, 1}(a).comps, b = Multivector{3, 1}(b).comps
-    Multivector{3, 2}(MVector(
+    Multivector{3, 2}(
         a[1]*b[2] - a[2]*b[1],
         a[1]*b[3] - a[3]*b[1],
         a[2]*b[3] - a[3]*b[2],
-    ))
+    )
 end
 ```
 """

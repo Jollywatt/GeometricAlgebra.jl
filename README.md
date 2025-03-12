@@ -115,7 +115,7 @@ Thanks to the wonderful [`SymbolicUtils`](https://symbolicutils.juliasymbolics.o
 For example, we can compute the product of two vectors symbolically as follows:
 
 ```julia
-julia> GeometricAlgebra.symbolic_components.([:x, :y], 3)
+julia> GeometricAlgebra.MiniCAS.variables.([:x, :y], 3)
 2-element Vector{Vector{Any}}:
  [x[1], x[2], x[3]]
  [y[1], y[2], y[3]]

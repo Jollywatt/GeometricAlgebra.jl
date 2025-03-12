@@ -26,6 +26,7 @@ export reversion, involution
 export flipdual, hodgedual, invhodgedual, ldual, rdual
 export matrix_repr, outermorphism
 export @symbolicga
+export MiniCAS
 
 include("MiniCAS/MiniCAS.jl")
 

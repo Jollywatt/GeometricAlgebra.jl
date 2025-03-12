@@ -38,11 +38,17 @@ ismonomial(a::Σ) = isone(length(a.x))
 
 #= multiplication of products =#
 
+mul(a::Π, b::Π) = Π(combine(a.x, b.x))
 mul!(a::Π, b::Π) = Π(combine!(a.x, b.x))
-(a::Π * b::Π) = Π(combine(a.x, b.x))
 
-(a::Π / b::Π) = mul!(inv(b), a)
-(a::Π \ b::Π) = mul!(inv(a), b)
+# double-bang means "mutate if possible"
+mul!!(a::Π{K}, b::Π{K}) where K = mul!(a, b)
+mul!!(a::Π, b::Π) = mul(a, b)
+
+(a::Π * b::Π) = mul(a, b)
+
+(a::Π / b::Π) = mul!!(inv(b), a)
+(a::Π \ b::Π) = mul!!(inv(a), b)
 (a::Union{Π,Σ} / b::Union{Π,Σ}) = a*inv(b)
 (a::Union{Π,Σ} \ b::Union{Π,Σ}) = inv(a)*b
 

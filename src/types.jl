@@ -194,6 +194,19 @@ Base.length(::AbstractMultivector) = error(
 Base.eltype(::OrType{<: BasisBlade{Sig,K,T} where {Sig,K}}) where {T} = T
 Base.eltype(::OrType{<:Multivector{Sig,K,S} where {Sig,K}}) where {S} = eltype(S)
 
+"""
+	Grade{K} >: BasisBlade{Sig,K}, Multivector{Sig,K}
+
+Type alias for a `BasisBlade` or `Multivector` with grade parameter `K`.
+
+# Example
+```jldoctest
+julia> prod(basis(3))::Grade{3}
+BasisBlade{3, 3, Int64}:
+ 1 v123
+```
+"""
+const Grade{K} = Union{BasisBlade{Sig,K},Multivector{Sig,K}} where Sig
 
 """
 	grade(a)
@@ -205,8 +218,7 @@ In the case of a multivector, `K` may be an integer (if it is homogeneous) or a 
 
 See also [`ishomogeneous`](@ref).
 """
-grade(::OrType{<: BasisBlade{Sig,K}}) where {Sig,K} = K
-grade(::OrType{<:Multivector{Sig,K}}) where {Sig,K} = K
+grade(::OrType{<:Grade{K}}) where K = K
 grade(::Scalar) = 0
 
 """

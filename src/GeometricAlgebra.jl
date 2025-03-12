@@ -7,7 +7,7 @@ using Random: AbstractRNG
 
 export SVector, MVector
 
-export AbstractMultivector, BasisBlade, Multivector
+export AbstractMultivector, BasisBlade, Multivector, Grade
 export basis, @basis, cayleytable
 export BasisDisplayStyle
 export signature, dimension, ncomponents, grade, eachgrade, blades

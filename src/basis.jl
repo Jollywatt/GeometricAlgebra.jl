@@ -330,10 +330,12 @@ function generate_blades(sig;
 		indices = bits_to_indices.(Ref(style), bits)
 	end
 
+
 	# if allperms == true, then index order matters; otherwise, use style's default index ordering
 	labels = sprint.(show_basis_blade, Ref(style), allperms ? indices : bits) 
 	if !isnothing(prefix)
-		labels .= replace.(labels, r"^[^0-9]+"=>prefix)
+		oldprefix = sprint.(show_basis_blade, Ref(style), zero(UInt))
+		labels .= replace.(labels,oldprefix=>prefix)
 	end
 	labels = Symbol.(labels)
 

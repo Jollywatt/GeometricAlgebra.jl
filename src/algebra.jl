@@ -44,8 +44,8 @@ Base.:isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(zero(b) 
 scalar_multiply(a::BasisBlade{Sig,K}, b) where {Sig,K} = BasisBlade{Sig,K}(a.coeff*b, a.bits)
 scalar_multiply(a, b::BasisBlade{Sig,K}) where {Sig,K} = BasisBlade{Sig,K}(a*b.coeff, b.bits)
 
-scalar_multiply(a::Multivector, b) = constructor(a)(a.comps*b)
-scalar_multiply(a, b::Multivector) = constructor(b)(a*b.comps)
+scalar_multiply(a::Multivector, b) = constructor(a)(a.comps.*b)
+scalar_multiply(a, b::Multivector) = constructor(b)(a.*b.comps)
 
 Base.:*(a::AbstractMultivector, b::Scalar) = scalar_multiply(a, b)
 Base.:*(a::Scalar, b::AbstractMultivector) = scalar_multiply(a, b)
@@ -633,7 +633,46 @@ function outermorphism(mat::AbstractMatrix, a::AbstractMultivector{Sig}; sig=Sig
 end
 outermorphism(mat, a::Scalar) = a
 
+"""
+	embed(sig, a::Multivector)
 
+Embed a multivector into the algebra of metric signature `sig`, adding or discarding dimensions as necessary.
+
+Basis vectors in the original and new spaces are associated by the order in which they appear.
+Components are dropped if `dimension(sig) < dimension(a)`, and extra zero components are added
+if `dimension(sig) > dimension(a)`.
+
+# Examples
+```jldoctest
+julia> embed(Cl(2,2), Multivector{3,2}([1, 2, 3]))
+6-component Multivector{Cl(2,2), 2, SVector{6, Float64}}:
+ 1.0 v12
+ 2.0 v13
+ 3.0 v23
+ 0.0 v14
+ 0.0 v24
+ 0.0 v34
+
+julia> embed(2, Multivector{3,1}([1,2,3]))
+2-component Multivector{2, 1, SVector{2, Int64}}:
+ 1 v1
+ 2 v2
+```
+"""
+function embed(sig, a::Multivector)
+	T = Multivector{sig,grade(a)}
+	b = zero(T)
+	for k in grade(a)
+		n_orig = ncomponents(signature(a), k)
+		n_new = ncomponents(sig, k)
+		if n_new > n_orig
+			b += Multivector{sig,k}([a[k].comps; zeros(n_new - n_orig)])
+		else
+			b += Multivector{sig,k}(a[k].comps[1:n_new])
+		end
+	end
+	b
+end
 
 unit_pseudoscalar(::Val{Sig}) where {Sig} = let dim = dimension(Sig)
 	BasisBlade{Sig,dim}(1, bits_dual(dim, UInt(0)))

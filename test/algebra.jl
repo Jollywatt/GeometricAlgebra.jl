@@ -275,3 +275,12 @@ end
 		@inferred (a⨼b)∧(v12⋅b)*I
 	end
 end
+
+@testset "embed" begin
+	a = Multivector{3,1}(1, 2, 3)
+	@test embed(4, a) == Multivector{4,1}(1, 2, 3, 0)
+	@test embed(2, a) == Multivector{2,1}(1, 2)
+
+	a = randn(Multivector{3,0:3})
+	@test embed(3, embed(Cl(4,1), a)) == a
+end

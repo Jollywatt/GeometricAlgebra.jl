@@ -142,7 +142,7 @@ end
 
 @generated function symbolic_multivector_eval(::Val{Sig}, f::Function, args...) where Sig
 	@assert isdefined(f, :instance)
-	1
+	2
 	symbolic_multivector_eval(Expr, Val(Sig), f.instance, args...)
 end
 
@@ -180,11 +180,11 @@ To do this, the metric signatures in `args` are replaced with the equivalent can
 	of the first `AbstractMultivector` argument in `args`.
 	(The actual signature is lost because signatures are converted to canonical tuples.)
 """
-function symbolic_optim(f::Function, args...)
+function symbolic_optim(f::Function, args...; sig::Val=first_signature(args...))
 	# we’re replacing objects’ type parameters, so type stability is a little delicate
 	args′ = map(canonicalize, args)
-	Sig::Val = first_signature(args...) # guess the original (non-canonical) signature of f(args...)
-	result = symbolic_multivector_eval(Sig, f, args′...)
+	# Sig::Val = first_signature(args...) # guess the original (non-canonical) signature of f(args...)
+	result = symbolic_multivector_eval(sig, f, args′...)
 end
 
 """

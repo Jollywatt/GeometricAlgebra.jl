@@ -10,6 +10,7 @@ const Π = ProductNode
 const Σ = SumNode
 
 Base.copy(a::Union{Π,Σ}) = typeof(a)(copy(a.x))
+Base.broadcastable(a::Union{Π,Σ}) = Ref(a)
 
 (a::Π == b::Π) = a.x == b.x
 (a::Σ == b::Σ) = a.x == b.x

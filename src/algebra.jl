@@ -673,6 +673,7 @@ function embed(sig, a::Multivector)
 	end
 	b
 end
+embed(sig, a::BasisBlade) = BasisBlade{sig}(iszero(a.bits >> dimension(sig)) ? a.coeff : zero(a.coeff), a.bits)
 
 unit_pseudoscalar(::Val{Sig}) where {Sig} = let dim = dimension(Sig)
 	BasisBlade{Sig,dim}(1, bits_dual(dim, UInt(0)))

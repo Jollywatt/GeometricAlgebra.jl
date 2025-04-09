@@ -185,6 +185,6 @@ end
 grade(a::AbstractMultivector, ::typeof(+)) = iseven(a) ? a :  isodd(a) ? zero(a) : grade(a, Val(0:2:dimension(a)))
 grade(a::AbstractMultivector, ::typeof(-)) =  isodd(a) ? a : iseven(a) ? zero(a) : grade(a, Val(1:2:dimension(a)))
 
-grade(a::Scalar, k) = 0 ∈ k ? a : numberzero(a)
+grade(a::Scalar, k) = 0 ∈ k ? a : numberzero(typeof(a))
 
 eachgrade(a::Multivector) = ishomogeneous(a) ? (a,) : (a[k] for k in grade(a))

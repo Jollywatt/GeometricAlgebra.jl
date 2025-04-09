@@ -109,7 +109,7 @@ julia> @btime geometric_prod(Val(:nosym), A, B); # opt-out of symbolic optim
   7.312 μs (125 allocations: 4.67 KiB)
 ```
 """
-function symbolic_multivector_eval(::Type{Expr}, sig::Val, f::Function, args...; simplify=true)
+function symbolic_multivector_eval(::Type{Expr}, sig::Val{Sig}, f::Function, args...; simplify=true) where Sig
 	abc = Symbol.('a' .+ (0:length(args) - 1))
 
 	sym_args = make_symbolic.(args, abc)
@@ -120,8 +120,7 @@ function symbolic_multivector_eval(::Type{Expr}, sig::Val, f::Function, args...;
 		# special case for zero-component results - ensure sensible eltype
 		if isempty(sym_result.comps)
 			T = promote_type(eltype.(args[I])...)
-			comps = zeroslike(componentstype(signature(sym_result), 0, T), 0)
-			return constructor(sym_result)(comps)
+			return Multivector{Sig,grade(sym_result)}(SVector{0,T}())
 		end
 
 		sym_result = MiniCAS.factor(sym_result)
@@ -142,7 +141,7 @@ end
 
 @generated function symbolic_multivector_eval(::Val{Sig}, f::Function, args...) where Sig
 	@assert isdefined(f, :instance)
-	2
+	1
 	symbolic_multivector_eval(Expr, Val(Sig), f.instance, args...)
 end
 

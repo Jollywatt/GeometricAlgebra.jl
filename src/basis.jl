@@ -409,7 +409,7 @@ macro basis(sig, args...)
 	quote
 		$(assignments...)
 		$(esc(canary)) = true
-		if Base.isdefined($__module__, $(QuoteNode(canary)))
+		if true || Base.isdefined($__module__, $(QuoteNode(canary)))
 			@info $message
 		end
 	end

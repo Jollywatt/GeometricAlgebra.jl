@@ -151,7 +151,7 @@ first_signature(::OrType{<:AbstractMultivector{Sig}}, args...) where Sig = Val(S
 first_signature(a, args...) = first_signature(args...)
 
 replace_signature(a::Multivector{Sig,K,S}, ::Val{Sig′}) where {Sig,Sig′,K,S} = Multivector{Sig′,K,S}(a.comps)
-replace_signature(a, ::Val) = a
+replace_signature(a::BasisBlade{Sig,K}, ::Val{Sig′}) where {Sig,Sig′,K} = BasisBlade{Sig′,K}(a.coeff, a.bits)
 
 canonicalize(a::Multivector) = replace_signature(a, Val(canonical_signature(signature(a))))
 canonicalize(a::BasisBlade) = canonicalize(Multivector(a))

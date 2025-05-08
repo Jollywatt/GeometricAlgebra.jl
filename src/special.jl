@@ -388,3 +388,45 @@ function via_subalgebra_mask(fn, a::Multivector, mask)
 	b = fn(a′)
 	embed_in_superalgebra(signature(a), b, mask)
 end
+
+
+"""
+	factorblade(A::AbstractMultivector)
+
+Find a factorisation ``A = u₁ ∧ ⋯ ∧ uₖ`` of a ``k``-blade ``A`` using the
+"fast factorisation" algorithm [^1], so that `wedge(factorblade(A)...) ≈ A`.
+
+!!! warning
+	The multivector `A` is **assumed** to be a blade without checking.
+	If it is not a blade, then `factorblade(A)` is undefined.
+
+[^1]: Fontijne, D., & Dorst, L. (2010). Efficient Algorithms for Factorization and Join of Blades. In E. Bayro-Corrochano & G. Scheuermann (Eds.), Geometric Algebra Computing (pp. 457–476). Springer London. https://doi.org/10.1007/978-1-84996-108-0_21
+"""
+function factorblade(B::Multivector)
+	@assert length(grade(B)) == 1
+	(β, i) = findmax(abs, B.comps)
+	Bₛ = B*β^(1/grade(B) - 1)
+	F = basis(signature(B), grade(B), i)
+	Fi = inv(F)
+
+	factors = map(bits_to_indices(F.bits)) do i
+		fᵢ = basis(signature(B), 1, i)
+		bᵢ = (fᵢ ⨼ Fi) ⨼ Bₛ
+	end
+
+	if iseven(B)
+		factors[begin] *= sign(B.comps[i])
+	end
+
+	factors
+end
+
+function factorblade(B::BasisBlade{Sig}) where Sig
+	coeff = abs(B.coeff)^(1/grade(B))
+	T = promote_type(typeof(coeff), eltype(B))
+	factors = map(bits_to_indices(B.bits)) do i
+		BasisBlade{Sig,1,T}(coeff, UInt(1 << (i - 1)))
+	end
+	factors[begin] *= sign(B.coeff)
+	factors
+end

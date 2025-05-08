@@ -102,3 +102,34 @@ end
 
 	@test via_matrix_repr(sin, Multivector{3,0:2:2}(1:4)) |> grade === 0:2:2
 end
+
+
+@testset "blade factorisation" begin
+	@testset "blades" begin
+		@testset for T in (Float64, ComplexF64)
+			@testset "sig: $sig" for sig in 1:5
+				@testset "grade: $k" for k in 1:dimension(sig)
+					@testset for b in basis(sig, k)
+						b *= randn(T)
+						factors = factorblade(b)
+						@test wedge(factors...) ≈ b
+					end
+				end
+			end
+		end
+	end
+
+	@testset "multivectors" begin
+		@testset for T in (Float64, ComplexF64)
+			@testset "sig: $sig" for sig in [2, 3, 4, 5, Cl(1,1), Cl(1,3)]
+				@testset "grade: $k" for k in 1:dimension(sig)
+					for _ in 1:100
+						blade = wedge(randn(Multivector{sig,1,Vector{T}}, k)...)
+						factors = factorblade(blade)
+						@test wedge(factors...) ≈ blade
+					end
+				end
+			end
+		end
+	end
+end

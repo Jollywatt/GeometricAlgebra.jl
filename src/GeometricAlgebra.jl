@@ -25,6 +25,7 @@ export geometric_prod,
 export reversion, involution
 export flipdual, hodgedual, invhodgedual, ldual, rdual
 export matrix_repr, outermorphism, embed
+export factorblade
 export @symbolicga
 export MiniCAS
 

@@ -4,15 +4,15 @@ const Scalar = Union{Number,MiniCAS.SumNode,MiniCAS.ProductNode}
 
 
 """
-	AbstractMultivector{Sig}
+	AbstractMultivector{Sig,K}
 
-Supertype of all elements in the geometric algebra defined by the
-metric signature `Sig`.
+Supertype of elements of the geometric algebra with
+metric signature `Sig` and grade(s) `K`.
 
 # Subtypes
 
 ```
-         AbstractMultivector{Sig}
+         AbstractMultivector{Sig,K}
             /               \\
 BasisBlade{Sig,K,T}   Multivector{Sig,K,S}
 ```
@@ -21,12 +21,12 @@ BasisBlade{Sig,K,T}   Multivector{Sig,K,S}
 - [`Multivector`](@ref): a homogeneous or inhomogeneous multivector; a sum of basis blades.
 
 """
-abstract type AbstractMultivector{Sig} end
+abstract type AbstractMultivector{Sig,K} end
 
 
 
 """
-	BasisBlade{Sig,K,T}
+	BasisBlade{Sig,K,T} <: AbstractMultivector{Sig,K}
 
 A basis blade of grade `K` and scalar coefficient of type `T`.
 
@@ -42,7 +42,7 @@ Basis blades are scalar multiples of wedge products of orthogonal _basis_ vector
 - `K::Int`: Grade of the blade, equal to `count_ones(bits)`, retrieved with [`grade()`](@ref).
 - `T`: Numerical type of the scalar coefficient, retrieved with `eltype()`.
 """
-struct BasisBlade{Sig,K,T} <: AbstractMultivector{Sig}
+struct BasisBlade{Sig,K,T} <: AbstractMultivector{Sig,K}
 	coeff::T
 	bits::UInt
 end
@@ -74,7 +74,7 @@ BasisBlade(a::BasisBlade) = a
 
 
 """
-	Multivector{Sig,K,S} <: AbstractMultivector{Sig}
+	Multivector{Sig,K,S} <: AbstractMultivector{Sig,K}
 
 A general multivector with parts of grade `∈ K`.
 
@@ -87,7 +87,7 @@ Inhomogeneous multivectors may be specified with a range or tuple of grades.
 - `K`: Grade(s) present in the multivector. Can be an integer or a collection of integers (a range or tuple).
 - `S`: Storage type of the multivector components, usually a subtype of `AbstractVector`.
 """
-struct Multivector{Sig,K,S} <: AbstractMultivector{Sig}
+struct Multivector{Sig,K,S} <: AbstractMultivector{Sig,K}
 	comps::S
 end
 

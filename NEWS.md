@@ -2,7 +2,16 @@
 
 _This package is in early development; minor versions may introduce breaking changes. New features are shown in this news file, but many internal improvements are not._
 
+## v0.2.4
+
+* Add blade factoring function, `factorblade()`.
+
 ## v0.2.3
+
+* Rewrite symbolic engine (uses `GeometricAlgebra.MiniCAS` instead of `SymbolicUtils`).
+* Add option to suppress small components when displaying multivectors.
+* Add Faddeev-LeVerrier implementation of multivector inverses, `inv_flv_method()`.
+* Fix bugs with `sqrt()` and `outermorphism()`.
 
 ## v0.2.2
 

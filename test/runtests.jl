@@ -1,9 +1,6 @@
 #= Run this script interactively: `julia -i runtests.jl`
 ... or with arguments `julia runtests.jl [testfiles...]` =#
 
-cd(joinpath(".", dirname(@__FILE__)))
-# using Pkg; Pkg.activate(".") # TODO: GeometricAlgebra can't be in Project.toml for Pkg.test to work
-
 using Random, Test, Coverage, Documenter
 using Revise, GeometricAlgebra
 
@@ -11,12 +8,14 @@ const project_root = pathof(GeometricAlgebra) |> dirname |> dirname
 
 # apply setup code to all doctests in doc strings
 DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
-    using Revise
-    using GeometricAlgebra
-    using GeometricAlgebra.MiniCAS
+	using Revise
+	using GeometricAlgebra
+	using GeometricAlgebra.MiniCAS
 end; recursive=true)
 
-alltests() = setdiff(filter(endswith(".jl"), readdir()), [basename(@__FILE__)])
+alltests() = relpath.(filter(readdir(dirname(@__FILE__), join=true)) do file
+	endswith(file, ".jl") && file != @__FILE__
+end, pwd())
 
 test(files::String...) = test(files)
 function test(files=alltests())

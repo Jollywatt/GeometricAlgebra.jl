@@ -120,7 +120,8 @@ function symbolic_multivector_eval(::Type{Expr}, sig::Val{Sig}, f::Function, arg
 		# special case for zero-component results - ensure sensible eltype
 		if isempty(sym_result.comps)
 			T = promote_type(eltype.(args[I])...)
-			return Multivector{Sig,grade(sym_result)}(SVector{0,T}())
+			M = Multivector{Sig,grade(sym_result)}
+			return :($M(SVector{0,$T}()))
 		end
 
 		sym_result = MiniCAS.factor(sym_result)

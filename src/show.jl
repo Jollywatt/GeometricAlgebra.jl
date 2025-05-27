@@ -202,7 +202,7 @@ function show_multivector(io::IO, @nospecialize(a);
 	else
 		if groupgrades
 			if issmall(a, eps)
-				print(io, " "^indent, numberzero(eltype(a)))
+				print(io, " "^indent, numberzero(isconcretetype(eltype(a)) ? eltype(a) : Int))
 				return
 			end
 

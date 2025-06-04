@@ -41,5 +41,6 @@ include("algebra.jl")
 include("special.jl")
 include("show.jl")
 include("utils.jl")
+include("promotion.jl")
 
 end # module GeometricAlgebra

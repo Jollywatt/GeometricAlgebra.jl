@@ -228,6 +228,17 @@ Whether `a` is homogeneous, i.e., consists of nonzero parts of the same grade.
 """
 ishomogeneous(a) = isone(length(grade(a)))
 
+"""
+	isblade(a, atol=√eps)
+
+Whether `a^2` is (approximately) a scalar.
+"""
+function isblade(a, atol=√eps(float(eltype(a))))
+	ishomogeneous(a) || return false
+	grade(a) ∈ (0, 1, dimension(a) - 1, dimension(a)) && return true
+	all(<(atol)∘abs, (a*a - a⊙a).comps)
+end
+
 componentbits(a::OrType{<:Multivector}) = componentbits(Val(dimension(a)), Val(grade(a)))
 
 """

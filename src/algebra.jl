@@ -610,7 +610,7 @@ Sandwich product `R*a*~R` of multivector `a` by a rotor `R`.
 function sandwich_prod end
 
 sandwich_prod(R, a) = grade(R*a*reversion(R), grade(a))
-@symbolic_optim sandwich_prod(R::AbstractMultivector, a::AbstractMultivector) = grade(R*a*reversion(R), grade(a))
+@symbolic_optim sandwich_prod(R::AbstractMultivector{Sig}, a::AbstractMultivector{Sig}) where Sig = grade(R*a*reversion(R), grade(a))
 
 
 """
@@ -659,21 +659,22 @@ julia> embed(2, Multivector{3,1}([1,2,3]))
  2 v2
 ```
 """
-function embed(sig, a::Multivector)
-	T = Multivector{sig,grade(a)}
+function embed(::Val{Sig}, a::Multivector) where Sig
+	T = Multivector{Sig,grade(a)}
 	b = zero(T)
 	for k in grade(a)
 		n_orig = ncomponents(signature(a), k)
-		n_new = ncomponents(sig, k)
+		n_new = ncomponents(Sig, k)
 		if n_new > n_orig
-			b += Multivector{sig,k}([a[k].comps; zeros(n_new - n_orig)])
+			b += Multivector{Sig,k}([a[k].comps; zeros(n_new - n_orig)])
 		else
-			b += Multivector{sig,k}(a[k].comps[1:n_new])
+			b += Multivector{Sig,k}(a[k].comps[1:n_new])
 		end
 	end
 	b
 end
-embed(sig, a::BasisBlade) = BasisBlade{sig}(iszero(a.bits >> dimension(sig)) ? a.coeff : zero(a.coeff), a.bits)
+embed(::Val{Sig}, a::BasisBlade) where Sig = BasisBlade{Sig}(iszero(a.bits >> dimension(Sig)) ? a.coeff : zero(a.coeff), a.bits)
+embed(sig, a::AbstractMultivector) = embed(Val(sig), a)
 
 unit_pseudoscalar(::Val{Sig}) where {Sig} = let dim = dimension(Sig)
 	BasisBlade{Sig,dim}(1, bits_dual(dim, UInt(0)))

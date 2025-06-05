@@ -43,4 +43,6 @@ include("show.jl")
 include("utils.jl")
 include("promotion.jl")
 
+include("Conformal/cga.jl")
+
 end # module GeometricAlgebra

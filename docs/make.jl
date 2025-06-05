@@ -43,6 +43,9 @@ function make(; kwargs...)
                 "theory/special.md",
                 "theory/references.md",
             ],
+            "Models of geometry" => [
+                "theory/cga.md",
+            ],
             "docstrings.md",
         ],
         format=Documenter.HTML(

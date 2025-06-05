@@ -61,6 +61,13 @@ Pages = [
 Modules = [MiniCAS]
 ```
 
+## Conformal geometric algebra
+
+```@autodocs
+Pages = ["Conformal/cga.jl"]
+Modules = [GeometricAlgebra.Conformal]
+```
+
 ## Utilities
 
 ```@autodocs

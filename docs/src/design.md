@@ -17,8 +17,8 @@ using GeometricAlgebra
 There are two concrete types for representing elements in a geometric algebra:
 
 ```
-         AbstractMultivector{Sig}
-            /               \                             
+        AbstractMultivector{Sig,K}
+            /               \
 BasisBlade{Sig,K,T}    Multivector{Sig,K,S}
 ```
 
@@ -36,7 +36,7 @@ Type parameters:
 
 ## [Metric Signatures](@id sig)
 
-The metric signature type parameter `Sig` defines the dimension of the geometric algebra and the norms of its standard orthonormal basis vectors.
+The metric signature type parameter `Sig` defines the dimension of the geometric algebra and the squares of its standard orthonormal basis vectors.
 Additionally, it allows various default behaviours to be customised through method definitions which dispatch on `Sig`, as detailed in [the metric signature interface](@ref sig-interface).
 
 By default, the following metric signature types are implemented:
@@ -99,23 +99,23 @@ basis(ℙ(3)) |> sum
 
 ## Symbolic Algebra and Code Generation
 
-Thanks to the wonderful [`SymbolicUtils`](https://symbolicutils.juliasymbolics.org/) package, the same code originally written for numerical multivectors readily works with symbolic components.
+The package comes with a very minimal symbolic algebra module, `MiniCAS`, which is used for compile-time code simplification, but can also be used for (very simple) symbolic calculations.
 For example, we can compute the product of two vectors symbolically as follows:
 
 ```jldoctest
-julia> GeometricAlgebra.make_symbolic.(Multivector{2,1}, [:A, :B])
-2-element Vector{Multivector{2, 1, Vector{GeometricAlgebra.MiniCAS.ProductNode{Expr}}}}:
+julia> [Multivector{2,1}(:A), Multivector{2,2}(:B)]
+2-element Vector{Multivector{2, K, Vector{GeometricAlgebra.MiniCAS.ProductNode{Expr}}} where K}:
  A[1]v1 + A[2]v2
- B[1]v1 + B[2]v2
+ B[1]v12
 
 julia> prod(ans)
-2-component Multivector{2, 0:2:2, SVector{2, GeometricAlgebra.MiniCAS.SumNode{Expr, Int64}}}:
- A[1] * B[1] + A[2] * B[2]
- -(A[2] * B[1]) + A[1] * B[2] v12
+2-component Multivector{2, 1, SVector{2, Any}}:
+ -(A[2] * B[1]) v1
+ A[1] * B[1]    v2
 ```
 
-This makes it easy to optimize multivector operations: first perform the calculation symbolically and then compile the resulting analytic expression. By default, this optimization is enabled for most products (including the geometric, wedge and inner products in up to eight dimensions[^1]).
-This is done by prefixing method definitions with the internal [`@symbolic_optim`](@ref) macro.
+This makes it easy to optimize multivector operations: first perform the calculation symbolically and then compile the resulting analytic expression. By default, this compile-time optimization is enabled for most products (including the geometric, wedge and inner products in up to eight dimensions[^1]).
+This optimisation is applied by prefixing method definitions with the internal [`@symbolic_optim`](@ref) macro.
 
 [^1]: This can be changed on a per-algebra basis by defining methods for [`use_symbolic_optim()`](@ref).
 

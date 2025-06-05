@@ -21,7 +21,7 @@ This package is not yet registered, but can be installed directly from source.
 ```julia
 julia> using Pkg
 
-julia> Pkg.add(url="https://github.com/Jollywatt/GeometricAlgebra.jl", rev="v0.2.1")
+julia> Pkg.add(url="https://github.com/Jollywatt/GeometricAlgebra.jl")
 
 julia> using GeometricAlgebra
 ```

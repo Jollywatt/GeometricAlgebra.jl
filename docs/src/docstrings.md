@@ -21,6 +21,13 @@ Pages = ["signatures.jl", "basis.jl"]
 Modules = [GeometricAlgebra]
 ```
 
+## Multivector promotion
+
+```@autodocs
+Pages = [ "promotion.jl"]
+Modules = [GeometricAlgebra]
+```
+
 ## Logic for bits and grades
 
 ```@autodocs

@@ -16,7 +16,7 @@ graded_prod(fn, a::AbstractMultivector...) = graded_prod(fn, promote(a...)...)
 
 Define a promotion rule for multivector signatures.
 
-This works in much the same way as [`Base.promote_rule`](@ref), except that this does not
+This works in much the same way as `Base.promote_rule`, except that this does not
 operate on the full types, but only on the metric signature parameter of `AbstractMultivector`.
 
 Operations between multivectors of different signatures is not defined unless there is an applicable
@@ -24,7 +24,7 @@ method of [`signature_promote_rule`](@ref) defining the common signature to conv
 Signatures must be wrapped in `Val{}`, not `Type{}`, because signatures are allowed to be `isbits`
 values as well as types.
 
-To convert multivectors between signatures, there must be a corresponding method of [`signature_convert(::Val{Sig}, a)`](@ref).
+To convert multivectors between signatures, there must be a corresponding method `signature_convert(::Val{Sig}, a)`.
 
 See also [`signature_convert`](@ref).
 

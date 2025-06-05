@@ -89,7 +89,7 @@ all | ``2^n`` | multivectors
 A ``k``-vector in ``n``-dimensional Euclidean space is represented as a component vector wrapped in the `Multivector{n,k}` type.
 
 ```@repl ga
-Multivector{3,2}(rand(3))
+randn(Multivector{3,2})
 ```
 
 Elements of ``Cl(V, ⋅)`` may consist of parts of differing grade, and when they do they are called **(inhomogeneous) multivectors**.

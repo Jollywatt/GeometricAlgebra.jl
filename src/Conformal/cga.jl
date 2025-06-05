@@ -23,6 +23,7 @@ using ..GeometricAlgebra
 export CGA, CGABlade, CGAGeometry
 export origin, infinity, nullbasis
 export up, dn
+export translate
 export standardform
 export ipns, opns
 
@@ -116,46 +117,70 @@ For any vector `u` we have `dn(up(u)) == n` and `up∘dn` is idempotent.
 up, dn
 
 
-#= versors =#
+#= translation operator =#
 
+"""
+	translate(p)
+	translate(p, X) -> X′ = sandwich_prod(translate(p), X)
+
+Translate `X::Multivector{CGA{Sig}}` by the displacement vector `p::Multivector{Sig,1}`.
+
+The single-argument method returns the translation rotor and
+the two-argument form applies the rotor to `X` with [`sandwich_prod`](@ref).
+
+The translation rotor is defined as ``𝚃ₚ = \\exp(½ n_∞ ∧ p)`` where ``n_∞`` is
+the point at [`infinity`](@ref).
+
+# Examples
+```jldoctest; setup = :(using GeometricAlgebra.Conformal)
+julia> (p, x), noo = randn(Multivector{3,1}, 2), infinity(3);
+
+julia> translate(p, up(x)) ≈ up(x + p)
+true
+
+julia> translate(p, noo) ≈ noo
+true
+```
+"""
 function translate(p::Grade{1,CGA{Sig}}) where Sig
 	oo = infinity(CGA{Sig})
 	1 + 2\oo∧p
 end
 
 translate(p::Grade{1,Sig}) where Sig = translate(embed(CGA{Sig}, p))
-translate(p, X) where Sig = sandwich_prod(translate(p), X)
+translate(p, X) = sandwich_prod(translate(p), X)
 
 
 
 #= blade classification =#
 
 """
-	CGAOBlade{Sig,K} >:
+	CGABlade{Sig,K}:
 		DirectionBlade{Sig,K}(E)
 		FlatBlade{Sig,K}(E, p)
 		DualFlatBlade{Sig,K}(E, p)
 		RoundBlade{Sig,K}(E, p, r2)
 
-A blade in the conformal geometric algebra `CGA{Sig}` over base space `Sig`.
+Standard forms of blades in the conformal geometric algebra `CGA{Sig}` over base space `Sig`.
 
-| Type | Mathematical form |
+| Value | Mathematical form |
 |:-----|:-----|
-| `DirectionBlade(E)` | ``E ∧ ∞`` |
-| `FlatBlade(E, p)` | ``Tₚ[𝒪 ∧ E ∧ ∞]`` |
-| `DualFlatBlade(E, p)` | ``Tₚ[E]`` |
-| `RoundBlade(E, p, r2)` | ``Tₚ[(𝒪 + r2/2 ∞) ∧ E]`` |
+| `DirectionBlade(E)` | ``E ∧ n_∞`` |
+| `FlatBlade(E, p)` | ``𝚃ₚ[n₀ ∧ E ∧ n_∞]`` |
+| `DualFlatBlade(E, p)` | ``𝚃ₚ[E]`` |
+| `RoundBlade(E, p, r2)` | ``𝚃ₚ[(n₀ + r2/2 n_∞) ∧ E]`` |
 
 Any blade in `CGA{Sig}` is of exactly one of the forms above, where:
 - ``E`` is a `K`-blade in the base space
 - ``p`` is a position vector in the base space
-- ``r2`` is a radius squared, which may be positive or negative
-- ``𝒪`` and ``∞`` are the points at the origin and at infinity
-- ``Tₚ`` is the translation operator sending ``𝒪`` to ``p``
+- ``r2`` is a square-radius, which may be positive or negative
+- ``n₀`` and ``n_∞`` are the points at the [`origin`](@ref) and at [`infinity`](@ref)
+- ``Tₚ`` is the translation operator sending ``n₀`` to ``p``
 
 The method [`standardform`](@ref) classifies any blade in `CGA{Sig}` to one of these forms.
+A standard blade `X::CGABlade` may be converted back to the usual additive form with `Multivector(X)`.
 
-See table 14.1 of [^1] for mathematical details.
+See table 14.1 of [^1] for discussion.
 
 [^1]: Dorst, L., Fontijne, D., & Mann, S. (2010). Geometric Algebra for Computer Science: An Object-Oriented Approach to Geometry. Elsevier.
 """
@@ -187,9 +212,13 @@ GeometricAlgebra.Multivector(X::DualFlatBlade{Sig}) where Sig = translate(X.p, X
 GeometricAlgebra.Multivector(X::RoundBlade{Sig}) where Sig = translate(X.p, (origin(Sig) + 2\X.r2*infinity(Sig)) ∧ X.E)
 
 """
-	todo
+	standardform(X::AbstractMultivector{CGA{Sig}}) -> CGABlade{Sig}
+
+Put the blade `X` in standard form, returning a `CGABlade` object.
 """
 function standardform(X::AbstractMultivector{<:CGA})
+	@assert isblade(X)
+
 	o = origin(signature(X))
 	oo = infinity(signature(X))
 
@@ -239,29 +268,46 @@ struct RoundGeometry{Sig,K} <: CGAGeometry{Sig}
 end
 struct PointAtInfinity{Sig} <: CGAGeometry{Sig} end
 struct EmptySet{Sig} <: CGAGeometry{Sig} end
-struct FlatGeometry{K,Sig} <: CGAGeometry{Sig}
-	# todo: call this KPlane?
-	p::Multivector{Sig,1}
-	E::Multivector{Sig,K}
-end
-struct RoundGeometry{K,Sig} <: CGAGeometry{Sig}
-	# todo: call this KSphere?
-	p::Multivector{Sig,1}
-	E::Multivector{Sig,K}
-	r2::Float64
-end
 
+"""
+	CGAGeometry{Sig}:
+		FlatGeometry{Sig,K}(p, E)
+		RoundGeometry{Sig,K}(p, E, r2)
+		PointAtInfinity{Sig}()
+		EmptySet()
 
-const Point = RoundGeometry{0,3}
-const PointPair = RoundGeometry{1,3}
-const Circle = RoundGeometry{2,3}
-const Sphere = RoundGeometry{3,3}
+Subsets of ``ℝⁿ ∪ {∞}`` which are the [`ipns`](@ref) or [`opns`](@ref) of a conformal blade.
 
-const PointFlat = FlatGeometry{0,3}
-const Line = FlatGeometry{1,3}
-const Plane = FlatGeometry{2,3}
+See also [`FlatGeometry`](@ref) and [`RoundGeometry`](@ref).
+"""
+CGAGeometry, PointAtInfinity, EmptySet
 
+"""
+	FlatGeometry{Sig,K}(p, E) <: CGAGeometry{Sig}
 
+A `K`-flat in the base space `Sig` through the point `p` spanning the `K`-blade `E`.
+
+A `0`-flat is a point, a `1`-flat is a line, a `2`-flat is a plane, etc.
+All flats include the unique point at infinity.
+
+See also [`RoundGeometry`](@ref) and [`CGAGeometry`](@ref).
+"""
+FlatGeometry
+
+"""
+	RoundGeometry{Sig,K}(p, E, r2) <: CGAGeometry{Sig}
+
+A `K`-round in the base space `Sig` around the point `p` spanning the `K`-blade `E` with square radius `r2`.
+
+A `0`-round is a point, a `1`-round is a point pair, a `2`-round is a circle, a `3`-round is a sphere, etc.
+No rounds include the point at infinity.
+
+!!! note
+	The square radius `r2` may be negative, in which case the round is formally the empty set, but one may also
+	interpret this as an "imaginary" radius.
+
+See also [`FlatGeometry`](@ref) and [`CGAGeometry`](@ref).
+"""
 
 ipns(X::DirectionBlade{Sig}) where Sig = PointAtInfinity{Sig}()
 ipns(X::DualFlatBlade) = FlatGeometry(X.p, hodgedual(X.E))
@@ -306,12 +352,18 @@ function showfields(io::IO, X::T) where T
 	end
 end
 
+GeometricAlgebra.grade(X::DirectionBlade) = grade(X.E) + 1
+GeometricAlgebra.grade(X::FlatBlade) = grade(X.E) + 2
+GeometricAlgebra.grade(X::DualFlatBlade) = grade(X.E)
+GeometricAlgebra.grade(X::RoundBlade) = grade(X.E) + 1
+
 showformula(::Type{<:DirectionBlade}) = "E∧oo"
-showformula(::Type{<:FlatBlade}) = "translate(p, o∧E∧oo)"
+showformula(::Type{<:FlatBlade}) = "translate(p, n0∧E∧noo)"
 showformula(::Type{<:DualFlatBlade}) = "translate(p, E)"
-showformula(::Type{<:RoundBlade}) = "translate(p, (o + r2/2*oo)∧E)"
+showformula(::Type{<:RoundBlade}) = "translate(p, (n0 + r2/2*noo)∧E)"
 function Base.show(io::IO, mime::MIME"text/plain", X::T) where T <: CGABlade{Sig,K} where {Sig,K}
-	print(io, T, " of the form ")
+	println(io, T, ":")
+	print(io, " $(grade(X))-blade of the form ")
 	printstyled(io, showformula(T), color=:cyan)
 	print(io, ":")
 	showfields(io, X)
@@ -319,11 +371,19 @@ end
 
 showformula(::Type{<:PointAtInfinity}) = ""
 showformula(::Type{<:EmptySet}) = ""
-showformula(::Type{<:FlatGeometry}) = styled"through {cyan:p} with direction {cyan:E}"
-showformula(::Type{<:RoundGeometry}) = styled"around center {cyan:p} with square radius {cyan:r2} and span {cyan:E}"
-function Base.show(io::IO, mime::MIME"text/plain", X::T) where T <: CGAGeometry
-	iszero(nfields(X)) && return print(io, T, "()")
-	print(io, T, " ", showformula(T), ":")
+function showformula(::Type{<:FlatGeometry{Sig,K}}) where {Sig,K}
+	desc = get(("point", "line", "plane", "volume"), K + 1, nothing)
+	desc = isnothing(desc) ? "" : " ($desc)"
+	styled"$K-flat$desc through {cyan:p} spanning {cyan:E}"
+end
+function showformula(::Type{<:RoundGeometry{Sig,K}}) where {Sig,K}
+	desc = get(("point", "point pair", "circle", "sphere"), K + 1, nothing)
+	desc = isnothing(desc) ? "" : " ($desc)"
+	styled"$K-round$desc around center {cyan:p} spanning {cyan:E} with square radius {cyan:r2}"
+end
+function Base.show(io::IO, mime::MIME"text/plain", X::T) where T <: Union{FlatGeometry,RoundGeometry}
+	println(io, T, ": ")
+	print(io, " ", showformula(T), ":")
 	showfields(io, X)
 end
 

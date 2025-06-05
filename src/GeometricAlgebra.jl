@@ -12,7 +12,7 @@ export basis, @basis, cayleytable
 export BasisDisplayStyle
 export signature, dimension, ncomponents, grade, eachgrade, blades
 export Cl
-export scalar, isscalar, ishomogeneous
+export scalar, isscalar, ishomogeneous, isblade
 export geometric_prod,
 	scalar_prod, ⊙,
 	wedge, ∧,

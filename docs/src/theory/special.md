@@ -7,7 +7,7 @@ end
 
 # Inverses, Roots and Logarithms
 
-In general, finding the inverse ``A^{-1}``, square root ``\sqrt{A}`` or logarithm ``\log A`` of a general multivector ``A`` is difficult. However, for certain cases, explicit formulae exist.
+In general, finding the inverse, a square root or a logarithm of an arbitrary multivector is difficult. However, explicit formulae exist for certain cases.
 
 ## Multivector inverses
 
@@ -21,16 +21,16 @@ Any multivector ``A`` has either no inverse or exactly one inverse ``A^{-1}`` su
 For any metric in up to five dimensions, explicit formulae exist for the inverse of a multivector ``A``.
 The implementation used in `GeometricAlgebra.jl` is mainly based on [Hitzer2017](@cite) and is described here.
 
-For a multivector ``A ∈ Cl(ℝ^d, ·)`` with metric ``·`` in ``d`` dimensions, let:
+For a multivector ``A`` in `d`` dimensions, let:
 
 - ``Ā`` be the [Clifford conjugate](@ref "Clifford conjugation")
 - ``Â`` be the [involute](@ref involution)
 - ``Ã`` be the [reverse](@ref "Reversion")
 - ``[A]_K`` denote the negation of grades ``k ∈ K``, i.e.,
 ```math
-[A]_K = \sum_{k=0}^d ⟨A⟩_k · \begin{cases}
-	-1 & \text{if } k ∈ K \\
-	+1 & \text{otherwise}
+[A]_K = \sum_{k=0}^d \begin{cases}
+	-⟨A⟩_k & \text{if } k ∈ K \\
+	+⟨A⟩_k & \text{otherwise}
 .\end{cases}
 ```
 
@@ -65,7 +65,7 @@ The inverse exists if and only if ``c_0 \ne 0``.
 
 If ``A`` is a ``d``-dimensional multivector, then:
 ```math
-\text{repsize}(A) = \begin{cases}
+\text{repsize}(A) \le \begin{cases}
 	1 & A = ⟨A⟩_0 \\
 	2 & \text{$A$ is a pseudoscalar or (pseudo)vector} \\
 	2^{\lfloor d/2 \rfloor} & \text{$A$ is even} \\

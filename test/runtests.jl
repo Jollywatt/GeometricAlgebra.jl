@@ -17,7 +17,7 @@ function alltests(dir=dirname(@__FILE__))
 	testfiles = String[]
 	for (root, dirs, files) in walkdir(dir)
 		f = filter(files) do file
-			endswith(file, ".jl") && file != @__FILE__
+			endswith(file, ".jl") && file != basename(@__FILE__)
 		end
 		append!(testfiles, relpath.(joinpath.(root, f), pwd()))
 		for dir in dirs

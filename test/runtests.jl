@@ -13,9 +13,19 @@ DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
 	using GeometricAlgebra.MiniCAS
 end; recursive=true)
 
-alltests() = relpath.(filter(readdir(dirname(@__FILE__), join=true)) do file
-	endswith(file, ".jl") && file != @__FILE__
-end, pwd())
+function alltests(dir=dirname(@__FILE__))
+	testfiles = String[]
+	for (root, dirs, files) in walkdir(dir)
+		f = filter(files) do file
+			endswith(file, ".jl") && file != @__FILE__
+		end
+		append!(testfiles, relpath.(joinpath.(root, f), pwd()))
+		for dir in dirs
+			append!(testfiles, alltests(dir))
+		end
+	end
+	testfiles
+end
 
 test(files::String...) = test(files)
 function test(files=alltests())

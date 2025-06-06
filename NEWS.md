@@ -5,6 +5,7 @@ _This package is in early development; minor versions may introduce breaking cha
 ## v0.2.4
 
 * Add blade factoring function, `factorblade()`.
+* Add `Conformal` submodule for basic operations in conformal geometric algebras.
 
 ## v0.2.3
 

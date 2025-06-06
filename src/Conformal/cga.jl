@@ -19,6 +19,7 @@ module Conformal
 
 using StyledStrings
 using ..GeometricAlgebra
+using Compat
 
 export CGA, CGABlade, CGAGeometry
 export origin, infinity, nullbasis
@@ -26,6 +27,9 @@ export up, dn
 export translate
 export standardform
 export ipns, opns
+
+@compat public DirectionBlade, FlatBlade, DualFlatBlade, RoundBlade
+@compat public FlatGeometry, RoundGeometry, PointAtInfinity, EmptySet
 
 
 #= signature and basis display style =#
@@ -274,7 +278,7 @@ struct EmptySet{Sig} <: CGAGeometry{Sig} end
 		FlatGeometry{Sig,K}(p, E)
 		RoundGeometry{Sig,K}(p, E, r2)
 		PointAtInfinity{Sig}()
-		EmptySet()
+		EmptySet{Sig}()
 
 Subsets of ``ℝⁿ ∪ {∞}`` which are the [`ipns`](@ref) or [`opns`](@ref) of a conformal blade.
 
@@ -285,7 +289,8 @@ CGAGeometry, PointAtInfinity, EmptySet
 """
 	FlatGeometry{Sig,K}(p, E) <: CGAGeometry{Sig}
 
-A `K`-flat in the base space `Sig` through the point `p` spanning the `K`-blade `E`.
+A `K`-flat in the base space `Sig` through the point `p::Multivector{Sig,1}`
+spanning the `K`-blade `E::Multivector{Sig,K}`.
 
 A `0`-flat is a point, a `1`-flat is a line, a `2`-flat is a plane, etc.
 All flats include the unique point at infinity.
@@ -297,17 +302,19 @@ FlatGeometry
 """
 	RoundGeometry{Sig,K}(p, E, r2) <: CGAGeometry{Sig}
 
-A `K`-round in the base space `Sig` around the point `p` spanning the `K`-blade `E` with square radius `r2`.
+A `K`-round in the base space `Sig` around the point `p::Multivector{Sig,1}`
+spanning the `K`-blade `E::Multivector{Sig,K}` with square radius `r2`.
 
-A `0`-round is a point, a `1`-round is a point pair, a `2`-round is a circle, a `3`-round is a sphere, etc.
-No rounds include the point at infinity.
+A `0`-round is a point, a `1`-round is a point pair, a `2`-round is a circle,
+a `3`-round is a sphere, etc. No rounds include the point at infinity.
 
 !!! note
-	The square radius `r2` may be negative, in which case the round is formally the empty set, but one may also
-	interpret this as an "imaginary" radius.
+	The square radius `r2` may be negative, in which case the round is formally\
+	the empty set, but one may also interpret this as an "imaginary" radius.
 
 See also [`FlatGeometry`](@ref) and [`CGAGeometry`](@ref).
 """
+RoundGeometry
 
 ipns(X::DirectionBlade{Sig}) where Sig = PointAtInfinity{Sig}()
 ipns(X::DualFlatBlade) = FlatGeometry(X.p, hodgedual(X.E))

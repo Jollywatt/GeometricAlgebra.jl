@@ -77,7 +77,7 @@ function Base.convert(::Type{AbstractMultivector{Sig}}, a::AbstractMultivector{S
 end
 
 # this is the error shown when promotion fails
-function Base.sametype_error(x::Tuple{Vararg{<:AbstractMultivector}})
+function Base.sametype_error(x::Tuple{Vararg{AbstractMultivector}})
 	error("""
 	Could not promote multivectors of signature $(join(signature.(x), ", ", " and ")).
 

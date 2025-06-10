@@ -58,7 +58,7 @@ We interpret $n_0$ as the origin and $n_∞$ as the unique _point at infinity_.
 
 ## Standard form of CGA blades
 
-It is useful to represent blades in `CGA{Sig}` in purely terms of objects in the base space `Sig` and the null basis $n_0$ and $n_∞$.
+It is useful to represent blades in `CGA{Sig}` in purely terms of $n_0$, $n_∞$ and objects in the base space `Sig`.
 
 In fact, any blade $X$ in `CGA{Sig}` is of exactly one of the four forms represented by the subtypes of [`CGABlade`](@ref).
 
@@ -79,15 +79,15 @@ This example shows how $𝐯_1𝐯_2 + 2𝐯_2∧n_∞$ can be written as $𝚃_
 
 ## Geometric objects represented by CGA blades
 
-Any CGA blade $X$ can be associated with a subset of the base space $\mathbb{R}^n$ in two ways, providing geometrical interpretations.
-We define the _inner_ and _outer product null spaces_[^1]
+Any CGA blade $X$ can be associated with a subset of the base space $\mathbb{R}^n$ in two ways related by duality, providing clear geometrical meaning.
+Define the _inner_ and _outer product null spaces_[^1],  obtained with [`ipns`](@ref) and [`opns`](@ref):
 ```math
 \begin{align*}
 \operatorname{ipns}(X) &\coloneqq \{p \in \mathbb{R}^n \cup \{∞\} \mid \operatorname{up}(p) \mathop\rfloor X = 0 \} \\
 \operatorname{opns}(X) &\coloneqq \{p \in \mathbb{R}^n \cup \{∞\} \mid \operatorname{up}(p) \wedge X = 0 \}
 \end{align*}
 ```
-which are related by duality (e.g., $\operatorname{ipns} = \operatorname{opns} \circ \operatorname{hodgedual}$) and may be obtained with [`ipns`](@ref) and [`opns`](@ref).
+These are related by duality so that `ipns(x) == opns(hodgedual(x))` and `ipns(hodgedual(x)) == opns(x)`.
 
 [^1]:
 	In an abuse of notation, $\operatorname{up}(∞) = n_∞$.
@@ -95,7 +95,12 @@ which are related by duality (e.g., $\operatorname{ipns} = \operatorname{opns} \
 	where $[\quad]$ is the projective equivalence class.
 	Then we have $\operatorname{ipns}(X) = \{x \in Q \mid x \mathop\rfloor X = 0\}$ and similarly for $\operatorname{opns}$.
 
-For a given blade, the inner or outer product null space may be the empty set or an affine $k$-plane (point, line, plane, and so on) or $k$-sphere (point pair, circle, sphere, and so on) in the extended base space $\mathbb{R}^n \cup \{∞\}$.
+Possible values of $\operatorname{ipns}$ or $\operatorname{opns}$ are the following subsets of the extended base space $\mathbb{R}^n \cup \{∞\}$:
+- the empty set,
+- an affine $k$-plane (point, line, plane, and so on) which contains $∞$,
+- a $k$-sphere (point, point pair, circle, sphere, and so on),
+- the point at infinity.
+
 Geometric objects of these kinds are represented by the [`FlatGeometry`](@ref) and [`RoundGeometry`](@ref) subtypes of [`CGAGeometry`](@ref).
 
 

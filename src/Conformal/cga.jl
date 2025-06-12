@@ -60,8 +60,8 @@ GeometricAlgebra.signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{Sig})
 #= standard conformal null basis =#
 
 nullbasis(S::Type{CGA{Sig}}) where Sig = (origin = origin(S), infinity = infinity(S))
-origin(::Type{CGA{n}}) where n = Multivector{CGA{n},1}([zeros(n); -0.5; 0.5])
-infinity(::Type{CGA{n}}) where n = Multivector{CGA{n},1}([zeros(n); +1; +1])
+origin(::Type{CGA{Sig}}) where Sig = Multivector{CGA{Sig},1}([zeros(dimension(Sig)); -0.5; 0.5])
+infinity(::Type{CGA{Sig}}) where Sig = Multivector{CGA{Sig},1}([zeros(dimension(Sig)); +1; +1])
 
 origin(n::Integer) = origin(CGA{n})
 infinity(n::Integer) = infinity(CGA{n})

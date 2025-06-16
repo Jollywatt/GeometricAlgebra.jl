@@ -1,19 +1,25 @@
 """
 # Conformal geometric algebra
 
-Tools for working with conformal geometric algebra.
+Tools for working with conformal geometric algebra (CGA).
 
-The algebra `CGA{Sig}` is an extension of the base space `Sig` with two additional dimensions,
-`vp^2 = +1` and `vm^2 = -1`. Points in the base space `p::Multivector{Sig,a}` are associated to
+The algebra `CGA{Sig}` is an extension of the base space `Sig` with two additional dimensions
+of square ``+1`` and ``-1``. Points in the base space `p::Multivector{Sig,1}` are associated to
 null vectors in the higher space by
 ```julia
-up(x) = o + x + x^2/2*oo
+up(x) = n0 + x + x^2/2*noo
 ```
-where `o = origin(CGA{Sig})` is the null vector representing the origin and `oo = origin(CGA{Sig})`
-represents the point at infinity.
+where `n0, noo = nullbasis(Sig)` are the null vectors representing the origin and the point at infinity.
 
-Conformal geometric algebra has covariant representations of points, point-pairs, lines, circles,
-spheres, and other geometric primitives.
+Geometric primitives including _flats_ (points, point pairs, lines, planes, ...) and _rounds_
+(point pairs, circles, spheres, ...) can be naturally represented as the inner or outer product
+null spaces of CGA blades (see [`ipns`](@ref) and [`opns`](@ref)).
+
+Geometric primitives may be translated in space with [`translate`](@ref) and combined with
+the wedge product to produce meets (for `opns` geometries) or joins (intersections, for `ipns`).
+
+Any CGA blade has a [`standardform`](@ref) from which geometric properties (such as position, radius
+and carrier) can be easily retrieved.
 """
 module Conformal
 
@@ -112,9 +118,9 @@ or "project down" a conformal 1-vector back into the base space.
 
 The `up` map is given by
 ```math
-up(x) = o + embed(x) + 1/2 x^2 oo
+up(x) = n0 + embed(x) + 1/2 x^2 noo
 ```
-where `o = origin(CGA{Sig})` and `oo = infinity(CGA{Sig})` are the points representing the origin and infinity.
+where `n0, noo = nullbasis(CGA{Sig})` are the points representing the origin and infinity.
 
 For any vector `u` we have `dn(up(u)) == n` and `up∘dn` is idempotent.
 """
@@ -132,7 +138,7 @@ Translate `X::Multivector{CGA{Sig}}` by the displacement vector `p::Multivector{
 The single-argument method returns the translation rotor and
 the two-argument form applies the rotor to `X` with [`sandwich_prod`](@ref).
 
-The translation rotor is defined as ``𝚃ₚ = \\exp(½ n_∞ ∧ p)`` where ``n_∞`` is
+The translation rotor is defined as ``𝚃ₚ = \\exp(½ n_∞ p)`` where ``n_∞`` is
 the point at [`infinity`](@ref).
 
 # Examples
@@ -181,7 +187,7 @@ Any blade in `CGA{Sig}` is of exactly one of the forms above, where:
 - ``n₀`` and ``n_∞`` are the points at the [`origin`](@ref) and at [`infinity`](@ref)
 - ``Tₚ`` is the translation operator sending ``n₀`` to ``p``
 
-The method [`standardform`](@ref) classifies any blade in `CGA{Sig}` to one of these forms.
+The method [`standardform`](@ref) puts any blade in `CGA{Sig}` into one of these forms.
 A standard blade `X::CGABlade` may be converted back to the usual additive form with `Multivector(X)`.
 
 See table 14.1 of [^1] for discussion.
@@ -306,10 +312,10 @@ A `K`-round in the base space `Sig` around the point `p::Multivector{Sig,1}`
 spanning the `K`-blade `E::Multivector{Sig,K}` with square radius `r2`.
 
 A `0`-round is a point, a `1`-round is a point pair, a `2`-round is a circle,
-a `3`-round is a sphere, etc. No rounds include the point at infinity.
+a `3`-round is a sphere, etc. Rounds never include the point at infinity.
 
 !!! note
-	The square radius `r2` may be negative, in which case the round is formally\
+	The square radius `r2` may be negative, in which case the round is formally
 	the empty set, but one may also interpret this as an "imaginary" radius.
 
 See also [`FlatGeometry`](@ref) and [`CGAGeometry`](@ref).

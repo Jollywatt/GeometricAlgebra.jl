@@ -1,11 +1,10 @@
 #= Run this script interactively: `julia -i make.jl`
 ... or with arguments `julia make.jl [test|fix|make|deploy]` =#
 
-cd(joinpath(".", dirname(@__FILE__)))
-using Pkg; Pkg.activate("."); Pkg.instantiate()
-
 using Documenter, DocumenterCitations
 using Revise
+using LiveServer
+
 using GeometricAlgebra
 using GeometricAlgebra.MiniCAS
 
@@ -105,4 +104,8 @@ end
 
 function cleardocs!(mod, name)
     Docs.meta(mod)[Docs.Binding(mod, name)] = Docs.MultiDoc()
+end
+
+cd(joinpath(project_root, "docs")) do
+    make()
 end

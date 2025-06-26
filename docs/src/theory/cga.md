@@ -13,8 +13,7 @@ using GeometricAlgebra.Conformal
 
 # Conformal Geometric Algebra
 
-
-Conformal geometric algebra (CGA) is an elegant projective model of points, lines, circles, planes, spheres, and other objects in $\mathbb{R}^n$ using blades in a geometric algebra over $\mathbb{R}^{n + 2}$.
+Conformal geometric algebra (CGA) is an projective model of _flats_ (points, lines, planes, ...) and _rounds_ (point pairs, circle, spheres, ...) in $\mathbb{R}^n$ which represents objects as blades in a geometric algebra over $\mathbb{R}^{n + 2}$.
 
 This package includes a small submodule which defines CGA and a few important operations, including [`standardform`](@ref) for classifying blades and the functions [`ipns`](@ref) and [`opns`](@ref) for obtaining the geometric forms represented by a blade.
 
@@ -54,7 +53,12 @@ We can go the other way with the _down_ map, [`dn`](@ref).
 p == dn(up(p)) == dn(100up(p))
 ```
 You may notice that $n_0$ itself is equal to $\operatorname{up}(0)$ and $n_\infty$ is the limit of $\operatorname{up}(x)/\|x\|^2$ as $x$ goes to infinity in any direction.
-We interpret $n_0$ as the origin and $n_∞$ as the unique _point at infinity_.
+We interpret $n_0$ as the origin point and $n_∞$ as the unique _point at infinity_.[^1]
+
+[^1]:
+	We are motivated by the fact that a unique point at infinity arises to consider an _extended base space_ $\mathbb{R}^n \cup \{\infty\}$ rather than simply $\mathbb{R}^n$.
+	Then we may define $\operatorname{up} : \mathbb{R}^n \cup \{\infty\} \to \mathbb{R}^{n + 2}$
+	with the additional rule $\operatorname{up}(\infty) = n_\infty$.
 
 ## Standard form of CGA blades
 
@@ -79,21 +83,18 @@ This example shows how $𝐯_1𝐯_2 + 2𝐯_2∧n_∞$ can be written as $𝚃_
 
 ## Geometric objects represented by CGA blades
 
-Any CGA blade $X$ can be associated with a subset of the base space $\mathbb{R}^n$ in two ways related by duality, providing clear geometrical meaning.
-Define the _inner_ and _outer product null spaces_[^1],  obtained with [`ipns`](@ref) and [`opns`](@ref):
+Any CGA blade $X$ can be associated with a subset of the base space $\mathbb{R}^n$ in two ways related by duality.[^2]
+
+[^2]:
+	They are dual in the sense that $\operatorname{ipns}(X) = \operatorname{opns}(I X)$ and $\operatorname{opns}(X) = \operatorname{ipns}(I X)$ where $I$ is the pseudoscalar.
+Define the _inner_ and _outer product null spaces_, obtained with [`ipns`](@ref) and [`opns`](@ref):
+
 ```math
 \begin{align*}
 \operatorname{ipns}(X) &\coloneqq \{p \in \mathbb{R}^n \cup \{∞\} \mid \operatorname{up}(p) \mathop\rfloor X = 0 \} \\
 \operatorname{opns}(X) &\coloneqq \{p \in \mathbb{R}^n \cup \{∞\} \mid \operatorname{up}(p) \wedge X = 0 \}
 \end{align*}
 ```
-These are related by duality so that `ipns(x) == opns(hodgedual(x))` and `ipns(hodgedual(x)) == opns(x)`.
-
-[^1]:
-	In an abuse of notation, $\operatorname{up}(∞) = n_∞$.
-	More formally, one may define these as subsets of the projective space $Q \subset \mathbf{P}\mathbb{R}^{n + 2}$ of null vectors, $Q = \{[\operatorname{up}(p)] \mid p \in \mathbb{R}^n\} \cup \{[n_\infty]\}$
-	where $[\quad]$ is the projective equivalence class.
-	Then we have $\operatorname{ipns}(X) = \{x \in Q \mid x \mathop\rfloor X = 0\}$ and similarly for $\operatorname{opns}$.
 
 Possible values of $\operatorname{ipns}$ or $\operatorname{opns}$ are the following subsets of the extended base space $\mathbb{R}^n \cup \{∞\}$:
 - the empty set,

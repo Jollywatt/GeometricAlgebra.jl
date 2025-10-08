@@ -684,3 +684,34 @@ unit_pseudoscalar(a::AbstractMultivector{Sig}) where {Sig} = unit_pseudoscalar(V
 pseudoscalar_square(sig::Val) = scalar(unit_pseudoscalar(sig)^2)
 pseudoscalar_square(a::AbstractMultivector{Sig}) where {Sig} = pseudoscalar_square(Val(Sig))
 
+function permutebits(a::Unsigned, perm)
+	b = zero(a)
+	for (i, p) in enumerate(perm)
+		# map ith bit to pth bit
+		b += (one(a) << (i - 1)) * ((a >> (p - 1)) & one(a))
+	end
+	b
+end
+
+mapbasis(fn, a::BasisBlade{Sig,K}) where {Sig,K} = BasisBlade{Sig,K}(a.coeff, fn(a.bits))
+function mapbasis(fn, a::Multivector{Sig,K}) where {Sig,K}
+	a′ = zero(a)
+	bits = componentbits(a)
+	for (i, b) in enumerate(bits)
+		a′ = add!(a′, a.comps[i], fn(b))
+	end
+	a′
+end
+
+"""
+	permutedims(a::Multivector, perm)
+
+Permute the basis dimensions of a `Multivector`.
+
+
+"""
+function Base.permutedims(a::Multivector, perm)
+	mapbasis(a) do bits
+		permutebits(bits, perm)
+	end
+end

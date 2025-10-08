@@ -81,7 +81,7 @@ function Base.sametype_error(x::Tuple{Vararg{AbstractMultivector}})
 	error("""
 	Could not promote multivectors of signature $(join(signature.(x), ", ", " and ")).
 
-	Hint: If it makes sense to, define appropriate methods for `signature_promote_rule()` and
+	Hint: If appropriate, define methods for `signature_promote_rule()` and
 	`signature_convert()` to enable promotion.
 	""")
 end

@@ -51,10 +51,13 @@ GeometricAlgebra.dimension(::Type{CGA{Sig}}) where Sig = dimension(Sig) + 2
 function GeometricAlgebra.basis_vector_square(P::Type{CGA{Sig}}, i::Integer) where Sig
 	(GeometricAlgebra.canonical_signature(Sig)..., +1, -1)[i]
 end
-function GeometricAlgebra.get_basis_display_style(::Type{CGA{Sig}}) where Sig
-	n = dimension(Sig)
-	BasisDisplayStyle(n + 2, indices=[string.(1:n); 'p'; 'm'])
+function GeometricAlgebra.get_basis_display_style(sig::Type{<:CGA})
+	n = dimension(sig)
+	BasisDisplayStyle(n, indices=[string.(1:n - 2); 'p'; 'm'])
 end
+
+GeometricAlgebra.dimension(::Type{CGA}) = 2
+GeometricAlgebra.basis_vector_square(P::Type{CGA}, i::Integer) = (+1, -1)[i]
 
 
 GeometricAlgebra.canonical_signature(::Type{CGA}) = (+1, -1)
@@ -63,6 +66,14 @@ GeometricAlgebra.canonical_signature(::Type{CGA}) = (+1, -1)
 
 GeometricAlgebra.signature_promote_rule(::Val{CGA{Sig}}, ::Val{Sig}) where Sig = CGA{Sig}
 GeometricAlgebra.signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{Sig}) where Sig = embed(CGA{Sig}, a)
+
+GeometricAlgebra.signature_promote_rule(::Val{CGA}, ::Val{CGA{Sig}}) where Sig = CGA{Sig}
+GeometricAlgebra.signature_promote_rule(::Val{CGA}, ::Val{Sig}) where Sig = CGA{Sig}
+function GeometricAlgebra.signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{CGA}) where Sig
+	n = dimension(Sig)
+	permutedims(embed(CGA{Sig}, a), [3:n + 2; 1; 2])
+end
+
 
 
 #= standard conformal null basis =#
@@ -74,6 +85,11 @@ infinity(::Type{CGA{Sig}}) where Sig = Multivector{CGA{Sig},1}([zeros(dimension(
 origin(n::Integer) = origin(CGA{n})
 infinity(n::Integer) = infinity(CGA{n})
 nullbasis(n::Integer) = nullbasis(CGA{n})
+
+origin() = Multivector{CGA,1}(-0.5, 0.5)
+infinity() = Multivector{CGA,1}(1, 1)
+nullbasis() = (origin(), infinity())
+
 
 """
 	nullbasis(n) = (origin(n), infinity(n))
@@ -263,7 +279,7 @@ function standardform(X::AbstractMultivector{<:CGA})
 		end
 	end
 end
-standardform(X::AbstractMultivector{Sig}) where Sig = standardform(embed(CGA{Sig}, X))
+# standardform(X::AbstractMultivector{Sig}) where Sig = standardform(embed(CGA{Sig}, X))
 
 
 #= inner and outer product null spaces =#

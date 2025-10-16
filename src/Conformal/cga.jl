@@ -57,6 +57,8 @@ function GeometricAlgebra.get_basis_display_style(::Type{CGA{Sig}}) where Sig
 end
 
 
+GeometricAlgebra.canonical_signature(::Type{CGA}) = (+1, -1)
+
 #= signature promotion =#
 
 GeometricAlgebra.signature_promote_rule(::Val{CGA{Sig}}, ::Val{Sig}) where Sig = CGA{Sig}

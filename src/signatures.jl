@@ -44,7 +44,8 @@ is ``2^n``-dimensional, and its grade-``k`` subspace ``\\binom{n}{k}``-dimension
 ncomponents(sig) = 1 << dimension(sig)  # << constant folds whereas 2^dim doesn't
 ncomponents(sig, k) = binomial(dimension(sig), k)
 
-
+dimension(sig) = length(canonical_signature(sig))
+# basis_vector_square(sig, i::Integer) = canonical_signature(sig)[i]
 
 """
 	show_signature(io, sig)

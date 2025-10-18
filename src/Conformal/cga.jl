@@ -27,6 +27,8 @@ using StyledStrings
 using ..GeometricAlgebra
 using Compat
 
+import GeometricAlgebra: canonical_signature
+
 export CGA, CGABlade, CGAGeometry
 export origin, infinity, nullbasis
 export up, dn
@@ -47,20 +49,12 @@ to ``+1`` and ``-1``, respectively.
 """
 abstract type CGA{Sig} end
 
-GeometricAlgebra.dimension(::Type{CGA{Sig}}) where Sig = dimension(Sig) + 2
-function GeometricAlgebra.basis_vector_square(P::Type{CGA{Sig}}, i::Integer) where Sig
-	(GeometricAlgebra.canonical_signature(Sig)..., +1, -1)[i]
-end
+canonical_signature(::Type{CGA}) = (+1, -1)
+canonical_signature(::Type{CGA{Sig}}) where Sig = (canonical_signature(Sig)..., +1, -1)
 function GeometricAlgebra.get_basis_display_style(sig::Type{<:CGA})
 	n = dimension(sig)
 	BasisDisplayStyle(n, indices=[string.(1:n - 2); 'p'; 'm'])
 end
-
-GeometricAlgebra.dimension(::Type{CGA}) = 2
-GeometricAlgebra.basis_vector_square(P::Type{CGA}, i::Integer) = (+1, -1)[i]
-
-
-GeometricAlgebra.canonical_signature(::Type{CGA}) = (+1, -1)
 
 #= signature promotion =#
 

@@ -1,16 +1,17 @@
 #= Metric Signature Interface
 
 Geometric algebras are defined by a metric signature, which
-is any `isbitstype` object implementing:
+is any `isbitstype` which implements
 
-- `dimension` giving the dimension of the underlying vector space
-- `basis_vector_square` for getting the scalar square of the ``i``th orthonormal basis vector
+- `canonical_signature(sig) -> Tuple`
 
 The first type parameter of an `<:AbstractMultivector{Sig}` is the
 algebra’s defining metric signature.
 
 In addition to the required methods above, metric signatures may implement
 
+- `dimension(sig) == length(canonical_signature(sig))`
+- `basis_vector_square(sig, i) == canonical_signature(sig)[i]`
 - `show_signature(io, sig)` for custom printing of the `Sig` type parameter
 - `show_basis_blade(io, sig, indices)` for custom basis blade styles (e.g., "dx ∧ dy", "e₁₂")
 =#
@@ -29,7 +30,7 @@ julia> GeometricAlgebra.canonical_signature(ans)
 (1, -1, -1, -1)
 ```
 """
-canonical_signature(sig) = ntuple(i -> basis_vector_square(sig, i), dimension(sig))
+function canonical_signature end
 
 """
 	ncomponents(sig) = 2^dimension(sig)
@@ -45,7 +46,7 @@ ncomponents(sig) = 1 << dimension(sig)  # << constant folds whereas 2^dim doesn'
 ncomponents(sig, k) = binomial(dimension(sig), k)
 
 dimension(sig) = length(canonical_signature(sig))
-# basis_vector_square(sig, i::Integer) = canonical_signature(sig)[i]
+basis_vector_square(sig, i::Integer) = canonical_signature(sig)[i]
 
 """
 	show_signature(io, sig)
@@ -123,12 +124,14 @@ componentstype(::Multivector{Sig,K,T}) where {Sig,K,T} = T
 #= Built-in Metric Signatures =#
 
 # Int: Euclidean space
+canonical_signature(dim::Integer) = ntuple(_ -> 1, dim)
 dimension(dim::Integer) = dim
-basis_vector_square(::Integer, i) = 1
+basis_vector_square(::Integer, i::Integer) = 1
 
 # Tuple, NamedTuple
+canonical_signature(sig::Union{Tuple,NamedTuple}) = Tuple(sig)
 dimension(sig::Union{Tuple,NamedTuple}) = length(sig)
-basis_vector_square(sig::Union{Tuple,NamedTuple}, i) = sig[i]
+basis_vector_square(sig::Union{Tuple,NamedTuple}, i::Integer) = sig[i]
 
 """
 	Cl(p, q=0, r=0)
@@ -155,8 +158,9 @@ julia> ans .^ 2
 """
 struct Cl{P,Q,R} end
 Cl(p::Integer, q::Integer=0, r::Integer=0) = Cl{p,q,r}()
+canonical_signature(::Cl{P,Q,R}) where {P,Q,R} = ntuple(i -> i <= P ? 1 : i <= P + Q ? -1 : 0, P + Q + R)
 dimension(::Cl{P,Q,R}) where {P,Q,R} = P + Q + R
-basis_vector_square(::Cl{P,Q,R}, i) where {P,Q,R} = i <= P ? 1 : i <= P + Q ? -1 : 0
+basis_vector_square(::Cl{P,Q,R}, i::Integer) where {P,Q,R} = i <= P ? 1 : i <= P + Q ? -1 : 0
 show_signature(io, ::Cl{P,Q,R}) where {P,Q,R} = print(io, "Cl($P,$Q,$R)")
 show_signature(io, ::Cl{P,Q,0}) where {P,Q} = print(io, "Cl($P,$Q)")
 Base.show(io::IO, ::MIME"text/plain", sig::Cl) = show_pretty(io, show_signature, sig)

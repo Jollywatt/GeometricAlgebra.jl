@@ -27,7 +27,7 @@ using StyledStrings
 using ..GeometricAlgebra
 using Compat
 
-import GeometricAlgebra: canonical_signature
+import GeometricAlgebra: canonical_signature, signature_promote_rule, signature_convert
 
 export CGA, CGABlade, CGAGeometry
 export origin, infinity, nullbasis
@@ -58,12 +58,12 @@ end
 
 #= signature promotion =#
 
-GeometricAlgebra.signature_promote_rule(::Val{CGA{Sig}}, ::Val{Sig}) where Sig = CGA{Sig}
-GeometricAlgebra.signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{Sig}) where Sig = embed(CGA{Sig}, a)
+signature_promote_rule(::Val{CGA{Sig}}, ::Val{Sig}) where Sig = CGA{Sig}
+signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{Sig}) where Sig = embed(CGA{Sig}, a)
 
-GeometricAlgebra.signature_promote_rule(::Val{CGA}, ::Val{CGA{Sig}}) where Sig = CGA{Sig}
-GeometricAlgebra.signature_promote_rule(::Val{CGA}, ::Val{Sig}) where Sig = CGA{Sig}
-function GeometricAlgebra.signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{CGA}) where Sig
+signature_promote_rule(::Val{CGA}, ::Val{CGA{Sig}}) where Sig = CGA{Sig}
+signature_promote_rule(::Val{CGA}, ::Val{Sig}) where Sig = CGA{Sig}
+function signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{CGA}) where Sig
 	n = dimension(Sig)
 	permutedims(embed(CGA{Sig}, a), [3:n + 2; 1; 2])
 end
@@ -113,7 +113,6 @@ function up(x::Multivector{Sig,1}) where Sig
 end
 up(x::BasisBlade) = up(Multivector(x))
 up(comps::AbstractVector) = up(Multivector{length(comps),1}(comps))
-up(c, comps...) = up(Multivector{length(comps) + 1,1}(c, comps...))
 
 
 function dn(x::Multivector{CGA{Sig},1}) where Sig
@@ -233,12 +232,14 @@ GeometricAlgebra.Multivector(X::FlatBlade{Sig}) where Sig = translate(X.p, origi
 GeometricAlgebra.Multivector(X::DualFlatBlade{Sig}) where Sig = translate(X.p, X.E)
 GeometricAlgebra.Multivector(X::RoundBlade{Sig}) where Sig = translate(X.p, (origin(Sig) + 2\X.r2*infinity(Sig)) ∧ X.E)
 
+standardform(X::AbstractMultivector{CGA}) = standardform(signature_convert(Val(CGA{0}), X))
+
 """
 	standardform(X::AbstractMultivector{CGA{Sig}}) -> CGABlade{Sig}
 
 Put the blade `X` in standard form, returning a `CGABlade` object.
 """
-function standardform(X::AbstractMultivector{<:CGA})
+function standardform(X::AbstractMultivector{CGA{Sig}}) where Sig
 	@assert isblade(X)
 
 	o = origin(signature(X))
@@ -363,14 +364,19 @@ ipns, opns
 #= display methods =#
 
 function showfields(io::IO, X::T) where T
+	indent = " "^get(io, :indent, 0)
 	iszero(nfields(X)) && return
 	pad = maximum(length.(string.(fieldnames(T))))
 	for field in fieldnames(T)
-		printstyled(io, "\n  ", rpad(field, pad), color=:cyan)
+		printstyled(io, "\n  ", indent, rpad(field, pad), color=:cyan, bold=true)
 		print(io, " = ")
 		val = getfield(X, field)
 		if val isa Multivector
 			GeometricAlgebra.show_multivector(io, val, inline=true, showzeros=false)
+		elseif applicable(showformula, typeof(val))
+			printstyled(io, indent, showformula(typeof(val)), color=:cyan)
+			subio = IOContext(io, :indent => get(io, :indent, 0) + pad + 3)
+			showfields(subio, val)
 		else
 			show(io, val)
 		end
@@ -382,10 +388,10 @@ GeometricAlgebra.grade(X::FlatBlade) = grade(X.E) + 2
 GeometricAlgebra.grade(X::DualFlatBlade) = grade(X.E)
 GeometricAlgebra.grade(X::RoundBlade) = grade(X.E) + 1
 
-showformula(::Type{<:DirectionBlade}) = "E∧oo"
-showformula(::Type{<:FlatBlade}) = "translate(p, n0∧E∧noo)"
-showformula(::Type{<:DualFlatBlade}) = "translate(p, E)"
-showformula(::Type{<:RoundBlade}) = "translate(p, (n0 + r2/2*noo)∧E)"
+showformula(::Type{<:DirectionBlade}) = styled"{bold:E}∧oo"
+showformula(::Type{<:FlatBlade}) = styled"translate({bold:p}, n0∧{bold:E}∧noo)"
+showformula(::Type{<:DualFlatBlade}) = styled"translate({bold:p}, {bold:E})"
+showformula(::Type{<:RoundBlade}) = styled"translate({bold:p}, (n0 + {bold:r2}/2*noo)∧{bold:E})"
 function Base.show(io::IO, mime::MIME"text/plain", X::T) where T <: CGABlade{Sig,K} where {Sig,K}
 	println(io, T, ":")
 	print(io, " $(grade(X))-blade of the form ")

@@ -246,8 +246,8 @@ macro symbolic_optim(fndef::Expr)
 		$(Expr(:function, fnhead, fnbody))
 
 		Base.@__doc__ $(Expr(:function, fnhead_orig, quote
-			if use_symbolic_optim(first_signature($(args...)))
-				symbolic_optim($fnname, Val(:nosym), $(args...))
+			if $use_symbolic_optim($first_signature($(args...)))
+				$symbolic_optim($fnname, Val(:nosym), $(args...))
 			else
 				$fnname(Val(:nosym), $(args...))
 			end

@@ -49,7 +49,6 @@ to ``+1`` and ``-1``, respectively.
 """
 abstract type CGA{Sig} end
 
-canonical_signature(::Type{CGA}) = (+1, -1)
 canonical_signature(::Type{CGA{Sig}}) where Sig = (canonical_signature(Sig)..., +1, -1)
 function GeometricAlgebra.get_basis_display_style(sig::Type{<:CGA})
 	n = dimension(sig)
@@ -61,9 +60,9 @@ end
 signature_promote_rule(::Val{CGA{Sig}}, ::Val{Sig}) where Sig = CGA{Sig}
 signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{Sig}) where Sig = embed(CGA{Sig}, a)
 
-signature_promote_rule(::Val{CGA}, ::Val{CGA{Sig}}) where Sig = CGA{Sig}
-signature_promote_rule(::Val{CGA}, ::Val{Sig}) where Sig = CGA{Sig}
-function signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{CGA}) where Sig
+signature_promote_rule(::Val{CGA{0}}, ::Val{CGA{Sig}}) where Sig = CGA{Sig}
+signature_promote_rule(::Val{CGA{0}}, ::Val{Sig}) where Sig = CGA{Sig}
+function signature_convert(::Val{CGA{Sig}}, a::AbstractMultivector{CGA{0}}) where Sig
 	n = dimension(Sig)
 	permutedims(embed(CGA{Sig}, a), [3:n + 2; 1; 2])
 end
@@ -80,8 +79,8 @@ origin(n::Integer) = origin(CGA{n})
 infinity(n::Integer) = infinity(CGA{n})
 nullbasis(n::Integer) = nullbasis(CGA{n})
 
-origin() = Multivector{CGA,1}(-0.5, 0.5)
-infinity() = Multivector{CGA,1}(1, 1)
+origin() = Multivector{CGA{0},1}(-0.5, 0.5)
+infinity() = Multivector{CGA{0},1}(1, 1)
 nullbasis() = (origin(), infinity())
 
 

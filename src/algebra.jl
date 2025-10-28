@@ -14,6 +14,8 @@ function Base.:(==)(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig}
 	end
 	true
 end
+Base.:(==)(a::AbstractMultivector, b::AbstractMultivector) = ==(promote(a, b)...)
+
 Base.:(==)(a::BasisBlade{Sig}, b::Multivector{Sig}) where {Sig} = Multivector(a) == b
 Base.:(==)(a::Multivector{Sig}, b::BasisBlade{Sig}) where {Sig} = a == Multivector(b)
 
@@ -34,9 +36,9 @@ function Base.isapprox(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig};
 	isapprox(grade(a, k).comps, grade(b, k).comps; kwargs...)
 end
 
-Base.:isapprox(a::AbstractMultivector, b::Scalar; kwargs...) = isapprox(a, zero(a) + b; kwargs...)
-Base.:isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(zero(b) + a, b; kwargs...)
-
+Base.isapprox(a::AbstractMultivector, b::Scalar; kwargs...) = isapprox(a, zero(a) + b; kwargs...)
+Base.isapprox(a::Scalar, b::AbstractMultivector; kwargs...) = isapprox(zero(b) + a, b; kwargs...)
+Base.isapprox(a::AbstractMultivector, b::AbstractMultivector) = isapprox(promote(a, b)...)
 
 
 #= Scalar Multiplication =#

@@ -26,6 +26,7 @@ module Conformal
 using StyledStrings
 using ..GeometricAlgebra
 using Compat
+using Random
 
 import GeometricAlgebra: canonical_signature, signature_promote_rule, signature_convert
 
@@ -357,6 +358,20 @@ This is the set of points ``x`` satisfying `up(x)⋅A ≈ 0` (IPNS) or `up(x)∧
 possibly including the point at infinity.
 """
 ipns, opns
+
+
+function Base.rand(rng::AbstractRNG, X::Random.SamplerTrivial{FlatGeometry{Sig,K}}) where {Sig,K}
+	δ = randn(rng, Multivector{Sig,1})
+	δ = (δ⨼X[].E)⨼X[].E # project δ onto carrier E
+	X[].p + δ
+end
+
+function Base.rand(rng::AbstractRNG, X::Random.SamplerTrivial{RoundGeometry{Sig,K}}) where {Sig,K}
+	δ = randn(rng, Multivector{Sig,1})
+	δ = (δ⨼X[].E)⨼X[].E # project δ onto carrier E
+	δ *= √(X[].r2/(δ⊙δ))
+	X[].p + δ
+end
 
 
 

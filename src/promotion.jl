@@ -72,6 +72,10 @@ function Base.promote_rule(T::Type{<:AbstractMultivector{Sig}}, T′::Type{<:Abs
 	AbstractMultivector{sig}
 end
 
+function promote_signature(::Val{Sig}, ::Val{Sig′}) where {Sig,Sig′}
+	signature(promote_type(AbstractMultivector{Sig}, AbstractMultivector{Sig′}))
+end
+
 function Base.convert(::Type{AbstractMultivector{Sig}}, a::AbstractMultivector{Sig′}) where {Sig,Sig′}
 	signature_convert(Val(Sig), a)
 end

@@ -311,8 +311,14 @@ CGAGeometry, PointAtInfinity, EmptySet
 A `K`-flat in the base space `Sig` through the point `p::Multivector{Sig,1}`
 spanning the `K`-blade `E::Multivector{Sig,K}`.
 
-A `0`-flat is a point, a `1`-flat is a line, a `2`-flat is a plane, etc.
 All flats include the unique point at infinity.
+
+| ``k``-flat | name
+|------------|:----
+| ``0``-flat | point
+| ``1``-flat | line
+| ``2``-flat | plane
+| ``3``-flat | volume
 
 See also [`RoundGeometry`](@ref) and [`CGAGeometry`](@ref).
 """
@@ -321,11 +327,19 @@ FlatGeometry
 """
 	RoundGeometry{Sig,K}(p, E, r2) <: CGAGeometry{Sig}
 
-A `K`-round in the base space `Sig` around the point `p::Multivector{Sig,1}`
-spanning the `K`-blade `E::Multivector{Sig,K}` with square radius `r2`.
+A `K`-round in the base space `Sig` with _center_ point `p::Multivector{Sig,1}`
+spanning the _carrier_ `K`-blade `E::Multivector{Sig,K}` with _square radius_ `r2`.
 
-A `0`-round is a point, a `1`-round is a point pair, a `2`-round is a circle,
-a `3`-round is a sphere, etc. Rounds never include the point at infinity.
+A ``k``-round is a ``(k - 1)``-sphere, whose carrier is a ``k``-plane.
+No rounds contain the unique point at infinity.
+
+| ``k``-round | ``(k - 1)``-sphere | name
+|-------------|--------------------|:----
+| ``0``-round | ``-1``-sphere      | empty set
+| ``1``-round | ``0``-sphere       | point pair
+| ``2``-round | ``1``-sphere       | circle
+| ``3``-round | ``2``-sphere       | sphere
+
 
 !!! note
 	The square radius `r2` may be negative, in which case the round is formally
@@ -422,7 +436,7 @@ function showformula(::Type{<:FlatGeometry{Sig,K}}) where {Sig,K}
 	styled"$K-flat$desc through {cyan:p} spanning {cyan:E}"
 end
 function showformula(::Type{<:RoundGeometry{Sig,K}}) where {Sig,K}
-	desc = get(("point", "point pair", "circle", "sphere"), K + 1, nothing)
+	desc = get(("empty set", "point pair", "circle", "sphere"), K + 1, nothing)
 	desc = isnothing(desc) ? "" : " ($desc)"
 	styled"$K-round$desc around center {cyan:p} spanning {cyan:E} with square radius {cyan:r2}"
 end

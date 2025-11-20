@@ -17,7 +17,7 @@ DocMeta.setdocmeta!(GeometricAlgebra, :DocTestSetup, quote
     using GeometricAlgebra.MiniCAS
 end; recursive=true)
 
-const bibfile = "src/references.bib"
+const bibfile = joinpath(project_root, "docs/src/references.bib")
 
 function make(; kwargs...)
     macros = Dict(

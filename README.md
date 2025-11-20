@@ -111,29 +111,33 @@ Type parameters:
 
 ## Symbolic Algebra and Code Generation
 
-Thanks to the wonderful [`SymbolicUtils`](https://symbolicutils.juliasymbolics.org/) package, the same code originally written for numerical multivectors readily works with symbolic components.
+The `GeometricAlgebra.MiniCAS` provides a lightweight symbolic expression type allowing multivectors to have symbolic components.
 For example, we can compute the product of two vectors symbolically as follows:
 
 ```julia
 julia> GeometricAlgebra.MiniCAS.variables.([:x, :y], 3)
-2-element Vector{Vector{Any}}:
+2-element Vector{Vector{ProductNode{Expr}}}:
  [x[1], x[2], x[3]]
  [y[1], y[2], y[3]]
 
 julia> Multivector{3,1}.(ans)
-2-element Vector{Multivector{3, 1, Vector{Any}}}:
+2-element Vector{Multivector{3, 1, Vector{ProductNode{Expr}}}}:
  x[1]v1 + x[2]v2 + x[3]v3
  y[1]v1 + y[2]v2 + y[3]v3
 
 julia> prod(ans)
-4-component Multivector{3, 0:2:2, Vector{Any}}:
- x[1]*y[1] + x[2]*y[2] + x[3]*y[3]
- x[1]*y[2] - x[2]*y[1] v12 + x[1]*y[3] - x[3]*y[1] v13 + x[2]*y[3] - x[3]*y[2] v23
+4-component Multivector{3, 0:2:2, SVector{4, SumNode{Expr, Int64}}}:
+ x[1] * y[1] + x[2] * y[2] + x[3] * y[3]
+ -(x[2] * y[1]) + x[1] * y[2] v12 + -(x[3] * y[1]) + x[1] * y[3] v13 + -(x[3] * y[2]) + x[2] * y[3] v23
 
 ```
 
 This makes it easy to optimize multivector operations by first performing the calculation symbolically, then converting the resulting expression into unrolled code.
 By default, symbolic code generation is used for most products in up to eight dimensions (above which general algebraic expressions become unwieldy).
+
+> [!NOTE]
+> Prior to version 0.2.3, `GeometricAlegbra.jl` depended on `SymbolicUtils.jl` for symbolic algebra.
+> This was replaced by `MiniCAS` because only basic polynomial operations are required.
 
 ## Similar Packages
 

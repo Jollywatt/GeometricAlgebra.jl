@@ -20,7 +20,7 @@ This package readily usable, but unregistered. (Mostly because I haven’t thoug
 ```julia
 julia> using Pkg
 
-julia> Pkg.add(url="https://github.com/Jollywatt/GeometricAlgebra.jl", rev="v0.2.2")
+julia> Pkg.add(url="https://github.com/Jollywatt/GeometricAlgebra.jl", rev="release")
 ```
 
 ## Quick Start

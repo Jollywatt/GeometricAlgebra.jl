@@ -4,7 +4,6 @@ for op in [
 	:(Base.:+),
 	:geometric_prod,
 	:scalar_prod,
-	:sandwich_prod,
 ]
 	@eval $op(a::AbstractMultivector...) = $op(promote(a...)...)
 end

@@ -4,6 +4,7 @@ using StaticArrays
 import GeometricAlgebra:
 	dimension,
 	basis_vector_square,
+	canonical_signature,
 	componentstype,
 	BasisDisplayStyle,
 	show_blade,
@@ -81,8 +82,7 @@ end
 # Fixed size array types such as MVector or SVector may be most performant in few dimensions,
 # while something like SparseVector is suited to very large algebras.
 struct SigWithCompsType{Sig,S} end
-dimension(::SigWithCompsType{Sig}) where {Sig} = dimension(Sig)
-basis_vector_square(::SigWithCompsType{Sig}, i) where {Sig} = basis_vector_square(Sig, i)
+canonical_signature(::SigWithCompsType{Sig}) where {Sig} = canonical_signature(Sig)
 
 componentstype(::SigWithCompsType{Sig,<:Vector}, N) where {Sig} = Vector
 componentstype(::SigWithCompsType{Sig,<:MVector}, N) where {Sig} = MVector{N}

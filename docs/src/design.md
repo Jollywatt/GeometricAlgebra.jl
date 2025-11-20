@@ -68,32 +68,31 @@ As well as defining the geometric algebra, the signature is used to specify basi
 
 | Required methods | Description |
 |:-----------------|:------------|
-| `dimension(sig)` | The dimension of the underlying vector space, or number of basis vectors.
-| `basis_vector_square(sig, i)` | The scalar square of the `i`th basis vector. |
+| `canonical_signature(sig)` | Canonical representation as a tuple (e.g., `Cl(1,3)` becomes `(1,-1,-1,-1)`).
 
-| Optional methods | Description |
-|:-----------------|:------------|
-| `show_signature(io, sig)` | Show the metric signature in a compact human-readable form.
-| `show_basis_blade(io, sig, indices)` | Print a basis blade with the given indices (e.g., `v12` or `𝒆₁∧𝒆₂`).
-| `bits_to_indices(sig, bits)` | Define display order of indices for a basis blade (must also implement `basis_blade_parity(sig, bits)` consistently).
-| `componentstype(sig, N)` | Preferred array type for `Multivector{sig}` components. (E.g., `Vector`, `MVector`, `SparseVector`, etc.)
-| `use_symbolic_optim(sig)` | Whether to use symbolic code generation to optimise multivector products. (Default is true for low dimensions.)
+| Optional methods | Description | Default
+|:-----------------|:------------|:-------
+| `dimension(sig)` | The dimension of the underlying vector space | `length(canonical_signature(sig))`
+| `basis_vector_square(sig, i)` | The scalar square of the `i`th basis vector | `canonical_signature(sig)[i]`
+| `show_signature(io, sig)` | Print the metric signature in a compact human-readable form | `show(io, sig)`
+| `show_basis_blade(io, sig, indices)` | Print a basis blade with the given indices (e.g., `v12` or `𝒆₁∧𝒆₂`) | prints like `v12`
+| `bits_to_indices(sig, bits)` | Define the order of indices for a basis blade (must also implement `basis_blade_parity(sig, bits)` consistently) | always increasing like `v123`
+| `componentstype(sig, N)` | Preferred array type for `Multivector{sig}` components. (E.g., `Vector`, `MVector`, `SparseVector`, etc.) | `SVector` if small, `Vector` if large
+| `use_symbolic_optim(sig)` | Whether to use symbolic code generation to optimise multivector products. | True for low dimensions
 
 
 Below is an example of how one might define a “projectivised” signature which adds a projective dimension ``𝐯_0`` squaring to ``-1`` to any signature:
 ```@example ga
-import GeometricAlgebra: dimension, basis_vector_square, show_signature, show_basis_blade
+import GeometricAlgebra: canonical_signature, show_signature, show_basis_blade
 
 struct ℙ{Sig} end
 ℙ(sig) = ℙ{sig}()
 
-dimension(::ℙ{Sig}) where Sig = dimension(Sig) + 1
-basis_vector_square(::ℙ{Sig}, i) where Sig = i == 1 ? -1 : basis_vector_square(Sig, i - 1)
+canonical_signature(::ℙ{Sig}) where Sig = (-1, canonical_signature(Sig)...)
 show_signature(io::IO, ::ℙ{Sig}) where Sig = print(io, "ℙ($Sig)")
-
 show_basis_blade(io::IO, ::ℙ, indices::Vector) = print(io, "v", join(indices .- 1))
 
-basis(ℙ(3)) |> sum
+basis(ℙ(3))
 ```
 
 

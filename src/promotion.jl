@@ -81,8 +81,10 @@ end
 
 # this is the error shown when promotion fails
 function Base.sametype_error(x::Tuple{Vararg{AbstractMultivector}})
+	sigs = signature.(x)
+	isone(length(unique(sigs))) && @invoke Base.sametype_error(x::Any)
 	error("""
-	Could not promote multivectors of signature $(join(signature.(x), ", ", " and ")).
+	failed to promote multivectors of signature $(join(sigs, ", ", " and ")).
 
 	Hint: If appropriate, define methods for `signature_promote_rule()` and
 	`signature_convert()` to enable promotion.

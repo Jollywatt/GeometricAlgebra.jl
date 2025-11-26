@@ -117,6 +117,8 @@ function symbolic_multivector_eval(::Type{Expr}, sig::Val{Sig}, f::Function, arg
 	I = findall(arg -> arg isa AbstractMultivector, sym_args)
 
 	if sym_result isa Multivector
+		sym_result = squashgrades(sym_result)
+
 		# special case for zero-component results - ensure sensible eltype
 		if isempty(sym_result.comps)
 			T = promote_type(eltype.(args[I])...)
@@ -125,7 +127,6 @@ function symbolic_multivector_eval(::Type{Expr}, sig::Val{Sig}, f::Function, arg
 		end
 
 		sym_result = MiniCAS.factor(sym_result)
-		sym_result = squashgrades(sym_result)
 	end
 
 	expr = toexpr(sym_result, sig)

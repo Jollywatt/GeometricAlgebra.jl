@@ -218,7 +218,7 @@ In the case of a multivector, `K` may be an integer (if it is homogeneous) or a 
 
 See also [`ishomogeneous`](@ref).
 """
-grade(::OrType{<:Grade{K}}) where K = K
+grade(::OrType{<:AbstractMultivector{Sig,K}}) where {Sig,K} = K
 grade(::Scalar) = 0
 
 """

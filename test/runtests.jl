@@ -20,9 +20,6 @@ function alltests(dir=dirname(@__FILE__))
 			endswith(file, ".jl") && file != basename(@__FILE__)
 		end
 		append!(testfiles, relpath.(joinpath.(root, f), pwd()))
-		for dir in dirs
-			append!(testfiles, alltests(dir))
-		end
 	end
 	testfiles
 end

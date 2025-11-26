@@ -376,7 +376,8 @@ end
 
 function nonzerobitmask(a::Multivector)
 	usedbits = zero(UInt)
-	for (_, bits) in nonzero_components(a)
+	for (coeff, bits) in componentpairs(a)
+		iszero(coeff) && continue
 		usedbits |= bits
 	end
 	usedbits

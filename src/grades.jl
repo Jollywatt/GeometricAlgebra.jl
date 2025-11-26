@@ -67,6 +67,7 @@ function promote_grades(dim::Integer, p, q)
 	end
 	
 	all(iseven, p) && all(iseven, q) && return 0:2:dim
+	all(isodd, p) && all(isodd, q) && return 1:2:dim
 
 	0:dim
 end

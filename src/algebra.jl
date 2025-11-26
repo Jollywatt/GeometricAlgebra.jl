@@ -108,7 +108,7 @@ function add!(a::Multivector{Sig}, b::Multivector{Sig}) where {Sig}
 			a.comps[componentindices(a, k)] .+= b.comps[componentindices(b, k)]
 		end
 	else
-		for (coeff, bits) in nonzero_components(b)
+		for (coeff, bits) in componentpairs(b)
 			a = add!(a, coeff, bits)
 		end
 	end
@@ -164,10 +164,10 @@ function resulting_grades(::typeof(geometric_prod), dim, p::Integer, q::Integer)
 	abs(p - q):2:min(p + q, dim)
 end
 
+
 @symbolic_optim function geometric_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(resulting_multivector_type(geometric_prod, a, b))
-	for (acoeff, abits) ∈ nonzero_components(a), (bcoeff, bbits) ∈ nonzero_components(b)
-		# println(abits, ":", bbits)
+	for (acoeff, abits) ∈ componentpairs(a), (bcoeff, bbits) ∈ componentpairs(b)
 		factor = geometric_prod_factor(Sig, abits, bbits)
 		c = add!(c, factor*(acoeff*bcoeff), abits ⊻ bbits)
 	end
@@ -207,7 +207,7 @@ function scalar_prod(a::Multivector{Sig,K}, b::Multivector{Sig,K}) where {Sig,K}
 	s
 end
 
-@symbolic_optim function scalar_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
+function scalar_prod(a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	s = numberzero(promote_type(eltype(a), eltype(b)))
 	for k in 0:dimension(Sig)
 		grade(a) ∋ k ∈ grade(b) || continue
@@ -264,7 +264,7 @@ resulting_grades(::Tuple{typeof(graded_prod),GradeSelector}, dim, p::Integer, q:
 
 @symbolic_optim function graded_prod(grade_selector::Function, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig}
 	c = zero(resulting_multivector_type((graded_prod, grade_selector), a, b))
-	for (acoeff, abits) ∈ nonzero_components(a), (bcoeff, bbits) ∈ nonzero_components(b)
+	for (acoeff, abits) ∈ componentpairs(a), (bcoeff, bbits) ∈ componentpairs(b)
 		bits = abits ⊻ bbits
 		if count_ones(bits) == grade_selector(count_ones(abits), count_ones(bbits))
 			factor = geometric_prod_factor(Sig, abits, bbits)
@@ -274,9 +274,9 @@ resulting_grades(::Tuple{typeof(graded_prod),GradeSelector}, dim, p::Integer, q:
 	c
 end
 
-@symbolic_optim function graded_prod(::Val{K}, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig,K}
+function graded_prod(::Val{K}, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig,K}
 	c = zero(Multivector{Sig,K}, promote_type(eltype(a), eltype(b)))
-	for (acoeff, abits) ∈ nonzero_components(a), (bcoeff, bbits) ∈ nonzero_components(b)
+	for (acoeff, abits) ∈ componentpairs(a), (bcoeff, bbits) ∈ componentpairs(b)
 		bits = abits ⊻ bbits
 		if count_ones(bits) in K
 			factor = geometric_prod_factor(Sig, abits, bbits)
@@ -612,7 +612,6 @@ Sandwich product `R*a*~R` of multivector `a` by a rotor `R`.
 function sandwich_prod end
 
 sandwich_prod(R, a) = grade(R*a*reversion(R), grade(a))
-# @symbolic_optim sandwich_prod(R::AbstractMultivector{Sig}, a::AbstractMultivector{Sig}) where Sig = grade(R*a*reversion(R), grade(a))
 
 
 """
@@ -626,7 +625,7 @@ general multivectors.
 """
 function outermorphism(mat::AbstractMatrix, a::AbstractMultivector{Sig}; sig=Sig) where {Sig}
 	a′ = zero(Multivector{sig,grade(a)}, promote_type(eltype(mat), eltype(a)))
-	for (coeff, bits) ∈ nonzero_components(a)
+	for (coeff, bits) ∈ componentpairs(a)
 		vs = Multivector{sig,1}.(eachcol(mat[:,bits_to_indices(bits)]))
 		v = reduce(∧, vs; init = one(a′))
 		a′ = add!(a′, coeff*v)

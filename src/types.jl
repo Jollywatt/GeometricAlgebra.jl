@@ -346,8 +346,8 @@ isscalar(a::Scalar) = true
 isscalar(a::BasisBlade) = iszero(grade(a)) || isnumberzero(a)
 function isscalar(a::Multivector)
 	0 ∈ grade(a) || return all(isnumberzero, a.comps)
-	for (coeff, bits) in nonzero_components(a)
-		!iszero(bits) && return false
+	for (coeff, bits) in componentpairs(a)
+		!iszero(bits) && !iszero(coeff) && return false
 	end
 	true
 end
@@ -361,5 +361,5 @@ end
 blades(a::BasisBlade) = Ref(a)
 blades(a::Multivector{Sig}) where {Sig} = (BasisBlade{Sig}(coeff, bits) for (coeff, bits) ∈ zip(a.comps, componentbits(a)))
 
-nonzero_components(a::BasisBlade) = isnumberzero(a.coeff) ? () : ((a.coeff, a.bits),)
-nonzero_components(a::Multivector) = Iterators.filter(!isnumberzero∘first, zip(a.comps, componentbits(a)))
+componentpairs(a::BasisBlade) = ((a.coeff, a.bits),)
+componentpairs(a::Multivector) = zip(a.comps, componentbits(a))

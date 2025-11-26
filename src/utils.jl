@@ -53,7 +53,7 @@ issetindexable(a) = issetindexable(typeof(a))
 
 
 makevec(::Type{<:Tuple}, comps...) = comps
-makevec(::Type{<:Vector}, comps...) = collect(comps)
+makevec(::Type{<:Vector}, comps...) = vcat(comps...)
 makevec(::Type{<:MVector}, comps...) = MVector(comps...)
 makevec(::Type{<:SVector}, comps...) = SVector(comps...)
 

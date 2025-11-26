@@ -2,6 +2,10 @@
 
 _This package is in early development; minor versions may introduce breaking changes. New features are shown in this news file, but many internal improvements are not._
 
+## v0.2.5
+
+* Remove `Conformal` submodule, breaking it off into a separate package [`GeometricAlgebraModels.jl`](https://github.com/Jollywatt/GeometricAlgebraModels.jl), so that this package can focus on implementing the algebras.
+
 ## v0.2.4
 
 * Add blade factoring function, `factorblade()`.

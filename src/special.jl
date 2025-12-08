@@ -403,7 +403,8 @@ Find a factorisation ``A = u₁ ∧ ⋯ ∧ uₖ`` of a ``k``-blade ``A`` using 
 
 [^1]: Fontijne, D., & Dorst, L. (2010). Efficient Algorithms for Factorization and Join of Blades. In E. Bayro-Corrochano & G. Scheuermann (Eds.), Geometric Algebra Computing (pp. 457–476). Springer London. https://doi.org/10.1007/978-1-84996-108-0_21
 """
-function factorblade(B::Multivector)
+function factorblade(B::Multivector{Sig}) where Sig
+	B = embed(Val(dimension(B)), B)
 	@assert length(grade(B)) == 1
 	(β, i) = findmax(abs, B.comps)
 	Bₛ = B*β^(1/grade(B) - 1)
@@ -419,7 +420,7 @@ function factorblade(B::Multivector)
 		factors[begin] *= sign(B.comps[i])
 	end
 
-	factors
+	embed.(Val(Sig), factors)
 end
 
 function factorblade(B::BasisBlade{Sig}) where Sig

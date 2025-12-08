@@ -132,4 +132,16 @@ end
 			end
 		end
 	end
+
+	@testset "degenerate signatures" begin
+		@testset "sig: $sig" for sig in [Cl(1,1), Cl(1,3), Cl(2,0,1), Cl(0,1,4)]
+			@testset "grade: $k" for k in 1:dimension(sig)
+				for _ in 1:100
+					blade = wedge(randn(Multivector{sig,1}, k)...)
+					factors = factorblade(blade)
+					@test wedge(factors...) ≈ blade
+				end
+			end
+		end
+	end
 end

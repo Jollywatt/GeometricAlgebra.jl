@@ -274,6 +274,12 @@ resulting_grades(::Tuple{typeof(graded_prod),GradeSelector}, dim, p::Integer, q:
 	c
 end
 
+"""
+    graded_prod(Val(k), a, b)
+
+Compute the grade `k` part of `geometric_prod(a, b)`.
+
+"""
 function graded_prod(::Val{K}, a::AbstractMultivector{Sig}, b::AbstractMultivector{Sig}) where {Sig,K}
 	c = zero(Multivector{Sig,K}, promote_type(eltype(a), eltype(b)))
 	for (acoeff, abits) ∈ componentpairs(a), (bcoeff, bbits) ∈ componentpairs(b)

@@ -142,6 +142,10 @@ Multivector{Sig,K}(a::Multivector) where {Sig,K} = Multivector{Sig,K}(a.comps)
 Multivector{Sig,K}(comps::Scalar...) where {Sig,K} = Multivector{Sig,K}(makevec(componentstype(Sig, length(comps)), comps...))
 
 
+# conversions
+
+Base.convert(::Type{Multivector{Sig,K}}, a::BasisBlade{Sig,K}) where {Sig,K} = Multivector(a)
+
 Base.convert(::Type{Multivector{Sig,K,S}}, a::Multivector{Sig,K}) where {Sig,K,S} = Multivector{Sig,K}(convert(S, a.comps))
 function Base.convert(::Type{Multivector{Sig,K,S}}, a::Multivector{Sig,K′}) where {Sig,K,K′,S}
 	K′ ⊆ K || error("$(constructor(a)) cannot be represented as $(Multivector{Sig,K}), since $K′ ⊈ $K")

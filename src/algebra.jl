@@ -714,10 +714,8 @@ end
 	permutedims(a::Multivector, perm)
 
 Permute the basis dimensions of a `Multivector`.
-
-
 """
-function Base.permutedims(a::Multivector, perm)
+function Base.permutedims(a::AbstractMultivector, perm)
 	mapbasis(a) do bits
 		permutebits(bits, perm)
 	end

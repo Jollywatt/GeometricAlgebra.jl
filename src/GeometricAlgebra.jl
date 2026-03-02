@@ -2,7 +2,7 @@ module GeometricAlgebra
 
 using StaticArrays, SparseArrays
 using Combinatorics: permutations, parity
-using PrettyTables: pretty_table
+import PrettyTables
 using Random: AbstractRNG
 
 export SVector, MVector

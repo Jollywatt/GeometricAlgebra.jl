@@ -258,17 +258,22 @@ function cayleytable(io::IO, mvs::AbstractVector, op=*; separators=:auto, title=
 	if separators == :auto
 		types = typeof.(mvs)
 		diffs = types[begin + 1:end] .!= types[begin:end - 1]
-		separators = [1; 1 .+ findall(diffs)]
+		separators = findall(diffs)
 	end
 
-	pretty_table(
+	PrettyTables.pretty_table(
 		io,
 		table,
-		header = mvs,
+		column_labels = mvs,
 		row_labels = mvs,
-		row_label_column_title = string(title),
-		vlines = separators,
-		hlines = separators,
-		crop = :horizontal,
+		stubhead_label = string(title),
+		table_format=PrettyTables.TextTableFormat(
+	        horizontal_lines_at_data_rows=separators,
+	        vertical_lines_at_data_columns=separators,
+	        horizontal_line_at_beginning=false,
+	        horizontal_line_after_data_rows=false,
+	        vertical_line_at_beginning=false,
+	        vertical_line_after_data_columns=false,
+	    )
 	)
 end

@@ -247,7 +247,7 @@ end
 
 
 function Base.show(io::IO, @nospecialize(a::BasisBlade))
-	if :__PRETTY_TABLES_DATA__ ∈ keys(io)
+	if :__PRETTY_TABLES__DATA__ ∈ keys(io)
 		# printing within human-readable table
 		show_blade(IOContext(io, :color=>false, :compact=>true), a)
 	else
@@ -265,7 +265,7 @@ function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::BasisBlade))
 end
 
 function Base.show(io::IO, @nospecialize(a::Multivector))
-	if :__PRETTY_TABLES_DATA__ ∈ keys(io)
+	if :__PRETTY_TABLES__DATA__ ∈ keys(io)
 		# printing within human-readable table
 		show_multivector(IOContext(io, :color=>false), a; inline=true, compact=true, showzeros=false)
 	else

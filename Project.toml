@@ -16,5 +16,5 @@ StyledStrings = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
 [compat]
 Compat = "4.16.0"
 OrderedCollections = "1.8.0"
-PrettyTables = "^2"
+PrettyTables = "^3"
 StyledStrings = "^1"

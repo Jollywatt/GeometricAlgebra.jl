@@ -8,24 +8,24 @@ The default style for multivectors of metric signature `sig` can be set with
 
 - `dim::Int` is the dimension of the algebra (number of basis vectors).
 - `blades::Dict{UInt,Vector{Int}}` encodes the order of basis vectors
-   in basis blades. E.g., `0b101 => [1, 3]` is the default style.
+	in basis blades. E.g., `0b101 => [1, 3]` is the default style.
 - `blade_order::Dict{Int,Vector{UInt}}` specifies the order of basis blades
-   in a single grade. E.g., `3 => [0b011, 0b101, 0b110]` is the default ordering.
+	in a single grade. E.g., `3 => [0b011, 0b101, 0b110]` is the default ordering.
 - `blades_and_order::Dict{Int,Vector{Int}}` gives a way of specifying the previous
-   two mappings at once. E.g., `3 => [[1,2], [1,3], [2,3]]`.
+	two mappings at once. E.g., `3 => [[1,2], [1,3], [2,3]]`.
 
 # Keyword arguments
 
 - `indices=1:dim` specifies the symbols used for each basis vector.
 - `prefix="v"` is the prefix string for basis blades (if `sep == nothing`) or for each
-   basis vector.
+	basis vector.
 - `sep=nothing` is a string (e.g., `"∧"`) to separate each basis vector in a blade.
-   If `sep` is `nothing`, blades are shown as e.g., `v123`, whereas an empty string
-   results in `v1v2v3`.
+	If `sep` is `nothing`, blades are shown as e.g., `v123`, whereas an empty string
+	results in `v1v2v3`.
 - `labels` is a dictionary allowing individual basis blades to be given custom labels.
-   E.g., `[3,2] => "𝒊"` means `4v32` is displayed as `4𝒊` (so long as the order
-   `0b110 => [3,2]` is also specified in the `blades` argument — otherwise it would
-   display as the default `-4v23`).
+	E.g., `[3,2] => "𝒊"` means `4v32` is displayed as `4𝒊` (so long as the order
+	`0b110 => [3,2]` is also specified in the `blades` argument — otherwise it would
+	display as the default `-4v23`).
 
 
 !!! note
@@ -43,12 +43,12 @@ julia> Multivector{Cl(0,3),2}([3, -2, 1])
   1 v23
 
 julia> cyclical_style = BasisDisplayStyle(
-           3, Dict(2 => [[2,3], [3,1], [1,2]]);
-           indices = "₁₂₃",
-           prefix = "e",
-           sep = "",
-           labels = Dict([1,2,3] => "I"),
-       );
+			  3, Dict(2 => [[2,3], [3,1], [1,2]]);
+			  indices = "₁₂₃",
+			  prefix = "e",
+			  sep = "",
+			  labels = Dict([1,2,3] => "I"),
+		 );
 
 julia> GeometricAlgebra.BASIS_DISPLAY_STYLES[Cl(0,3)] = cyclical_style;
 
@@ -206,12 +206,16 @@ function Base.show(io::IO, style::BasisDisplayStyle)
 		end
 	end
 
-	pretty_table(io, [string.(0:n) mat];
-		vlines=[1],
-		hlines=[],
-		show_header=false,
-		columns_width=[7; fill(0, size(mat, 2))],
+	PrettyTables.pretty_table(io, [string.(0:n) mat];
+		show_column_labels=false,
+		fixed_data_column_widths=[7; fill(0, size(mat, 2))],
 		alignment=[:r; fill(:l, size(mat, 2))],
+		table_format=PrettyTables.TextTableFormat(;
+			PrettyTables.@text__no_horizontal_lines,
+			vertical_lines_at_data_columns=[1],
+			vertical_line_at_beginning=false,
+			vertical_line_after_data_columns=false,
+		)
 	)
 end
 
@@ -312,12 +316,12 @@ basis(sig, k, i::Integer) = BasisBlade{sig,k}(1, collect(GeometricAlgebra.compon
 
 
 function generate_blades(sig;
-                         grades=:all,
-                         allperms=false,
-                         pseudoscalar=:I,
-                         scalar=false,
-                         prefix=nothing,
-                         style=get_basis_display_style(sig))
+								 grades=:all,
+								 allperms=false,
+								 pseudoscalar=:I,
+								 scalar=false,
+								 prefix=nothing,
+								 style=get_basis_display_style(sig))
 	
 	grades = grades == :all ? (0:dimension(sig)) : grades
 	grades = scalar ? grades : grades ∩ (1:dimension(sig))

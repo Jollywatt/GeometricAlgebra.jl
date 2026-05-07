@@ -43,12 +43,12 @@ julia> Multivector{Cl(0,3),2}([3, -2, 1])
   1 v23
 
 julia> cyclical_style = BasisDisplayStyle(
-			  3, Dict(2 => [[2,3], [3,1], [1,2]]);
-			  indices = "₁₂₃",
-			  prefix = "e",
-			  sep = "",
-			  labels = Dict([1,2,3] => "I"),
-		 );
+         3, Dict(2 => [[2,3], [3,1], [1,2]]),
+         indices = "₁₂₃",
+         prefix = "e",
+         sep = "",
+         labels = Dict([1,2,3] => "I"),
+       );
 
 julia> GeometricAlgebra.BASIS_DISPLAY_STYLES[Cl(0,3)] = cyclical_style;
 
@@ -59,7 +59,7 @@ julia> Multivector{Cl(0,3),2}([3, -2, 1])
  3 e₁e₂
 
 julia> ans*rdual(ans) # pseudoscalar `e₁e₂e₃` displayed as `I`
-8-component Multivector{Cl(0,3), 0:3, SVector{8, Int64}}:
+4-component Multivector{Cl(0,3), 1:2:3, SVector{4, Int64}}:
  14 I
 ```
 To recover the default style:
@@ -257,7 +257,7 @@ julia> basis("-+++", 0:2:4)
  1 v1234
 
 julia> basis(Cl(1,3), :all) |> sum
-16-component Multivector{Cl(1,3), 0:4, MVector{16, Int64}}:
+16-component Multivector{Cl(1,3), 0:4, SVector{16, Int64}}:
  1
  1 v1 + 1 v2 + 1 v3 + 1 v4
  1 v12 + 1 v13 + 1 v23 + 1 v14 + 1 v24 + 1 v34

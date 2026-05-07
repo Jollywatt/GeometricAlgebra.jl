@@ -1,3 +1,52 @@
+"""
+	DisplayOptions(
+		inline::Bool
+		groupgrades::Union{Bool,Nothing}
+		showzeros::Union{Bool,Nothing}
+		eps::Float64
+		parseable::Bool
+		compact::Bool
+	)
+
+Customise the way multivectors are displayed.
+This is a mutable struct with fields:
+
+- `inline`: whether to force one-line representations.
+- `groupgrades`: if `true`, print blades of the same 
+   grade on one line, and if `false`, print each blade on its own line.
+   If `nothing`, homogeneous multivectors are drawn tall (like `false`) but
+   mixed multivectors are drawn grouped (one row per grade).
+- `showzeros`: whether to draw all components even if they
+   are zero. If `nothing`, homogeneous multivectors are drawn including zero
+   components, but mixed multivectors are drawn with zero components suppressed
+   (since they can have many components).
+- `eps`: the threshold value below which components are treated as zero
+   and suppressed, if hidden with `showzeros`.
+- `parseable`: whether to use a parseable style instead of human readable style.
+- `compact`: omit unnecessary spaces, coefficients of unity, etc.
+
+You can change the default display options by setting the fields
+of the constant global variable `GeometricAlgebra.display_options`.
+
+See also [`GeometricAlgebra.show_multivector`](@ref).
+
+# Example
+```jldoctest
+julia> u = Multivector{3,1}(0, 1, 2)
+3-component Multivector{3, 1, SVector{3, Int64}}:
+ 0 v1
+ 1 v2
+ 2 v3
+
+julia> GeometricAlgebra.display_options.inline = true;
+
+julia> GeometricAlgebra.display_options.showzeros = false;
+
+julia> u
+3-component Multivector{3, 1, SVector{3, Int64}}:
+ 1 v2 + 2 v3
+```
+"""
 mutable struct DisplayOptions
 	inline::Bool
 	groupgrades::Union{Bool,Nothing}
@@ -7,6 +56,16 @@ mutable struct DisplayOptions
 	compact::Bool
 end
 
+function Base.show(io::IO, m::MIME"text/plain", opts::DisplayOptions)
+	summary(io, opts)
+	println(io, " with fields:")
+	Base.print_array(io, [
+		k => getfield(opts, k)
+		for k in fieldnames(typeof(opts))
+	])
+end
+
+@doc (@doc DisplayOptions)
 const display_options = DisplayOptions(
 	false,
 	nothing,
@@ -156,6 +215,8 @@ Display multivector components in a column or inline, optionally grouping by gra
 - `parseable::Bool`: use parseable style (used by `repr`) instead of human-readable style.
 - `compact::Bool`: omit unnecessary spaces, coefficients of unity, etc (default: `false`).
 - `basis_display_style::BasisDisplayStyle`: style to use to print basis blades.
+
+See also [`GeometricAlgebra.display_options`](@ref).
 
 # Examples
 ```jldoctest

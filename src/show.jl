@@ -31,7 +31,7 @@ of the constant global variable `GeometricAlgebra.display_options`.
 See also [`GeometricAlgebra.show_multivector`](@ref).
 
 # Example
-```jldoctest
+```julia-repl
 julia> u = Multivector{3,1}(0, 1, 2)
 3-component Multivector{3, 1, SVector{3, Int64}}:
  0 v1
@@ -96,8 +96,8 @@ julia> GeometricAlgebra.show_blade(stdout, BasisBlade{(x=1,)}(1 + im, 0b1))
 ```
 """
 function show_blade(io::IO, @nospecialize(a::BasisBlade);
-                    compact=get(io, :compact, false),
-                    parseable=false,
+                    compact=display_options.compact || get(io, :compact, false),
+                    parseable=display_options.parseable,
                     basis_display_style=get_basis_display_style(signature(a)))
 	if parseable
 		@static if VERSION ≥ v"1.7"
@@ -312,17 +312,13 @@ function Base.show(io::IO, @nospecialize(a::BasisBlade))
 		# printing within human-readable table
 		show_blade(IOContext(io, :color=>false, :compact=>true), a)
 	else
-		show_blade(io, a, parseable=true)
+		show_blade(io, a, compact=true)
 	end
 end
 function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::BasisBlade))
-	if :typeinfo ∈ keys(io) 
-		show_blade(io, a)
-	else
-		show_header(io, a)
-		print(io, " ")
-		show_blade(io, a)
-	end
+	show_header(io, a)
+	print(io, " ")
+	show_blade(io, a)
 end
 
 function Base.show(io::IO, @nospecialize(a::Multivector))
@@ -330,16 +326,12 @@ function Base.show(io::IO, @nospecialize(a::Multivector))
 		# printing within human-readable table
 		show_multivector(IOContext(io, :color=>false), a; inline=true, compact=true, showzeros=false)
 	else
-		show_multivector(io, a, parseable=true)
+		show_multivector(io, a, inline=true, compact=true, showzeros=false)
 	end
 end
 function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Multivector))
-	if :typeinfo ∈ keys(io)
-		show_multivector(io, a; inline=true, compact=true, showzeros=false)
-	else
-		show_header(io, a)
-		show_multivector(io, a; indent=1)
-	end
+	show_header(io, a)
+	show_multivector(io, a; indent=1)
 end
 
 

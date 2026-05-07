@@ -143,10 +143,10 @@ basis vectors of norm `+1`, `-1` and `0`, respectively.
 ```jldoctest
 julia> basis(Cl(1,3))
 4-element Vector{BasisBlade{Cl(1,3), 1, Int64}}:
- 1 v1
- 1 v2
- 1 v3
- 1 v4
+ v1
+ v2
+ v3
+ v4
 
 julia> ans .^ 2
 4-element Vector{BasisBlade{Cl(1,3), 0, Int64}}:
@@ -185,9 +185,9 @@ julia> Cl("+++") # 3D Euclidean metric signature
 
 julia> basis(ans)
 3-element Vector{BasisBlade{Cl("+++"), 1, Int64}}:
- 1 v1
- 1 v2
- 1 v3
+ v1
+ v2
+ v3
 
 julia> Multivector{(0,-1,1,1,1),2}
 Multivector{Cl("0-+++"), 2} (pretty-printed Multivector{(0, -1, 1, 1, 1), 2})

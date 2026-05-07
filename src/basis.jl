@@ -241,20 +241,20 @@ See also [`@basis`](@ref).
 ```jldoctest
 julia> basis(3)
 3-element Vector{BasisBlade{3, 1, Int64}}:
- 1 v1
- 1 v2
- 1 v3
+ v1
+ v2
+ v3
 
 julia> basis("-+++", 0:2:4)
 8-element Vector{BasisBlade{Cl("-+++"), _A, Int64} where _A}:
  1
- 1 v12
- 1 v13
- 1 v23
- 1 v14
- 1 v24
- 1 v34
- 1 v1234
+ v12
+ v13
+ v23
+ v14
+ v24
+ v34
+ v1234
 
 julia> basis(Cl(1,3), :all) |> sum
 16-component Multivector{Cl(1,3), 0:4, SVector{16, Int64}}:

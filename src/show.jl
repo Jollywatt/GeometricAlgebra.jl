@@ -1,3 +1,6 @@
+public show_multivector
+public display_options
+
 """
 	DisplayOptions(
 		inline::Bool

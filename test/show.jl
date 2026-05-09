@@ -71,13 +71,13 @@ end
 
 end
 
+@basis 3
 @testset "repr parseability" begin
-	v = basis(3)
 	reflect(eq, x) = eq(eval(Meta.parse(repr(x))), x)
 
-	@test reflect(===, v[1])
-	@test reflect(===, 5.5v[1])
-	@test reflect(===, 4//v[1])
+	@test reflect(===, v1)
+	@test reflect(===, 5.5v1)
+	@test reflect(===, 4//v1)
 
 	@test reflect(==, Multivector{3,1}([1,2,3]))
 	@test reflect(==, Multivector{3,2}(SVector(1,2,3)))

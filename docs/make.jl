@@ -1,7 +1,10 @@
 #= Run this script interactively: `julia -i make.jl`
 ... or with arguments `julia make.jl [test|fix|make|deploy]` =#
 
-using Documenter, DocumenterCitations
+using Documenter
+using DocumenterCitations
+using DocumenterInterLinks
+
 using Revise
 using LiveServer
 

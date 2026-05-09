@@ -6,13 +6,14 @@
 		eps::Float64
 		parseable::Bool
 		compact::Bool
+		summary::Bool
 	)
 
 Customise the way multivectors are displayed.
 This is a mutable struct with fields:
 
 - `inline`: whether to force one-line representations.
-- `groupgrades`: if `true`, print blades of the same 
+- `groupgrades`: if `true`, print blades of the same
    grade on one line, and if `false`, print each blade on its own line.
    If `nothing`, homogeneous multivectors are drawn tall (like `false`) but
    mixed multivectors are drawn grouped (one row per grade).
@@ -24,6 +25,7 @@ This is a mutable struct with fields:
    and suppressed, if hidden with `showzeros`.
 - `parseable`: whether to use a parseable style instead of human readable style.
 - `compact`: omit unnecessary spaces, coefficients of unity, etc.
+- `summary`: whether to print a line with type information before components.
 
 You can change the default display options by setting the fields
 of the constant global variable `GeometricAlgebra.display_options`.
@@ -42,9 +44,10 @@ julia> GeometricAlgebra.display_options.inline = true;
 
 julia> GeometricAlgebra.display_options.showzeros = false;
 
+julia> GeometricAlgebra.display_options.summary = false;
+
 julia> u
-3-component Multivector{3, 1, SVector{3, Int64}}:
- 1 v2 + 2 v3
+1 v2 + 2 v3
 ```
 """
 mutable struct DisplayOptions
@@ -54,6 +57,7 @@ mutable struct DisplayOptions
 	eps::Float64
 	parseable::Bool
 	compact::Bool
+	summary::Bool
 end
 
 function Base.show(io::IO, m::MIME"text/plain", opts::DisplayOptions)
@@ -73,6 +77,7 @@ const display_options = DisplayOptions(
 	0,
 	false,
 	false,
+	true,
 )
 
 #= BasisBlade =#
@@ -117,7 +122,7 @@ function show_blade(io::IO, @nospecialize(a::BasisBlade);
 			return
 		elseif compact && isnumberone(coeff)
 			isscalar(a) && print(io, "1")
-		elseif compact && isnumberone(-coeff) 
+		elseif compact && isnumberone(-coeff)
 			print(io, isscalar(a) ? "-1" : "-")
 		else
 			Base.show_unquoted(io, coeff, 0, Base.operator_precedence(:*))
@@ -295,16 +300,7 @@ function show_multivector(io::IO, @nospecialize(a);
 	end
 end
 
-
-function show_header(io::IO, @nospecialize(a::BasisBlade))
-	show(io, typeof(a))
-	println(io, ":")
-end
-function show_header(io::IO, @nospecialize(a::Multivector))
-	print(io, ncomponents(a), "-component ")
-	show(io, typeof(a))
-	println(io, ":")
-end
+Base.summary(io::IO, @nospecialize(a::Multivector)) = print(io, ncomponents(a), "-component ", typeof(a))
 
 
 function Base.show(io::IO, @nospecialize(a::BasisBlade))
@@ -316,8 +312,10 @@ function Base.show(io::IO, @nospecialize(a::BasisBlade))
 	end
 end
 function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::BasisBlade))
-	show_header(io, a)
-	print(io, " ")
+	if display_options.summary
+		summary(io, a)
+		print(io, ":\n ")
+	end
 	show_blade(io, a)
 end
 
@@ -330,8 +328,13 @@ function Base.show(io::IO, @nospecialize(a::Multivector))
 	end
 end
 function Base.show(io::IO, ::MIME"text/plain", @nospecialize(a::Multivector))
-	show_header(io, a)
-	show_multivector(io, a; indent=1)
+	if display_options.summary
+		summary(io, a)
+		println(io, ":")
+		show_multivector(io, a; indent=1)
+	else
+		show_multivector(io, a)
+	end
 end
 
 

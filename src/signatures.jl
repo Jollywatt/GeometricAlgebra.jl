@@ -1,7 +1,7 @@
 #= Metric Signature Interface
 
 Geometric algebras are defined by a metric signature, which
-is any `isbitstype` which implements
+is any `isbitstype` implementing the method
 
 - `canonical_signature(sig) -> Tuple`
 
@@ -12,12 +12,13 @@ In addition to the required methods above, metric signatures may implement
 
 - `dimension(sig) == length(canonical_signature(sig))`
 - `basis_vector_square(sig, i) == canonical_signature(sig)[i]`
+- `componentstype(sig, N[, T])` for signature or size dependent default component storage types
 - `show_signature(io, sig)` for custom printing of the `Sig` type parameter
 - `show_basis_blade(io, sig, indices)` for custom basis blade styles (e.g., "dx ∧ dy", "e₁₂")
 =#
 
 """
-	canonical_signature(sig)
+	canonical_signature(sig) -> Tuple
 
 Canonical tuple representation of a metric signature.
 
@@ -32,21 +33,24 @@ julia> GeometricAlgebra.canonical_signature(ans)
 """
 function canonical_signature end
 
-"""
-	ncomponents(sig) = 2^dimension(sig)
-	ncomponents(sig, k) = binomial(dimension(sig), k)
-
-Dimension of (the grade-`k` subspace of) the geometric algebra of metric
-signature `sig`, viewed as a vector space.
-
-If the dimension of the _underlying_ vector space (see [`dimension`](@ref)) in ``n``, then the algebra
-is ``2^n``-dimensional, and its grade-``k`` subspace ``\\binom{n}{k}``-dimensional.
-"""
-ncomponents(sig) = 1 << dimension(sig)  # << constant folds whereas 2^dim doesn't
-ncomponents(sig, k) = binomial(dimension(sig), k)
-
 dimension(sig) = length(canonical_signature(sig))
 basis_vector_square(sig, i::Integer) = canonical_signature(sig)[i]
+
+
+"""
+	componentstype(sig, N) -> Type{<:AbstractVector}
+
+The component array type for `N`-component multivectors with signature `sig`.
+
+You can redefine this method to customise the default array type.
+The fallback method returns `MVector{N}` for `N <= 16`, and `Vector` otherwise.
+"""
+componentstype(sig, N) = N <= 32 ? SVector{N} : Vector
+componentstype(sig, N, T) = typeintersect(componentstype(sig, N), AbstractVector{T})
+
+componentstype(T::Type{<:Multivector}) = componentstype(signature(T), ncomponents(T))
+componentstype(::Multivector{Sig,K,T}) where {Sig,K,T} = T
+
 
 """
 	show_signature(io, sig)
@@ -72,6 +76,8 @@ BasisBlade{Cl("+---")} (pretty-printed BasisBlade{(1, -1, -1, -1)})
 ```
 """
 show_signature(io, sig) = show(io, sig)
+
+show_basis_blade(io::IO, sig, bits::Unsigned) = show_basis_blade(io, sig, bits_to_indices(sig, bits))
 
 """
 	show_basis_blade(io, sig, indices::Vector{Int})
@@ -101,24 +107,22 @@ function show_basis_blade(io::IO, sig, indices::Vector)
 		printstyled(io, join(string.("v", indices)); bold=true)
 	end
 end
-show_basis_blade(io::IO, sig::NamedTuple, indices::Vector) = printstyled(io, join(keys(sig)[indices]), bold=true)
 
-show_basis_blade(io::IO, sig, bits::Unsigned) = show_basis_blade(io, sig, bits_to_indices(sig, bits))
 
 
 """
-	componentstype(sig, N) -> Type{<:AbstractVector}
+	ncomponents(sig) = 2^dimension(sig)
+	ncomponents(sig, k) = binomial(dimension(sig), k)
 
-The component array type for `N`-component multivectors with signature `sig`.
+Dimension of (the grade-`k` subspace of) the geometric algebra of metric
+signature `sig`, viewed as a vector space.
 
-You can redefine this method to customise the default array type.
-The fallback method returns `MVector{N}` for `N <= 16`, and `Vector` otherwise.
+If the dimension of the _underlying_ vector space (see [`dimension`](@ref)) in ``n``, then the algebra
+is ``2^n``-dimensional, and its grade-``k`` subspace ``\\binom{n}{k}``-dimensional.
 """
-componentstype(sig, N) = N <= 32 ? SVector{N} : Vector
-componentstype(sig, N, T) = typeintersect(componentstype(sig, N), AbstractVector{T})
+ncomponents(sig) = 1 << dimension(sig)  # << constant folds whereas 2^dim doesn't
+ncomponents(sig, k) = binomial(dimension(sig), k)
 
-componentstype(T::Type{<:Multivector}) = componentstype(signature(T), ncomponents(T))
-componentstype(::Multivector{Sig,K,T}) where {Sig,K,T} = T
 
 
 #= Built-in Metric Signatures =#
@@ -132,6 +136,7 @@ basis_vector_square(::Integer, i::Integer) = 1
 canonical_signature(sig::Union{Tuple,NamedTuple}) = Tuple(sig)
 dimension(sig::Union{Tuple,NamedTuple}) = length(sig)
 basis_vector_square(sig::Union{Tuple,NamedTuple}, i::Integer) = sig[i]
+show_basis_blade(io::IO, sig::NamedTuple, indices::Vector) = printstyled(io, join(keys(sig)[indices]), bold=true)
 
 """
 	Cl(p, q=0, r=0)
@@ -195,27 +200,72 @@ Multivector{Cl("0-+++"), 2} (pretty-printed Multivector{(0, -1, 1, 1, 1), 2})
 """
 Cl(s::String) = interpret_signature(s)
 
-# depreciated?
-macro Cl_str(s)
-	interpret_signature(s)
-end
-
 show_signature(io, sig::Tuple) = print(io, "Cl(\"$(join(map(s -> get(Dict(+1=>"+", -1=>"-"), s, s), sig)))\")")
 
 interpret_signature(sig::String) = Tuple(Dict('+' => +1, '-' => -1, '0' => 0)[i] for i in sig)
 interpret_signature(sig) = sig
 
 
+
+
 """
-	cayleytable(sig, op=*)
-	cayleytable(objs, op=*)
+	cayleytable(objs::AbstractVector, op=*; title)
 
-Display a multivector multiplication table.
-
-The first argument may be a metric signature or any vector of objects
-which can be combined with the binary operator `op`.
+Display a Cayley table for the binary operation `op` on the objects in `objs`.
 
 The keyword argument `title` sets the contents of the top-left cell.
+
+# Examples
+```jldoctest
+julia> cayleytable([false, true], &)
+ (↓) & (→) │ false   true
+───────────┼──────────────
+     false │ false  false
+      true │ false   true
+
+julia> cayleytable(0:5, (a, b) -> mod(a*b, 6), title="ab mod 6")
+ ab mod 6 │ 0  1  2  3  4  5
+──────────┼──────────────────
+        0 │ 0  0  0  0  0  0
+        1 │ 0  1  2  3  4  5
+        2 │ 0  2  4  0  2  4
+        3 │ 0  3  0  3  0  3
+        4 │ 0  4  2  0  4  2
+        5 │ 0  5  4  3  2  1
+```
+"""
+function cayleytable(io::IO, objs::AbstractVector, op=*; separators=:auto, title=:( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) ))
+	table = [op(a, b) for a ∈ objs, b ∈ objs]
+
+	if separators == :auto
+		types = typeof.(objs)
+		diffs = types[begin + 1:end] .!= types[begin:end - 1]
+		separators = findall(diffs)
+	end
+
+	PrettyTables.pretty_table(
+		io,
+		table,
+		column_labels = objs,
+		row_labels = objs,
+		stubhead_label = string(title),
+		table_format=PrettyTables.TextTableFormat(
+	        horizontal_lines_at_data_rows=separators,
+	        vertical_lines_at_data_columns=separators,
+	        horizontal_line_at_beginning=false,
+	        horizontal_line_after_data_rows=false,
+	        vertical_line_at_beginning=false,
+	        vertical_line_after_data_columns=false,
+	    )
+	)
+end
+
+
+
+"""
+	cayleytable(sig, op=*)
+
+Display a multivector multiplication table for the geometric algebra with signature `sig`.
 
 # Examples
 ```jldoctest
@@ -234,46 +284,22 @@ julia> cayleytable(3)
 ───────────┼──────┼───────────────────┼───────────────────┼──────
       v123 │ v123 │  v23   -v13   v12 │  -v3     v2   -v1 │   -1
 
-julia> cayleytable(basis((t=-1, x=1, y=1, z=1), 2), ∧)
- (↓) ∧ (→) │   tx     ty    xy    tz     xz    yz
-───────────┼──────────────────────────────────────
-        tx │    0      0     0     0      0  txyz
-        ty │    0      0     0     0  -txyz     0
-        xy │    0      0     0  txyz      0     0
-        tz │    0      0  txyz     0      0     0
-        xz │    0  -txyz     0     0      0     0
-        yz │ txyz      0     0     0      0     0
+julia> cayleytable(Cl(2,0,1), lcontract)
+ lcontract(↓, →) │ 1 │ v1  v2  v3 │ v12  v13  v23 │ v123
+─────────────────┼───┼────────────┼───────────────┼──────
+               1 │ 1 │ v1  v2  v3 │ v12  v13  v23 │ v123
+─────────────────┼───┼────────────┼───────────────┼──────
+              v1 │ 0 │  1   0   0 │  v2   v3    0 │  v23
+              v2 │ 0 │  0   1   0 │ -v1    0   v3 │ -v13
+              v3 │ 0 │  0   0   0 │   0    0    0 │    0
+─────────────────┼───┼────────────┼───────────────┼──────
+             v12 │ 0 │  0   0   0 │  -1    0    0 │  -v3
+             v13 │ 0 │  0   0   0 │   0    0    0 │    0
+             v23 │ 0 │  0   0   0 │   0    0    0 │    0
+─────────────────┼───┼────────────┼───────────────┼──────
+            v123 │ 0 │  0   0   0 │   0    0    0 │    0
 
 ```
 """
 cayleytable(args...; kwargs...) = cayleytable(stdout, args...; kwargs...)
-function cayleytable(io::IO, sig, args...; kwargs...)
-	sig = interpret_signature(sig)
-	cayleytable(io, basis(sig, :all), args...; kwargs...)
-end
-
-function cayleytable(io::IO, mvs::AbstractVector, op=*; separators=:auto, title=:( $(nameof(op))($(Symbol("↓")), $(Symbol("→"))) ))
-	table = [op(a, b) for a ∈ mvs, b ∈ mvs]
-
-	if separators == :auto
-		types = typeof.(mvs)
-		diffs = types[begin + 1:end] .!= types[begin:end - 1]
-		separators = findall(diffs)
-	end
-
-	PrettyTables.pretty_table(
-		io,
-		table,
-		column_labels = mvs,
-		row_labels = mvs,
-		stubhead_label = string(title),
-		table_format=PrettyTables.TextTableFormat(
-	        horizontal_lines_at_data_rows=separators,
-	        vertical_lines_at_data_columns=separators,
-	        horizontal_line_at_beginning=false,
-	        horizontal_line_after_data_rows=false,
-	        vertical_line_at_beginning=false,
-	        vertical_line_after_data_columns=false,
-	    )
-	)
-end
+cayleytable(io::IO, sig, args...; kwargs...) = cayleytable(io, basis(interpret_signature(sig), :all), args...; kwargs...)

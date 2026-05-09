@@ -102,7 +102,3 @@ end
 function cleardocs!(mod, name)
     Docs.meta(mod)[Docs.Binding(mod, name)] = Docs.MultiDoc()
 end
-
-cd(joinpath(project_root, "docs")) do
-    make()
-end

@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-    tags: '*'
+    tags: "*"
 
   pull_request:
     branches:
@@ -26,13 +26,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         arch: [x64]
-        version: ['1.10', '1.11']
+        version: ["1.11", "1.12"]
 
     runs-on: ${{ matrix.os }}
 
     env:
-        codecov-arch: x64
-        codecov-version: '1.11'
+      codecov-arch: x64
+      codecov-version: "1.12"
 
     steps:
       - name: Check out code
@@ -96,7 +96,7 @@ jobs:
       - name: Set up Julia environment
         uses: julia-actions/setup-julia@latest
         with:
-          version: '1.11'
+          version: "1.12"
 
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'

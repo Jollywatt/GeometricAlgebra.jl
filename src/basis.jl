@@ -1,3 +1,7 @@
+public BASIS_DISPLAY_STYLES
+public get_basis_display_style
+
+
 """
 	BasisDisplayStyle(dim, blades[, blade_order]; kwargs...)
 	BasisDisplayStyle(dim, blades_and_order; kwargs...)
@@ -29,9 +33,9 @@ The default style for multivectors of metric signature `sig` can be set with
 
 
 !!! note
-	`BasisDisplayStyle` only affects how multivectors are _displayed_.
-	The actual internal layout of multivectors is never affected.
-	However, the active style for `sig` can affect the value of `basis(sig)`.
+    `BasisDisplayStyle` only affects how multivectors are _displayed_.
+    The actual internal layout of multivectors is never affected.
+    However, the active style for `sig` can affect the value of `basis(sig)`.
 
 # Examples
 
@@ -65,7 +69,7 @@ julia> ans*rdual(ans) # pseudoscalar `e₁e₂e₃` displayed as `I`
 To recover the default style:
 ```jldoctest
 julia> delete!(GeometricAlgebra.BASIS_DISPLAY_STYLES, Cl(0,3))
-IdDict{Any, BasisDisplayStyle}() 
+IdDict{Any, BasisDisplayStyle}()
 ```
 """
 struct BasisDisplayStyle
@@ -135,8 +139,50 @@ The style for the key `sig` must have the same dimension as `sig`.
 
 To use the default display style, remove the entry for `sig` with `delete!(GeometricAlgebra.BASIS_DISPLAY_STYLES, sig)`
 or remove all with `empty!`.
+
+!!! note
+    The function [`get_basis_display_style`](@ref) takes precedence when deciding a style for a signature: by default,
+    [`get_basis_display_style`](@ref) retrieves the style (if it exists) from `BASIS_DISPLAY_STYLES`, but you may also
+    add methods to [`get_basis_display_style`](@ref) directly.
+
+# Examples
+```jldoctest
+julia> GeometricAlgebra.BASIS_DISPLAY_STYLES[Cl(1,3)] = BasisDisplayStyle(4, prefix="γ", indices=0:3)
+BasisDisplayStyle:
+      dim: 4
+   blades: []
+ parities: []
+    order: []
+  indices: ["0", "1", "2", "3"]
+   prefix: "γ"
+      sep: nothing
+   labels: []
+  preview:
+       0 │ γ
+       1 │ γ0     γ1    γ2    γ3
+       2 │ γ01    γ02   γ12   γ03   γ13  γ23
+       3 │ γ012   γ013  γ023  γ123
+       4 │ γ0123
+
+julia> prod(basis(Cl(1,3)))
+BasisBlade{Cl(1,3), 4, Int64}:
+ 1 γ0123
+
+julia> delete!(GeometricAlgebra.BASIS_DISPLAY_STYLES, Cl(1,3))
+IdDict{Any, BasisDisplayStyle}()
+```
+
 """
 const BASIS_DISPLAY_STYLES = IdDict{Any,BasisDisplayStyle}()
+
+"""
+  get_basis_display_style(sig) -> BasisDisplayStyle
+
+Defines the `BasisDisplayStyle` to use when displaying `AbstractMultivector` objects with metric signature `sig`.
+
+You may define methods of this function to customise　basis display styles based on the signature type.
+By default, `get_basis_display_style` retrieves the style from the lookup dictionary [`BASIS_DISPLAY_STYLES`](@ref).
+"""
 get_basis_display_style(sig) = get(BASIS_DISPLAY_STYLES, sig, sig)
 
 
@@ -322,11 +368,11 @@ function generate_blades(sig;
 								 scalar=false,
 								 prefix=nothing,
 								 style=get_basis_display_style(sig))
-	
+
 	grades = grades == :all ? (0:dimension(sig)) : grades
 	grades = scalar ? grades : grades ∩ (1:dimension(sig))
 
-	bits = componentbits(style, grades) 
+	bits = componentbits(style, grades)
 
 	if allperms
 		indices = map(permutations∘bits_to_indices, bits) |> Iterators.flatten |> collect
@@ -336,7 +382,7 @@ function generate_blades(sig;
 
 
 	# if allperms == true, then index order matters; otherwise, use style's default index ordering
-	labels = sprint.(show_basis_blade, Ref(style), allperms ? indices : bits) 
+	labels = sprint.(show_basis_blade, Ref(style), allperms ? indices : bits)
 	if !isnothing(prefix)
 		oldprefix = sprint.(show_basis_blade, Ref(style), zero(UInt))
 		labels .= replace.(labels,oldprefix=>prefix)

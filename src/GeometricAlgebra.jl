@@ -1,7 +1,8 @@
 module GeometricAlgebra
 
 using StaticArrays, SparseArrays
-using Combinatorics: permutations, parity
+using Combinatorics: permutations
+import Combinatorics: parity
 import PrettyTables
 using Random: AbstractRNG
 
@@ -10,7 +11,7 @@ export SVector, MVector
 export AbstractMultivector, BasisBlade, Multivector, Grade
 export basis, @basis, cayleytable
 export BasisDisplayStyle
-export signature, dimension, ncomponents, grade, eachgrade, blades
+export signature, dimension, ncomponents, grade, eachgrade, blades, parity
 export canonical_signature, Cl
 export scalar, isscalar, ishomogeneous, isblade
 export geometric_prod,
@@ -21,7 +22,8 @@ export geometric_prod,
 	lcontract, ⨼,
 	rcontract, ⨽,
 	clifford_conj, var"'ᶜ",
-	sandwich_prod
+	sandwich_prod,
+	versor_prod
 export reversion, involution
 export flipdual, hodgedual, invhodgedual, ldual, rdual
 export matrix_repr, outermorphism, embed

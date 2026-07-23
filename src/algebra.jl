@@ -384,7 +384,7 @@ function square(a::Multivector)
 	k = grade(a)
 	if k == 0 || k == 1 || k == dim || k == dim - 1
 		inner(a, a) # we want this branch to be taken at compile time
-	else 
+	else
 		a*a
 	end
 	# grade(a) ∈ (0, 1, dim - 1, dim) ? inner(a, a) : a*a
@@ -618,6 +618,31 @@ Sandwich product `R*a*~R` of multivector `a` by a rotor `R`.
 function sandwich_prod end
 
 sandwich_prod(R, a) = grade(R*a*reversion(R), grade(a))
+
+
+"""
+	parity(a::AbstractMultivector)
+
+The parity of a multivector is `0` if the multivector has only even grades,
+`1` if it has only odd grades, and `nothing` otherwise.
+"""
+function parity(::Grade{K}) where K
+	all(iseven, K) && return 0
+	all(isodd, K) && return 1
+	throw(ArgumentError("parity not defined for multivector of mixed grades $K"))
+end
+parity(::Number) = 0
+
+"""
+	versor_prod(V, a)
+
+Versor product of multivector `a` by a versor `V`, defined as
+```math
+(-1)^{p(V)p(a)} V a V^{-1}
+```
+where ``p(x)`` is the [`parity()`](@ref) of ``x``.
+"""
+versor_prod(V, a) = (-1)^(parity(V)parity(a))*grade(V*a*inv(V), grade(a))
 
 
 """
